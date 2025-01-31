@@ -30,11 +30,14 @@ export default {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          // DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#7E72EE",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "#5A4EC7",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
+          // DEFAULT: "hsl(var(--secondary))",
+          DEFAULT: "#71717A",
           foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
@@ -49,6 +52,7 @@ export default {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -70,6 +74,14 @@ export default {
           from: {height: "var(--radix-collapsible-content-height)"},
           to: {height: "0"},
         },
+      },
+      backgroundImage: {
+        maingradient:
+          "linear-gradient(180deg, #1c1d1f 0%, rgba(28, 29, 31, 0.68) 100%)",
+        secgradient:
+          "linear-gradient(180deg, #39393a 0%, rgba(28, 29, 31, 0.68) 100%)",
+        purplegradient: "linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%)",
+        hoverpurplegradient: "linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%)",
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
