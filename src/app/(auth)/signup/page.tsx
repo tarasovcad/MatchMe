@@ -9,8 +9,30 @@ import SimpleInput from "@/components/ui/SimpleInput";
 import CustomCheckbox from "@/components/ui/CustomCheckbox";
 import {Button} from "@/components/shadcn/button";
 import Image from "next/image";
-
+import {set, useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {SignUpFormData, signUpSchema} from "@/validation/signUpValidation";
+import {Controller} from "react-hook-form";
 const SignUp = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: {errors, isValid},
+  } = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      agreement: false,
+    },
+  });
+
+  const onSubmit = (data: SignUpFormData) => {
+    setCurrentStep(2);
+  };
+
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
       <Link href={"/"} className="absolute top-4 left-4 w-fit">
@@ -44,79 +66,104 @@ const SignUp = () => {
         </motion.div>
       </Link>
       {/* Signup form */}
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
-          <LogoImage size={32} />
-          <div className="flex flex-col gap-9  w-full justify-center ">
-            <div>
-              <MainGradient
-                as="h1"
-                className="text-center text-[36px] font-bold sm:text-[32px] xs:text-[30px] max-[396px]:text-[24px]">
-                Start Your Journey
-              </MainGradient>
-              <SecGradient as="h3" className=" text-base">
-                Join and start connecting instantly
-              </SecGradient>
+      {currentStep === 1 && (
+        <form
+          className="flex-1 flex items-center justify-center px-4 py-10"
+          onSubmit={handleSubmit(onSubmit)}>
+          <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
+            <LogoImage size={32} />
+            <div className="flex flex-col gap-9  w-full justify-center ">
+              <div>
+                <MainGradient
+                  as="h1"
+                  className="text-center text-[36px] font-bold sm:text-[32px] xs:text-[30px] max-[396px]:text-[24px]">
+                  Start Your Journey
+                </MainGradient>
+                <SecGradient as="h3" className=" text-base">
+                  Join and start connecting instantly
+                </SecGradient>
+              </div>
+              <div className="flex flex-col gap-4">
+                <SimpleInput
+                  mail
+                  label="Enter your email"
+                  placeholder="example@gmail.com"
+                  type="email"
+                  register={register("email")}
+                  id="email"
+                  name="email"
+                  error={errors.email}
+                />
+                <Controller
+                  name="agreement"
+                  control={control}
+                  render={({field}) => (
+                    <CustomCheckbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="agreement"
+                    />
+                  )}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-4">
-              <SimpleInput
-                mail
-                label="Enter your email"
-                placeholder="example@gmail.com"
-                type="email"
-              />
-              <CustomCheckbox />
+            <Button
+              disabled={!isValid}
+              type="submit"
+              variant={"default"}
+              size={"default"}
+              className="relative transition-all duration-300 ease-in-out w-full 
+                     bg-purplegradient 
+                     hover:before:opacity-100 
+                     overflow-hidden 
+                     before:content-[''] 
+                     before:absolute 
+                     before:inset-0 
+                     before:bg-hoverpurplegradient 
+                     before:opacity-0 
+                     before:transition-opacity 
+                     before:duration-300
+                     disabled:opacity-50 
+                     disabled:cursor-not-allowed
+                     disabled:hover:before:opacity-0">
+              <span className="relative z-10">Send 4-digit code</span>
+            </Button>
+            <div className="flex items-center justify-center w-full">
+              <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
+              <span className="mx-3 text-secondary/80 text-xs">OR</span>
+              <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
             </div>
-          </div>
-          <Button
-            disabled
-            variant={"default"}
-            size={"default"}
-            className="relative transition-all duration-300 ease-in-out w-full 
-             bg-purplegradient 
-             hover:before:opacity-100 
-             overflow-hidden 
-             before:content-[''] 
-             before:absolute 
-             before:inset-0 
-             before:bg-hoverpurplegradient 
-             before:opacity-0 
-             before:transition-opacity 
-             before:duration-300
-             disabled:opacity-50 
-             disabled:cursor-not-allowed
-             disabled:hover:before:opacity-0">
-            <span className="relative z-10">Send 4-digit code</span>
-          </Button>
-          <div className="flex items-center justify-center w-full">
-            <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
-            <span className="mx-3 text-secondary/80 text-xs">OR</span>
-            <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
-          </div>
-          <div className="w-full flex flex-col gap-3 justify-center">
-            <Button asChild className="gap-3 w-full">
-              <Link href="#">
-                <Image src="/google.webp" alt="Google" width={16} height={16} />
-                Sign up with Google
+            <div className="w-full flex flex-col gap-3 justify-center">
+              <Button asChild className="gap-3 w-full">
+                <Link href="#">
+                  <Image
+                    src="/google.webp"
+                    alt="Google"
+                    width={16}
+                    height={16}
+                  />
+                  Sign up with Google
+                </Link>
+              </Button>
+              <Button asChild className="gap-3 w-full">
+                <Link href="#">
+                  <Image src="github.svg" alt="Github" width={16} height={16} />
+                  Sign up with Github
+                </Link>
+              </Button>
+            </div>
+            <p className="text-center text-sm text-secondary">
+              Already have an account?{" "}
+              <Link
+                href={"#"}
+                className="transition-colors duration-300 ease-in-out text-primary hover:text-primary-hover font-medium">
+                Sign In
               </Link>
-            </Button>
-            <Button asChild className="gap-3 w-full">
-              <Link href="#">
-                <Image src="github.svg" alt="Github" width={16} height={16} />
-                Sign up with Github
-              </Link>
-            </Button>
+            </p>
           </div>
-          <p className="text-center text-sm text-secondary">
-            Already have an account?{" "}
-            <Link
-              href={"#"}
-              className="transition-colors duration-300 ease-in-out text-primary hover:text-primary-hover font-medium">
-              Sign In
-            </Link>
-          </p>
-        </div>
-      </div>
+        </form>
+      )}
+      {currentStep === 2 && <h1>Step 2</h1>}
 
       <div className="text-center">
         <div className="flex gap-2.5 items-center justify-center">
