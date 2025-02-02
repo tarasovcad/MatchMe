@@ -1,26 +1,32 @@
 "use client";
-import {ChevronLeft} from "lucide-react";
 import Link from "next/link";
-import {motion} from "framer-motion";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {LogoImage} from "@/components/ui/Logo";
-import MainGradient, {SecGradient} from "@/components/ui/Text";
-import SimpleInput from "@/components/ui/SimpleInput";
-import CustomCheckbox from "@/components/ui/CustomCheckbox";
 import {Button} from "@/components/shadcn/button";
 import Image from "next/image";
-import {set, useForm} from "react-hook-form";
+import {FormProvider, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {SignUpFormData, signUpSchema} from "@/validation/signUpValidation";
-import {Controller} from "react-hook-form";
+import AuthHomeLink from "@/components/auth/AuthHomeLink";
+import AuthTopText from "@/components/auth/AuthTopText";
+import AuthButton from "@/components/auth/AuthButton";
+import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
+import AuthStep1Form from "@/components/auth/AuthStep1Form";
+import {AuthStepConfig} from "@/types/AuthStepConfig";
+import AuthStepDots from "@/components/auth/AuthStepsDots";
+import AuthOTP from "@/components/auth/AuthOTP";
+import {supabase} from "@/utils/superbase/client";
+
+import {toast} from "sonner";
 const SignUp = () => {
+  const totalSteps = 3;
   const [currentStep, setCurrentStep] = useState(1);
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: {errors, isValid},
-  } = useForm<SignUpFormData>({
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [otpError, setOtpError] = useState(false);
+  const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
+  const methods = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: "onChange",
     defaultValues: {
@@ -29,153 +35,180 @@ const SignUp = () => {
     },
   });
 
-  const onSubmit = (data: SignUpFormData) => {
-    setCurrentStep(2);
+  const onSubmit = async (data: SignUpFormData) => {
+    setLoading(true);
+    let toastId;
+    try {
+      if (currentStep === 1) {
+        toastId = toast.loading("Sending OTP...");
+        const res = await supabase.auth.signInWithOtp({
+          email: data.email,
+          options: {
+            shouldCreateUser: true,
+          },
+        });
+
+        const {error} = res;
+
+        if (error) {
+          console.log(error);
+          toast.error(error.message, {id: toastId});
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Code sent successfully!", {id: toastId});
+        setCurrentStep(2);
+        setEmail(data.email);
+      } else if (currentStep === 2) {
+        toastId = toast.loading("Verifying OTP...");
+        const {error} = await supabase.auth.verifyOtp({
+          email,
+          token: otp,
+          type: "email",
+        });
+
+        if (error) {
+          setOtpError(true);
+          toast.error(error.message, {id: toastId});
+          setLoading(false);
+          return;
+        }
+
+        toast.success("OTP verified successfully!", {id: toastId});
+        setCurrentStep(3);
+      }
+    } catch (error) {
+      console.error("Authentication error:", error);
+      if (toastId) {
+        toast.error("An error occurred. Please try again.", {id: toastId});
+      }
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (otp.length === 6) {
+      setOtpHas6Symbols(true);
+    } else {
+      setOtpHas6Symbols(false);
+    }
+  }, [otp]);
+
+  const stepConfig: AuthStepConfig = {
+    1: {
+      title: "Start Your Journey",
+      subtitle: "Join and start connecting instantly",
+      buttonText: "Send 6-digit code",
+      bottomSubTitle: "Already have an account?",
+      bottomSubTitleLinkText: "Log in",
+      bottomSubTitleHfref: "/signin",
+    },
+    2: {
+      title: "Verify Your Email",
+      subtitle: `We sent a code to ${email} `,
+      buttonText: "Explore Projects",
+      bottomSubTitle: "Didn't get a code?",
+      bottomSubTitleLinkText: "Click to resend",
+      bottomSubTitleHfref: "/signin",
+    },
+    3: {
+      title: "Verify Your Email",
+      subtitle: `We sent a code to ${email} `,
+      buttonText: "Explore Projects",
+      bottomSubTitle: "Didn't get a code?",
+      bottomSubTitleLinkText: "Click to resend",
+      bottomSubTitleHfref: "/signin",
+    },
+  };
+
+  const {
+    title,
+    subtitle,
+    buttonText,
+    bottomSubTitleHfref,
+    bottomSubTitleLinkText,
+    bottomSubTitle,
+  } = stepConfig[currentStep];
 
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
-      <Link href={"/"} className="absolute top-4 left-4 w-fit">
-        <motion.div
-          className="flex gap-[6px] items-center px-2 py-1 rounded-md cursor-pointer group"
-          whileHover="hover"
-          initial="initial">
-          <motion.div
-            variants={{
-              initial: {x: 0},
-              hover: {x: -2},
-            }}
-            transition={{type: "spring", stiffness: 200}}>
-            <ChevronLeft
-              size={16}
-              className="text-[#48494A] group-hover:text-[#2b2b2c]"
-            />
-          </motion.div>
+      <AuthHomeLink />
 
-          <motion.div
-            variants={{
-              initial: {opacity: 1},
-              hover: {opacity: 1},
-            }}
-            transition={{duration: 0.3}}>
-            <span
-              className={`bg-maingradient bg-clip-text text-transparent w-fit text-sm font-medium group-hover:text-[#2b2b2c] transition-all duration-300 ease-in-out`}>
-              Home
-            </span>
-          </motion.div>
-        </motion.div>
-      </Link>
       {/* Signup form */}
-      {currentStep === 1 && (
-        <form
-          className="flex-1 flex items-center justify-center px-4 py-10"
-          onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex-1 flex items-center justify-center px-4 py-10"
+        onSubmit={methods.handleSubmit(onSubmit)}>
+        <FormProvider {...methods}>
           <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
             <LogoImage size={32} />
             <div className="flex flex-col gap-9  w-full justify-center ">
-              <div>
-                <MainGradient
-                  as="h1"
-                  className="text-center text-[36px] font-bold sm:text-[32px] xs:text-[30px] max-[396px]:text-[24px]">
-                  Start Your Journey
-                </MainGradient>
-                <SecGradient as="h3" className=" text-base">
-                  Join and start connecting instantly
-                </SecGradient>
+              <AuthTopText maintext={title} secText={subtitle} />
+              {currentStep === 1 && (
+                <div className="flex flex-col gap-4">
+                  <AuthStep1Form />
+                </div>
+              )}
+            </div>
+            {currentStep === 2 && (
+              <div className="flex items-center justify-center w-full">
+                <AuthOTP setOtp={setOtp} otpError={otpError} />
               </div>
-              <div className="flex flex-col gap-4">
-                <SimpleInput
-                  mail
-                  label="Enter your email"
-                  placeholder="example@gmail.com"
-                  type="email"
-                  register={register("email")}
-                  id="email"
-                  name="email"
-                  error={errors.email}
-                />
-                <Controller
-                  name="agreement"
-                  control={control}
-                  render={({field}) => (
-                    <CustomCheckbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      id="agreement"
-                    />
-                  )}
-                />
-              </div>
-            </div>
-            <Button
-              disabled={!isValid}
-              type="submit"
-              variant={"default"}
-              size={"default"}
-              className="relative transition-all duration-300 ease-in-out w-full 
-                     bg-purplegradient 
-                     hover:before:opacity-100 
-                     overflow-hidden 
-                     before:content-[''] 
-                     before:absolute 
-                     before:inset-0 
-                     before:bg-hoverpurplegradient 
-                     before:opacity-0 
-                     before:transition-opacity 
-                     before:duration-300
-                     disabled:opacity-50 
-                     disabled:cursor-not-allowed
-                     disabled:hover:before:opacity-0">
-              <span className="relative z-10">Send 4-digit code</span>
-            </Button>
-            <div className="flex items-center justify-center w-full">
-              <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
-              <span className="mx-3 text-secondary/80 text-xs">OR</span>
-              <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
-            </div>
-            <div className="w-full flex flex-col gap-3 justify-center">
-              <Button asChild className="gap-3 w-full">
-                <Link href="#">
-                  <Image
-                    src="/google.webp"
-                    alt="Google"
-                    width={16}
-                    height={16}
-                  />
-                  Sign up with Google
-                </Link>
-              </Button>
-              <Button asChild className="gap-3 w-full">
-                <Link href="#">
-                  <Image src="github.svg" alt="Github" width={16} height={16} />
-                  Sign up with Github
-                </Link>
-              </Button>
-            </div>
-            <p className="text-center text-sm text-secondary">
-              Already have an account?{" "}
-              <Link
-                href={"#"}
-                className="transition-colors duration-300 ease-in-out text-primary hover:text-primary-hover font-medium">
-                Sign In
-              </Link>
-            </p>
-          </div>
-        </form>
-      )}
-      {currentStep === 2 && <h1>Step 2</h1>}
+            )}
 
-      <div className="text-center">
-        <div className="flex gap-2.5 items-center justify-center">
-          <div className="w-5 h-2.5 rounded-full bg-primary"></div>
-          <button
-            disabled
-            className="w-2.5 h-2.5 rounded-full bg-input transition-all duration-300 ease-in-out   group-disabled:cursor-not-allowed group-disabled:opacity-50 hover:scale-110 hover:bg-primary disabled:hover:scale-100 disabled:hover:bg-input"></button>
-          <button
-            disabled
-            className="w-2.5 h-2.5 rounded-full bg-input transition-all duration-300 ease-in-out   group-disabled:cursor-not-allowed group-disabled:opacity-50 hover:scale-110 hover:bg-primary disabled:hover:scale-100 disabled:hover:bg-input"></button>
-        </div>
-      </div>
+            <AuthButton
+              key={loading ? "loading" : "idle"}
+              loading={loading}
+              text={buttonText}
+              disabled={currentStep === 2 && !otpHas6Symbols}
+            />
+            {currentStep === 1 && (
+              <>
+                <div className="flex items-center justify-center w-full">
+                  <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
+                  <span className="mx-3 text-secondary/80 text-xs">OR</span>
+                  <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
+                </div>
+                <div className="w-full flex flex-col gap-3 justify-center">
+                  <Button asChild className="gap-3 w-full">
+                    <Link href="#">
+                      <Image
+                        src="/google.webp"
+                        alt="Google"
+                        width={16}
+                        height={16}
+                      />
+                      Sign up with Google
+                    </Link>
+                  </Button>
+                  <Button asChild className="gap-3 w-full">
+                    <Link href="#">
+                      <Image
+                        src="github.svg"
+                        alt="Github"
+                        width={16}
+                        height={16}
+                      />
+                      Sign up with Github
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
+            {currentStep === 3 && "Step 3"}
+
+            <AuthBottomSubTitle
+              maintext={bottomSubTitle}
+              link={bottomSubTitleLinkText}
+              href={bottomSubTitleHfref}
+            />
+          </div>
+        </FormProvider>
+      </form>
+
+      <AuthStepDots totalSteps={totalSteps} currentStep={currentStep} />
     </div>
   );
 };
