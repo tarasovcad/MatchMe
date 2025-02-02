@@ -4,7 +4,11 @@ import React, {useEffect, useState} from "react";
 import {LogoImage} from "@/components/ui/Logo";
 import {FormProvider, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {SignUpFormData, signUpSchema} from "@/validation/signUpValidation";
+import {
+  SignUpFormData,
+  signUpSchemaStep1,
+  signUpSchemaStep3,
+} from "@/validation/signUpValidation";
 import AuthHomeLink from "@/components/auth/AuthHomeLink";
 import AuthTopText from "@/components/auth/AuthTopText";
 import AuthButton from "@/components/auth/AuthButton";
@@ -13,50 +17,77 @@ import AuthStep1Form from "@/components/auth/AuthStep1Form";
 import AuthStepDots from "@/components/auth/AuthStepsDots";
 import AuthOTP from "@/components/auth/AuthOTP";
 import {supabase} from "@/utils/superbase/client";
-import Link from "next/link";
-import Image from "next/image";
 import {toast} from "sonner";
 import {signInConfig} from "@/data/auth/stepsConfigs";
 import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
-import {Button} from "@/components/shadcn/button";
 import AuthStep3Form from "@/components/auth/AuthStep3Form";
+import {useRouter} from "next/navigation";
 const SignUp = () => {
-  const totalSteps = 3;
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpError, setOtpError] = useState(false);
   const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [totalSteps, setTotalSteps] = useState(3);
+  const router = useRouter();
+  const getSchemaForStep = (step: number) => {
+    switch (step) {
+      case 1:
+        return signUpSchemaStep1;
+      case 3:
+        return signUpSchemaStep3;
+      default:
+        return signUpSchemaStep1;
+    }
+  };
+
   const methods = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(getSchemaForStep(currentStep)),
     mode: "onChange",
     defaultValues: {
       email: "",
       agreement: false,
+      name: "",
+      username: "",
     },
   });
+  // console.log(methods.getValues("name"));
+  const {handleSubmit, formState} = methods;
+  const {errors, isValid} = formState;
 
   const onSubmit = async (data: SignUpFormData) => {
     setLoading(true);
     let toastId;
     try {
       if (currentStep === 1) {
-        toastId = toast.loading("Sending OTP...");
-        const res = await supabase.auth.signInWithOtp({
+        toastId = toast.loading("Checking account...");
+        const {error} = await supabase.auth.signInWithOtp({
           email: data.email,
-          options: {
-            shouldCreateUser: true,
-          },
         });
 
-        const {error} = res;
-
         if (error) {
-          console.log(error);
           toast.error(error.message, {id: toastId});
           setLoading(false);
           return;
+        }
+
+        const {data: userData, error: userError} = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("email", data.email);
+        console.log(data, "data");
+        console.log(userError, "userError");
+        console.log(userData, "userData");
+        if (userError || userData.length === 0) {
+          console.log("user is not found in profiles table");
+          setIsNewUser(true);
+          setTotalSteps(3);
+        } else {
+          console.log("user is found in profiles table");
+          setIsNewUser(false);
+          setTotalSteps(2);
         }
 
         toast.success("Code sent successfully!", {id: toastId});
@@ -78,7 +109,42 @@ const SignUp = () => {
         }
 
         toast.success("OTP verified successfully!", {id: toastId});
-        setCurrentStep(3);
+        if (isNewUser) {
+          setCurrentStep(3);
+        } else {
+          // redirect
+          router.push("/dashboard");
+        }
+      } else if (currentStep === 3) {
+        toastId = toast.loading("Creating account...");
+        const {data: userData, error: userError} =
+          await supabase.auth.getUser();
+
+        if (userError) {
+          toast.error(userError.message, {id: toastId});
+          setLoading(false);
+          return;
+        }
+        const {error: profileError} = await supabase.from("profiles").insert({
+          id: userData.user.id,
+          email: email,
+          name: data.name,
+          username: data.username,
+        });
+
+        if (!email) {
+          toast.error("Missing email address", {id: toastId});
+          return;
+        }
+
+        if (profileError) {
+          toast.error(profileError.message, {id: toastId});
+          setLoading(false);
+          return;
+        }
+        console.log("profile created successfully");
+        toast.success("Account created successfully!", {id: toastId});
+        // router.push("/dashboard");
       }
     } catch (error) {
       console.error("Authentication error:", error);
