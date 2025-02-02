@@ -6,9 +6,9 @@ const AuthBottomSubTitle = ({
   link,
   href,
 }: {
-  maintext: string;
-  link: string;
-  href?: string;
+  maintext: string | undefined;
+  link: string | undefined;
+  href?: string | undefined;
 }) => {
   return (
     <p className="text-center text-sm text-secondary">

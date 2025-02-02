@@ -3,8 +3,8 @@ export type AuthStepConfig = {
     title: string;
     subtitle: string;
     buttonText: string;
-    bottomSubTitle: string;
-    bottomSubTitleLinkText: string;
-    bottomSubTitleHfref: string;
+    bottomSubTitle?: string;
+    bottomSubTitleLinkText?: string;
+    bottomSubTitleHfref?: string;
   };
 };

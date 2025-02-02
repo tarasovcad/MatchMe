@@ -2,6 +2,7 @@ import React from "react";
 import {Controller, useFormContext} from "react-hook-form";
 import SimpleInput from "../ui/SimpleInput";
 import CustomCheckbox from "../ui/CustomCheckbox";
+import {AnimatePresence, motion} from "framer-motion";
 
 export default function AuthStep1Form() {
   const {
@@ -34,11 +35,20 @@ export default function AuthStep1Form() {
             />
           )}
         />
-        {errors.agreement && (
-          <p className="mt-2 text-xs text-destructive">
-            {errors.agreement.message as string}
-          </p>
-        )}
+
+        <AnimatePresence>
+          {errors.agreement && (
+            <motion.p
+              className="text-xs text-destructive"
+              layout
+              initial={{opacity: 0, height: 0, marginTop: 0}}
+              animate={{opacity: 1, height: "auto", marginTop: 8}}
+              exit={{opacity: 0, height: 0, marginTop: 0}}
+              transition={{duration: 0.1, ease: "easeInOut"}}>
+              {errors.agreement.message as string}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

@@ -2,6 +2,7 @@ import {Label} from "@/components/shadcn/label";
 import {Mail} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {UseFormRegisterReturn} from "react-hook-form";
+import {AnimatePresence, motion} from "framer-motion";
 interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   mail?: boolean;
   label: string;
@@ -54,9 +55,19 @@ const SimpleInput = ({
           </div>
         )}
       </div>
-      {error?.message && (
-        <p className="mt-2 text-xs text-destructive">{error.message}</p>
-      )}
+      <AnimatePresence>
+        {error?.message && (
+          <motion.p
+            className="text-xs text-destructive"
+            layout
+            initial={{opacity: 0, height: 0, marginTop: 0}}
+            animate={{opacity: 1, height: "auto", marginTop: 8}}
+            exit={{opacity: 0, height: 0, marginTop: 0}}
+            transition={{duration: 0.1, ease: "easeInOut"}}>
+            {error.message}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

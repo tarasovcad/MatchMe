@@ -1,9 +1,7 @@
 "use client";
-import Link from "next/link";
+
 import React, {useEffect, useState} from "react";
 import {LogoImage} from "@/components/ui/Logo";
-import {Button} from "@/components/shadcn/button";
-import Image from "next/image";
 import {FormProvider, useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {SignUpFormData, signUpSchema} from "@/validation/signUpValidation";
@@ -12,15 +10,19 @@ import AuthTopText from "@/components/auth/AuthTopText";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
 import AuthStep1Form from "@/components/auth/AuthStep1Form";
-import {AuthStepConfig} from "@/types/AuthStepConfig";
 import AuthStepDots from "@/components/auth/AuthStepsDots";
 import AuthOTP from "@/components/auth/AuthOTP";
 import {supabase} from "@/utils/superbase/client";
-
+import Link from "next/link";
+import Image from "next/image";
 import {toast} from "sonner";
+import {signInConfig} from "@/data/auth/stepsConfigs";
+import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
+import {Button} from "@/components/shadcn/button";
+import AuthStep3Form from "@/components/auth/AuthStep3Form";
 const SignUp = () => {
   const totalSteps = 3;
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -97,32 +99,7 @@ const SignUp = () => {
     }
   }, [otp]);
 
-  const stepConfig: AuthStepConfig = {
-    1: {
-      title: "Start Your Journey",
-      subtitle: "Join and start connecting instantly",
-      buttonText: "Send 6-digit code",
-      bottomSubTitle: "Already have an account?",
-      bottomSubTitleLinkText: "Log in",
-      bottomSubTitleHfref: "/signin",
-    },
-    2: {
-      title: "Verify Your Email",
-      subtitle: `We sent a code to ${email} `,
-      buttonText: "Explore Projects",
-      bottomSubTitle: "Didn't get a code?",
-      bottomSubTitleLinkText: "Click to resend",
-      bottomSubTitleHfref: "/signin",
-    },
-    3: {
-      title: "Verify Your Email",
-      subtitle: `We sent a code to ${email} `,
-      buttonText: "Explore Projects",
-      bottomSubTitle: "Didn't get a code?",
-      bottomSubTitleLinkText: "Click to resend",
-      bottomSubTitleHfref: "/signin",
-    },
-  };
+  const config = signInConfig(email);
 
   const {
     title,
@@ -131,7 +108,7 @@ const SignUp = () => {
     bottomSubTitleHfref,
     bottomSubTitleLinkText,
     bottomSubTitle,
-  } = stepConfig[currentStep];
+  } = config[currentStep];
 
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
@@ -157,53 +134,22 @@ const SignUp = () => {
                 <AuthOTP setOtp={setOtp} otpError={otpError} />
               </div>
             )}
-
+            {currentStep === 3 && <AuthStep3Form />}
             <AuthButton
               key={loading ? "loading" : "idle"}
               loading={loading}
               text={buttonText}
               disabled={currentStep === 2 && !otpHas6Symbols}
             />
-            {currentStep === 1 && (
-              <>
-                <div className="flex items-center justify-center w-full">
-                  <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
-                  <span className="mx-3 text-secondary/80 text-xs">OR</span>
-                  <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
-                </div>
-                <div className="w-full flex flex-col gap-3 justify-center">
-                  <Button asChild className="gap-3 w-full">
-                    <Link href="#">
-                      <Image
-                        src="/google.webp"
-                        alt="Google"
-                        width={16}
-                        height={16}
-                      />
-                      Sign up with Google
-                    </Link>
-                  </Button>
-                  <Button asChild className="gap-3 w-full">
-                    <Link href="#">
-                      <Image
-                        src="github.svg"
-                        alt="Github"
-                        width={16}
-                        height={16}
-                      />
-                      Sign up with Github
-                    </Link>
-                  </Button>
-                </div>
-              </>
-            )}
-            {currentStep === 3 && "Step 3"}
+            {currentStep === 1 && <AuthProvidersLinks />}
 
-            <AuthBottomSubTitle
-              maintext={bottomSubTitle}
-              link={bottomSubTitleLinkText}
-              href={bottomSubTitleHfref}
-            />
+            {currentStep !== 3 && (
+              <AuthBottomSubTitle
+                maintext={bottomSubTitle}
+                link={bottomSubTitleLinkText}
+                href={bottomSubTitleHfref}
+              />
+            )}
           </div>
         </FormProvider>
       </form>
