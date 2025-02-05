@@ -11,14 +11,13 @@ export async function handleStep2(data: {email: string; otp: string}) {
       token: otp,
       type: "email",
     });
-    console.log(verifyData, "verifyData");
     if (error) {
       console.log(error);
       return {
         error: error.message,
       };
     }
-    return;
+    return {message: "OTP verified successfully!"};
   } catch (error) {
     console.log("Undexpected error in handleStep2:", error);
     return {

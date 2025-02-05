@@ -24,6 +24,7 @@ import AuthStep3Form from "@/components/auth/AuthStep3Form";
 import {useRouter} from "next/navigation";
 import {handleStep1} from "@/actions/(auth)/handleStep1";
 import {handleStep2} from "@/actions/(auth)/handleStep2";
+import {handleStep3} from "@/actions/(auth)/handleStep3";
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -44,6 +45,7 @@ const SignUp = () => {
         return signUpSchemaStep1;
     }
   };
+  console.log(email, "email");
 
   const methods = useForm<SignUpFormData>({
     resolver: zodResolver(getSchemaForStep(currentStep)),
@@ -76,10 +78,11 @@ const SignUp = () => {
   } = config[currentStep];
 
   const handleFormSubmitStep1 = async (data: SignUpFormData) => {
+    let toastId;
     try {
       setLoading(true);
+      toastId = toast.loading("Checking account...");
       const response = await handleStep1(data);
-      console.log(response);
 
       if (response.isNewUser) {
         setIsNewUser(true);
@@ -87,11 +90,13 @@ const SignUp = () => {
       } else {
         setTotalSteps(2);
       }
-      toast.success(response.message);
+      toast.success(response.message, {id: toastId});
       setEmail(data.email);
       setCurrentStep(2);
     } catch (error) {
-      toast.error("Signup failed. Please try again.");
+      toast.error("Signup failed. Please try again.", {id: toastId});
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
     }
@@ -102,7 +107,14 @@ const SignUp = () => {
     try {
       toastId = toast.loading("Verifying OTP...");
       setLoading(true);
-      await handleStep2({email, otp});
+      const response = await handleStep2({email, otp});
+      console.log(response);
+      if (response?.error) {
+        toast.error(response.error, {id: toastId});
+        setLoading(false);
+        return;
+      }
+      toast.success(response?.message, {id: toastId});
       if (isNewUser) {
         setCurrentStep(3);
       } else {
@@ -117,7 +129,30 @@ const SignUp = () => {
       toast.success("OTP verified successfully!", {id: toastId});
     }
   };
-  const handleFormSubmitStep3 = async () => {};
+  const handleFormSubmitStep3 = async (data: SignUpFormData) => {
+    let toastId;
+    try {
+      toastId = toast.loading("Creating account...");
+      const response = await handleStep3(data, email);
+      console.log(response);
+      if (response.error) {
+        toast.error(response.error, {id: toastId});
+        setLoading(false);
+        return;
+      }
+      toast.success(response.message, {id: toastId});
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1000);
+    } catch (error) {
+      toast.error("Signup failed. Please try again.", {id: toastId});
+      setLoading(false);
+      return;
+    } finally {
+      setLoading(false);
+      toast.success("Account created successfully!", {id: toastId});
+    }
+  };
 
   const handleFormSchema = (step: number) => {
     switch (step) {
@@ -125,7 +160,7 @@ const SignUp = () => {
         return handleFormSubmitStep1;
       case 2:
         return handleFormSubmitStep2;
-        // case 3:
+      case 3:
         return handleFormSubmitStep3;
       default:
         return handleFormSubmitStep1;
