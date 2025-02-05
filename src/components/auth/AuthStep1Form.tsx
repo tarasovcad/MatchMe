@@ -32,6 +32,7 @@ export default function AuthStep1Form() {
               checked={field.value}
               onCheckedChange={field.onChange}
               id="agreement"
+              name="agreement"
             />
           )}
         />

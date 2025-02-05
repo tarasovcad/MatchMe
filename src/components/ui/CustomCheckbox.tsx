@@ -7,12 +7,15 @@ interface CustomCheckboxProps {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
   id: string;
+  name: string;
 }
 
 const CustomCheckbox = ({
   checked,
   onCheckedChange,
   id,
+  name,
+  ...props
 }: CustomCheckboxProps) => {
   return (
     <div>
@@ -24,7 +27,13 @@ const CustomCheckbox = ({
             "--ring": "238.7 83.5% 66.7%",
           } as React.CSSProperties
         }>
-        <Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} />
+        <Checkbox
+          id={id}
+          checked={checked}
+          name={name}
+          onCheckedChange={onCheckedChange}
+          {...props}
+        />
         <TermsAndPolicy id={id} />
       </div>
     </div>

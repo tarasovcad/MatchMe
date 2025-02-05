@@ -22,6 +22,7 @@ import {signInConfig} from "@/data/auth/stepsConfigs";
 import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
 import AuthStep3Form from "@/components/auth/AuthStep3Form";
 import {useRouter} from "next/navigation";
+import {handleStep1} from "@/actions/(auth)/handleStep1";
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -53,109 +54,6 @@ const SignUp = () => {
       username: "",
     },
   });
-  // console.log(methods.getValues("name"));
-  const {handleSubmit, formState} = methods;
-  const {errors, isValid} = formState;
-
-  const onSubmit = async (data: SignUpFormData) => {
-    setLoading(true);
-    let toastId;
-    try {
-      if (currentStep === 1) {
-        toastId = toast.loading("Checking account...");
-        const {error} = await supabase.auth.signInWithOtp({
-          email: data.email,
-        });
-
-        if (error) {
-          toast.error(error.message, {id: toastId});
-          setLoading(false);
-          return;
-        }
-
-        const {data: userData, error: userError} = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("email", data.email);
-        console.log(data, "data");
-        console.log(userError, "userError");
-        console.log(userData, "userData");
-        if (userError || userData.length === 0) {
-          console.log("user is not found in profiles table");
-          setIsNewUser(true);
-          setTotalSteps(3);
-        } else {
-          console.log("user is found in profiles table");
-          setIsNewUser(false);
-          setTotalSteps(2);
-        }
-
-        toast.success("Code sent successfully!", {id: toastId});
-        setCurrentStep(2);
-        setEmail(data.email);
-      } else if (currentStep === 2) {
-        toastId = toast.loading("Verifying OTP...");
-        const {error} = await supabase.auth.verifyOtp({
-          email,
-          token: otp,
-          type: "email",
-        });
-
-        if (error) {
-          setOtpError(true);
-          toast.error(error.message, {id: toastId});
-          setLoading(false);
-          return;
-        }
-
-        toast.success("OTP verified successfully!", {id: toastId});
-        if (isNewUser) {
-          setCurrentStep(3);
-        } else {
-          // redirect
-          router.push("/dashboard");
-        }
-      } else if (currentStep === 3) {
-        toastId = toast.loading("Creating account...");
-        const {data: userData, error: userError} =
-          await supabase.auth.getUser();
-
-        if (userError) {
-          toast.error(userError.message, {id: toastId});
-          setLoading(false);
-          return;
-        }
-        const {error: profileError} = await supabase.from("profiles").insert({
-          id: userData.user.id,
-          email: email,
-          name: data.name,
-          username: data.username,
-        });
-
-        if (!email) {
-          toast.error("Missing email address", {id: toastId});
-          return;
-        }
-
-        if (profileError) {
-          toast.error(profileError.message, {id: toastId});
-          setLoading(false);
-          return;
-        }
-        console.log("profile created successfully");
-        toast.success("Account created successfully!", {id: toastId});
-        // router.push("/dashboard");
-      }
-    } catch (error) {
-      console.error("Authentication error:", error);
-      if (toastId) {
-        toast.error("An error occurred. Please try again.", {id: toastId});
-      }
-      setLoading(false);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     if (otp.length === 6) {
@@ -183,7 +81,26 @@ const SignUp = () => {
       {/* Signup form */}
       <form
         className="flex-1 flex items-center justify-center px-4 py-10"
-        onSubmit={methods.handleSubmit(onSubmit)}>
+        onSubmit={methods.handleSubmit(async (data) => {
+          try {
+            setLoading(true);
+            const response = await handleStep1(data);
+            console.log(response);
+
+            if (response.isNewUser) {
+              setTotalSteps(3);
+            } else {
+              setTotalSteps(2);
+            }
+            toast.success(response.message);
+            setEmail(data.email);
+            setCurrentStep(2);
+          } catch (error) {
+            toast.error("Signup failed. Please try again.");
+          } finally {
+            setLoading(false);
+          }
+        })}>
         <FormProvider {...methods}>
           <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
             <LogoImage size={32} />
