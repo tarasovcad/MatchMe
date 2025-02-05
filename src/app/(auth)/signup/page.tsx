@@ -23,6 +23,7 @@ import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
 import AuthStep3Form from "@/components/auth/AuthStep3Form";
 import {useRouter} from "next/navigation";
 import {handleStep1} from "@/actions/(auth)/handleStep1";
+import {handleStep2} from "@/actions/(auth)/handleStep2";
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -74,6 +75,63 @@ const SignUp = () => {
     bottomSubTitle,
   } = config[currentStep];
 
+  const handleFormSubmitStep1 = async (data: SignUpFormData) => {
+    try {
+      setLoading(true);
+      const response = await handleStep1(data);
+      console.log(response);
+
+      if (response.isNewUser) {
+        setIsNewUser(true);
+        setTotalSteps(3);
+      } else {
+        setTotalSteps(2);
+      }
+      toast.success(response.message);
+      setEmail(data.email);
+      setCurrentStep(2);
+    } catch (error) {
+      toast.error("Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFormSubmitStep2 = async () => {
+    let toastId;
+    try {
+      toastId = toast.loading("Verifying OTP...");
+      setLoading(true);
+      await handleStep2({email, otp});
+      if (isNewUser) {
+        setCurrentStep(3);
+      } else {
+        router.push("/");
+      }
+    } catch (error) {
+      toast.error("Signup failed. Please try again.", {id: toastId});
+      setLoading(false);
+      return;
+    } finally {
+      setLoading(false);
+      toast.success("OTP verified successfully!", {id: toastId});
+    }
+  };
+  const handleFormSubmitStep3 = async () => {};
+
+  const handleFormSchema = (step: number) => {
+    switch (step) {
+      case 1:
+        return handleFormSubmitStep1;
+      case 2:
+        return handleFormSubmitStep2;
+        // case 3:
+        return handleFormSubmitStep3;
+      default:
+        return handleFormSubmitStep1;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
       <AuthHomeLink />
@@ -81,26 +139,7 @@ const SignUp = () => {
       {/* Signup form */}
       <form
         className="flex-1 flex items-center justify-center px-4 py-10"
-        onSubmit={methods.handleSubmit(async (data) => {
-          try {
-            setLoading(true);
-            const response = await handleStep1(data);
-            console.log(response);
-
-            if (response.isNewUser) {
-              setTotalSteps(3);
-            } else {
-              setTotalSteps(2);
-            }
-            toast.success(response.message);
-            setEmail(data.email);
-            setCurrentStep(2);
-          } catch (error) {
-            toast.error("Signup failed. Please try again.");
-          } finally {
-            setLoading(false);
-          }
-        })}>
+        onSubmit={methods.handleSubmit(handleFormSchema(currentStep))}>
         <FormProvider {...methods}>
           <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
             <LogoImage size={32} />

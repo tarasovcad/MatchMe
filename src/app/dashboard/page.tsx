@@ -1,7 +1,15 @@
-import React from "react";
+import {createClient} from "@/utils/superbase/server";
 
-const page = () => {
-  return <div>123</div>;
-};
+export default async function HomePage() {
+  const supabase = await createClient();
 
-export default page;
+  const {
+    data: {user},
+  } = await supabase.auth.getUser();
+  console.log(user);
+  if (!user) {
+    return <div>User not logged in</div>;
+  }
+
+  return <div>User logged in: {user.email}</div>;
+}
