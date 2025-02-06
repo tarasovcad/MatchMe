@@ -12,7 +12,6 @@ export async function handleStep3(
 ) {
   try {
     const {name, username} = data;
-    console.log(email);
     if (name.length === 0 || username.length === 0) {
       return {
         error: "Name and username cannot be empty",
@@ -39,7 +38,7 @@ export async function handleStep3(
       username: data.username,
     });
     if (profileError) {
-      console.log("Undexpected error in handleStep1:", profileError);
+      console.log("Undexpected error in handleStep3:", profileError);
       return {
         error:
           profileError instanceof Error
@@ -47,6 +46,29 @@ export async function handleStep3(
             : "An unexpected error occurred",
       };
     }
+    const {data: updatedUser, error} = await supabase.auth.updateUser({
+      data: {
+        name: name,
+        username: username,
+      },
+    });
+
+    if (!updatedUser) {
+      return {
+        error: "Failed to update user profile",
+      };
+    }
+
+    if (error) {
+      console.log("Undexpected error in handleStep3:", error);
+      return {
+        error:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
+      };
+    }
+
     return {
       message: "Account created successfully!",
     };

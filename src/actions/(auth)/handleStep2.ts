@@ -6,7 +6,7 @@ export async function handleStep2(data: {email: string; otp: string}) {
   try {
     const supabase = await createClient();
     const {email, otp} = data;
-    const {data: verifyData, error} = await supabase.auth.verifyOtp({
+    const {error} = await supabase.auth.verifyOtp({
       email,
       token: otp,
       type: "email",

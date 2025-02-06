@@ -24,19 +24,16 @@ export async function handleStep1(data: {email: string; agreement: boolean}) {
         .from("profiles")
         .select("*")
         .eq("email", data.email);
-      console.log(data, "data");
 
       if (userError || userData.length === 0) {
         return {
           isNewUser: true,
           totalSteps: 3,
-          message: "User not found, continue to step 3",
         };
       }
       return {
         isNewUser: false,
         totalSteps: 2,
-        message: "User found, continue to step 2",
       };
     } else {
       console.log("Agreement is not checked or email is empty");

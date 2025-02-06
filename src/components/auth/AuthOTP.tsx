@@ -3,30 +3,21 @@
 import {cn} from "@/lib/utils";
 import {OTPInput, SlotProps} from "input-otp";
 import {Minus} from "lucide-react";
-import {useEffect, useId, useState} from "react";
+import {useId} from "react";
 
 interface AuthOTPProps {
   setOtp: React.Dispatch<React.SetStateAction<string>>;
   otpError?: boolean;
 }
 
-export default function AuthOTP({setOtp, otpError}: AuthOTPProps) {
+export default function AuthOTP({setOtp}: AuthOTPProps) {
   const id = useId();
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    if (otpError) {
-      setHasError(true);
-      setTimeout(() => setHasError(false), 3000);
-    }
-  }, [otpError]);
 
   return (
     <OTPInput
       id={id}
       containerClassName={cn(
         "flex items-center gap-3 has-[:disabled]:opacity-50 transition-all",
-        hasError && "border-red-500",
       )}
       maxLength={6}
       onChange={setOtp}
@@ -34,7 +25,7 @@ export default function AuthOTP({setOtp, otpError}: AuthOTPProps) {
         <>
           <div className="flex gap-1">
             {slots.slice(0, 3).map((slot, idx) => (
-              <Slot key={idx} {...slot} hasError={hasError} />
+              <Slot key={idx} {...slot} />
             ))}
           </div>
 
@@ -44,7 +35,7 @@ export default function AuthOTP({setOtp, otpError}: AuthOTPProps) {
 
           <div className="flex gap-1">
             {slots.slice(3).map((slot, idx) => (
-              <Slot key={idx} {...slot} hasError={hasError} />
+              <Slot key={idx} {...slot} />
             ))}
           </div>
         </>
@@ -53,7 +44,7 @@ export default function AuthOTP({setOtp, otpError}: AuthOTPProps) {
   );
 }
 
-function Slot({char, hasError}: SlotProps & {hasError: boolean}) {
+function Slot({char, hasError}: SlotProps & {hasError?: boolean}) {
   return (
     <div
       className={cn(

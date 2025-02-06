@@ -1,41 +1,22 @@
-"use client";
+import {createClient} from "@/utils/superbase/server";
 
-import {supabase} from "@/utils/superbase/client";
-import {useEffect, useState} from "react";
-import type {User} from "@supabase/supabase-js";
-export default function Page() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export default async function HomePage() {
+  const supabase = await createClient();
 
-  useEffect(() => {
-    // Fetch the current session on component mount
-    const fetchSession = async () => {
-      const {data, error} = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error getting session:", error.message);
-      }
-      if (data.session) {
-        setUser(data.session.user);
-      }
-      setLoading(false);
-    };
-
-    fetchSession();
-  }, []);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
+  const {
+    data: {user},
+  } = await supabase.auth.getUser();
+  console.log(user);
   if (!user) {
-    return <p>You are not logged in.</p>;
+    return <div>User not logged in</div>;
   }
 
   return (
-    <div>
-      <h1>Welcome, {user.email}!</h1>
-      <p>Your user ID is: {user.id}</p>
-      <p>{user.role}</p>
-    </div>
+    <>
+      <div>User logged in</div>
+      <div>Email: {user.email}</div>
+      <div>Name: {user.user_metadata.name}</div>
+      <div>Username: {user.user_metadata.username}</div>
+    </>
   );
 }

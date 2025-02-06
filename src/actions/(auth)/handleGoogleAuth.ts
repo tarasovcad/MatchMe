@@ -1,0 +1,27 @@
+"use server";
+import {createClient} from "@/utils/superbase/server";
+
+export async function handleGoogleAuth() {
+  try {
+    const supabase = await createClient();
+    const response = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
+    if (response.error) {
+      return {
+        error: response.error.message,
+      };
+    }
+
+    return {
+      error: response.error,
+      link: response.data.url,
+    };
+  } catch (error) {
+    console.log("Undexpected error in handleGoogleAuth:", error);
+    return {
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}

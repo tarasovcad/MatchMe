@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
-
 import React, {useEffect, useState} from "react";
 import {LogoImage} from "@/components/ui/Logo";
 import {FormProvider, useForm} from "react-hook-form";
@@ -16,7 +16,6 @@ import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
 import AuthStep1Form from "@/components/auth/AuthStep1Form";
 import AuthStepDots from "@/components/auth/AuthStepsDots";
 import AuthOTP from "@/components/auth/AuthOTP";
-import {supabase} from "@/utils/superbase/client";
 import {toast} from "sonner";
 import {signInConfig} from "@/data/auth/stepsConfigs";
 import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
@@ -30,7 +29,6 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [otpError, setOtpError] = useState(false);
   const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [totalSteps, setTotalSteps] = useState(3);
@@ -81,8 +79,16 @@ const SignUp = () => {
     let toastId;
     try {
       setLoading(true);
-      toastId = toast.loading("Checking account...");
+      toastId = toast.loading("Signing up...");
       const response = await handleStep1(data);
+      console.log(response);
+
+      if (response.error) {
+        toast.error(`Signup failed: ${response.error}`, {id: toastId});
+        setLoading(false);
+        return;
+      }
+      toast.success("OTP sent successfully!", {id: toastId});
 
       if (response.isNewUser) {
         setIsNewUser(true);
@@ -90,7 +96,7 @@ const SignUp = () => {
       } else {
         setTotalSteps(2);
       }
-      toast.success(response.message, {id: toastId});
+
       setEmail(data.email);
       setCurrentStep(2);
     } catch (error) {
@@ -142,7 +148,7 @@ const SignUp = () => {
       }
       toast.success(response.message, {id: toastId});
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/");
       }, 1000);
     } catch (error) {
       toast.error("Signup failed. Please try again.", {id: toastId});
@@ -188,7 +194,7 @@ const SignUp = () => {
             </div>
             {currentStep === 2 && (
               <div className="flex items-center justify-center w-full">
-                <AuthOTP setOtp={setOtp} otpError={otpError} />
+                <AuthOTP setOtp={setOtp} />
               </div>
             )}
             {currentStep === 3 && <AuthStep3Form />}
