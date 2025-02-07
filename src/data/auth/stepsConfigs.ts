@@ -1,6 +1,6 @@
 import {AuthStepConfig} from "@/types/AuthStepConfig";
 
-export const signInConfig = (email: string): AuthStepConfig => ({
+export const signInConfig = (email?: string): AuthStepConfig => ({
   1: {
     title: "Start Your Journey",
     subtitle: "Join and start connecting instantly",

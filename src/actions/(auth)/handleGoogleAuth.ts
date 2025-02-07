@@ -1,5 +1,5 @@
 "use server";
-import {createClient} from "@/utils/superbase/server";
+import {createClient} from "@/utils/supabase/server";
 
 export async function handleGoogleAuth() {
   try {
@@ -7,7 +7,7 @@ export async function handleGoogleAuth() {
     const response = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:3000/auth/callback",
+        redirectTo: "http://localhost:3000/callback",
       },
     });
     if (response.error) {

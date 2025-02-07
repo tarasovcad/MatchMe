@@ -1,6 +1,6 @@
 "use server";
 
-import {createClient} from "@/utils/superbase/server";
+import {createClient} from "@/utils/supabase/server";
 
 export async function handleStep3(
   data: {
@@ -37,6 +37,7 @@ export async function handleStep3(
       name: data.name,
       username: data.username,
     });
+    console.log("profile should be created");
     if (profileError) {
       console.log("Undexpected error in handleStep3:", profileError);
       return {
@@ -50,6 +51,7 @@ export async function handleStep3(
       data: {
         name: name,
         username: username,
+        is_profile_complete: true,
       },
     });
 

@@ -46,7 +46,30 @@ export async function updateSession(request: NextRequest) {
   // If this is not done, you may be causing the browser and server to go out
   // of sync and terminate the user's session prematurely!
 
-  await supabase.auth.getUser();
+  const {data, error: userError} = await supabase.auth.getUser();
+  if (data.user) {
+    const isProfileComplete =
+      data.user.user_metadata?.is_profile_complete || false;
+    const {pathname} = request.nextUrl;
+    console.log(pathname);
+    const allowedPathsForNotAuthenticated = [
+      "/auth/callback",
+      "/complete-profile",
+      "/home",
+      "/signup",
+    ];
+
+    const shouldRedirectToProfile =
+      !isProfileComplete &&
+      !allowedPathsForNotAuthenticated.some((path) =>
+        pathname.startsWith(path),
+      );
+
+    // if (shouldRedirectToProfile) {
+    //   return NextResponse.redirect(new URL("/complete-profile", request.url));
+    // }
+    console.log(data);
+  }
 
   return supabaseResponse;
 }

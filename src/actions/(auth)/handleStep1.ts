@@ -1,6 +1,6 @@
 "use server";
 
-import {createClient} from "@/utils/superbase/server";
+import {createClient} from "@/utils/supabase/server";
 
 // Step 1: Send OTP
 export async function handleStep1(data: {email: string; agreement: boolean}) {
