@@ -1,6 +1,7 @@
 import React from "react";
 import {Button} from "../shadcn/button";
 import {LoaderCircle} from "lucide-react";
+import LoadingButtonCirlce from "../ui/LoadingButtonCirlce";
 
 interface AuthButtonProps {
   text: string;
@@ -39,7 +40,7 @@ const AuthButton = ({
       disabled:cursor-not-allowed
       disabled:hover:before:opacity-0">
       {loading ? (
-        <LoaderCircle className="relative z-10 animate-spin" size={22} />
+        <LoadingButtonCirlce />
       ) : (
         <span className="relative z-10">{text}</span>
       )}

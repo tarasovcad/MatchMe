@@ -24,14 +24,18 @@ import {useRouter} from "next/navigation";
 import {handleStep1} from "@/actions/(auth)/handleStep1";
 import {handleStep2} from "@/actions/(auth)/handleStep2";
 import {handleStep3} from "@/actions/(auth)/handleStep3";
+import {handleGoogleAuth} from "@/actions/(auth)/handleGoogleAuth";
 const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleProviderLoading, setGoogleProviderLoading] = useState(false);
+  const [githubProviderLoading, setGithubProviderLoading] = useState(false);
   const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [totalSteps, setTotalSteps] = useState(3);
+
   const router = useRouter();
   const getSchemaForStep = (step: number) => {
     switch (step) {
@@ -43,7 +47,6 @@ const SignUp = () => {
         return signUpSchemaStep1;
     }
   };
-  console.log(email, "email");
 
   const methods = useForm<SignUpFormData>({
     resolver: zodResolver(getSchemaForStep(currentStep)),
@@ -173,11 +176,23 @@ const SignUp = () => {
     }
   };
 
+  const handleGoogleProvider = async () => {
+    setGoogleProviderLoading(true);
+    const response = await handleGoogleAuth();
+    if (response.error) {
+      toast.error(response.error);
+      setGoogleProviderLoading(false);
+    }
+    if (response.link) {
+      router.push(response.link);
+      // setGoogleProviderLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
       <AuthHomeLink />
 
-      {/* Signup form */}
       <form
         className="flex-1 flex items-center justify-center px-4 py-10"
         onSubmit={methods.handleSubmit(handleFormSchema(currentStep))}>
@@ -204,7 +219,12 @@ const SignUp = () => {
               text={buttonText}
               disabled={currentStep === 2 && !otpHas6Symbols}
             />
-            {currentStep === 1 && <AuthProvidersLinks />}
+            {currentStep === 1 && (
+              <AuthProvidersLinks
+                handleGoogleProvider={handleGoogleProvider}
+                googleProviderLoading={googleProviderLoading}
+              />
+            )}
 
             {currentStep !== 3 && (
               <AuthBottomSubTitle

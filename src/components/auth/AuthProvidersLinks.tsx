@@ -2,22 +2,18 @@ import React from "react";
 import {Button} from "../shadcn/button";
 import Link from "next/link";
 import Image from "next/image";
-import {handleGoogleAuth} from "@/actions/(auth)/handleGoogleAuth";
-import {toast} from "sonner";
-import {supabase} from "@/utils/superbase/client";
-import {redirect} from "next/dist/server/api-utils";
-import {useRouter} from "next/navigation";
-const AuthProvidersLinks = () => {
-  const router = useRouter();
-  const handleGoogleProvider = async () => {
-    const response = await handleGoogleAuth();
-    console.log(response);
-    if (response.error) {
-      toast.error(response.error);
-    }
-    if (response.link) {
-      router.push(response.link);
-    }
+import LoadingButtonCirlce from "../ui/LoadingButtonCirlce";
+interface handleGoogleProviderProps {
+  handleGoogleProvider: () => Promise<void>;
+  googleProviderLoading?: boolean;
+}
+
+const AuthProvidersLinks = ({
+  handleGoogleProvider,
+  googleProviderLoading,
+}: handleGoogleProviderProps) => {
+  const handleClick = async () => {
+    await handleGoogleProvider();
   };
 
   return (
@@ -28,9 +24,17 @@ const AuthProvidersLinks = () => {
         <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
       </div>
       <div className="w-full flex flex-col gap-3 justify-center">
-        <Button asChild className="gap-3 w-full" onClick={handleGoogleProvider}>
+        <Button
+          asChild
+          className="gap-3 w-full"
+          onClick={handleClick}
+          disabled={googleProviderLoading}>
           <Link href="#">
-            <Image src="/google.webp" alt="Google" width={16} height={16} />
+            {googleProviderLoading ? (
+              <LoadingButtonCirlce size={16} />
+            ) : (
+              <Image src="/google.webp" alt="Google" width={16} height={16} />
+            )}
             Sign up with Google
           </Link>
         </Button>
