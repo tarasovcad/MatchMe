@@ -2,40 +2,41 @@
 
 import {createClient} from "@/utils/supabase/server";
 
-export async function handleStep3(
-  data: {
-    email: string;
-    name: string;
-    username: string;
-  },
-  email: string,
-) {
+export async function handleStep3(data: {
+  email: string;
+  name: string;
+  username: string;
+}) {
   try {
+    const supabase = await createClient();
     const {name, username} = data;
     if (name.length === 0 || username.length === 0) {
       return {
         error: "Name and username cannot be empty",
       };
     }
+
+    const {data: userData, error: userError} = await supabase.auth.getUser();
+    console.log(userData, "userData");
+    if (userError) {
+      return {
+        error: userError.message,
+      };
+    }
+    const email = userData.user.email;
+
     if (email?.length === 0) {
       return {
         error: "Email cannot be empty",
       };
     }
 
-    const supabase = await createClient();
-
-    const {data: userData, error: userError} = await supabase.auth.getUser();
-    if (userError) {
-      return {
-        error: userError.message,
-      };
-    }
     const {error: profileError} = await supabase.from("profiles").insert({
       id: userData.user.id,
       email: email,
       name: data.name,
       username: data.username,
+      image: null,
     });
     console.log("profile should be created");
     if (profileError) {
@@ -52,6 +53,7 @@ export async function handleStep3(
         name: name,
         username: username,
         is_profile_complete: true,
+        image: "",
       },
     });
 

@@ -46,29 +46,40 @@ export async function updateSession(request: NextRequest) {
   // If this is not done, you may be causing the browser and server to go out
   // of sync and terminate the user's session prematurely!
 
-  const {data, error: userError} = await supabase.auth.getUser();
+  const {data} = await supabase.auth.getUser();
+  const {pathname} = request.nextUrl;
+  const referer = request.headers.get("referer") || "/";
+
   if (data.user) {
     const isProfileComplete =
       data.user.user_metadata?.is_profile_complete || false;
-    const {pathname} = request.nextUrl;
-    console.log(pathname);
+
     const allowedPathsForNotAuthenticated = [
       "/auth/callback",
       "/complete-profile",
       "/home",
-      "/signup",
     ];
 
-    const shouldRedirectToProfile =
-      !isProfileComplete &&
-      !allowedPathsForNotAuthenticated.some((path) =>
-        pathname.startsWith(path),
-      );
+    const notAllowedPathsForAuthenticated = [
+      "/auth/callback",
+      "/complete-profile",
+      "/signup",
+      "/login",
+    ];
 
-    // if (shouldRedirectToProfile) {
-    //   return NextResponse.redirect(new URL("/complete-profile", request.url));
-    // }
-    console.log(data);
+    if (
+      !isProfileComplete &&
+      !allowedPathsForNotAuthenticated.includes(pathname)
+    ) {
+      return NextResponse.redirect(new URL("/complete-profile", request.url));
+    }
+
+    if (
+      isProfileComplete &&
+      notAllowedPathsForAuthenticated.includes(pathname)
+    ) {
+      return NextResponse.redirect(new URL(referer, request.url));
+    }
   }
 
   return supabaseResponse;

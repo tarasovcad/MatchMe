@@ -49,11 +49,6 @@ const AuthStepsDots = ({
               variants={dotVariants}
               animate={isActive ? "active" : "inactive"}
               className="rounded-full"
-              whileHover={
-                !isActive
-                  ? {scale: 1.15, rotate: 5, transition: {duration: 0.2}}
-                  : {}
-              }
             />
           );
         })}

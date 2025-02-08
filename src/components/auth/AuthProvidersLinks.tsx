@@ -1,19 +1,23 @@
-import React from "react";
+import React, {useState} from "react";
 import {Button} from "../shadcn/button";
 import Link from "next/link";
 import Image from "next/image";
 import LoadingButtonCirlce from "../ui/LoadingButtonCirlce";
-interface handleGoogleProviderProps {
-  handleGoogleProvider: () => Promise<void>;
+interface handleProviderAuthActionProps {
+  handleProviderAuthAction: (provider: "google" | "github") => Promise<void>;
   googleProviderLoading?: boolean;
+  githubProviderLoading?: boolean;
 }
 
 const AuthProvidersLinks = ({
-  handleGoogleProvider,
+  handleProviderAuthAction,
   googleProviderLoading,
-}: handleGoogleProviderProps) => {
-  const handleClick = async () => {
-    await handleGoogleProvider();
+  githubProviderLoading,
+}: handleProviderAuthActionProps) => {
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const handleClick = async (provider: "google" | "github") => {
+    setIsAuthenticating(true);
+    await handleProviderAuthAction(provider);
   };
 
   return (
@@ -27,8 +31,8 @@ const AuthProvidersLinks = ({
         <Button
           asChild
           className="gap-3 w-full"
-          onClick={handleClick}
-          disabled={googleProviderLoading}>
+          onClick={() => handleClick("google")}
+          disabled={isAuthenticating || googleProviderLoading}>
           <Link href="#">
             {googleProviderLoading ? (
               <LoadingButtonCirlce size={16} />
@@ -38,9 +42,17 @@ const AuthProvidersLinks = ({
             Sign up with Google
           </Link>
         </Button>
-        <Button asChild className="gap-3 w-full">
+        <Button
+          asChild
+          className="gap-3 w-full"
+          onClick={() => handleClick("github")}
+          disabled={isAuthenticating || githubProviderLoading}>
           <Link href="#">
-            <Image src="github.svg" alt="Github" width={16} height={16} />
+            {githubProviderLoading ? (
+              <LoadingButtonCirlce size={16} />
+            ) : (
+              <Image src="github.svg" alt="Github" width={16} height={16} />
+            )}
             Sign up with Github
           </Link>
         </Button>
