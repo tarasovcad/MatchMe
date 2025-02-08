@@ -94,6 +94,7 @@ const CompleteProfile = () => {
     if (isUsernameValid) {
       debouncedCheckUsername(username);
     }
+    return () => debouncedCheckUsername.cancel();
   }, [username, debouncedCheckUsername, isUsernameValid]);
 
   return (
