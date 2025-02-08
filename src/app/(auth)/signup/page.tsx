@@ -22,7 +22,6 @@ import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
 import {useRouter} from "next/navigation";
 import {handleStep1} from "@/actions/(auth)/handleStep1";
 import {handleStep2} from "@/actions/(auth)/handleStep2";
-import {handleGoogleAuth} from "@/actions/(auth)/handleGoogleAuth";
 import {handleProviderAuth} from "@/actions/(auth)/handleProviderAuth";
 const AuthSignUpClientPage = () => {
   const [currentStep, setCurrentStep] = useState(1);

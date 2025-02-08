@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     }
     const providerImage =
       user.user_metadata?.picture || user.user_metadata?.avatar_url;
-    console.log(providerImage, "provider image");
+
     if (providerImage && user.user_metadata.image !== providerImage) {
       const {error: metadataError} = await supabase.auth.updateUser({
         data: {image: providerImage},

@@ -1,8 +1,22 @@
 import {LoaderCircle} from "lucide-react";
 import React from "react";
 
-const LoadingButtonCirlce = ({size = 20}: {size?: number}) => {
-  return <LoaderCircle className="relative z-10 animate-spin" size={size} />;
+interface LoadingButtonCircleProps
+  extends React.ComponentProps<typeof LoaderCircle> {
+  size?: number;
+}
+
+const LoadingButtonCircle: React.FC<LoadingButtonCircleProps> = ({
+  size = 20,
+  ...props
+}) => {
+  return (
+    <LoaderCircle
+      className="relative z-10 animate-spin"
+      size={size}
+      {...props}
+    />
+  );
 };
 
-export default LoadingButtonCirlce;
+export default LoadingButtonCircle;
