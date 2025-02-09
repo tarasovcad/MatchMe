@@ -1,6 +1,6 @@
 import React from "react";
 import SimpleInput from "../ui/SimpleInput";
-import {useFormContext} from "react-hook-form";
+import {Controller, useFormContext} from "react-hook-form";
 
 const AuthStep3Form = ({
   usernameLoading,
@@ -10,12 +10,13 @@ const AuthStep3Form = ({
   isUsernameAvailable?: boolean | null;
 }) => {
   const {
+    control,
     register,
     formState: {errors},
   } = useFormContext();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 ">
       <SimpleInput
         label="Full Name"
         register={register("name")}
@@ -25,16 +26,23 @@ const AuthStep3Form = ({
         id="name"
         name="name"
       />
-      <SimpleInput
-        label="Username"
-        placeholder="joedoe"
-        register={register("username")}
-        error={errors.username}
-        type="username"
-        id="username"
-        loading={usernameLoading}
+      <Controller
+        control={control}
         name="username"
-        isUsernameAvailable={isUsernameAvailable}
+        render={({field}) => (
+          <SimpleInput
+            label="Username"
+            placeholder="joedoe"
+            error={errors.username}
+            isUsernameAvailable={isUsernameAvailable}
+            type="username"
+            id="username"
+            loading={usernameLoading}
+            name="username"
+            value={field.value || ""}
+            onChange={(e) => field.onChange(e.target.value.toLowerCase())}
+          />
+        )}
       />
     </div>
   );

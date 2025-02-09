@@ -4,6 +4,7 @@ import {cn} from "@/lib/utils";
 import {UseFormRegisterReturn} from "react-hook-form";
 import {AnimatePresence, motion} from "framer-motion";
 import LoadingButtonCirlce from "./LoadingButtonCirlce";
+
 interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   mail?: boolean;
   label: string;
@@ -47,8 +48,10 @@ const SimpleInput = ({
             error &&
               "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
             isUsernameAvailable === false &&
+              !error &&
               "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
             isUsernameAvailable === true &&
+              !error &&
               "border-success/80 text-success focus-visible:border-success/80 focus-visible:ring-success/20",
             className,
           )}
@@ -84,7 +87,7 @@ const SimpleInput = ({
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {isUsernameAvailable === false && (
+        {isUsernameAvailable === false && !error && (
           <motion.div
             className="text-xs text-destructive flex items-center gap-1.5"
             layout
@@ -103,7 +106,7 @@ const SimpleInput = ({
         )}
       </AnimatePresence>
       <AnimatePresence>
-        {isUsernameAvailable === true && (
+        {isUsernameAvailable === true && !error && (
           <motion.div
             className="text-xs text-success flex items-center gap-1.5"
             layout

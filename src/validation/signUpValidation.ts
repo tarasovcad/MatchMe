@@ -1,3 +1,6 @@
+import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
+import {hasProfanity} from "@/utils/other/profanityCheck";
+
 import {z} from "zod";
 
 export const signUpSchemaStep1 = z.object({
@@ -19,14 +22,22 @@ export const signUpSchemaStep3 = z.object({
   username: z
     .string()
     .min(4, {message: "Username must be at least 4 characters"})
-    .max(20, {message: "Username must be at most 20 characters"})
-    .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, {
+    .max(15, {message: "Username must be at most 15 characters"})
+    .regex(/^[a-z][a-z0-9_-]*$/, {
       message:
-        "Username can only contain letters, numbers, hyphens (-), and underscores (_), and must start with a letter",
+        "Username can only contain lower-case letters, numbers, hyphens (-), and underscores (_), and must start with a lower-case letter",
     })
     .refine((val) => !/[-_]{2,}/.test(val), {
       message: "Username cannot have consecutive hyphens or underscores",
-    }),
+    })
+    .refine((username) => !RESERVED_USERNAMES.includes(username), {
+      message: "Looks like this username is unavailable. Try something else!",
+    })
+    .refine((username) => !hasProfanity(username), {
+      message:
+        "Username contains inappropriate language. Please choose another.",
+    })
+    .transform((val) => val.toLowerCase()),
 });
 
 export type SignUpFormData = z.infer<typeof signUpSchemaStep1> &

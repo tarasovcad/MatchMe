@@ -3,9 +3,6 @@ import {NextResponse} from "next/server";
 // The client you created from the Server-Side Auth instructions
 
 export async function GET(request: Request) {
-  console.log("GET request received");
-  const startTime = performance.now();
-
   const {searchParams, origin} = new URL(request.url);
   const code = searchParams.get("code");
   // if "next" is in param, use it as the redirect URL
@@ -30,6 +27,10 @@ export async function GET(request: Request) {
     const user = userData.user;
     const isProfileComplete = user.user_metadata?.is_profile_complete ?? false;
 
+    const userFullName = user.user_metadata?.full_name || "";
+
+    const userUsername = user.user_metadata?.user_name || "";
+
     // If is_profile_complete is missing, update it to false
     if (!isProfileComplete) {
       const {error: metadataError} = await supabase.auth.updateUser({
@@ -39,7 +40,11 @@ export async function GET(request: Request) {
       if (metadataError) {
         console.error("Error updating user metadata:", metadataError.message);
       }
+      return NextResponse.redirect(
+        `${origin}/complete-profile?name=${encodeURIComponent(userFullName)}&username=${encodeURIComponent(userUsername)}`,
+      );
     }
+
     const providerImage =
       user.user_metadata?.picture || user.user_metadata?.avatar_url;
 
@@ -54,12 +59,6 @@ export async function GET(request: Request) {
         console.log("User metadata updated successfully");
       }
     }
-
-    const endTime = performance.now();
-    console.log(
-      `User authentication completed in ${(endTime - startTime).toFixed(2)} ms`,
-    );
-
     const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
     const isLocalEnv = process.env.NODE_ENV === "development";
     if (isLocalEnv) {

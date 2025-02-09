@@ -1,5 +1,6 @@
 "use server";
 
+import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
 import {createClient} from "@/utils/supabase/server";
 export async function checkUsernameAvailabilityAuth(username: string) {
   const startTime = performance.now();
@@ -9,9 +10,12 @@ export async function checkUsernameAvailabilityAuth(username: string) {
         error: "Username is required",
       };
     }
+    if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+      return {error: "This username is reserved and cannot be used"};
+    }
     const supabase = await createClient();
 
-    const usernameLowerCase = username.toLowerCase();
+    const usernameTrimmed = username.trim().toLowerCase();
 
     const {count, error} = await supabase
       .from("profiles")
@@ -19,7 +23,7 @@ export async function checkUsernameAvailabilityAuth(username: string) {
         head: true,
         count: "exact",
       })
-      .eq("username", usernameLowerCase);
+      .eq("username", usernameTrimmed);
 
     const isAvailable = count === 0;
 

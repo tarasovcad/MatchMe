@@ -17,7 +17,6 @@ export async function handleStep3(data: {
     }
 
     const {data: userData, error: userError} = await supabase.auth.getUser();
-    console.log(userData, "userData");
     if (userError) {
       return {
         error: userError.message,
@@ -38,7 +37,6 @@ export async function handleStep3(data: {
       username: data.username,
       image: null,
     });
-    console.log("profile should be created");
     if (profileError) {
       console.log("Undexpected error in handleStep3:", profileError);
       return {
