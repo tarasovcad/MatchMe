@@ -5,7 +5,7 @@ import {SignUpFormData, signUpSchemaStep3} from "@/validation/signUpValidation";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {LogoImage} from "@/components/ui/Logo";
 import AuthTopText from "@/components/auth/AuthTopText";
-import {signInConfig} from "@/data/auth/stepsConfigs";
+import {signInConfig, signUpConfig} from "@/data/auth/stepsConfigs";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthStep3Form from "@/components/auth/AuthStep3Form";
 import {useRouter, useSearchParams} from "next/navigation";
@@ -42,7 +42,7 @@ const CompleteProfile = () => {
   const usernameSchema = signUpSchemaStep3.shape.username;
   const isUsernameValid = usernameSchema.safeParse(username).success;
 
-  const {title, subtitle, buttonText} = signInConfig()[3];
+  const {title, subtitle, buttonText} = signUpConfig()[3];
 
   const handleFormSubmitStep3 = async (data: SignUpFormData) => {
     let toastId;

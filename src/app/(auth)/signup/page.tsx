@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, {useEffect, useState} from "react";
 import {LogoImage} from "@/components/ui/Logo";
@@ -16,13 +15,12 @@ import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
 import AuthStep1Form from "@/components/auth/AuthStep1Form";
 import AuthStepDots from "@/components/auth/AuthStepsDots";
 import AuthOTP from "@/components/auth/AuthOTP";
-import {toast} from "sonner";
-import {signInConfig} from "@/data/auth/stepsConfigs";
+import {signUpConfig} from "@/data/auth/stepsConfigs";
 import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
 import {useRouter} from "next/navigation";
-import {handleStep1} from "@/actions/(auth)/handleStep1";
-import {handleStep2} from "@/actions/(auth)/handleStep2";
-import {handleProviderAuth} from "@/actions/(auth)/handleProviderAuth";
+import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
+import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
+import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
 const AuthSignUpClientPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -58,14 +56,8 @@ const AuthSignUpClientPage = () => {
   });
 
   useEffect(() => {
-    if (otp.length === 6) {
-      setOtpHas6Symbols(true);
-    } else {
-      setOtpHas6Symbols(false);
-    }
+    setOtpHas6Symbols(otp.length === 6);
   }, [otp]);
-
-  const config = signInConfig(email);
 
   const {
     title,
@@ -74,99 +66,29 @@ const AuthSignUpClientPage = () => {
     bottomSubTitleHfref,
     bottomSubTitleLinkText,
     bottomSubTitle,
-  } = config[currentStep];
+  } = signUpConfig(email)[currentStep];
 
-  const handleFormSubmitStep1 = async (data: SignUpFormData) => {
-    let toastId;
-    try {
-      setLoading(true);
-      toastId = toast.loading("Signing up...");
-      const response = await handleStep1(data);
-      console.log(response);
-
-      if (response.error) {
-        toast.error(`Signup failed: ${response.error}`, {id: toastId});
-        setLoading(false);
-        return;
-      }
-      toast.success("OTP sent successfully!", {id: toastId});
-
-      if (response.isNewUser) {
-        setIsNewUser(true);
-        setTotalSteps(3);
-      } else {
-        setTotalSteps(2);
-      }
-
-      setEmail(data.email);
-      setCurrentStep(2);
-    } catch (error) {
-      toast.error("Signup failed. Please try again.", {id: toastId});
-      setLoading(false);
-      return;
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleFormSubmitStep2 = async () => {
-    let toastId;
-    try {
-      toastId = toast.loading("Verifying OTP...");
-      setLoading(true);
-      const response = await handleStep2({email, otp});
-      console.log(response);
-      if (response?.error) {
-        toast.error(response.error, {id: toastId});
-        setLoading(false);
-        return;
-      }
-      toast.success(response?.message, {id: toastId});
-      if (isNewUser) {
-        router.push("/complete-profile?from=/signup");
-      } else {
-        router.push("/");
-      }
-    } catch (error) {
-      toast.error("Signup failed. Please try again.", {id: toastId});
-      setLoading(false);
-      return;
-    } finally {
-      setLoading(false);
-      toast.success("OTP verified successfully!", {id: toastId});
-    }
+  const onProviderClick = async (provider: string) => {
+    await handleProviderAuthAction(
+      provider,
+      setGoogleProviderLoading,
+      setGithubProviderLoading,
+      router,
+    );
   };
 
-  const handleFormSchema = (step: number) => {
-    switch (step) {
-      case 1:
-        return handleFormSubmitStep1;
-      case 2:
-        return handleFormSubmitStep2;
-
-      default:
-        return handleFormSubmitStep1;
-    }
-  };
-
-  const handleProviderAuthAction = async (provider: string) => {
-    if (provider === "google") {
-      setGoogleProviderLoading(true);
-    } else {
-      setGithubProviderLoading(true);
-    }
-    const response = await handleProviderAuth(provider);
-    if (response.error) {
-      console.log(response.error);
-      toast.error(response.error);
-      if (provider === "google") {
-        setGoogleProviderLoading(false);
-      } else {
-        setGithubProviderLoading(false);
-      }
-      return;
-    }
-    if (response.link) {
-      router.push(response.link);
+  const onSubmit = async (data: SignUpFormData) => {
+    if (currentStep === 1) {
+      await handleFormSubmitStep1(
+        data,
+        setLoading,
+        setEmail,
+        setCurrentStep,
+        setIsNewUser,
+        setTotalSteps,
+      );
+    } else if (currentStep === 2) {
+      await handleFormSubmitStep2(email, otp, isNewUser, setLoading, router);
     }
   };
 
@@ -176,7 +98,7 @@ const AuthSignUpClientPage = () => {
 
       <form
         className="flex-1 flex items-center justify-center px-4 py-10"
-        onSubmit={methods.handleSubmit(handleFormSchema(currentStep))}>
+        onSubmit={methods.handleSubmit(onSubmit)}>
         <FormProvider {...methods}>
           <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
             <LogoImage size={32} />
@@ -202,7 +124,7 @@ const AuthSignUpClientPage = () => {
             />
             {currentStep === 1 && (
               <AuthProvidersLinks
-                handleProviderAuthAction={handleProviderAuthAction}
+                handleProviderAuthAction={onProviderClick}
                 googleProviderLoading={googleProviderLoading}
                 githubProviderLoading={githubProviderLoading}
               />
