@@ -4,7 +4,7 @@ import SimpleInput from "../ui/SimpleInput";
 import CustomCheckbox from "../ui/CustomCheckbox";
 import {AnimatePresence, motion} from "framer-motion";
 
-export default function AuthStep1Form() {
+export default function AuthStep1Form({page}: {page: "signup" | "login"}) {
   const {
     register,
     control,
@@ -23,34 +23,36 @@ export default function AuthStep1Form() {
         name="email"
         error={errors.email}
       />
-      <div>
-        <Controller
-          name="agreement"
-          control={control}
-          render={({field}) => (
-            <CustomCheckbox
-              checked={field.value}
-              onCheckedChange={field.onChange}
-              id="agreement"
-              name="agreement"
-            />
-          )}
-        />
+      {page === "signup" && (
+        <div>
+          <Controller
+            name="agreement"
+            control={control}
+            render={({field}) => (
+              <CustomCheckbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                id="agreement"
+                name="agreement"
+              />
+            )}
+          />
 
-        <AnimatePresence>
-          {errors.agreement && (
-            <motion.p
-              className="text-xs text-destructive"
-              layout
-              initial={{opacity: 0, height: 0, marginTop: 0}}
-              animate={{opacity: 1, height: "auto", marginTop: 8}}
-              exit={{opacity: 0, height: 0, marginTop: 0}}
-              transition={{duration: 0.1, ease: "easeInOut"}}>
-              {errors.agreement.message as string}
-            </motion.p>
-          )}
-        </AnimatePresence>
-      </div>
+          <AnimatePresence>
+            {errors.agreement && (
+              <motion.p
+                className="text-xs text-destructive"
+                layout
+                initial={{opacity: 0, height: 0, marginTop: 0}}
+                animate={{opacity: 1, height: "auto", marginTop: 8}}
+                exit={{opacity: 0, height: 0, marginTop: 0}}
+                transition={{duration: 0.1, ease: "easeInOut"}}>
+                {errors.agreement.message as string}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </>
   );
 }

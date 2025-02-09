@@ -7,12 +7,14 @@ interface handleProviderAuthActionProps {
   handleProviderAuthAction: (provider: "google" | "github") => Promise<void>;
   googleProviderLoading?: boolean;
   githubProviderLoading?: boolean;
+  page: "signup" | "login";
 }
 
 const AuthProvidersLinks = ({
   handleProviderAuthAction,
   googleProviderLoading,
   githubProviderLoading,
+  page,
 }: handleProviderAuthActionProps) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const handleClick = async (provider: "google" | "github") => {
@@ -39,7 +41,7 @@ const AuthProvidersLinks = ({
             ) : (
               <Image src="/google.webp" alt="Google" width={16} height={16} />
             )}
-            Sign up with Google
+            {page === "login" ? "Log In" : "Sign Up"} with Google
           </Link>
         </Button>
         <Button
@@ -53,7 +55,7 @@ const AuthProvidersLinks = ({
             ) : (
               <Image src="github.svg" alt="Github" width={16} height={16} />
             )}
-            Sign up with Github
+            {page === "login" ? "Log In" : "Sign Up"} with Github
           </Link>
         </Button>
       </div>
