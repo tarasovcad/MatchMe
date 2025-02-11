@@ -17,7 +17,7 @@ const dotVariants = {
   inactive: {
     width: 10,
     height: 10,
-    backgroundColor: "#E4E4E7",
+    backgroundColor: "var(--dot-inactive-color)",
     scale: 1,
     rotate: 0,
     transition: {

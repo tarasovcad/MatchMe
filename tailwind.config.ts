@@ -76,12 +76,10 @@ export default {
         },
       },
       backgroundImage: {
-        maingradient:
-          "linear-gradient(180deg, #1c1d1f 0%, rgba(28, 29, 31, 0.68) 100%)",
-        secgradient:
-          "linear-gradient(180deg, #39393a 0%, rgba(28, 29, 31, 0.68) 100%)",
-        purplegradient: "linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%)",
-        hoverpurplegradient: "linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%)",
+        maingradient: "var(--maingradient)",
+        secgradient: "var(--secgradient)",
+        purplegradient: "var(--purplegradient)",
+        hoverpurplegradient: "var(--hoverpurplegradient)",
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

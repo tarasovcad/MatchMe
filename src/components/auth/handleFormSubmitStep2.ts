@@ -1,8 +1,8 @@
-// handleFormSubmitStep2.ts
 import {toast} from "sonner";
 import {handleStep2} from "@/actions/(auth)/handleStep2";
 
 export async function handleFormSubmitStep2(
+  page: "signup" | "login",
   email: string,
   otp: string,
   isNewUser: boolean,
@@ -21,7 +21,7 @@ export async function handleFormSubmitStep2(
     }
     toast.success(response?.message, {id: toastId});
     if (isNewUser) {
-      router.push("/complete-profile?from=/signup");
+      router.push(`/complete-profile?from=/${page}`);
     } else {
       router.push("/");
     }

@@ -68,29 +68,29 @@ export async function updateSession(request: NextRequest) {
     ];
 
     // Redirect users with incomplete profiles
-    if (
-      !isProfileComplete &&
-      !allowedPathsForNotAuthenticated.includes(pathname)
-    ) {
-      return NextResponse.redirect(new URL("/complete-profile", request.url));
-    }
+    // if (
+    //   !isProfileComplete &&
+    //   !allowedPathsForNotAuthenticated.includes(pathname)
+    // ) {
+    //   return NextResponse.redirect(new URL("/complete-profile", request.url));
+    // }
 
-    // Prevent authenticated users from accessing auth pages
-    if (
-      isProfileComplete &&
-      notAllowedPathsForAuthenticated.includes(pathname)
-    ) {
-      return NextResponse.redirect(new URL(referer, request.url));
-    }
+    // // Prevent authenticated users from accessing auth pages
+    // if (
+    //   isProfileComplete &&
+    //   notAllowedPathsForAuthenticated.includes(pathname)
+    // ) {
+    //   return NextResponse.redirect(new URL(referer, request.url));
+    // }
   }
   // If the user is not authenticated, redirect them to the signup page
-  else {
-    const allowedUnauthenticatedPaths = ["/signup", "/login", "/callback"];
+  // else {
+  //   const allowedUnauthenticatedPaths = ["/signup", "/login", "/callback"];
 
-    if (!allowedUnauthenticatedPaths.includes(pathname)) {
-      return NextResponse.redirect(new URL("/signup", request.url));
-    }
-  }
+  //   if (!allowedUnauthenticatedPaths.includes(pathname)) {
+  //     return NextResponse.redirect(new URL("/signup", request.url));
+  //   }
+  // }
 
   return supabaseResponse;
 }

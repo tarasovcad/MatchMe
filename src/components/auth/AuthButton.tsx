@@ -27,7 +27,8 @@ const AuthButton = ({
       {...props}
       className="relative transition-all duration-300 ease-in-out w-full 
       bg-purplegradient 
-      hover:before:opacity-100 
+      hover:before:opacity-100
+      dark:text-white 
       overflow-hidden 
       before:content-[''] 
       before:absolute 

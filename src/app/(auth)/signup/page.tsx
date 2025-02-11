@@ -21,6 +21,7 @@ import {useRouter} from "next/navigation";
 import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
 import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
+import ThemeToggle from "@/components/other/ThemeToggle";
 const SignUpPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -89,7 +90,14 @@ const SignUpPage = () => {
         setTotalSteps,
       );
     } else if (currentStep === 2) {
-      await handleFormSubmitStep2(email, otp, isNewUser, setLoading, router);
+      await handleFormSubmitStep2(
+        page,
+        email,
+        otp,
+        isNewUser,
+        setLoading,
+        router,
+      );
     }
   };
 

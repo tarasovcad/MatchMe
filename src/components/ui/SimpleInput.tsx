@@ -27,6 +27,7 @@ const SimpleInput = ({
   register,
   className,
   name,
+
   error,
   loading,
   isUsernameAvailable,

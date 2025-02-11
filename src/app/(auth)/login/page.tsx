@@ -74,7 +74,14 @@ const LoginPage = () => {
         setTotalSteps,
       );
     } else if (currentStep === 2) {
-      await handleFormSubmitStep2(email, otp, isNewUser, setLoading, router);
+      await handleFormSubmitStep2(
+        page,
+        email,
+        otp,
+        isNewUser,
+        setLoading,
+        router,
+      );
     }
   };
 
