@@ -37,7 +37,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="selection:bg-primary selection:text-white ">
       <body className={`${geistSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
