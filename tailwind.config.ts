@@ -17,6 +17,7 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        radius: "var(--radius)",
       },
       colors: {
         background: "hsl(var(--background))",
@@ -35,7 +36,7 @@ export default {
           hover: "hsl(var(--primary-hover))",
         },
         secondary: {
-          DEFAULT: "#71717A",
+          DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
         muted: {
@@ -63,6 +64,7 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+          background: "hsl(var(--sidebar-background))",
         },
       },
       keyframes: {

@@ -28,7 +28,7 @@ import type {User} from "@supabase/supabase-js";
 export function AppSidebar({
   user,
   ...props
-}: React.ComponentProps<typeof Sidebar> & {user: User}) {
+}: React.ComponentProps<typeof Sidebar> & {user?: User}) {
   const data = {
     user: {
       name: user.user_metadata.name,

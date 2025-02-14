@@ -34,13 +34,21 @@ export function NavMain({
             asChild
             defaultOpen={item.isActive}
             className="group/collapsible">
-            <SidebarMenuItem>
+            <SidebarMenuItem className="relative">
+              {item.title === "Inbox" && (
+                <div className="w-[18px] h-[18px] bg-primary rounded-full flex items-center justify-center text-white text-xs font-medium absolute right-2 top-1/2 -translate-y-1/2 group-data-[state=collapsed]:hidden">
+                  2
+                </div>
+              )}
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && (
-                    <item.icon className="stroke-[2.1px] text-[#292929]" />
+                  {item.title === "Notifications" && (
+                    <div className="w-[6px] h-[6px] bg-primary rounded-full absolute top-[17px] left-[17px] outline outline-[1.8px] outline-sidebar-background"></div>
                   )}
-                  <MainGradient as="span">{item.title}</MainGradient>
+
+                  {item.icon && <item.icon className="stroke-[2.1px]" />}
+                  {/* <MainGradient as="span">{item.title}</MainGradient> */}
+                  {item.title && <span>{item.title}</span>}
                 </SidebarMenuButton>
               </CollapsibleTrigger>
             </SidebarMenuItem>

@@ -18,7 +18,7 @@ const SidebarProvider = async ({children}: {children: React.ReactNode}) => {
   return (
     <SidebarShadcnProvider>
       <AppSidebar user={user} />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="p-6">{children}</SidebarInset>
     </SidebarShadcnProvider>
   );
 };
