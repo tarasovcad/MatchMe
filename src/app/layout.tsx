@@ -3,6 +3,7 @@ import {Geist, Geist_Mono} from "next/font/google";
 import "./globals.css";
 import {Toaster} from "sonner";
 import {ThemeProvider} from "@/providers/theme-provider";
+import FaviconUpdater from "@/components/other/FaviconUpdater";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,18 +18,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MatchMe",
   description: "Find Your Team, Start Your Dream",
-  icons: {
-    icon: [
-      {
-        url: "/light-icon.svg",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/dark-icon.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
-  },
 };
 
 export default function RootLayout({
@@ -41,12 +30,16 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className="selection:bg-primary selection:text-white ">
+      <head>
+        <link rel="icon" href="/light-icon.svg" />
+      </head>
       <body className={`${geistSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange>
+          <FaviconUpdater />
           {children}
         </ThemeProvider>
         <Toaster position="top-right" richColors />

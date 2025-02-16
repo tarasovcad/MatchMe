@@ -11,24 +11,27 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-
-import {NavMain} from "@/components/ui/nav-main";
-import {NavUser} from "@/components/ui/nav-user";
+import {NavMain} from "@/components/ui/(sidebar)/nav-main";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/shadcn/sidebar";
-import {LogoImage, LogoText} from "./Logo";
-import OpenSearchModal from "../search/OpenSearchModal";
+import {LogoImage, LogoText} from "../Logo";
+import OpenSearchModal from "../../search/OpenSearchModal";
 import type {User} from "@supabase/supabase-js";
+import Link from "next/link";
+import {SidebarUserDropdown} from "./SidebarUserDropdown";
 
 export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {user?: User}) {
+  if (!user) return null;
+
   const data = {
     user: {
       name: user.user_metadata.name,
@@ -88,18 +91,17 @@ export function AppSidebar({
       },
     ],
   };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {/* <TeamSwitcher teams={data.teams} /> */}
-        <div className="py-3 px-[6px] flex items-center justify-between">
-          <div className="flex items-center gap-[6px]">
+        <div className="py-3 px-[6px] flex items-center justify-between ">
+          <Link href={"/"} className="flex items-center gap-[6px] min-h-[29px]">
             <LogoImage size={24} />
             <LogoText className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden" />
-          </div>
+          </Link>
           <div className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden">
-            {/* <SidebarTrigger /> */}
-            {/* smth here on the right side from logo*/}
+            <SidebarTrigger />
           </div>
         </div>
       </SidebarHeader>
@@ -111,7 +113,7 @@ export function AppSidebar({
 
       <SidebarFooter>
         <NavMain items={data.navSecondary} />
-        <NavUser user={data.user} />
+        <SidebarUserDropdown user={data.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

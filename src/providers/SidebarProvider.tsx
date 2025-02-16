@@ -1,7 +1,7 @@
 import React from "react";
 import {SidebarInset} from "@/components/shadcn/sidebar";
 import {SidebarProvider as SidebarShadcnProvider} from "@/components/shadcn/sidebar";
-import {AppSidebar} from "@/components/ui/app-sidebar";
+import {AppSidebar} from "@/components/ui/(sidebar)/AppSidebar";
 import {createClient} from "@/utils/supabase/server";
 
 const SidebarProvider = async ({children}: {children: React.ReactNode}) => {

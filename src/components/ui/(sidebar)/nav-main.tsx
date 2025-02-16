@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
-import MainGradient from "./Text";
+import MainGradient from "../Text";
 
 export function NavMain({
   items,
