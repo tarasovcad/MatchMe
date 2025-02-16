@@ -10,7 +10,7 @@ import {cn} from "@/lib/utils";
 import {Button} from "@/components/shadcn/button";
 import {Input} from "@/components/shadcn/input";
 import {Separator} from "@/components/shadcn/separator";
-import {Sheet, SheetContent} from "@/components/shadcn/sheet";
+import {Sheet, SheetContent, SheetTitle} from "@/components/shadcn/sheet";
 import {Skeleton} from "@/components/shadcn/skeleton";
 import {
   Tooltip,
@@ -212,6 +212,7 @@ const Sidebar = React.forwardRef<
             }
             side={side}>
             <div className="flex h-full w-full flex-col">{children}</div>
+            <SheetTitle>Menu</SheetTitle>
           </SheetContent>
         </Sheet>
       );
@@ -263,8 +264,8 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({className, onClick, ...props}, ref) => {
+  React.ComponentPropsWithoutRef<typeof Button> & {svgSize?: number}
+>(({className, onClick, svgSize = 16, ...props}, ref) => {
   const {toggleSidebar} = useSidebar();
 
   return (
@@ -279,7 +280,7 @@ const SidebarTrigger = React.forwardRef<
         toggleSidebar();
       }}
       {...props}>
-      <PanelLeft size={16} className="stroke-[2]" />
+      <PanelLeft size={svgSize} className="stroke-[2]" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

@@ -142,16 +142,21 @@ export function SidebarUserDropdown({
                       onClick={() =>
                         setTheme(theme === "dark" ? "light" : "dark")
                       }>
-                      <DropdownMenuItem>
-                        {theme === "dark" ? <Moon /> : <Sun />}
-                        Toggle theme
+                      <DropdownMenuItem className="flex items-center gap-2 justify-between cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          {theme === "dark" ? <Moon /> : <Sun />}
+                          Toggle theme
+                        </div>
+                        <kbd className="inline-flex h-5 max-h-full items-center rounded border border-border px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+                          ⌘M
+                        </kbd>
                       </DropdownMenuItem>
                     </button>
                   </motion.div>
 
                   <motion.div variants={itemVariants}>
                     <Link className="w-full" href={"/profile"}>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer">
                         <UserCircle />
                         Profile
                       </DropdownMenuItem>
@@ -160,7 +165,7 @@ export function SidebarUserDropdown({
 
                   <motion.div variants={itemVariants}>
                     <Link className="w-full" href={"/dashboard"}>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer">
                         <Home />
                         Homepage
                       </DropdownMenuItem>
@@ -168,20 +173,26 @@ export function SidebarUserDropdown({
                   </motion.div>
 
                   <motion.div variants={itemVariants}>
-                    <DropdownMenuItem>
-                      <Folders />
-                      My projects
-                    </DropdownMenuItem>
+                    <Link className="w-full" href={"/projects"}>
+                      <DropdownMenuItem className="cursor-pointer">
+                        <Folders />
+                        My projects
+                      </DropdownMenuItem>
+                    </Link>
                   </motion.div>
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
 
                 <motion.div variants={itemVariants}>
-                  <DropdownMenuItem>
-                    <LogOut />
-                    Log out
-                  </DropdownMenuItem>
+                  <button
+                    className="w-full"
+                    onClick={() => console.log("logout")}>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <LogOut />
+                      Log out
+                    </DropdownMenuItem>
+                  </button>
                 </motion.div>
               </div>
             </motion.div>

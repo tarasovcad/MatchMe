@@ -1,3 +1,5 @@
+import AccountTab from "@/components/(pages)/settings/AccountTab";
+import SecurityTab from "@/components/(pages)/settings/SecurityTab";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
 import SidebarProvider from "@/providers/SidebarProvider";
@@ -10,6 +12,15 @@ interface PageProps {
 const SettingsPage = async ({searchParams}: PageProps) => {
   let {tab} = await searchParams;
   tab = tab ? tab : "account";
+
+  const TabComponents = {
+    account: AccountTab,
+    security: SecurityTab,
+  } as const;
+
+  const SelectedComponent =
+    TabComponents[tab as keyof typeof TabComponents] || AccountTab;
+
   return (
     <SidebarProvider>
       <div className="flex flex-col gap-8">
@@ -18,9 +29,9 @@ const SettingsPage = async ({searchParams}: PageProps) => {
             title="Settings"
             subtitle="Manage your detail and personal preferences here."
           />
-          <SettingsTabs tab={tab} />
+          {/* <SettingsTabs tab={tab} /> */}
         </div>
-        <div>123</div>
+        <SelectedComponent />
       </div>
     </SidebarProvider>
   );

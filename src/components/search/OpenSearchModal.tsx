@@ -5,11 +5,11 @@ import {cn} from "@/lib/utils";
 const OpenSearchModal = () => {
   return (
     <>
-      <div className="space-y-2 px-2 transition-opacity duration-300 ease-in-out  group-data-[state=collapsed]:hidden ">
+      <div className="space-y-2 px-2 transition-opacity duration-300 ease-in-out  group-data-[state=collapsed]:hidden hidden md:block ">
         <div className="relative">
           <button
             className={cn(
-              "peer pe-9 ps-9 h-[33.14px] font-medium flex w-full rounded-lg border border-input dark:bg-[#131316] bg-[#fff] px-3 py-[6px] text-sm text-muted-foreground/70 transition-shadow  group-data-[state=collapsed]:pe-0 group-data-[state=collapsed]:ps-0 group-data-[state=collapsed]:border-0 cursor-pointer ",
+              "transition-all duration-300 ease-in-out  peer pe-9 ps-9  h-[33.14px] font-medium flex w-full rounded-lg border border-input bg-sidebar px-3 py-[6px] text-sm text-muted-foreground/70  group-data-[state=collapsed]:pe-0 group-data-[state=collapsed]:ps-0 group-data-[state=collapsed]:border-0 cursor-pointer hover:border-ring/20 hover:bg-accent hover:text-accent-foreground/60",
             )}
             type="button">
             <span className="inline-flex group-data-[state=collapsed]:hidden">
