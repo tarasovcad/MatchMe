@@ -4,6 +4,7 @@ import "./globals.css";
 import {Toaster} from "sonner";
 import {ThemeProvider} from "@/providers/theme-provider";
 import FaviconUpdater from "@/components/other/FaviconUpdater";
+import GlobaleHotkeys from "@/utils/other/globaleHotkeys";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange>
           <FaviconUpdater />
+          <GlobaleHotkeys />
           {children}
         </ThemeProvider>
         <Toaster position="top-right" richColors />

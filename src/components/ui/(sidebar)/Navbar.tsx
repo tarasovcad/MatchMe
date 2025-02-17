@@ -20,10 +20,10 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               className="h-7 w-7">
-              <Search size={18} className="stroke-[2]" />
+              <Search size={20} className="stroke-[2]" />
               <span className="sr-only">Toggle Sidebar</span>
             </Button>
-            <SidebarTrigger svgSize={18} />
+            <SidebarTrigger svgSize={20} />
           </div>
         </div>
       </div>

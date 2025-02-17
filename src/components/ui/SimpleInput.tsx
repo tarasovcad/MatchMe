@@ -7,7 +7,7 @@ import LoadingButtonCirlce from "./LoadingButtonCirlce";
 
 interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   mail?: boolean;
-  label: string;
+  label?: string;
   placeholder: string;
   type: string;
   id: string;
@@ -20,14 +20,13 @@ interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const SimpleInput = ({
   mail,
-  label = "undefined",
+  label,
   placeholder = "undefined",
   type,
   id,
   register,
   className,
   name,
-
   error,
   loading,
   isUsernameAvailable,
@@ -35,8 +34,8 @@ const SimpleInput = ({
 }: SimpleInputProps) => {
   return (
     <div className="space-y-2 w-full">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
+      {label && <Label htmlFor={id}>{label}</Label>}
+      <div className="relative w-full">
         <input
           className={cn(
             "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",

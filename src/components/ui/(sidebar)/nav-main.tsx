@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
 import MainGradient from "../Text";
+import Link from "next/link";
 
 export function NavMain({
   items,
@@ -41,15 +42,17 @@ export function NavMain({
                 </div>
               )}
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.title === "Notifications" && (
-                    <div className="w-[6px] h-[6px] bg-primary rounded-full absolute top-[17px] left-[17px] outline outline-[1.8px] outline-sidebar-background"></div>
-                  )}
+                <Link href={item.url}>
+                  <SidebarMenuButton tooltip={item.title}>
+                    {item.title === "Notifications" && (
+                      <div className="w-[6px] h-[6px] bg-primary rounded-full absolute top-[17px] left-[17px] outline outline-[1.8px] outline-sidebar-background"></div>
+                    )}
 
-                  {item.icon && <item.icon className="stroke-[2.1px]" />}
-                  {/* <MainGradient as="span">{item.title}</MainGradient> */}
-                  {item.title && <span>{item.title}</span>}
-                </SidebarMenuButton>
+                    {item.icon && <item.icon className="stroke-[2.1px]" />}
+                    {/* <MainGradient as="span">{item.title}</MainGradient> */}
+                    {item.title && <span>{item.title}</span>}
+                  </SidebarMenuButton>
+                </Link>
               </CollapsibleTrigger>
             </SidebarMenuItem>
           </Collapsible>
