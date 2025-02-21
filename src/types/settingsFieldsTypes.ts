@@ -3,10 +3,10 @@ export interface FormFieldProps {
   fieldDescription: string;
   fieldType:
     | "text"
-    | "dropdown"
-    | "number"
-    | "image"
     | "select"
+    | "number"
+    | "dropdown"
+    | "image"
     | "textarea"
     | "tags"
     | "slider";
@@ -19,6 +19,7 @@ export interface FormFieldProps {
       name: string;
       className?: string;
       disabled?: boolean;
+      options?: DropdownOption[];
     },
   ];
 }
@@ -26,4 +27,9 @@ export interface FormFieldProps {
 export interface FormProps {
   formTitle: string;
   formData: FormFieldProps[];
+}
+
+export interface DropdownOption {
+  title: string;
+  description?: string;
 }

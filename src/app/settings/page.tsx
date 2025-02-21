@@ -29,7 +29,7 @@ const SettingsPage = async ({searchParams}: PageProps) => {
             title="Settings"
             subtitle="Manage your detail and personal preferences here."
           />
-          {/* <SettingsTabs tab={tab} /> */}
+          <SettingsTabs tab={tab} />
         </div>
         <SelectedComponent />
       </div>

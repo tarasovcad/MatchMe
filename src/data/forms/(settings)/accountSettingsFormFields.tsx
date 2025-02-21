@@ -41,6 +41,17 @@ export const accountSettingsFormFields = [
             placeholder: "He/Him",
             type: "text",
             name: "pronouns",
+            options: [
+              {
+                title: "He/Him",
+              },
+              {
+                title: "She/Her",
+              },
+              {
+                title: "They/Them",
+              },
+            ],
           },
         ],
       },
@@ -84,6 +95,33 @@ export const accountSettingsFormFields = [
             placeholder: "Data Analytics",
             type: "text",
             name: "currentRole",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Looing for",
+        fieldDescription: "Let others know what you’re looking for",
+        fieldType: "select",
+        fieldInputProps: [
+          {
+            id: "lookingFor",
+            placeholder: "I'm looking for a new job",
+            type: "text",
+            name: "lookingFor",
+            options: [
+              {
+                title: "Team Member",
+                description: "Contribute your skills to an existing team",
+              },
+              {
+                title: "Co-Founder",
+                description: "Partner to launch and grow a startup",
+              },
+              {
+                title: "Startups",
+                description: "Open to contributing to existing startups",
+              },
+            ],
           },
         ],
       },

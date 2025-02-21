@@ -49,31 +49,26 @@ export function AppSidebar({
         title: "Feed",
         url: "/feed",
         icon: Globe,
-        isActive: true,
       },
       {
         title: "Projects",
         url: "/projects",
         icon: FolderOpen,
-        isActive: true,
       },
       {
         title: "Profiles",
         url: "/profiles",
         icon: Users,
-        isActive: true,
       },
       {
         title: "Inbox",
         url: "/inbox",
         icon: MessageCircle,
-        isActive: true,
       },
       {
         title: "Notifications",
         url: "/notifications",
         icon: Bell,
-        isActive: true,
       },
     ],
     navSecondary: [
@@ -81,19 +76,17 @@ export function AppSidebar({
         title: "Settings",
         url: "/settings",
         icon: Settings,
-        isActive: true,
       },
       {
         title: "Support",
         url: "/support",
         icon: HelpCircle,
-        isActive: true,
       },
     ],
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" {...props} variant="sidebar">
       <SidebarHeader>
         <div className="py-3 px-[6px] flex items-center justify-between ">
           <Link href={"/"} className="flex items-center gap-[6px] min-h-[29px]">
