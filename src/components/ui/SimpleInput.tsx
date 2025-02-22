@@ -13,6 +13,7 @@ interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
   register?: UseFormRegisterReturn<string>;
   name: string;
+  readOnly?: boolean;
   loading?: boolean;
   error?: {message?: string} | undefined;
   isUsernameAvailable?: boolean | null;
@@ -29,6 +30,7 @@ const SimpleInput = ({
   name,
   error,
   loading,
+  readOnly,
   isUsernameAvailable,
   ...props
 }: SimpleInputProps) => {
@@ -38,7 +40,7 @@ const SimpleInput = ({
       <div className="relative w-full">
         <input
           className={cn(
-            "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-muted ",
             type === "search" &&
               "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
             type === "file" &&
@@ -55,6 +57,7 @@ const SimpleInput = ({
               "border-success/80 text-success focus-visible:border-success/80 focus-visible:ring-success/20",
             className,
           )}
+          readOnly={readOnly}
           type={type}
           id={id}
           placeholder={placeholder}

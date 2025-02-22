@@ -1,5 +1,6 @@
 import AccountTab from "@/components/(pages)/settings/AccountTab";
 import SecurityTab from "@/components/(pages)/settings/SecurityTab";
+import SettingsMainButtonts from "@/components/(pages)/settings/SettingsMainButtonts";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
 import SidebarProvider from "@/providers/SidebarProvider";
@@ -23,8 +24,8 @@ const SettingsPage = async ({searchParams}: PageProps) => {
 
   return (
     <SidebarProvider>
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8 pb-24 ">
+        <div className="flex flex-col gap-6 ">
           <PageTitle
             title="Settings"
             subtitle="Manage your detail and personal preferences here."
@@ -33,6 +34,7 @@ const SettingsPage = async ({searchParams}: PageProps) => {
         </div>
         <SelectedComponent />
       </div>
+      <SettingsMainButtonts />
     </SidebarProvider>
   );
 };

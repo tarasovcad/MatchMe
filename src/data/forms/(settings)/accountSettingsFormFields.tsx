@@ -26,9 +26,9 @@ export const accountSettingsFormFields = [
           {
             id: "username",
             placeholder: "johndoe",
+            readOnly: true,
             type: "text",
             name: "username",
-            disabled: true,
           },
         ],
       },
@@ -91,7 +91,7 @@ export const accountSettingsFormFields = [
         fieldType: "text",
         fieldInputProps: [
           {
-            id: "currentRole",
+            id: "",
             placeholder: "Data Analytics",
             type: "text",
             name: "currentRole",
@@ -120,6 +120,242 @@ export const accountSettingsFormFields = [
               {
                 title: "Startups",
                 description: "Open to contributing to existing startups",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        fieldTitle: "Goals",
+        fieldDescription:
+          "Describe your current professional aspirations or next steps in your career.",
+        fieldType: "textarea",
+        fieldInputProps: [
+          {
+            id: "goals",
+            placeholder: "I want to be a...",
+            type: "text",
+            name: "goals",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Tagline",
+        fieldDescription: "A short tagline that describes you",
+        fieldType: "text",
+        fieldInputProps: [
+          {
+            id: "tagline",
+            placeholder: "I'm a...",
+            type: "text",
+            name: "tagline",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Skills",
+        fieldDescription: "Your main skills (up  to 20)",
+        fieldType: "tags",
+        fieldInputProps: [
+          {
+            id: "skills",
+            placeholder: "Select skills",
+            type: "text",
+            name: "skills",
+            tags: [
+              {
+                value: "react",
+                label: "React",
+              },
+              {
+                value: "next.js",
+                label: "Next.js",
+              },
+              {
+                value: "sveltekit",
+                label: "SvelteKit",
+              },
+              {
+                value: "nuxt.js",
+                label: "Nuxt.js",
+              },
+              {
+                value: "remix",
+                label: "Remix",
+              },
+              {
+                value: "astro",
+                label: "Astro",
+              },
+              {
+                value: "angular",
+                label: "Angular",
+              },
+              {
+                value: "vue",
+                label: "Vue.js",
+              },
+
+              {
+                value: "ember",
+                label: "Ember.js",
+              },
+              {
+                value: "gatsby",
+                label: "Gatsby",
+              },
+              {
+                value: "eleventy",
+                label: "Eleventy",
+              },
+              {
+                value: "solid",
+                label: "SolidJS",
+              },
+              {
+                value: "preact",
+                label: "Preact",
+              },
+              {
+                value: "qwik",
+                label: "Qwik",
+              },
+              {
+                value: "alpine",
+                label: "Alpine.js",
+              },
+              {
+                value: "lit",
+                label: "Lit",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        fieldTitle: "Work Availability",
+        fieldDescription: "Specify how many hours you can work per week",
+        fieldType: "slider",
+        fieldInputProps: [
+          {
+            id: "availability",
+            name: "availability",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "Personal Context",
+    formData: [
+      {
+        fieldTitle: "Location & Timezone",
+        fieldType: "dropdown",
+        fieldInputProps: [
+          {
+            id: "location",
+            placeholder: "London / British Time (UTC +0)",
+            type: "text",
+            name: "location",
+            options: [
+              {
+                title: "London / British Time (UTC +0)",
+              },
+              {
+                title: "New York / Eastern Time (UTC -5)",
+              },
+              {
+                title: "Tokyo / Japan Standard Time (UTC +9)",
+              },
+              {
+                title: "Sydney / Australian Time (UTC +10)",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        fieldTitle: "Languages Spoken",
+        fieldDescription: "List the languages you speak",
+        fieldType: "tags",
+        fieldInputProps: [
+          {
+            id: "languages",
+            placeholder: "Select languages",
+            type: "text",
+            name: "languages",
+            tags: [
+              {
+                label: "English",
+                value: "english",
+              },
+              {
+                label: "Spanish",
+                value: "spanish",
+              },
+              {
+                label: "French",
+                value: "french",
+              },
+              {
+                label: "German",
+                value: "german",
+              },
+
+              {
+                label: "Italian",
+                value: "italian",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        fieldTitle: "About you",
+        fieldDescription: "Write a description for your profile",
+        fieldType: "description",
+        fieldInputProps: [
+          {
+            id: "about",
+            placeholder: "Write a description for your profile",
+            type: "text",
+            name: "about",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Personal Website",
+        fieldDescription: "If you have a personal website enter its URL here",
+        fieldType: "webiste",
+        fieldInputProps: [
+          {
+            id: "website",
+            placeholder: "example.com",
+            type: "text",
+            name: "website",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Social Links",
+        fieldDescription:
+          "Add links to your professional social media profiles",
+        fieldType: "social",
+        fieldInputProps: [
+          {
+            id: "social",
+            placeholder: "example.com",
+            type: "text",
+            name: "social",
+            socials: [
+              {
+                value: "twitter.com/",
+              },
+              {
+                value: "facebook.com/",
+              },
+              {
+                value: "linkedin.com/company",
               },
             ],
           },

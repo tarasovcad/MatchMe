@@ -9,7 +9,7 @@ body {
 @layer base {
   :root {
     --primary: 246 78% 68%; /* #EA4C89 */
-    --secondary: 240, 4%, 46%; /* #757780 */
+    --secondary: 0, 0%, 16%; /* #292929 */
     --primary-hover: 241 54% 54%; /* #5F6CE1 */
     --background: 0 0% 100%; /* #FFFFFF */
     --foreground: 240 10% 4%; /* #09090B */

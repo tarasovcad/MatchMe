@@ -1,3 +1,5 @@
+import {Option} from "@/components/shadcn/multiselect";
+
 export interface FormFieldProps {
   fieldTitle: string;
   fieldDescription: string;
@@ -9,7 +11,10 @@ export interface FormFieldProps {
     | "image"
     | "textarea"
     | "tags"
-    | "slider";
+    | "slider"
+    | "webiste"
+    | "social"
+    | "description";
   fieldRequired?: boolean;
   fieldInputProps: [
     {
@@ -17,8 +22,11 @@ export interface FormFieldProps {
       placeholder: string;
       type: string;
       name: string;
+      readOnly?: boolean;
       className?: string;
       disabled?: boolean;
+      tags?: Option[];
+      socials?: SocialOption[];
       options?: DropdownOption[];
     },
   ];
@@ -32,4 +40,8 @@ export interface FormProps {
 export interface DropdownOption {
   title: string;
   description?: string;
+}
+
+export interface SocialOption {
+  value: string;
 }

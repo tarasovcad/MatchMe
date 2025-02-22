@@ -5,6 +5,11 @@ import NumberFieldInput from "../ui/NumberFieldInput";
 import SettingsProfilePhoto from "./SettingsProfilePhoto";
 import SelectInput from "../ui/SelectInput";
 import SettingsSelectField from "./SettingsSelectField";
+import AutogrowingTextarea from "../ui/AutogrowingTextarea";
+import Multiselect from "../ui/Multiselect";
+import SimpleSlider from "../ui/settings/SimpleSlider";
+import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
+import SocialLinksInput from "../ui/settings/SocialLinksInput";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -12,6 +17,11 @@ const fieldComponents = {
   image: SettingsProfilePhoto,
   dropdown: SelectInput,
   select: SettingsSelectField,
+  textarea: AutogrowingTextarea,
+  tags: Multiselect,
+  slider: SimpleSlider,
+  webiste: PersonalWebsiteInput,
+  social: SocialLinksInput,
 };
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
@@ -36,8 +46,11 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           placeholder={fieldInputProps[0].placeholder}
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
-          name="firstName"
+          name={fieldInputProps[0].name}
+          readOnly={fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
+          socials={fieldInputProps[0].socials ?? []}
+          tags={fieldInputProps[0].tags ?? []}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none !text-foreground"}`}
         />
       </div>

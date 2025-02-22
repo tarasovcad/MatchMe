@@ -39,14 +39,3 @@ export default function SelectInput({
     </div>
   );
 }
-
-{
-  /* <InputComponent
-id={fieldInputProps[0].id}
-placeholder={fieldInputProps[0].placeholder}
-type={fieldType}
-disabled={fieldInputProps[0].disabled}
-name="firstName"
-className={`${fieldInputProps[0].disabled && "bg-muted shadow-none !text-foreground"}`}
-/> */
-}
