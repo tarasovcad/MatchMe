@@ -1,7 +1,8 @@
 import {toast} from "sonner";
-import {SignUpFormData} from "@/validation/signUpValidation";
-import {LoginFormData} from "@/validation/loginValidation";
+
+import {LoginFormData} from "@/validation/auth/loginValidation";
 import {handleStep1} from "@/actions/(auth)/handleStep1";
+import {SignUpFormData} from "@/validation/auth/signUpValidation";
 
 export async function handleFormSubmitStep1(
   page: "signup" | "login",
@@ -31,11 +32,11 @@ export async function handleFormSubmitStep1(
     toast.success("OTP sent successfully!", {id: toastId});
 
     if (response.isNewUser === true) {
-      console.log("New user");
+      // New user
       setIsNewUser(true);
       setTotalSteps(3);
     } else {
-      console.log("Existing user");
+      // Existing user
       setIsNewUser(false);
       setTotalSteps(2);
     }

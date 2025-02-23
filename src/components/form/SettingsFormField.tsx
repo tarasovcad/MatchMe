@@ -35,7 +35,7 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
       <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
         <p className="text-foreground text-sm font-medium">{fieldTitle}</p>
         {fieldDescription && (
-          <p className="text-xs text-secondary break-words">
+          <p className="text-xs text-muted-foreground break-words">
             {fieldDescription}
           </p>
         )}

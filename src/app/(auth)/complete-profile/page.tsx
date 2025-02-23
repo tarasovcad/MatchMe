@@ -1,7 +1,10 @@
 "use client";
 import React, {useCallback, useEffect, useState} from "react";
 import {FormProvider, useForm} from "react-hook-form";
-import {SignUpFormData, signUpSchemaStep3} from "@/validation/signUpValidation";
+import {
+  SignUpFormData,
+  signUpSchemaStep3,
+} from "@/validation/auth/signUpValidation";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {LogoImage} from "@/components/ui/Logo";
 import AuthTopText from "@/components/auth/AuthTopText";

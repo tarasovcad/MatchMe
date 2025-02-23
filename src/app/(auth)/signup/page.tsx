@@ -7,7 +7,7 @@ import {
   SignUpFormData,
   signUpSchemaStep1,
   signUpSchemaStep3,
-} from "@/validation/signUpValidation";
+} from "@/validation/auth/signUpValidation";
 import AuthHomeLink from "@/components/auth/AuthHomeLink";
 import AuthTopText from "@/components/auth/AuthTopText";
 import AuthButton from "@/components/auth/AuthButton";
@@ -21,7 +21,6 @@ import {useRouter} from "next/navigation";
 import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
 import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
-import ThemeToggle from "@/components/other/ThemeToggle";
 const SignUpPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -104,7 +103,6 @@ const SignUpPage = () => {
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
       <AuthHomeLink />
-
       <form
         className="flex-1 flex items-center justify-center px-4 py-10"
         onSubmit={methods.handleSubmit((data) => onSubmit(data, "signup"))}>

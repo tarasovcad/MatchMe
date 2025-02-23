@@ -1,3 +1,4 @@
+"use client";
 import {motion} from "framer-motion";
 
 const dotVariants = {
@@ -5,13 +6,12 @@ const dotVariants = {
     width: 20,
     height: 10,
     backgroundColor: "#7E72EE",
-    scale: [1, 1.2, 1],
-    rotate: [0, 10, 0],
+    scale: [1, 1.2],
     transition: {
       type: "spring",
       stiffness: 500,
       damping: 30,
-      times: [0, 0.5, 1],
+      times: [0, 1],
     },
   },
   inactive: {

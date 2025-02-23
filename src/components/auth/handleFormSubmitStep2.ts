@@ -14,7 +14,6 @@ export async function handleFormSubmitStep2(
     toastId = toast.loading("Verifying OTP...");
     setLoading(true);
     const response = await handleStep2({email, otp});
-    console.log(response);
     if (response?.error) {
       toast.error(response.error, {id: toastId});
       return;

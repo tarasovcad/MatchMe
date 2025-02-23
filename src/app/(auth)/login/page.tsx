@@ -16,7 +16,7 @@ import {useRouter} from "next/navigation";
 import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
 import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
-import {LoginFormData, signInSchema} from "@/validation/loginValidation";
+import {LoginFormData, signInSchema} from "@/validation/auth/loginValidation";
 const LoginPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");

@@ -1,8 +1,13 @@
 import SettingsFormField from "@/components/form/SettingsFormField";
 import {accountSettingsFormFields} from "@/data/forms/(settings)/accountSettingsFormFields";
+import {SettingsSessionUser} from "@/types/user/settingsSesssionUser";
 import React from "react";
 
-const AccountTab = () => {
+const AccountTab = ({
+  username,
+  name,
+  image,
+}: SettingsSessionUser["account"]) => {
   return (
     <div className=" gap-6 flex flex-col">
       {accountSettingsFormFields.map((formFields, index) => {

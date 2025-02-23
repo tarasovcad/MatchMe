@@ -30,13 +30,13 @@ export async function handleStep3(data: {
       };
     }
 
-    const {error: profileError} = await supabase.from("profiles").insert({
+    const {error: profileError} = await supabase.from("profiles").upsert({
       id: userData.user.id,
       email: email,
       name: data.name,
       username: data.username,
-      image: null,
     });
+
     if (profileError) {
       console.log("Undexpected error in handleStep3:", profileError);
       return {
@@ -51,7 +51,6 @@ export async function handleStep3(data: {
         name: name,
         username: username,
         is_profile_complete: true,
-        image: "",
       },
     });
 
@@ -70,7 +69,6 @@ export async function handleStep3(data: {
             : "An unexpected error occurred",
       };
     }
-
     return {
       message: "Account created successfully!",
     };

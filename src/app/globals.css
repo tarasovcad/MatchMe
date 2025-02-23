@@ -8,16 +8,10 @@ body {
 
 @layer base {
   :root {
+    /* MY COLORS THAT I USE IN MY DESIGN */
+
     --primary: 246 78% 68%; /* #EA4C89 */
-    --secondary: 0, 0%, 16%; /* #292929 */
-    --primary-hover: 241 54% 54%; /* #5F6CE1 */
-    --background: 0 0% 100%; /* #FFFFFF */
-    --foreground: 240 10% 4%; /* #09090B */
-    --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 240 10% 3.9%; /* #09090B */
-    --popover: 0 0% 100%; /* #FFFFFF */
-    --popover-foreground: 240 10% 3.9%; /* #09090B */
-    --primary-foreground: 0 0% 98%; /* #FAFAFA */
+    --secondary: 240 3.8% 46.1%; /* #71717a */
     --maingradient: linear-gradient(
       180deg,
       #1c1d1f 0%,
@@ -30,14 +24,24 @@ body {
     );
     --purplegradient: linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%);
     --hoverpurplegradient: linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%);
+    --muted-foreground: 240 3.8% 46.1%; /* #71717a */
+    --border: 240 5.9% 90%; /* #E0E0E5 */
+
+    /* OTHER SHADCN COLORS */
+    --primary-hover: 241 54% 54%; /* #5F6CE1 */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 240 10% 4%; /* #09090B */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 240 10% 3.9%; /* #09090B */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 240 10% 3.9%; /* #09090B */
+    --primary-foreground: 0 0% 98%; /* #FAFAFA */
     --secondary-foreground: 240 5.9% 10%; /* #191B1D */
     --muted: 240 4.8% 95.9%; /* #F2F2F5 */
-    --muted-foreground: 240 3.8% 46.1%; /* #76777B */
     --accent: 240 4.8% 95.9%; /* #F2F2F5 */
     --accent-foreground: 240 5.9% 10%; /* #191B1D */
     --destructive: 0 84.2% 60.2%; /* #E63946 */
     --destructive-foreground: 0 0% 100%; /* #FFFFFF */
-    --border: 240 5.9% 90%; /* #E0E0E5 */
     --input: 240 4.9% 83.9%; /* #D1D1D6 */
     --ring: 240 5% 64.9%; /* #B0B0B8 */
     --dot-inactive-color: #e4e4e7; /* #E4E4E7 */
@@ -61,7 +65,7 @@ body {
     --primary: 246 78% 68%;
     --primary-hover: 241 54% 54%;
     --background: 240 10% 3.9%;
-    --foreground: 240 4.8% 95.9%;
+    --foreground: 240 4.8% 95.9%; /* #f4f4f5 */
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
     --maingradient: linear-gradient(
