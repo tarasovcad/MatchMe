@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+@layer base {
+  :root {
+    /* MY COLORS THAT I USE IN MY DESIGN */
+
+    --primary: 246 78% 68%; /* #EA4C89 */
+    --secondary: 240 3.8% 46.1%; /* #71717a */
+    --maingradient: linear-gradient(
+      180deg,
+      #1c1d1f 0%,
+      rgba(28, 29, 31, 0.68) 100%
+    );
+    --secgradient: linear-gradient(
+      180deg,
+      #39393a 0%,
+      rgba(28, 29, 31, 0.68) 100%
+    );
+    --purplegradient: linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%);
+    --hoverpurplegradient: linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%);
+    --muted-foreground: 240 3.8% 46.1%; /* #71717a */
+    --border: 240 5.9% 90%; /* #E0E0E5 */
+
+    /* OTHER SHADCN COLORS */
+    --primary-hover: 241 54% 54%; /* #5F6CE1 */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 240 10% 4%; /* #09090B */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 240 10% 3.9%; /* #09090B */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 240 10% 3.9%; /* #09090B */
+    --primary-foreground: 0 0% 98%; /* #FAFAFA */
+    --secondary-foreground: 240 5.9% 10%; /* #191B1D */
+    --muted: 240 4.8% 95.9%; /* #F2F2F5 */
+    --accent: 240 4.8% 95.9%; /* #F2F2F5 */
+    --accent-foreground: 240 5.9% 10%; /* #191B1D */
+    --destructive: 0 84.2% 60.2%; /* #E63946 */
+    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+    --input: 240 4.9% 83.9%; /* #D1D1D6 */
+    --ring: 240 5% 64.9%; /* #B0B0B8 */
+    --dot-inactive-color: #e4e4e7; /* #E4E4E7 */
+    --success: #1a7f37; /* #1A7F37 */
+    --radius: 0.375rem;
+    --logo-text-color: 210, 11%, 4%;
+    --logo-image-color: 0, 0%, 31%;
+    --sidebar-background: 0 0% 98%; /* #FAFAFA */
+    --sidebar-foreground: 240 5.3% 26.1%; /* #404348 */
+    --sidebar-primary: 240 5.9% 10%; /* #191B1D */
+    --sidebar-primary-foreground: 0 0% 98%; /* #FAFAFA */
+    --sidebar-accent: 240 4.8% 95.9%; /* #F2F2F5 */
+    --sidebar-accent: 0, 0%, 95%; /* #F2F2F5 */
+    --sidebar-accent-foreground: 240 5.9% 10%; /* #191B1D */
+    --sidebar-border: 220 13% 91%; /* #D6DAE5 */
+    --sidebar-ring: 246 78% 68%;
+    --sidebar-text-hover: 240, 10%, 4%; /* #09090B */
+  }
+
+  .dark {
+    --primary: 246 78% 68%;
+    --primary-hover: 241 54% 54%;
+    --background: 240 10% 3.9%;
+    --foreground: 240 4.8% 95.9%; /* #f4f4f5 */
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --maingradient: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.68) 100%
+    );
+    --secgradient: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.68) 100%
+    );
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --secondary: 240, 5%, 65%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5.9% 10%;
+    --muted-foreground: 240 4.4% 58%;
+    --accent: 240 5.9% 10%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --logo-text-color: 210, 8%, 95%;
+    --logo-image-color: 0, 0%, 69%;
+    --dot-inactive-color: #4d4d52;
+    --ring: 240 3.8% 46.1%;
+    --sidebar-background: 240, 7%, 8%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 246 78% 68%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  pre::-webkit-scrollbar {
+    width: 5px;
+  }
+  pre::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  pre::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 5px;
+  }
+  pre {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
