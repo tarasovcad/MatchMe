@@ -10,6 +10,8 @@ import Multiselect from "../ui/Multiselect";
 import SimpleSlider from "../ui/settings/SimpleSlider";
 import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
 import SocialLinksInput from "../ui/settings/SocialLinksInput";
+import {MatchMeUser} from "@/types/user/matchMeUser";
+import {useFormContext} from "react-hook-form";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -26,9 +28,15 @@ const fieldComponents = {
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps} = formField;
-
+  const fieldName = fieldInputProps[0].name;
   const InputComponent =
     fieldComponents[fieldType as keyof typeof fieldComponents] || SimpleInput;
+
+  const {
+    register,
+    control,
+    formState: {errors},
+  } = useFormContext();
 
   return (
     <div className="flex justify-between items-start gap-8 max-[990px]:flex-col max-[990px]:gap-2 ">
@@ -51,6 +59,8 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
           tags={fieldInputProps[0].tags ?? []}
+          register={register(fieldName)}
+          error={errors[fieldName]}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none !text-foreground"}`}
         />
       </div>

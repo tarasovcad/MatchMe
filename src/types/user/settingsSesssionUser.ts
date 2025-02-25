@@ -1,10 +1,10 @@
+import {MatchMeUser} from "./matchMeUser";
+
 export interface SettingsSessionUser {
   account: {
-    username?: string;
-    name?: string;
-    image?: string;
+    profile?: MatchMeUser;
   };
   security: {
-    email?: string;
+    profile?: MatchMeUser;
   };
 }

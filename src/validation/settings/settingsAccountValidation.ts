@@ -10,6 +10,8 @@ export const settingsAccountValidationSchema = z.object({
       /^[A-Z][a-z]+(?:\s[A-Z][a-z]+)+$/,
       "Enter a valid full name (First Last)",
     ),
+  username: z.string(),
+  age: z.number().int().min(18, "You must be at least 18 years old"),
 });
 
 export type SettingsAccountFormData = z.infer<

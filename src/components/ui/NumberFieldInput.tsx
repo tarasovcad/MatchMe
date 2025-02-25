@@ -1,9 +1,16 @@
 "use client";
 
+import {SimpleInputProps} from "@/types/simpleInputProps";
+import {AnimatePresence, motion} from "framer-motion";
 import {ChevronDown, ChevronUp} from "lucide-react";
 import {Button, Group, Input, NumberField} from "react-aria-components";
 
-export default function NumberFieldInput() {
+export default function NumberFieldInput({
+  id,
+  name,
+  register,
+  error,
+}: SimpleInputProps) {
   return (
     <NumberField minValue={0} maxValue={100} step={1} className={`w-full`}>
       <div className="space-y-2 w-full">
@@ -13,6 +20,8 @@ export default function NumberFieldInput() {
             placeholder="23"
             inputMode="numeric"
             pattern="\d*"
+            id={id}
+            {...register}
           />
           <div className="flex h-[calc(100%+2px)] flex-col">
             <Button
@@ -27,6 +36,19 @@ export default function NumberFieldInput() {
             </Button>
           </div>
         </Group>
+        <AnimatePresence>
+          {error?.message && (
+            <motion.p
+              className="text-xs text-destructive"
+              layout
+              initial={{opacity: 0, height: 0, marginTop: 0}}
+              animate={{opacity: 1, height: "auto", marginTop: 8}}
+              exit={{opacity: 0, height: 0, marginTop: 0}}
+              transition={{duration: 0.1, ease: "easeInOut"}}>
+              {error.message}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </NumberField>
   );

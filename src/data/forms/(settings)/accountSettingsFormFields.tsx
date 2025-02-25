@@ -14,7 +14,7 @@ export const accountSettingsFormFields = [
             id: "firstName",
             placeholder: "John Doe",
             type: "text",
-            name: "firstName",
+            name: "name",
           },
         ],
       },
