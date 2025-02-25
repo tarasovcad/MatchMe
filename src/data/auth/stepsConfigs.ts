@@ -1,4 +1,4 @@
-import {AuthStepConfig} from "@/types/authStepConfig";
+import {AuthStepConfig} from "@/types/AuthStepConfig";
 
 export const signUpConfig = (email?: string): AuthStepConfig => ({
   1: {
