@@ -3,8 +3,9 @@
 import {useSearchParams} from "next/navigation";
 
 export default function AuthErrorPage() {
-  const searchParams = useSearchParams();
-  const error = searchParams.get("error");
+  // const searchParams = useSearchParams();
+  // const error = searchParams.get("error");
+  const error = "Something went wrong during authentication.";
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
