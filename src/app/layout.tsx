@@ -5,7 +5,8 @@ import {Toaster} from "sonner";
 import {ThemeProvider} from "@/providers/theme-provider";
 import FaviconUpdater from "@/components/other/FaviconUpdater";
 import GlobaleHotkeys from "@/utils/other/globaleHotkeys";
-
+import {Analytics} from "@vercel/analytics/react";
+import {SpeedInsights} from "@vercel/speed-insights/next";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -42,6 +43,8 @@ export default function RootLayout({
           disableTransitionOnChange>
           <FaviconUpdater />
           <GlobaleHotkeys />
+          <Analytics />
+          <SpeedInsights />
           {children}
         </ThemeProvider>
         <Toaster position="top-right" richColors />
