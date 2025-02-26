@@ -25,12 +25,16 @@ import OpenSearchModal from "../../search/OpenSearchModal";
 import type {User} from "@supabase/supabase-js";
 import Link from "next/link";
 import {SidebarUserDropdown} from "./SidebarUserDropdown";
+import {usePathname} from "next/navigation";
 
 export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {user?: User}) {
   if (!user) return null;
+
+  const pathname = usePathname();
+  const isActive = (url: string) => pathname === url;
 
   const data = {
     user: {
@@ -43,32 +47,37 @@ export function AppSidebar({
         title: "Dashboard",
         url: "/dashboard",
         icon: PanelsTopLeft,
-        isActive: true,
+        isActive: isActive("/dashboard"),
       },
       {
         title: "Feed",
         url: "/feed",
         icon: Globe,
+        isActive: isActive("/feed"),
       },
       {
         title: "Projects",
         url: "/projects",
         icon: FolderOpen,
+        isActive: isActive("/projects"),
       },
       {
         title: "Profiles",
         url: "/profiles",
         icon: Users,
+        isActive: isActive("/profiles"),
       },
       {
         title: "Inbox",
         url: "/inbox",
         icon: MessageCircle,
+        isActive: isActive("/inbox"),
       },
       {
         title: "Notifications",
         url: "/notifications",
         icon: Bell,
+        isActive: isActive("/notifications"),
       },
     ],
     navSecondary: [
@@ -76,11 +85,13 @@ export function AppSidebar({
         title: "Settings",
         url: "/settings",
         icon: Settings,
+        isActive: isActive("/settings"),
       },
       {
         title: "Support",
         url: "/support",
         icon: HelpCircle,
+        isActive: isActive("/support"),
       },
     ],
   };

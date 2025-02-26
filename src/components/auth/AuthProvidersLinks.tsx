@@ -23,8 +23,8 @@ const AuthProvidersLinks = ({
   };
 
   return (
-    <>
-      <div className="flex items-center justify-center w-full">
+    <div className="flex flex-col gap-[22px]">
+      <div className="flex items-center justify-center w-full ">
         <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
         <span className="mx-3 text-secondary/80 text-xs">OR</span>
         <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
@@ -59,7 +59,7 @@ const AuthProvidersLinks = ({
           </Link>
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 

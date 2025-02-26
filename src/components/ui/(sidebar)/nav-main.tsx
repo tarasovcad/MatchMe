@@ -43,13 +43,14 @@ export function NavMain({
               )}
               <CollapsibleTrigger asChild>
                 <Link href={item.url}>
-                  <SidebarMenuButton tooltip={item.title}>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    isActive={item.isActive}>
                     {item.title === "Notifications" && (
                       <div className="w-[6px] h-[6px] bg-primary rounded-full absolute top-[17px] left-[17px] outline outline-[1.8px] outline-sidebar-background"></div>
                     )}
 
                     {item.icon && <item.icon className="stroke-[2.1px]" />}
-                    {/* <MainGradient as="span">{item.title}</MainGradient> */}
                     {item.title && <span>{item.title}</span>}
                   </SidebarMenuButton>
                 </Link>

@@ -21,6 +21,8 @@ import {useRouter} from "next/navigation";
 import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
 import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
+import {motion} from "framer-motion";
+
 const SignUpPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -99,55 +101,103 @@ const SignUpPage = () => {
       );
     }
   };
+  const containerVariants = {
+    hidden: {opacity: 0},
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.1,
+        when: "beforeChildren",
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {y: 20, opacity: 0},
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 12,
+        duration: 0.2,
+      },
+    },
+  };
 
   return (
     <div className="min-h-screen flex flex-col px-4 py-8">
       <AuthHomeLink />
-      <form
+
+      <motion.form
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
         className="flex-1 flex items-center justify-center px-4 py-10"
         onSubmit={methods.handleSubmit((data) => onSubmit(data, "signup"))}>
         <FormProvider {...methods}>
-          <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
-            <LogoImage size={32} />
-            <div className="flex flex-col gap-9  w-full justify-center ">
+          <motion.div
+            variants={containerVariants}
+            className="w-full max-w-[400px] flex flex-col gap-[22px]">
+            <motion.div variants={itemVariants}>
+              <LogoImage size={32} />
+            </motion.div>
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-col gap-9 w-full justify-center">
               <AuthTopText maintext={title} secText={subtitle} />
               {currentStep === 1 && (
-                <div className="flex flex-col gap-4">
+                <motion.div
+                  variants={itemVariants}
+                  className="flex flex-col gap-4">
                   <AuthStep1Form page="signup" />
-                </div>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
             {currentStep === 2 && (
-              <div className="flex items-center justify-center w-full">
+              <motion.div
+                variants={itemVariants}
+                className="flex items-center justify-center w-full">
                 <AuthOTP setOtp={setOtp} />
-              </div>
+              </motion.div>
             )}
 
-            <AuthButton
-              key={loading ? "loading" : "idle"}
-              loading={loading}
-              text={buttonText}
-              disabled={currentStep === 2 && !otpHas6Symbols}
-            />
-            {currentStep === 1 && (
-              <AuthProvidersLinks
-                handleProviderAuthAction={onProviderClick}
-                googleProviderLoading={googleProviderLoading}
-                githubProviderLoading={githubProviderLoading}
-                page="signup"
+            <motion.div variants={itemVariants}>
+              <AuthButton
+                key={loading ? "loading" : "idle"}
+                loading={loading}
+                text={buttonText}
+                disabled={currentStep === 2 && !otpHas6Symbols}
               />
+            </motion.div>
+
+            {currentStep === 1 && (
+              <motion.div variants={itemVariants}>
+                <AuthProvidersLinks
+                  handleProviderAuthAction={onProviderClick}
+                  googleProviderLoading={googleProviderLoading}
+                  githubProviderLoading={githubProviderLoading}
+                  page="signup"
+                />
+              </motion.div>
             )}
 
-            <AuthBottomSubTitle
-              maintext={bottomSubTitle}
-              link={bottomSubTitleLinkText}
-              href={bottomSubTitleHfref}
-            />
-          </div>
+            <motion.div variants={itemVariants}>
+              <AuthBottomSubTitle
+                maintext={bottomSubTitle}
+                link={bottomSubTitleLinkText}
+                href={bottomSubTitleHfref}
+              />
+            </motion.div>
+          </motion.div>
         </FormProvider>
-      </form>
+      </motion.form>
 
-      <AuthStepDots totalSteps={totalSteps} currentStep={currentStep} />
+      <motion.div variants={itemVariants} initial="hidden" animate="visible">
+        <AuthStepDots totalSteps={totalSteps} currentStep={currentStep} />
+      </motion.div>
     </div>
   );
 };
