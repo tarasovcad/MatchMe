@@ -3,6 +3,8 @@ import {NextResponse} from "next/server";
 
 export async function GET(request: Request) {
   try {
+    const NEXT_PUBLIC_SITE_URL =
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const {searchParams, origin} = new URL(request.url);
     const code = searchParams.get("code");
     // if "next" is in param, use it as the redirect URL
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error("Error exchanging code for session:", error.message);
       return NextResponse.redirect(
-        `${origin}/auth-code-error?error=${encodeURIComponent(error.message)}`,
+        `${NEXT_PUBLIC_SITE_URL}/auth-code-error?error=missing_code`,
       );
     }
 
@@ -39,7 +41,7 @@ export async function GET(request: Request) {
     if (fetchError || !userData?.user) {
       console.error("Error fetching user data:", fetchError?.message);
       return NextResponse.redirect(
-        `${origin}/auth-code-error?error=${encodeURIComponent(fetchError?.message || "Unknown error")}`,
+        `${NEXT_PUBLIC_SITE_URL}/auth-code-error?error=${encodeURIComponent(fetchError?.message || "Unknown error")}`,
       );
     }
 
@@ -87,7 +89,7 @@ export async function GET(request: Request) {
         console.error("Error updating user metadata:", metadataError.message);
       }
       return NextResponse.redirect(
-        `${origin}/complete-profile?name=${encodeURIComponent(userFullName)}&username=${encodeURIComponent(userUsername)}`,
+        `${NEXT_PUBLIC_SITE_URL}/complete-profile?name=${encodeURIComponent(userFullName)}&username=${encodeURIComponent(userUsername)}`,
       );
     }
 
@@ -95,11 +97,11 @@ export async function GET(request: Request) {
     const isLocalEnv = process.env.NODE_ENV === "development";
     if (isLocalEnv) {
       // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`http://localhost:3000${next}`);
     } else if (forwardedHost) {
       return NextResponse.redirect(`https://${forwardedHost}${next}`);
     } else {
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${NEXT_PUBLIC_SITE_URL}${next}`);
     }
   } catch (err) {
     console.error("Unexpected error in callback:", err);
