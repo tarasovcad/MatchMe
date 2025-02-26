@@ -3,9 +3,8 @@ import {NextResponse} from "next/server";
 
 export async function GET(request: Request) {
   try {
-    const NEXT_PUBLIC_SITE_URL =
-      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const {searchParams, origin} = new URL(request.url);
+    console.log("origin", origin);
     const code = searchParams.get("code");
     // if "next" is in param, use it as the redirect URL
     const next = searchParams.get("next") ?? "/";
@@ -22,7 +21,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error("Error exchanging code for session:", error.message);
       return NextResponse.redirect(
-        `${NEXT_PUBLIC_SITE_URL}/auth-code-error?error=missing_code`,
+        `${origin}/auth-code-error?error=${encodeURIComponent(error.message)}`,
       );
     }
 
@@ -41,7 +40,7 @@ export async function GET(request: Request) {
     if (fetchError || !userData?.user) {
       console.error("Error fetching user data:", fetchError?.message);
       return NextResponse.redirect(
-        `${NEXT_PUBLIC_SITE_URL}/auth-code-error?error=${encodeURIComponent(fetchError?.message || "Unknown error")}`,
+        `${origin}/auth-code-error?error=${encodeURIComponent(fetchError?.message || "Unknown error")}`,
       );
     }
 
@@ -53,8 +52,6 @@ export async function GET(request: Request) {
     const userId = userData.user.id;
     const providerImage =
       user.user_metadata?.picture || user.user_metadata?.avatar_url;
-    // its hapends
-    console.log("GET request received");
     if (!userImage) {
       console.log("No provider image found so updating user profile");
       const {error: metadataError} = await supabase.auth.updateUser({
@@ -89,19 +86,21 @@ export async function GET(request: Request) {
         console.error("Error updating user metadata:", metadataError.message);
       }
       return NextResponse.redirect(
-        `${NEXT_PUBLIC_SITE_URL}/complete-profile?name=${encodeURIComponent(userFullName)}&username=${encodeURIComponent(userUsername)}`,
+        `${origin}/complete-profile?name=${encodeURIComponent(userFullName)}&username=${encodeURIComponent(userUsername)}`,
       );
     }
 
     const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
     const isLocalEnv = process.env.NODE_ENV === "development";
+    console.log("Forwarded Host:", forwardedHost);
+    console.log("Origin:", origin);
     if (isLocalEnv) {
       // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-      return NextResponse.redirect(`http://localhost:3000${next}`);
+      return NextResponse.redirect(`${origin}${next}`);
     } else if (forwardedHost) {
       return NextResponse.redirect(`https://${forwardedHost}${next}`);
     } else {
-      return NextResponse.redirect(`${NEXT_PUBLIC_SITE_URL}${next}`);
+      return NextResponse.redirect(`${origin}${next}`);
     }
   } catch (err) {
     console.error("Unexpected error in callback:", err);
