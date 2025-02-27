@@ -4,7 +4,6 @@ import {NextResponse} from "next/server";
 export async function GET(request: Request) {
   try {
     const {searchParams, origin} = new URL(request.url);
-    console.log("origin", origin);
     const code = searchParams.get("code");
     // if "next" is in param, use it as the redirect URL
     const next = searchParams.get("next") ?? "/";
@@ -52,6 +51,8 @@ export async function GET(request: Request) {
     const userId = userData.user.id;
     const providerImage =
       user.user_metadata?.picture || user.user_metadata?.avatar_url;
+    // its hapends
+    console.log("GET request received");
     if (!userImage) {
       console.log("No provider image found so updating user profile");
       const {error: metadataError} = await supabase.auth.updateUser({
@@ -91,10 +92,15 @@ export async function GET(request: Request) {
     }
 
     const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
-    
-    return NextResponse.redirect(
-  `https://matchme.me${next}?debug=true&env=${encodeURIComponent(process.env.NODE_ENV)}&origin=${encodeURIComponent(origin)}&host=${encodeURIComponent(forwardedHost || 'none')}`
-);
+    const isLocalEnv = process.env.NODE_ENV === "development";
+    if (isLocalEnv) {
+      // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+      return NextResponse.redirect(`${origin}${next}`);
+    } else if (forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}${next}`);
+    } else {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
   } catch (err) {
     console.error("Unexpected error in callback:", err);
     return NextResponse.redirect(
