@@ -91,34 +91,10 @@ export async function GET(request: Request) {
     }
 
     const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
-    const isLocalEnv = process.env.NODE_ENV === "development";
-    const productionDomain = "matchme.me";
-
-    console.log({
-      NODE_ENV: process.env.NODE_ENV,
-      origin,
-      forwardedHost,
-      requestURL: request.url,
-    });
-
-    // Check if we're already on production domain
-    const isProductionDomain =
-      origin.includes(productionDomain) ||
-      (forwardedHost && forwardedHost.includes(productionDomain));
-
-    if (isProductionDomain) {
-      // We're on production domain, stay there
-      return NextResponse.redirect(`https://${productionDomain}${next}`);
-    } else if (isLocalEnv) {
-      // Local development
-      return NextResponse.redirect(`${origin}${next}`);
-    } else if (forwardedHost) {
-      // Some other proxy/forwarded request
-      return NextResponse.redirect(`https://${forwardedHost}${next}`);
-    } else {
-      // Fallback
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+    
+    return NextResponse.redirect(
+  `https://matchme.me${next}?debug=true&env=${encodeURIComponent(process.env.NODE_ENV)}&origin=${encodeURIComponent(origin)}&host=${encodeURIComponent(forwardedHost || 'none')}`
+);
   } catch (err) {
     console.error("Unexpected error in callback:", err);
     return NextResponse.redirect(
