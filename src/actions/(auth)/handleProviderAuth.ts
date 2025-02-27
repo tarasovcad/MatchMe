@@ -8,11 +8,18 @@ export async function handleProviderAuth(provider: string) {
         error: "Invalid provider",
       };
     }
+
+    const isLocalEnv = process.env.NODE_ENV === "development";
+    const siteUrl = isLocalEnv
+      ? "http://localhost:3000"
+      : process.env.NEXT_PUBLIC_SITE_URL;
+
+    const callbackUrl = `${siteUrl}/callback`;
     const supabase = await createClient();
     const response = await supabase.auth.signInWithOAuth({
       provider: provider,
       options: {
-        redirectTo: "http://localhost:3000/callback",
+        redirectTo: callbackUrl,
       },
     });
     if (response.error) {
