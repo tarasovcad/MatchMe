@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, {useState} from "react";
 import SettingsMainButtonts from "@/components/(pages)/settings/SettingsMainButtonts";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
@@ -22,6 +22,7 @@ const SettingsClientPage = ({
   tab: string | string[];
   profile: MatchMeUser;
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
   const TabComponents = {
     account: AccountTab,
     security: SecurityTab,
@@ -43,8 +44,19 @@ const SettingsClientPage = ({
       age: profile.age || undefined,
     },
   });
+
+  const onSubmit = async (data: SettingsAccountFormData) => {
+    setIsLoading(true);
+    try {
+      await submitAccountForm(data);
+    } catch (error) {
+      console.error("Form submission error:", error);
+    }
+    setIsLoading(false);
+  };
+
   return (
-    <form onSubmit={methods.handleSubmit(submitAccountForm)}>
+    <form onSubmit={methods.handleSubmit(onSubmit)}>
       <FormProvider {...methods}>
         <div className="flex flex-col gap-8 pb-24">
           <div className="flex flex-col gap-6 ">
@@ -56,7 +68,7 @@ const SettingsClientPage = ({
           </div>
           <SelectedComponent {...selectedProps} />
         </div>
-        <SettingsMainButtonts />
+        <SettingsMainButtonts isLoading={isLoading} />
       </FormProvider>
     </form>
   );

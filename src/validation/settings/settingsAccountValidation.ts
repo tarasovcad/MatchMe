@@ -11,7 +11,17 @@ export const settingsAccountValidationSchema = z.object({
       "Enter a valid full name (First Last)",
     ),
   username: z.string(),
-  age: z.number().int().min(18, "You must be at least 18 years old"),
+  pronouns: z.string().optional(),
+  age: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Age cannot be empty if provided",
+    })
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .pipe(
+      z.number().int().min(18, "You must be at least 18 years old").optional(),
+    ),
 });
 
 export type SettingsAccountFormData = z.infer<

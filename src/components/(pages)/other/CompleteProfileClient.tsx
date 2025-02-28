@@ -20,6 +20,7 @@ import {checkUsernameAvailabilityAuth} from "@/actions/(auth)/checkUsernameAvail
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
 import {hasProfanity} from "@/utils/other/profanityCheck";
 import {Suspense} from "react";
+import {motion} from "framer-motion";
 
 const CompleteProfileClient = () => {
   const [loading, setLoading] = useState(false);
@@ -152,34 +153,78 @@ const CompleteProfileClient = () => {
     return () => debouncedCheckUsername.cancel();
   }, [username, debouncedCheckUsername, isUsernameValid]);
 
+  const containerVariants = {
+    hidden: {opacity: 0},
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.1,
+        when: "beforeChildren",
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {y: 20, opacity: 0},
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 12,
+        duration: 0.2,
+      },
+    },
+  };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <div className="min-h-screen flex flex-col px-4 py-8">
-        <form
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="min-h-screen flex flex-col px-4 py-8">
+        <motion.form
+          variants={containerVariants}
           className="flex-1 flex items-center justify-center px-4 py-10"
           onSubmit={methods.handleSubmit(handleFormSubmitStep3)}>
           <FormProvider {...methods}>
-            <div className="w-full max-w-[400px] flex flex-col gap-[22px]">
-              <LogoImage size={32} />
-              <div className="flex flex-col gap-9  w-full justify-center ">
+            <motion.div
+              variants={containerVariants}
+              className="w-full max-w-[400px] flex flex-col gap-[22px]">
+              <motion.div variants={itemVariants}>
+                <LogoImage size={32} />
+              </motion.div>
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col gap-9 w-full justify-center">
                 <AuthTopText maintext={title} secText={subtitle} />
-              </div>
-              <AuthStep3Form
-                usernameLoading={usernameLoading}
-                isUsernameAvailable={isUsernameAvailable}
-              />
-              <AuthButton
-                key={loading ? "loading" : "idle"}
-                loading={loading}
-                text={buttonText}
-              />
-            </div>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <AuthStep3Form
+                  usernameLoading={usernameLoading}
+                  isUsernameAvailable={isUsernameAvailable}
+                />
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <AuthButton
+                  key={loading ? "loading" : "idle"}
+                  loading={loading}
+                  text={buttonText}
+                />
+              </motion.div>
+            </motion.div>
           </FormProvider>
-        </form>
+        </motion.form>
+
         {referrer === "/signup" && (
-          <AuthStepsDots totalSteps={3} currentStep={3} />
+          <motion.div variants={itemVariants}>
+            <AuthStepsDots totalSteps={3} currentStep={3} />
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </Suspense>
   );
 };

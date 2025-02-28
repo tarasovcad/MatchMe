@@ -10,7 +10,6 @@ import Multiselect from "../ui/Multiselect";
 import SimpleSlider from "../ui/settings/SimpleSlider";
 import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
 import SocialLinksInput from "../ui/settings/SocialLinksInput";
-import {MatchMeUser} from "@/types/user/matchMeUser";
 import {useFormContext} from "react-hook-form";
 
 const fieldComponents = {
@@ -34,7 +33,6 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
 
   const {
     register,
-    control,
     formState: {errors},
   } = useFormContext();
 
