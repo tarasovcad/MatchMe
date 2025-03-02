@@ -1,8 +1,9 @@
 import SettingsFormField from "@/components/form/SettingsFormField";
+import {Option} from "@/components/shadcn/multiselect";
 import {accountSettingsFormFields} from "@/data/forms/(settings)/accountSettingsFormFields";
 import React from "react";
 
-const AccountTab = () => {
+const AccountTab = ({skills}: {skills: Option[]}) => {
   return (
     <div className=" gap-6 flex flex-col">
       {accountSettingsFormFields.map((formFields, index) => {
@@ -19,6 +20,7 @@ const AccountTab = () => {
                   <SettingsFormField
                     formField={formField}
                     key={formField.fieldTitle}
+                    skills={skills}
                   />
                 );
               })}

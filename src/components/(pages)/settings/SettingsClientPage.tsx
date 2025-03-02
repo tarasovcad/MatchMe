@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, {useState} from "react";
 import SettingsMainButtonts from "@/components/(pages)/settings/SettingsMainButtonts";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
@@ -12,27 +12,27 @@ import {
   SettingsAccountFormData,
   settingsAccountValidationSchema,
 } from "@/validation/settings/settingsAccountValidation";
-import {SettingsSessionUser} from "@/types/user/settingsSesssionUser";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import {Option} from "@/components/shadcn/multiselect";
 
 const SettingsClientPage = ({
   tab,
   profile,
+  skills,
 }: {
   tab: string | string[];
   profile: MatchMeUser;
+  skills: Option[];
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const TabComponents = {
     account: AccountTab,
     security: SecurityTab,
   } as const;
-  const tabProps: SettingsSessionUser = {
-    account: {profile},
-    security: {profile},
-  };
+
   const SelectedComponent =
     TabComponents[tab as keyof typeof TabComponents] || AccountTab;
-  const selectedProps = tabProps[tab as keyof SettingsSessionUser] || {};
 
   const methods = useForm<SettingsAccountFormData>({
     resolver: zodResolver(settingsAccountValidationSchema),
@@ -43,8 +43,19 @@ const SettingsClientPage = ({
       age: profile.age || undefined,
     },
   });
+
+  const onSubmit = async (data: SettingsAccountFormData) => {
+    setIsLoading(true);
+    try {
+      await submitAccountForm(data);
+    } catch (error) {
+      console.error("Form submission error:", error);
+    }
+    setIsLoading(false);
+  };
+
   return (
-    <form onSubmit={methods.handleSubmit(submitAccountForm)}>
+    <form onSubmit={methods.handleSubmit(onSubmit)}>
       <FormProvider {...methods}>
         <div className="flex flex-col gap-8 pb-24">
           <div className="flex flex-col gap-6 ">
@@ -54,9 +65,9 @@ const SettingsClientPage = ({
             />
             <SettingsTabs tab={tab} />
           </div>
-          <SelectedComponent {...selectedProps} />
+          <SelectedComponent profile={profile} skills={skills} />
         </div>
-        <SettingsMainButtonts />
+        <SettingsMainButtonts isLoading={isLoading} />
       </FormProvider>
     </form>
   );

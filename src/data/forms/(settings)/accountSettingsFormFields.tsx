@@ -162,73 +162,7 @@ export const accountSettingsFormFields = [
             placeholder: "Select skills",
             type: "text",
             name: "skills",
-            tags: [
-              {
-                value: "react",
-                label: "React",
-              },
-              {
-                value: "next.js",
-                label: "Next.js",
-              },
-              {
-                value: "sveltekit",
-                label: "SvelteKit",
-              },
-              {
-                value: "nuxt.js",
-                label: "Nuxt.js",
-              },
-              {
-                value: "remix",
-                label: "Remix",
-              },
-              {
-                value: "astro",
-                label: "Astro",
-              },
-              {
-                value: "angular",
-                label: "Angular",
-              },
-              {
-                value: "vue",
-                label: "Vue.js",
-              },
-
-              {
-                value: "ember",
-                label: "Ember.js",
-              },
-              {
-                value: "gatsby",
-                label: "Gatsby",
-              },
-              {
-                value: "eleventy",
-                label: "Eleventy",
-              },
-              {
-                value: "solid",
-                label: "SolidJS",
-              },
-              {
-                value: "preact",
-                label: "Preact",
-              },
-              {
-                value: "qwik",
-                label: "Qwik",
-              },
-              {
-                value: "alpine",
-                label: "Alpine.js",
-              },
-              {
-                value: "lit",
-                label: "Lit",
-              },
-            ],
+            tags: [],
           },
         ],
       },

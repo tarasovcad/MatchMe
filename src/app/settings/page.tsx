@@ -21,15 +21,26 @@ const SettingsPage = async ({searchParams}: PageProps) => {
 
   const {id} = user;
 
-  const {data: profile, error} = await supabase
+  const {data: profile, error: profileError} = await supabase
     .from("profiles")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (error) {
-    console.log("Error fetching profile:", error.message);
+  if (profileError) {
+    console.log("Error fetching profile:", profileError.message);
     return <div>Error fetching profile</div>;
+  }
+  const {data, error} = await supabase.from("skills").select("name");
+
+  const skillNames = data?.map((skill) => ({
+    value: skill.name,
+    label: skill.name,
+  }));
+
+  if (error) {
+    console.log("Error fetching skills:", error.message);
+    return <div>Error fetching skills</div>;
   }
 
   const params = await searchParams;
@@ -37,7 +48,11 @@ const SettingsPage = async ({searchParams}: PageProps) => {
 
   return (
     <SidebarProvider>
-      <SettingsClientPage tab={tab} profile={profile} />
+      <SettingsClientPage
+        tab={tab}
+        profile={profile}
+        skills={skillNames || []}
+      />
     </SidebarProvider>
   );
 };

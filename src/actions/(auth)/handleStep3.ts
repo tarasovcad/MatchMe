@@ -46,10 +46,14 @@ export async function handleStep3(data: {
             : "An unexpected error occurred",
       };
     }
+
+    const role = email === process.env.ADMIN_EMAIL ? "admin" : "user";
+
     const {data: updatedUser, error} = await supabase.auth.updateUser({
       data: {
         name: name,
         username: username,
+        role: role,
         is_profile_complete: true,
       },
     });

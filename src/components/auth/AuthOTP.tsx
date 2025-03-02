@@ -4,6 +4,33 @@ import {cn} from "@/lib/utils";
 import {OTPInput, SlotProps} from "input-otp";
 import {Minus} from "lucide-react";
 import {useId} from "react";
+import {motion} from "framer-motion";
+
+const containerVariants = {
+  hidden: {opacity: 0},
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.1,
+      when: "beforeChildren",
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: {y: 20, opacity: 0},
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 12,
+      duration: 0.2,
+    },
+  },
+};
 
 interface AuthOTPProps {
   setOtp: React.Dispatch<React.SetStateAction<string>>;
@@ -14,39 +41,46 @@ export default function AuthOTP({setOtp}: AuthOTPProps) {
   const id = useId();
 
   return (
-    <OTPInput
-      id={id}
-      containerClassName={cn(
-        "flex items-center gap-3 has-[:disabled]:opacity-50 transition-all",
-      )}
-      maxLength={6}
-      onChange={setOtp}
-      render={({slots}) => (
-        <>
-          <div className="flex gap-1">
-            {slots.slice(0, 3).map((slot, idx) => (
-              <Slot key={idx} {...slot} />
-            ))}
-          </div>
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="flex items-center gap-3 has-[:disabled]:opacity-50 transition-all">
+      <OTPInput
+        id={id}
+        containerClassName="flex items-center gap-3"
+        maxLength={6}
+        onChange={setOtp}
+        render={({slots}) => (
+          <>
+            <motion.div variants={itemVariants} className="flex gap-1">
+              {slots.slice(0, 3).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </motion.div>
 
-          <div className="text-muted-foreground/80">
-            <Minus size={16} strokeWidth={2} aria-hidden="true" />
-          </div>
+            <motion.div
+              variants={itemVariants}
+              className="text-muted-foreground/80">
+              <Minus size={16} strokeWidth={2} aria-hidden="true" />
+            </motion.div>
 
-          <div className="flex gap-1">
-            {slots.slice(3).map((slot, idx) => (
-              <Slot key={idx} {...slot} />
-            ))}
-          </div>
-        </>
-      )}
-    />
+            <motion.div variants={itemVariants} className="flex gap-1">
+              {slots.slice(3).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </motion.div>
+          </>
+        )}
+      />
+    </motion.div>
   );
 }
 
 function Slot({char, hasError}: SlotProps & {hasError?: boolean}) {
   return (
-    <div
+    <motion.div
+      variants={itemVariants}
       className={cn(
         "flex size-12 items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-sm shadow-black/5 transition-shadow",
         hasError
@@ -54,9 +88,9 @@ function Slot({char, hasError}: SlotProps & {hasError?: boolean}) {
           : "border-input",
         char !== null && !hasError
           ? "border-primary ring-[3px] ring-ring/20"
-          : "", // Apply ring only if there's no error
+          : "",
       )}>
       {char !== null && <div>{char}</div>}
-    </div>
+    </motion.div>
   );
 }

@@ -10,8 +10,8 @@ import Multiselect from "../ui/Multiselect";
 import SimpleSlider from "../ui/settings/SimpleSlider";
 import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
 import SocialLinksInput from "../ui/settings/SocialLinksInput";
-import {MatchMeUser} from "@/types/user/matchMeUser";
 import {useFormContext} from "react-hook-form";
+import {Option} from "../shadcn/multiselect";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -26,7 +26,13 @@ const fieldComponents = {
   social: SocialLinksInput,
 };
 
-const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
+const SettingsFormField = ({
+  formField,
+  skills,
+}: {
+  formField: FormFieldProps;
+  skills: Option[];
+}) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps} = formField;
   const fieldName = fieldInputProps[0].name;
   const InputComponent =
@@ -34,7 +40,6 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
 
   const {
     register,
-    control,
     formState: {errors},
   } = useFormContext();
 
@@ -58,7 +63,11 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           readOnly={fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
-          tags={fieldInputProps[0].tags ?? []}
+          tags={
+            fieldInputProps[0].name === "skills"
+              ? skills
+              : fieldInputProps[0].tags
+          }
           register={register(fieldName)}
           error={errors[fieldName]}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none !text-foreground"}`}
