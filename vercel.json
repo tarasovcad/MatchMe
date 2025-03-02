@@ -1,6 +1,0 @@
-{
-  "ignoreBuildStep": true,
-  "build": {
-    "ignore": ["cdk/**/*"]
-  }
-}
