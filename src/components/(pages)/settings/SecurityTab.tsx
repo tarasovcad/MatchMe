@@ -1,7 +1,7 @@
-import {SettingsSessionUser} from "@/types/user/settingsSesssionUser";
+import {MatchMeUser} from "@/types/user/matchMeUser";
 import React from "react";
 
-const SecurityTab = ({profile}: SettingsSessionUser["security"]) => {
+const SecurityTab = ({profile}: {profile: MatchMeUser}) => {
   return <div>SecurityTab</div>;
 };
 

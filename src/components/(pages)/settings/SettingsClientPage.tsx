@@ -12,28 +12,27 @@ import {
   SettingsAccountFormData,
   settingsAccountValidationSchema,
 } from "@/validation/settings/settingsAccountValidation";
-import {SettingsSessionUser} from "@/types/user/settingsSesssionUser";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import {Option} from "@/components/shadcn/multiselect";
 
 const SettingsClientPage = ({
   tab,
   profile,
+  skills,
 }: {
   tab: string | string[];
   profile: MatchMeUser;
+  skills: Option[];
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+
   const TabComponents = {
     account: AccountTab,
     security: SecurityTab,
   } as const;
-  const tabProps: SettingsSessionUser = {
-    account: {profile},
-    security: {profile},
-  };
+
   const SelectedComponent =
     TabComponents[tab as keyof typeof TabComponents] || AccountTab;
-  const selectedProps = tabProps[tab as keyof SettingsSessionUser] || {};
 
   const methods = useForm<SettingsAccountFormData>({
     resolver: zodResolver(settingsAccountValidationSchema),
@@ -66,7 +65,7 @@ const SettingsClientPage = ({
             />
             <SettingsTabs tab={tab} />
           </div>
-          <SelectedComponent {...selectedProps} />
+          <SelectedComponent profile={profile} skills={skills} />
         </div>
         <SettingsMainButtonts isLoading={isLoading} />
       </FormProvider>

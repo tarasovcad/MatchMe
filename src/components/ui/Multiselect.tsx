@@ -9,7 +9,7 @@ export default function Component({
   placeholder: string;
   name: string;
   className: string;
-  tags: Option[];
+  tags: Option[] | undefined;
 }) {
   return (
     <div className="">
