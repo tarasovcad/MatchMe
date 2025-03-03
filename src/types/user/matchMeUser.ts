@@ -6,11 +6,12 @@ export interface MatchMeUser {
   pronouns: string | null;
   age: number | null;
   image: string;
+  current_role: string | null;
   looking_for: string | null;
   goals: string | null;
   tagline: string | null;
   skills: string | null;
-  work_availability: string | null;
+  work_availability: number | null;
   location_timezone: string | null;
   languages_spoken: string | null;
   about_you: string | null;
@@ -18,4 +19,5 @@ export interface MatchMeUser {
   social_links: string | null;
   is_profile_public: boolean;
   created_at: string;
+  public_current_role: string | null;
 }

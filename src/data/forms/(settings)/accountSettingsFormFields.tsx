@@ -91,10 +91,10 @@ export const accountSettingsFormFields = [
         fieldType: "text",
         fieldInputProps: [
           {
-            id: "",
+            id: "public_current_role",
             placeholder: "Data Analytics",
             type: "text",
-            name: "currentRole",
+            name: "public_current_role",
           },
         ],
       },
@@ -104,10 +104,10 @@ export const accountSettingsFormFields = [
         fieldType: "select",
         fieldInputProps: [
           {
-            id: "lookingFor",
+            id: "looking_for",
             placeholder: "I'm looking for a new job",
             type: "text",
-            name: "lookingFor",
+            name: "looking_for",
             options: [
               {
                 title: "Team Member",
@@ -146,7 +146,7 @@ export const accountSettingsFormFields = [
         fieldInputProps: [
           {
             id: "tagline",
-            placeholder: "I'm a...",
+            placeholder: "Looking for my next entrepreneurial journey",
             type: "text",
             name: "tagline",
           },
@@ -172,8 +172,8 @@ export const accountSettingsFormFields = [
         fieldType: "slider",
         fieldInputProps: [
           {
-            id: "availability",
-            name: "availability",
+            id: "work_availability",
+            name: "work_availability",
           },
         ],
       },

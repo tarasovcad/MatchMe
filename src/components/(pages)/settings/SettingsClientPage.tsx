@@ -24,6 +24,7 @@ const SettingsClientPage = ({
   profile: MatchMeUser;
   skills: Option[];
 }) => {
+  console.log(profile);
   const [isLoading, setIsLoading] = useState(false);
 
   const TabComponents = {
@@ -38,9 +39,18 @@ const SettingsClientPage = ({
     resolver: zodResolver(settingsAccountValidationSchema),
     mode: "onChange",
     defaultValues: {
-      name: profile.name,
-      username: profile.username,
-      age: profile.age || undefined,
+      name: profile.name ?? "",
+      username: profile.username ?? "",
+      pronouns: profile.pronouns ?? "",
+      age: profile.age ?? undefined,
+      public_current_role: profile.public_current_role ?? "",
+      looking_for: profile.looking_for ?? "",
+      goals: profile.goals ?? "",
+      tagline: profile.tagline ?? "",
+      // skills: Array.isArray(profile.skills) ? profile.skills : [],
+      skills: ["React", "Java"],
+      work_availability: profile.work_availability ?? undefined,
+      // work_availability: 45,
     },
   });
 

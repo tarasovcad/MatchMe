@@ -1,64 +1,25 @@
-// "use client";
-
-// import {Textarea} from "@/components/shadcn/textarea";
-// import {cn} from "@/lib/utils";
-// import {useRef, useEffect, useState} from "react";
-
-// export default function AutogrowingTextarea({
-//   id,
-//   placeholder,
-//   name,
-//   className,
-// }: {
-//   id: string;
-//   placeholder: string;
-//   name: string;
-//   className?: string;
-// }) {
-//   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-//   const [value, setValue] = useState("");
-
-//   useEffect(() => {
-//     if (textareaRef.current) {
-//       textareaRef.current.style.height = "auto";
-//       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-//     }
-//   }, [value]);
-
-//   return (
-//     <div className="w-full">
-//       <Textarea
-//         id={id}
-//         name={name}
-//         ref={textareaRef}
-//         placeholder={placeholder || ""}
-//         className={cn(
-//           "resize-none overflow-hidden max-h-[150px] min-h-0",
-//           className,
-//         )}
-//         value={value}
-//         onChange={(e) => setValue(e.target.value)}
-//       />
-//     </div>
-//   );
-// }
-
 "use client";
 
 import {ChangeEvent, useRef} from "react";
 import {Textarea} from "../shadcn/textarea";
 import {cn} from "@/lib/utils";
+import {UseFormRegisterReturn} from "react-hook-form";
+import {AnimatePresence, motion} from "framer-motion";
 
 export default function AutogrowingTextarea({
   id,
   placeholder,
   name,
   className,
+  register,
+  error,
 }: {
   id: string;
   placeholder: string;
   name: string;
   className?: string;
+  register?: UseFormRegisterReturn<string>;
+  error?: {message?: string} | undefined;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const defaultRows = 1;
@@ -84,15 +45,49 @@ export default function AutogrowingTextarea({
     textarea.style.height = `${newHeight}px`;
   };
 
+  // Merge the refs and event handlers to prevent {...register} from overwriting the ref
+  const combinedOnChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    if (register?.onChange) {
+      register.onChange(e);
+    }
+    handleInput(e);
+  };
+
   return (
-    <Textarea
-      id={id}
-      placeholder={placeholder}
-      ref={textareaRef}
-      name={name}
-      onChange={handleInput}
-      rows={defaultRows}
-      className={cn("min-h-[none] resize-none h-9", className)}
-    />
+    <div className="space-y-2">
+      <Textarea
+        id={id}
+        placeholder={placeholder}
+        ref={(e) => {
+          textareaRef.current = e;
+          if (typeof register?.ref === "function") {
+            register.ref(e);
+          }
+        }}
+        name={name}
+        onChange={combinedOnChange}
+        rows={defaultRows}
+        className={cn(
+          "min-h-[none] resize-none h-9",
+          error &&
+            "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+          className,
+        )}
+        onBlur={register?.onBlur}
+      />
+      <AnimatePresence>
+        {error?.message && (
+          <motion.p
+            className="text-xs text-destructive"
+            layout
+            initial={{opacity: 0, height: 0, marginTop: 0}}
+            animate={{opacity: 1, height: "auto", marginTop: 8}}
+            exit={{opacity: 0, height: 0, marginTop: 0}}
+            transition={{duration: 0.1, ease: "easeInOut"}}>
+            {error.message}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
