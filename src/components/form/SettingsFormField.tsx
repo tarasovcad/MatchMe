@@ -12,6 +12,7 @@ import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
 import SocialLinksInput from "../ui/settings/SocialLinksInput";
 import {useFormContext} from "react-hook-form";
 import {Option} from "../shadcn/multiselect";
+import DescriptionEditor from "../ui/DescriptionEditor";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -24,14 +25,15 @@ const fieldComponents = {
   slider: SimpleSlider,
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
+  description: DescriptionEditor,
 };
 
 const SettingsFormField = ({
   formField,
-  skills,
+  skillsArray,
 }: {
   formField: FormFieldProps;
-  skills: Option[];
+  skillsArray: Option[];
 }) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps} = formField;
   const fieldName = fieldInputProps[0].name;
@@ -65,7 +67,7 @@ const SettingsFormField = ({
           socials={fieldInputProps[0].socials ?? []}
           tags={
             fieldInputProps[0].name === "skills"
-              ? skills
+              ? skillsArray
               : fieldInputProps[0].tags
           }
           register={register(fieldName)}

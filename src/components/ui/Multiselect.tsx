@@ -23,13 +23,19 @@ export default function Component({
     formState: {errors},
   } = useFormContext();
 
+  const tagsName = tags?.map((tag) => ({
+    value: tag.value,
+    label: tag.value,
+  }));
+
+  console.log(tagsName);
   return (
     <Controller
       name={name}
       control={control}
       render={({field}) => (
         <MultipleSelector
-          defaultOptions={tags}
+          defaultOptions={tagsName}
           placeholder={placeholder}
           hideClearAllButton
           onChange={(selected) =>

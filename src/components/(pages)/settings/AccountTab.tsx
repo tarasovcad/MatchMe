@@ -3,7 +3,7 @@ import {Option} from "@/components/shadcn/multiselect";
 import {accountSettingsFormFields} from "@/data/forms/(settings)/accountSettingsFormFields";
 import React from "react";
 
-const AccountTab = ({skills}: {skills: Option[]}) => {
+const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
   return (
     <div className=" gap-6 flex flex-col">
       {accountSettingsFormFields.map((formFields, index) => {
@@ -20,7 +20,7 @@ const AccountTab = ({skills}: {skills: Option[]}) => {
                   <SettingsFormField
                     formField={formField}
                     key={formField.fieldTitle}
-                    skills={skills}
+                    skillsArray={skillsArray}
                   />
                 );
               })}

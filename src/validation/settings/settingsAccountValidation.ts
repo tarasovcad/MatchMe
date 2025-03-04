@@ -45,16 +45,61 @@ export const settingsAccountValidationSchema = z.object({
   goals: z
     .string()
     .max(200, {message: "Goals must be at most 200 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Goals cannot be empty if provided",
+    })
     .optional(),
   tagline: z
     .string()
     .max(70, {message: "Tagline must be at most 70 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Tagline cannot be empty if provided",
+    })
     .optional(),
   skills: z
     .array(z.string())
     .max(20, {message: "Skills must be at most 20 tags"})
     .optional(),
-  work_availability: z.coerce.number().optional(),
+  work_availability: z.coerce
+    .number()
+    .min(0, {message: "Work availability cannot be negative"})
+    .max(168, {message: "Work availability cannot exceed 168 hours per week"})
+    .optional(),
+  location_timezone: z.string().optional(),
+  languages: z
+    .array(z.string())
+    .max(20, {message: "Languages must be at most 20 tags"})
+    .optional(),
+  about_you: z
+    .string()
+    .max(600, {message: "Description must be at most 600 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Description cannot be empty if provided",
+    })
+    .optional(),
+  personal_website: z
+    .string()
+    .trim()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        try {
+          const url = new URL(val);
+          // Check if hostname has at least one dot and valid TLD pattern
+          return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(
+            url.hostname,
+          );
+        } catch (e) {
+          return false;
+        }
+      },
+      {message: "Please enter a valid website URL with a proper domain"},
+    )
+    .refine((val) => !/[A-Z]/.test(val), {
+      message: "The URL should not contain uppercase letters",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 export type SettingsAccountFormData = z.infer<

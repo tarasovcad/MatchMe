@@ -33,10 +33,11 @@ const SettingsPage = async ({searchParams}: PageProps) => {
   }
   const {data, error} = await supabase.from("skills").select("name");
 
-  const skillNames = data?.map((skill) => ({
-    value: skill.name,
-    label: skill.name,
-  }));
+  // change from name to value for multiselect
+  const skillsArray =
+    data?.map((skill) => ({
+      value: skill.name,
+    })) || [];
 
   if (error) {
     console.log("Error fetching skills:", error.message);
@@ -51,7 +52,7 @@ const SettingsPage = async ({searchParams}: PageProps) => {
       <SettingsClientPage
         tab={tab}
         profile={profile}
-        skills={skillNames || []}
+        skillsArray={skillsArray || []}
       />
     </SidebarProvider>
   );

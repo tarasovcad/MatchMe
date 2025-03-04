@@ -18,11 +18,11 @@ import {Option} from "@/components/shadcn/multiselect";
 const SettingsClientPage = ({
   tab,
   profile,
-  skills,
+  skillsArray,
 }: {
   tab: string | string[];
   profile: MatchMeUser;
-  skills: Option[];
+  skillsArray: Option[];
 }) => {
   console.log(profile);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,12 @@ const SettingsClientPage = ({
       // skills: Array.isArray(profile.skills) ? profile.skills : [],
       skills: ["React", "Java"],
       work_availability: profile.work_availability ?? undefined,
-      // work_availability: 45,
+      // location_timezone: profile.location_timezone ?? "",
+      location_timezone: "Tokyo / Japan Standard Time (UTC +9)",
+      // languages_spoken: profile.languages_spoken ?? "",
+      languages: ["English", "German"],
+      about_you: profile.about_you ?? "",
+      personal_website: profile.personal_website ?? "",
     },
   });
 
@@ -75,7 +80,7 @@ const SettingsClientPage = ({
             />
             <SettingsTabs tab={tab} />
           </div>
-          <SelectedComponent profile={profile} skills={skills} />
+          <SelectedComponent profile={profile} skillsArray={skillsArray} />
         </div>
         <SettingsMainButtonts isLoading={isLoading} />
       </FormProvider>

@@ -187,10 +187,10 @@ export const accountSettingsFormFields = [
         fieldType: "dropdown",
         fieldInputProps: [
           {
-            id: "location",
+            id: "location_timezone",
             placeholder: "London / British Time (UTC +0)",
             type: "text",
-            name: "location",
+            name: "location_timezone",
             options: [
               {
                 title: "London / British Time (UTC +0)",
@@ -220,25 +220,20 @@ export const accountSettingsFormFields = [
             name: "languages",
             tags: [
               {
-                label: "English",
-                value: "english",
+                value: "English",
               },
               {
-                label: "Spanish",
-                value: "spanish",
+                value: "Spanish",
               },
               {
-                label: "French",
-                value: "french",
+                value: "French",
               },
               {
-                label: "German",
-                value: "german",
+                value: "German",
               },
 
               {
-                label: "Italian",
-                value: "italian",
+                value: "Italian",
               },
             ],
           },
@@ -250,10 +245,10 @@ export const accountSettingsFormFields = [
         fieldType: "description",
         fieldInputProps: [
           {
-            id: "about",
+            id: "about_you",
             placeholder: "Write a description for your profile",
             type: "text",
-            name: "about",
+            name: "about_you",
           },
         ],
       },
@@ -263,10 +258,10 @@ export const accountSettingsFormFields = [
         fieldType: "webiste",
         fieldInputProps: [
           {
-            id: "website",
+            id: "personal_website",
             placeholder: "example.com",
             type: "text",
-            name: "website",
+            name: "personal_website",
           },
         ],
       },

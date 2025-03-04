@@ -13,7 +13,7 @@ export interface MatchMeUser {
   skills: string | null;
   work_availability: number | null;
   location_timezone: string | null;
-  languages_spoken: string | null;
+  languages: string | null;
   about_you: string | null;
   personal_website: string | null;
   social_links: string | null;
