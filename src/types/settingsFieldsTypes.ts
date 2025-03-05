@@ -43,5 +43,6 @@ export interface DropdownOption {
 }
 
 export interface SocialOption {
-  value: string;
+  title: string;
+  url?: string;
 }

@@ -72,13 +72,13 @@ export default function DescriptionEditor({
       <div className="flex items-center gap-0.5 mb-1.5">
         <Button
           size={"icon"}
-          className="border-none"
+          className="border-none w-8 h-8"
           onMouseDown={(e) => e.preventDefault()}>
           <Bold size={16} />
         </Button>
         <Button
           size={"icon"}
-          className="border-none"
+          className="border-none w-8 h-8"
           onMouseDown={(e) => e.preventDefault()}>
           <Italic size={16} />
         </Button>

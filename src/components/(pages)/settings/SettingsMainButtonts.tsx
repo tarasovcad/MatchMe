@@ -13,7 +13,7 @@ const SettingsMainButtonts = ({isLoading}: {isLoading: boolean}) => {
         Cancel
       </Button>
       <Button
-        type="submit"
+        // type="submit"
         variant={"secondary"}
         className="px-[25px] max-w-[165.5px] w-full transition-colors duration-300 ease-in-out"
         disabled={isLoading}

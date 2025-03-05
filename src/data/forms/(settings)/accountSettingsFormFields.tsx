@@ -272,20 +272,32 @@ export const accountSettingsFormFields = [
         fieldType: "social",
         fieldInputProps: [
           {
-            id: "social",
+            id: "social_links",
             placeholder: "example.com",
             type: "text",
-            name: "social",
+            name: "social_links",
             socials: [
               {
-                value: "twitter.com/",
+                title: "x.com/",
               },
               {
-                value: "facebook.com/",
+                title: "github.com/",
               },
               {
-                value: "linkedin.com/company",
+                title: "linkedin.com/",
               },
+            ],
+            options: [
+              {title: "instagram.com/"},
+              {title: "facebook.com/"},
+              {title: "tiktok.com/@"},
+              {title: "youtube.com/c/"},
+              {title: "medium.com/@"},
+              {title: "dribbble.com/"},
+              {title: "reddit.com/u/"},
+              {title: "behance.net/"},
+              {title: "stackoverflow.com/users/"},
+              {title: "leetcode.com/"},
             ],
           },
         ],
