@@ -24,7 +24,6 @@ const SettingsClientPage = ({
   profile: MatchMeUser;
   skillsArray: Option[];
 }) => {
-  console.log(profile);
   const [isLoading, setIsLoading] = useState(false);
 
   const TabComponents = {
@@ -56,13 +55,36 @@ const SettingsClientPage = ({
       languages: ["English", "German"],
       about_you: profile.about_you ?? "",
       personal_website: profile.personal_website ?? "",
+      social_links_1_platform: "x.com/",
+      social_links_1: "",
+      social_links_2_platform: "github.com/",
+      social_links_2: "",
+      social_links_3_platform: "linkedin.com/",
+      social_links_3: "",
     },
   });
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
-      await submitAccountForm(data);
+      const processedData = {
+        ...data,
+        socialLinks: [
+          {
+            platform: data.social_links_1_platform,
+            link: data.social_links_1,
+          },
+          {
+            platform: data.social_links_2_platform,
+            link: data.social_links_2,
+          },
+          {
+            platform: data.social_links_3_platform,
+            link: data.social_links_3,
+          },
+        ].filter((link) => link.platform && link.link),
+      };
+      await submitAccountForm(processedData);
     } catch (error) {
       console.error("Form submission error:", error);
     }

@@ -288,6 +288,9 @@ export const accountSettingsFormFields = [
               },
             ],
             options: [
+              {title: "x.com/"},
+              {title: "github.com/"},
+              {title: "linkedin.com/"},
               {title: "instagram.com/"},
               {title: "facebook.com/"},
               {title: "tiktok.com/@"},

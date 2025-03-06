@@ -100,6 +100,30 @@ export const settingsAccountValidationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  social_links_1_platform: z.string().optional(),
+  social_links_1: z
+    .string()
+    .max(10, {message: "Social link must be at most 50 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Description cannot be empty if provided",
+    })
+    .optional(),
+  social_links_2_platform: z.string().optional(),
+  social_links_2: z
+    .string()
+    .max(10, {message: "Social link must be at most 50 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Description cannot be empty if provided",
+    })
+    .optional(),
+  social_links_3_platform: z.string().optional(),
+  social_links_3: z
+    .string()
+    .max(10, {message: "Social link must be at most 50 characters"})
+    .refine((val) => !val || val.trim().length > 0, {
+      message: "Description cannot be empty if provided",
+    })
+    .optional(),
 });
 
 export type SettingsAccountFormData = z.infer<
