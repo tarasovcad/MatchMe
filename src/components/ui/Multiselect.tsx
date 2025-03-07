@@ -28,7 +28,6 @@ export default function Component({
     label: tag.value,
   }));
 
-  console.log(tagsName);
   return (
     <Controller
       name={name}

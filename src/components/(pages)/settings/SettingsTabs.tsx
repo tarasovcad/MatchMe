@@ -178,19 +178,17 @@ interface SingleTabProps {
 
 const SettingsTabs = ({tab}: {tab: string | string[] | undefined}) => {
   return (
-    <div className="overflow-x-auto whitespace-nowrap">
-      <div className="flex items-center gap-2">
-        {settingsTabsData.map((settingsTab) => {
-          return (
-            <SingleTab
-              key={settingsTab.query}
-              link={settingsTab.query}
-              title={settingsTab.title}
-              active={settingsTab.query === tab}
-            />
-          );
-        })}
-      </div>
+    <div className="flex items-center gap-2">
+      {settingsTabsData.map((settingsTab) => {
+        return (
+          <SingleTab
+            key={settingsTab.query}
+            link={settingsTab.query}
+            title={settingsTab.title}
+            active={settingsTab.query === tab}
+          />
+        );
+      })}
     </div>
   );
 };
