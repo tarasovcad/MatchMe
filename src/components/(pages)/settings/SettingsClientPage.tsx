@@ -38,6 +38,8 @@ const SettingsClientPage = ({
     resolver: zodResolver(settingsAccountValidationSchema),
     mode: "onChange",
     defaultValues: {
+      is_profile_public: profile.is_profile_public ?? false,
+      is_profile_verified: profile.is_profile_verified ?? false,
       name: profile.name ?? "",
       username: profile.username ?? "",
       pronouns: profile.pronouns ?? "",

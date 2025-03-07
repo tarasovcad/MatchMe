@@ -1,11 +1,32 @@
 import SettingsFormField from "@/components/form/SettingsFormField";
 import {Option} from "@/components/shadcn/multiselect";
-import {accountSettingsFormFields} from "@/data/forms/(settings)/accountSettingsFormFields";
+import {
+  accountSettingsFormFields,
+  accountSettingsFormFieldsTop,
+} from "@/data/forms/(settings)/accountSettingsFormFields";
+import {cn} from "@/lib/utils";
 import React from "react";
 
 const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
   return (
     <div className=" gap-6 flex flex-col">
+      <div className="border border-border rounded-[8px]">
+        {accountSettingsFormFieldsTop.map((formField, index) => {
+          return (
+            <div
+              key={formField.fieldTitle}
+              className={cn(
+                "px-[18px] py-3",
+                index !== 0 && "border-t border-border",
+              )}>
+              <SettingsFormField
+                formField={formField}
+                skillsArray={skillsArray}
+              />
+            </div>
+          );
+        })}
+      </div>
       {accountSettingsFormFields.map((formFields, index) => {
         return (
           <div

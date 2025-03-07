@@ -1,4 +1,4 @@
-import {FormProps} from "@/types/settingsFieldsTypes";
+import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
 
 export const accountSettingsFormFields = [
   {
@@ -308,3 +308,32 @@ export const accountSettingsFormFields = [
     ],
   },
 ] as FormProps[];
+
+export const accountSettingsFormFieldsTop = [
+  {
+    fieldTitle: "Make Profile Public",
+    fieldDescription: "Enable to make your profile visible to others",
+    fieldType: "makeProfilePublic",
+    fieldInputProps: [
+      {
+        id: "is_profile_public",
+        placeholder: "Make Profile Public",
+        type: "text",
+        name: "is_profile_public",
+      },
+    ],
+  },
+  {
+    fieldTitle: "Account Verification",
+    fieldDescription: "Verify your account to gain trust and visibility.",
+    fieldType: "accountVerification",
+    fieldInputProps: [
+      {
+        id: "is_profile_verified",
+        placeholder: "Account Verification",
+        type: "text",
+        name: "is_profile_verified",
+      },
+    ],
+  },
+] as FormFieldProps[];

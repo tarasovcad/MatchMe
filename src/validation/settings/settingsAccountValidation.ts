@@ -124,6 +124,8 @@ export const settingsAccountValidationSchema = z.object({
       message: "Description cannot be empty if provided",
     })
     .optional(),
+  is_profile_public: z.boolean().optional(),
+  is_profile_verified: z.boolean().optional(),
 });
 
 export type SettingsAccountFormData = z.infer<

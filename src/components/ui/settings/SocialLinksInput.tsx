@@ -12,6 +12,8 @@ import {DropdownOption, SocialOption} from "@/types/settingsFieldsTypes";
 import {Controller, useFormContext, useWatch} from "react-hook-form";
 import {Option} from "../../shadcn/multiselect";
 import {AnimatePresence, motion} from "framer-motion";
+import {FieldError} from "react-hook-form";
+
 export default function SocialLinksInput({
   id,
   placeholder,
@@ -40,7 +42,6 @@ export default function SocialLinksInput({
   return (
     <div className="flex flex-col gap-3  ">
       {socials.map((social, index) => {
-        console.log(social);
         const fieldName = `${name}_${index + 1}`;
         const selectName = `${name}_${index + 1}_platform`;
 
@@ -111,8 +112,8 @@ export default function SocialLinksInput({
                   animate={{opacity: 1, height: "auto"}}
                   exit={{opacity: 0, height: 0}}
                   transition={{duration: 0.1, ease: "easeInOut"}}>
-                  {fieldError?.message ||
-                    selectError?.message ||
+                  {(fieldError as FieldError)?.message ||
+                    (selectError as FieldError)?.message ||
                     "Invalid input"}
                 </motion.p>
               )}

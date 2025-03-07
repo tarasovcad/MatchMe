@@ -18,6 +18,7 @@ export interface MatchMeUser {
   personal_website: string | null;
   social_links: string | null;
   is_profile_public: boolean;
+  is_profile_verified: boolean;
   created_at: string;
   public_current_role: string | null;
 }

@@ -14,7 +14,9 @@ export interface FormFieldProps {
     | "slider"
     | "webiste"
     | "social"
-    | "description";
+    | "description"
+    | "accountVerification"
+    | "makeProfilePublic";
   fieldRequired?: boolean;
   fieldInputProps: [
     {

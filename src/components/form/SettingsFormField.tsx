@@ -13,6 +13,9 @@ import SocialLinksInput from "../ui/settings/SocialLinksInput";
 import {useFormContext} from "react-hook-form";
 import {Option} from "../shadcn/multiselect";
 import DescriptionEditor from "../ui/DescriptionEditor";
+import MakeProfilePublicSwitch from "../ui/settings/MakeProfilePublicSwitch";
+import VerifyAccountButton from "../ui/settings/VerifyAccountButton";
+import {cn} from "@/lib/utils";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -26,6 +29,8 @@ const fieldComponents = {
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   description: DescriptionEditor,
+  makeProfilePublic: MakeProfilePublicSwitch,
+  accountVerification: VerifyAccountButton,
 };
 
 const SettingsFormField = ({
@@ -45,9 +50,19 @@ const SettingsFormField = ({
     formState: {errors},
   } = useFormContext();
 
+  const isTopSection = () => {
+    return (
+      fieldType === "makeProfilePublic" || fieldType === "accountVerification"
+    );
+  };
+
   return (
-    <div className="flex justify-between items-start gap-8 max-[990px]:flex-col max-[990px]:gap-2 ">
-      <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
+    <div
+      className={cn(
+        "flex justify-between items-start gap-8  max-[990px]:gap-2",
+        isTopSection() ? "" : "max-[990px]:flex-col",
+      )}>
+      <div className="flex flex-col gap-[1px] w-full max-w-[285px] ">
         <p className="text-foreground text-sm font-medium">{fieldTitle}</p>
         {fieldDescription && (
           <p className="text-xs text-muted-foreground break-words">
