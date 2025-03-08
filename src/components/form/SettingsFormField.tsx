@@ -87,7 +87,7 @@ const SettingsFormField = ({
           }
           register={register(fieldName)}
           error={errors[fieldName]}
-          className={`${fieldInputProps[0].disabled && "bg-muted shadow-none !text-foreground"}`}
+          className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>
     </div>

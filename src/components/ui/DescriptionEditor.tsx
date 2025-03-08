@@ -59,7 +59,7 @@ export default function DescriptionEditor({
   return (
     <div
       className={cn(
-        "rounded-lg border border-input bg-background px-2 py-2 text-foreground shadow-sm shadow-black/5 transition-shadow",
+        "rounded-lg border border-input bg-background px-2 py-2 text-foreground shadow-xs shadow-black/5 transition-shadow",
         "disabled:cursor-not-allowed disabled:opacity-50",
         isFocused && "border-ring ring-[3px] ring-ring/20",
       )}
@@ -109,7 +109,7 @@ export default function DescriptionEditor({
         onFocus={() => setIsFocused(true)}
         className={cn(
           "px-[6px] flex min-h-[80px] w-full text-sm placeholder:text-muted-foreground/70 ",
-          "min-h-[none] resize-none focus-visible:ring-ring/0 focus-visible:ring-[0px] focus-visible:border-ring focus-visible:outline-none",
+          "min-h-[none] resize-none focus-visible:ring-ring/0 focus-visible:ring-[0px] focus-visible:border-ring focus-visible:outline-hidden",
           error &&
             "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
           className,

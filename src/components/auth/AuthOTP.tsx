@@ -45,7 +45,7 @@ export default function AuthOTP({setOtp}: AuthOTPProps) {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="flex items-center gap-3 has-[:disabled]:opacity-50 transition-all">
+      className="flex items-center gap-3 has-disabled:opacity-50 transition-all">
       <OTPInput
         id={id}
         containerClassName="flex items-center gap-3"
@@ -82,7 +82,7 @@ function Slot({char, hasError}: SlotProps & {hasError?: boolean}) {
     <motion.div
       variants={itemVariants}
       className={cn(
-        "flex size-12 items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-sm shadow-black/5 transition-shadow",
+        "flex size-12 items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-xs shadow-black/5 transition-shadow",
         hasError
           ? "border-destructive ring-[3px] ring-ring/20"
           : "border-input",

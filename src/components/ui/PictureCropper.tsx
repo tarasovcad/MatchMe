@@ -86,7 +86,7 @@
 //                     type="button"
 //                     variant="outline"
 //                     size="icon"
-//                     className="size-8 absolute -bottom-1 -right-1 z-10 rounded-full bg-background !opacity-100"
+//                     className="size-8 absolute -bottom-1 -right-1 z-10 rounded-full bg-background opacity-100!"
 //                     onClick={handleRemoveImage}>
 //                     <TrashIcon className="size-4 shrink-0" />
 //                   </Button>

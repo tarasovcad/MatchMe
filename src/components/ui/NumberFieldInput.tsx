@@ -28,9 +28,9 @@ export default function NumberFieldInput({
           className={`w-full`}
           name={name}>
           <div className="space-y-2 w-full">
-            <Group className="relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-lg border border-input text-sm shadow-sm shadow-black/5 transition-shadow data-[focus-within]:border-ring data-[disabled]:opacity-50 data-[focus-within]:outline-none data-[focus-within]:ring-[3px] data-[focus-within]:ring-ring/20">
+            <Group className="relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-lg border border-input text-sm shadow-xs shadow-black/5 transition-shadow data-focus-within:border-ring data-disabled:opacity-50 data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20">
               <Input
-                className="flex-1 bg-background px-3 py-2 tabular-nums text-foreground focus:outline-none"
+                className="flex-1 bg-background px-3 py-2 tabular-nums text-foreground focus:outline-hidden"
                 placeholder="23"
                 inputMode="numeric"
                 pattern="\d*"

@@ -141,7 +141,7 @@
 //     "py-2 px-[14px] border border-border rounded-radius font-medium text-sm relative z-10";
 //   const activeClasses = "text-[#09090B] dark:text-[#E4E4E7] cursor-default";
 //   const inactiveClasses =
-//     "text-secondary transition-colors duration-200 hover:!text-[#09090B] dark:hover:!text-[#E4E4E7] cursor-pointer";
+//     "text-secondary transition-colors duration-200 hover:text-[#09090B]! dark:hover:text-[#E4E4E7]! cursor-pointer";
 
 //   return (
 //     <>
@@ -203,7 +203,7 @@ const SingleTab = ({link, title, active}: SingleTabProps) => {
       ) : (
         <Link
           href={`?tab=${link}`}
-          className="py-2 px-[14px] border border-border rounded-radius text-secondary font-medium transition-colors duration-200 hover:bg-[#F2F2F5] hover:!text-[#09090B] dark:hover:bg-[#18181B] dark:hover:!text-[#E4E4E7] cursor-pointer text-sm">
+          className="py-2 px-[14px] border border-border rounded-radius text-secondary font-medium transition-colors duration-200 hover:bg-[#F2F2F5] hover:text-[#09090B]! dark:hover:bg-[#18181B] dark:hover:text-[#E4E4E7]! cursor-pointer text-sm">
           {title}
         </Link>
       )}

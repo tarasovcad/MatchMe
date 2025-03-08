@@ -58,7 +58,7 @@ export default function SocialLinksInput({
 
         return (
           <div className="space-y-2" key={index + social.title}>
-            <div className="flex rounded-lg shadow-xs">
+            <div className="flex rounded-lg shadow-2xs">
               <div className="relative">
                 <Controller
                   name={selectName}
