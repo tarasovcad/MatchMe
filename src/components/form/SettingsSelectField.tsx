@@ -28,16 +28,19 @@ const SettingsSelectField = ({
         <div className="space-y-2">
           <RadioGroup
             value={field.value || ""}
-            className="flex w-full gap-4"
+            className="flex w-full gap-4 max-[1165px]:gap-0 max-[1165px]:flex-col  "
             onValueChange={(value) => field.onChange(value)}>
-            {options?.map((option) => {
+            {options?.map((option, index) => {
               const isActive = field.value === option.title;
               return (
                 <label
                   htmlFor={`${id}-${option.title}`}
                   key={option.title}
                   className={cn(
-                    "py-4 px-[18px] border border-border rounded-[8px] w-full relative transition-colors cursor-pointer ",
+                    "py-4 px-[18px] border border-border  w-full relative transition-colors cursor-pointer min-[1165px]:rounded-[8px] min-[1165px]:  ",
+                    index === 0 && "max-[1165px]:rounded-t-[8px]",
+                    index === 2 && "max-[1165px]:rounded-b-[8px]",
+
                     isActive
                       ? "bg-primary/[9%] border-primary"
                       : "bg-background hover:bg-primary/[7%] hover:border-primary/[30%]",
@@ -48,7 +51,7 @@ const SettingsSelectField = ({
                     aria-describedby={`${id}-2-description`}
                     className="absolute top-3 right-3 w-[14px] h-[14px]"
                   />
-                  <div className="max-w-[134px] w-full flex flex-col gap-[4px]">
+                  <div className="min-[1165px]:max-w-[134px] w-full flex flex-col gap-[4px]">
                     <p className="text-sm text-foreground font-medium">
                       {option.title}
                     </p>
