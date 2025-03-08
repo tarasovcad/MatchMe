@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
 
@@ -17,6 +17,7 @@
   --color-foreground: hsl(var(--foreground));
 
   --color-card: hsl(var(--card));
+  --color-tag: hsl(var(--tag));
   --color-card-foreground: hsl(var(--card-foreground));
 
   --color-popover: hsl(var(--popover));
@@ -141,6 +142,7 @@
     --hoverpurplegradient: linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%);
     --muted-foreground: 240 3.8% 46.1%; /* #71717a */
     --border: 240 5.9% 90%; /* #E0E0E5 */
+    --tag: 220 14%, 96%; /* #F3F4F6 */
 
     /* OTHER SHADCN COLORS */
     --primary-hover: 241 54% 54%; /* #5F6CE1 */
@@ -160,7 +162,7 @@
     --input: 240 4.9% 83.9%; /* #D1D1D6 */
     --ring: 240 5% 64.9%; /* #B0B0B8 */
     --dot-inactive-color: #e4e4e7; /* #E4E4E7 */
-    --success: #1a7f37; /* #1A7F37 */
+    --success: 137, 66%, 30%; /* #1A7F37 */
     --radius: 0.375rem;
     --logo-text-color: 210, 11%, 4%;
     --logo-image-color: 0, 0%, 31%;
@@ -243,8 +245,6 @@
     scrollbar-color: hsl(var(--border)) transparent;
   }
 }
-
-
 
 @layer base {
   * {

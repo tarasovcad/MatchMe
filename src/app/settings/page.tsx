@@ -31,32 +31,13 @@ const SettingsPage = async ({searchParams}: PageProps) => {
     console.log("Error fetching profile:", profileError.message);
     return <div>Error fetching profile</div>;
   }
-  const {data, error} = await supabase.from("skills").select("name");
-
-  // change from name to value for multiselect
-  const skillsArray =
-    data?.map((skill) => ({
-      value: skill.name,
-    })) || [];
-
-  if (error) {
-    console.log("Error fetching skills:", error.message);
-    return <div>Error fetching skills</div>;
-  }
 
   const params = await searchParams;
   const tab = params?.tab ?? "account";
 
-  if (typeof window !== "undefined") {
-    return;
-  }
   return (
     <SidebarProvider>
-      <SettingsClientPage
-        tab={tab}
-        profile={profile}
-        skillsArray={skillsArray || []}
-      />
+      <SettingsClientPage tab={tab} profile={profile} />
     </SidebarProvider>
   );
 };

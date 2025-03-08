@@ -7,9 +7,9 @@ import {
 import {cn} from "@/lib/utils";
 import React from "react";
 
-const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
+const AccountTab = () => {
   return (
-    <div className=" gap-6 flex flex-col">
+    <div className="flex flex-col gap-6">
       <div className="border border-border rounded-[8px]">
         {accountSettingsFormFieldsTop.map((formField, index) => {
           return (
@@ -19,10 +19,7 @@ const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
                 "px-[18px] py-3",
                 index !== 0 && "border-t border-border",
               )}>
-              <SettingsFormField
-                formField={formField}
-                skillsArray={skillsArray}
-              />
+              <SettingsFormField formField={formField} />
             </div>
           );
         })}
@@ -32,7 +29,7 @@ const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
           <div
             key={formFields.formTitle}
             className={`flex flex-col gap-9 max-[990px]:gap-8 ${index !== 0 && "border-t border-border pt-6"}`}>
-            <h4 className="text-xl font-semibold text-foreground">
+            <h4 className="font-semibold text-foreground text-xl">
               {formFields.formTitle}
             </h4>
             <div className="flex flex-col gap-6">
@@ -41,7 +38,6 @@ const AccountTab = ({skillsArray}: {skillsArray: Option[]}) => {
                   <SettingsFormField
                     formField={formField}
                     key={formField.fieldTitle}
-                    skillsArray={skillsArray}
                   />
                 );
               })}

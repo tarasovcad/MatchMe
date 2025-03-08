@@ -56,10 +56,21 @@ export const settingsAccountValidationSchema = z.object({
       message: "Tagline cannot be empty if provided",
     })
     .optional(),
+
   skills: z
-    .array(z.string())
-    .max(20, {message: "Skills must be at most 20 tags"})
+    .array(
+      z
+        .string()
+        .min(2, {message: "Each skill must be at least 2 characters"})
+        .max(30, {message: "Each skill must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9#+\-* ]+$/, {
+          message:
+            "Skills can only contain letters, numbers, hyphens, # and + symbols",
+        }),
+    )
+    .max(15, {message: "Skills must be at most 15 tags"})
     .optional(),
+
   work_availability: z.coerce
     .number()
     .min(0, {message: "Work availability cannot be negative"})

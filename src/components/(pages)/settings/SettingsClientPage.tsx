@@ -18,11 +18,9 @@ import {Option} from "@/components/shadcn/multiselect";
 const SettingsClientPage = ({
   tab,
   profile,
-  skillsArray,
 }: {
   tab: string | string[];
   profile: MatchMeUser;
-  skillsArray: Option[];
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,14 +53,6 @@ const SettingsClientPage = ({
       location_timezone: "Tokyo / Japan Standard Time (UTC +9)",
       // languages_spoken: profile.languages_spoken ?? "",
       languages: ["English", "German"],
-      about_you: profile.about_you ?? "",
-      personal_website: profile.personal_website ?? "",
-      social_links_1_platform: "x.com/",
-      social_links_1: "",
-      social_links_2_platform: "github.com/",
-      social_links_2: "",
-      social_links_3_platform: "linkedin.com/",
-      social_links_3: "",
     },
   });
 
@@ -97,14 +87,14 @@ const SettingsClientPage = ({
     <form onSubmit={methods.handleSubmit(onSubmit)}>
       <FormProvider {...methods}>
         <div className="flex flex-col gap-8 pb-24">
-          <div className="flex flex-col gap-6 ">
+          <div className="flex flex-col gap-6">
             <PageTitle
               title="Settings"
               subtitle="Manage your detail and personal preferences here."
             />
             <SettingsTabs tab={tab} />
           </div>
-          <SelectedComponent profile={profile} skillsArray={skillsArray} />
+          <SelectedComponent profile={profile} />
         </div>
         <SettingsMainButtonts isLoading={isLoading} />
       </FormProvider>
