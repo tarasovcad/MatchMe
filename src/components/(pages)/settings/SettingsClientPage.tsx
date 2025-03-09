@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import SettingsMainButtonts from "@/components/(pages)/settings/SettingsMainButtonts";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
@@ -13,7 +13,7 @@ import {
   settingsAccountValidationSchema,
 } from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
-import {Option} from "@/components/shadcn/multiselect";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 
 const SettingsClientPage = ({
   tab,
@@ -23,6 +23,7 @@ const SettingsClientPage = ({
   profile: MatchMeUser;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const TabComponents = {
     account: AccountTab,
@@ -46,13 +47,10 @@ const SettingsClientPage = ({
       looking_for: profile.looking_for ?? "",
       goals: profile.goals ?? "",
       tagline: profile.tagline ?? "",
-      // skills: Array.isArray(profile.skills) ? profile.skills : [],
-      skills: ["React", "Java"],
+      skills: Array.isArray(profile.skills) ? profile.skills : [],
       work_availability: profile.work_availability ?? undefined,
-      // location_timezone: profile.location_timezone ?? "",
-      location_timezone: "Tokyo / Japan Standard Time (UTC +9)",
-      // languages_spoken: profile.languages_spoken ?? "",
-      languages: ["English", "German"],
+      location_timezone: profile.location_timezone ?? "",
+      languages: Array.isArray(profile.languages) ? profile.languages : [],
     },
   });
 
@@ -82,6 +80,18 @@ const SettingsClientPage = ({
     }
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div>
+        <LoadingButtonCircle />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={methods.handleSubmit(onSubmit)}>

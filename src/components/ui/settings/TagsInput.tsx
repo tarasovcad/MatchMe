@@ -5,8 +5,7 @@ import {useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {X} from "lucide-react";
 import {Controller, useFormContext} from "react-hook-form";
-
-export default function SkillsInput({
+export default function TagsInput({
   placeholder,
   name,
 }: {
@@ -15,7 +14,6 @@ export default function SkillsInput({
 }) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   const {control} = useFormContext();
-
   return (
     <Controller
       name={name}
@@ -38,7 +36,7 @@ export default function SkillsInput({
                 error ? "border-destructive/50" : "border-input"
               } rounded-[6px] font-medium text-sm ps-2 pe-7 flex items-center ${
                 error ? "text-destructive" : "text-foreground"
-              } ${isActiveTag ? `ring-2 ring-${error ? "destructive/30" : "ring/50"}` : ""}`}>
+              } ${isActiveTag ? `ring-2 ring-${error ? "destructive/30" : "ring/50"}` : ""} `}>
               {tag.text}
               <motion.button
                 className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
@@ -66,6 +64,7 @@ export default function SkillsInput({
                 if (error) {
                   return;
                 }
+
                 const tagArray = Array.isArray(newTags) ? newTags : [];
                 const values = tagArray.map(
                   (tag: Tag) =>

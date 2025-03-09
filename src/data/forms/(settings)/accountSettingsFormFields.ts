@@ -1,4 +1,5 @@
 import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
+import {languages} from "./languages";
 
 export const accountSettingsFormFields = [
   {
@@ -154,15 +155,14 @@ export const accountSettingsFormFields = [
       },
       {
         fieldTitle: "Skills",
-        fieldDescription: "Your main skills (up  to 20)",
+        fieldDescription: "Your main skills (up  to 15)",
         fieldType: "tags",
         fieldInputProps: [
           {
             id: "skills",
-            placeholder: "Select skills",
+            placeholder: "Add a skill",
             type: "text",
             name: "skills",
-            tags: [],
           },
         ],
       },
@@ -184,27 +184,13 @@ export const accountSettingsFormFields = [
     formData: [
       {
         fieldTitle: "Location & Timezone",
-        fieldType: "dropdown",
+        fieldType: "timezone",
         fieldInputProps: [
           {
             id: "location_timezone",
             placeholder: "London / British Time (UTC +0)",
             type: "text",
             name: "location_timezone",
-            options: [
-              {
-                title: "London / British Time (UTC +0)",
-              },
-              {
-                title: "New York / Eastern Time (UTC -5)",
-              },
-              {
-                title: "Tokyo / Japan Standard Time (UTC +9)",
-              },
-              {
-                title: "Sydney / Australian Time (UTC +10)",
-              },
-            ],
           },
         ],
       },
@@ -215,34 +201,17 @@ export const accountSettingsFormFields = [
         fieldInputProps: [
           {
             id: "languages",
-            placeholder: "Select languages",
+            placeholder: "Add a language",
             type: "text",
             name: "languages",
-            tags: [
-              {
-                value: "English",
-              },
-              {
-                value: "Spanish",
-              },
-              {
-                value: "French",
-              },
-              {
-                value: "German",
-              },
-
-              {
-                value: "Italian",
-              },
-            ],
+            tags: languages,
           },
         ],
       },
       {
         fieldTitle: "About you",
         fieldDescription: "Write a description for your profile",
-        fieldType: "description",
+        fieldType: "textarea",
         fieldInputProps: [
           {
             id: "about_you",

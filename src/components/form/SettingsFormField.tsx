@@ -11,11 +11,11 @@ import SimpleSlider from "../ui/settings/SimpleSlider";
 import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
 import SocialLinksInput from "../ui/settings/SocialLinksInput";
 import {useFormContext} from "react-hook-form";
-import DescriptionEditor from "../ui/DescriptionEditor";
 import MakeProfilePublicSwitch from "../ui/settings/MakeProfilePublicSwitch";
 import VerifyAccountButton from "../ui/settings/VerifyAccountButton";
 import {cn} from "@/lib/utils";
-import SkillsInput from "../ui/settings/SkillsInput";
+import TagsInput from "../ui/settings/TagsInput";
+import TimeZoneInput from "../(pages)/settings/TimeZoneInput";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -24,13 +24,13 @@ const fieldComponents = {
   dropdown: SelectInput,
   select: SettingsSelectField,
   textarea: AutogrowingTextarea,
-  tags: SkillsInput,
+  tags: TagsInput,
   slider: SimpleSlider,
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
-  description: DescriptionEditor,
   makeProfilePublic: MakeProfilePublicSwitch,
   accountVerification: VerifyAccountButton,
+  timezone: TimeZoneInput,
 };
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
@@ -74,7 +74,6 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           readOnly={fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
-          tags={fieldInputProps[0].tags ?? []}
           register={register(fieldName)}
           error={errors[fieldName]}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}

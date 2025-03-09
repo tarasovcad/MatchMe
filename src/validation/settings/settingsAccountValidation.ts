@@ -1,4 +1,7 @@
+import {languages} from "@/data/forms/(settings)/languages";
 import {z} from "zod";
+
+const allowedLanguages = new Set(languages.map((lang) => lang.value));
 
 export const settingsAccountValidationSchema = z.object({
   name: z
@@ -77,9 +80,22 @@ export const settingsAccountValidationSchema = z.object({
     .max(168, {message: "Work availability cannot exceed 168 hours per week"})
     .optional(),
   location_timezone: z.string().optional(),
+
   languages: z
-    .array(z.string())
-    .max(20, {message: "Languages must be at most 20 tags"})
+    .array(
+      z
+        .string()
+        .min(2, {message: "Each language must be at least 2 characters"})
+        .max(30, {message: "Each language must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9#+\-* ]+$/, {
+          message:
+            "Languages can only contain letters, numbers, hyphens, # and + symbols",
+        })
+        .refine((val) => allowedLanguages.has(val), {
+          message: "Language must be one of the supported languages",
+        }),
+    )
+    .max(15, {message: "Languages must be at most 15 tags"})
     .optional(),
   about_you: z
     .string()

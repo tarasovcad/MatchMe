@@ -1,9 +1,9 @@
 import SettingsFormField from "@/components/form/SettingsFormField";
-import {Option} from "@/components/shadcn/multiselect";
 import {
   accountSettingsFormFields,
   accountSettingsFormFieldsTop,
 } from "@/data/forms/(settings)/accountSettingsFormFields";
+
 import {cn} from "@/lib/utils";
 import React from "react";
 
