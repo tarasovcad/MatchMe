@@ -16,110 +16,138 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import {CheckIcon, ChevronDownIcon} from "lucide-react";
-import {useId, useMemo, useState} from "react";
+import {useCallback, useId, useMemo, useState, memo} from "react";
 import {Controller, useFormContext} from "react-hook-form";
+import {AnimatePresence, motion} from "framer-motion";
 
-export default function TimeZoneInput({name}: {name: string}) {
+// Memoize timezone data calculation
+const timezones = Intl.supportedValuesOf("timeZone");
+
+const formattedTimezones = timezones
+  .map((timezone) => {
+    const formatter = new Intl.DateTimeFormat("en", {
+      timeZone: timezone,
+      timeZoneName: "shortOffset",
+    });
+    const parts = formatter.formatToParts(new Date());
+    const offset =
+      parts.find((part) => part.type === "timeZoneName")?.value || "";
+    const modifiedOffset = offset === "GMT" ? "GMT+0" : offset;
+    const fullLabel = `(${modifiedOffset}) ${timezone.replace(/_/g, " ")}`;
+
+    return {
+      value: fullLabel,
+      label: fullLabel,
+      numericOffset: parseInt(
+        offset.replace("GMT", "").replace("+", "") || "0",
+      ),
+    };
+  })
+  .sort((a, b) => a.numericOffset - b.numericOffset);
+
+function TimeZoneInput({name}: {name: string}) {
   const id = useId();
-  const [open, setOpen] = useState<boolean>(false);
+  const [open, setOpen] = useState(false);
   const {getValues} = useFormContext();
-  const timezones = Intl.supportedValuesOf("timeZone");
 
-  const formattedTimezones = useMemo(() => {
-    return timezones
-      .map((timezone) => {
-        const formatter = new Intl.DateTimeFormat("en", {
-          timeZone: timezone,
-          timeZoneName: "shortOffset",
-        });
-        const parts = formatter.formatToParts(new Date());
-        const offset =
-          parts.find((part) => part.type === "timeZoneName")?.value || "";
-        const modifiedOffset = offset === "GMT" ? "GMT+0" : offset;
-        const fullLabel = `(${modifiedOffset}) ${timezone.replace(/_/g, " ")}`;
-
-        return {
-          value: fullLabel,
-          label: `(${modifiedOffset}) ${timezone.replace(/_/g, " ")}`,
-          numericOffset: parseInt(
-            offset.replace("GMT", "").replace("+", "") || "0",
-          ),
-        };
-      })
-      .sort((a, b) => a.numericOffset - b.numericOffset);
-  }, [timezones]);
+  // Memoize filter function
+  const filterTimezone = useCallback((value: string, search: string) => {
+    const normalizedValue = value.toLowerCase();
+    const normalizedSearch = search.toLowerCase().replace(/\s+/g, "");
+    return normalizedValue.includes(normalizedSearch) ? 1 : 0;
+  }, []);
 
   return (
     <Controller
       name={name}
       defaultValue={getValues(name)}
       render={({field, fieldState: {error}}) => {
+        // Memoize select handler with functional update
+        const handleSelect = useCallback(
+          (currentValue: string) => {
+            field.onChange(currentValue === field.value ? "" : currentValue);
+            setOpen(false);
+          },
+          [field.onChange, field.value],
+        );
+
         return (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                id={id}
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="justify-between bg-background hover:bg-background px-3 border-input outline-none focus-visible:outline-[3px] outline-offset-0 w-full h-9 font-normal text-foreground">
-                <span
+          <div className="space-y-2">
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id={id}
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
                   className={cn(
-                    "truncate",
-                    !field.value && "text-muted-foreground",
+                    "justify-between bg-background hover:bg-background px-3 border-input outline-none focus-visible:outline-[3px] outline-offset-0 w-full h-9 font-normal text-foreground m-0",
+                    error &&
+                      "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20 hover:text-destructive",
                   )}>
-                  {field.value
-                    ? formattedTimezones.find(
-                        (timezone) => timezone.value === field.value,
-                      )?.label
-                    : "Select timezone"}
-                </span>
-                <ChevronDownIcon
-                  size={16}
-                  className="text-muted-foreground/80 shrink-0"
-                  aria-hidden="true"
-                />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="p-0 border-input w-full min-w-[var(--radix-popper-anchor-width)]"
-              align="start">
-              <Command
-                filter={(value, search) => {
-                  const normalizedValue = value.toLowerCase();
-                  const normalizedSearch = search
-                    .toLowerCase()
-                    .replace(/\s+/g, "");
-                  return normalizedValue.includes(normalizedSearch) ? 1 : 0;
-                }}>
-                <CommandInput placeholder="Search timezone..." />
-                <CommandList>
-                  <CommandEmpty>No timezone found.</CommandEmpty>
-                  <CommandGroup>
-                    {formattedTimezones.map(({value: itemValue, label}) => (
-                      <CommandItem
-                        key={itemValue}
-                        value={itemValue}
-                        onSelect={(currentValue) => {
-                          console.log(currentValue);
-                          field.onChange(
-                            currentValue === field.value ? "" : currentValue,
-                          );
-                          setOpen(false);
-                        }}>
-                        {label}
-                        {field.value === itemValue && (
-                          <CheckIcon size={16} className="ml-auto" />
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                  <span
+                    className={cn(
+                      "truncate",
+                      !field.value && "text-muted-foreground",
+                    )}>
+                    {field.value
+                      ? formattedTimezones.find(
+                          (timezone) => timezone.value === field.value,
+                        )?.label
+                      : "Select timezone"}
+                  </span>
+                  <ChevronDownIcon
+                    size={16}
+                    className={cn(
+                      "text-muted-foreground/80 shrink-0",
+                      error && "text-destructive",
+                    )}
+                    aria-hidden="true"
+                  />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="p-0 border-input w-full min-w-[var(--radix-popper-anchor-width)]"
+                align="start">
+                <Command filter={filterTimezone}>
+                  <CommandInput placeholder="Search timezone..." />
+                  <CommandList>
+                    <CommandEmpty>No timezone found.</CommandEmpty>
+                    <CommandGroup>
+                      {formattedTimezones.map(({value: itemValue, label}) => (
+                        <CommandItem
+                          key={itemValue}
+                          value={itemValue}
+                          onSelect={handleSelect}>
+                          {label}
+                          {field.value === itemValue && (
+                            <CheckIcon size={16} className="ml-auto" />
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            <AnimatePresence>
+              {error?.message && (
+                <motion.p
+                  className="text-destructive text-xs"
+                  layout
+                  initial={{opacity: 0, height: 0, marginTop: 0}}
+                  animate={{opacity: 1, height: "auto", marginTop: 8}}
+                  exit={{opacity: 0, height: 0, marginTop: 0}}
+                  transition={{duration: 0.1, ease: "easeInOut"}}>
+                  {error.message}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
         );
       }}
     />
   );
 }
+
+export default memo(TimeZoneInput);

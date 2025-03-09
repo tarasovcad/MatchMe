@@ -30,7 +30,7 @@ const fieldComponents = {
   slider: SimpleSlider,
   // webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
-  // timezone: TimeZoneInput,
+  timezone: TimeZoneInput,
 };
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
