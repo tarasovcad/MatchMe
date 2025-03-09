@@ -51,6 +51,12 @@ const SettingsClientPage = ({
       work_availability: profile.work_availability ?? undefined,
       location_timezone: profile.location_timezone ?? "",
       languages: Array.isArray(profile.languages) ? profile.languages : [],
+      // social_links_1_platform: profile.social_links_1_platform ?? "",
+      // social_links_1: profile.social_links_1 ?? "ASCVDF",
+      // social_links_2_platform: profile.social_links_2_platform ?? "",
+      // social_links_2: profile.social_links_2 ?? "ASCVDF",
+      // social_links_3_platform: profile.social_links_3_platform ?? "",
+      // social_links_3: profile.social_links_3 ?? "AS134DF",
     },
   });
 

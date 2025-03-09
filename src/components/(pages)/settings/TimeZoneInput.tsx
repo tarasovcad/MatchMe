@@ -49,8 +49,6 @@ export default function TimeZoneInput({name}: {name: string}) {
       .sort((a, b) => a.numericOffset - b.numericOffset);
   }, [timezones]);
 
-  console.log(formattedTimezones);
-
   return (
     <Controller
       name={name}

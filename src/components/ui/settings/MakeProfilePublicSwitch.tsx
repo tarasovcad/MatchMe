@@ -22,7 +22,7 @@ const MakeProfilePublicSwitch = ({id, name}: {id: string; name: string}) => {
           animate={{opacity: 1, height: "auto"}}
           exit={{opacity: 0, height: 0, marginTop: 0}}
           transition={{duration: 0.1, ease: "easeInOut"}}
-          className="text-sm font-medium text-foreground inline-block">
+          className="inline-block w-[46px] font-medium text-foreground text-sm">
           {isVisible ? "Visible" : "Hidden"}
         </motion.span>
       </AnimatePresence>

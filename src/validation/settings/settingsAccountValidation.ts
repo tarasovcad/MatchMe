@@ -4,6 +4,8 @@ import {z} from "zod";
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
 
 export const settingsAccountValidationSchema = z.object({
+  is_profile_public: z.boolean().optional(),
+  is_profile_verified: z.boolean().optional(),
   name: z
     .string()
     .min(1, "Full name is required")
@@ -151,8 +153,6 @@ export const settingsAccountValidationSchema = z.object({
       message: "Description cannot be empty if provided",
     })
     .optional(),
-  is_profile_public: z.boolean().optional(),
-  is_profile_verified: z.boolean().optional(),
 });
 
 export type SettingsAccountFormData = z.infer<

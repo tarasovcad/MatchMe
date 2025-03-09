@@ -18,6 +18,8 @@ import TagsInput from "../ui/settings/TagsInput";
 import TimeZoneInput from "../(pages)/settings/TimeZoneInput";
 
 const fieldComponents = {
+  makeProfilePublic: MakeProfilePublicSwitch,
+  accountVerification: VerifyAccountButton,
   text: SimpleInput,
   number: NumberFieldInput,
   image: SettingsProfilePhoto,
@@ -26,11 +28,9 @@ const fieldComponents = {
   textarea: AutogrowingTextarea,
   tags: TagsInput,
   slider: SimpleSlider,
-  webiste: PersonalWebsiteInput,
+  // webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
-  makeProfilePublic: MakeProfilePublicSwitch,
-  accountVerification: VerifyAccountButton,
-  timezone: TimeZoneInput,
+  // timezone: TimeZoneInput,
 };
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
