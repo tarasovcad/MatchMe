@@ -7,7 +7,7 @@ import {
 } from "@/components/shadcn/select";
 import {DropdownOption} from "@/types/settingsFieldsTypes";
 import {AnimatePresence, motion} from "framer-motion";
-import {useFormContext, UseFormRegisterReturn} from "react-hook-form";
+import {useFormContext} from "react-hook-form";
 
 export default function SelectInput({
   id,
@@ -15,14 +15,12 @@ export default function SelectInput({
   name,
   className,
   options,
-  register,
   error,
 }: {
   id: string;
   placeholder: string;
   name: string;
   className: string;
-  register?: UseFormRegisterReturn<string>;
   options: DropdownOption[];
   error?: {message?: string} | undefined;
 }) {
@@ -49,7 +47,7 @@ export default function SelectInput({
       <AnimatePresence>
         {error?.message && (
           <motion.p
-            className="text-xs text-destructive"
+            className="text-destructive text-xs"
             layout
             initial={{opacity: 0, height: 0, marginTop: 0}}
             animate={{opacity: 1, height: "auto", marginTop: 8}}

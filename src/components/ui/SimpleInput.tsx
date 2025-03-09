@@ -1,7 +1,6 @@
 import {Label} from "@/components/shadcn/label";
 import {CircleCheck, Mail, TriangleAlert} from "lucide-react";
 import {cn} from "@/lib/utils";
-import {UseFormRegisterReturn} from "react-hook-form";
 import {AnimatePresence, motion} from "framer-motion";
 import LoadingButtonCirlce from "./LoadingButtonCirlce";
 import {SimpleInputProps} from "@/types/simpleInputProps";
@@ -27,7 +26,7 @@ const SimpleInput = ({
       <div className="relative w-full">
         <input
           className={cn(
-            "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-muted ",
+            "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-muted ",
             type === "search" &&
               "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
             type === "file" &&
@@ -53,12 +52,12 @@ const SimpleInput = ({
           {...props}
         />
         {mail && (
-          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+          <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
             <Mail size={16} strokeWidth={2} aria-hidden="true" />
           </div>
         )}
         {loading && (
-          <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-muted-foreground/80 peer-disabled:opacity-50">
+          <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 pe-3 text-muted-foreground/80 pointer-events-none end-0">
             <LoadingButtonCirlce size={16} />
           </div>
         )}
@@ -66,7 +65,7 @@ const SimpleInput = ({
       <AnimatePresence>
         {error?.message && (
           <motion.p
-            className="text-xs text-destructive"
+            className="text-destructive text-xs"
             layout
             initial={{opacity: 0, height: 0, marginTop: 0}}
             animate={{opacity: 1, height: "auto", marginTop: 8}}
@@ -79,14 +78,14 @@ const SimpleInput = ({
       <AnimatePresence>
         {isUsernameAvailable === false && !error && (
           <motion.div
-            className="text-xs text-destructive flex items-center gap-1.5"
+            className="flex items-center gap-1.5 text-destructive text-xs"
             layout
             initial={{opacity: 0, height: 0, marginTop: 0}}
             animate={{opacity: 1, height: "auto", marginTop: 8}}
             exit={{opacity: 0, height: 0, marginTop: 0}}
             transition={{duration: 0.1, ease: "easeInOut"}}>
             <TriangleAlert
-              className="-mt-0.5  inline-flex "
+              className="inline-flex -mt-0.5"
               size={14}
               strokeWidth={2}
               aria-hidden="true"
@@ -98,14 +97,14 @@ const SimpleInput = ({
       <AnimatePresence>
         {isUsernameAvailable === true && !error && (
           <motion.div
-            className="text-xs text-success flex items-center gap-1.5"
+            className="flex items-center gap-1.5 text-success text-xs"
             layout
             initial={{opacity: 0, height: 0, marginTop: 0}}
             animate={{opacity: 1, height: "auto", marginTop: 8}}
             exit={{opacity: 0, height: 0, marginTop: 0}}
             transition={{duration: 0.1, ease: "easeInOut"}}>
             <CircleCheck
-              className="-mt-0.5 inline-flex"
+              className="inline-flex -mt-0.5"
               size={14}
               strokeWidth={2}
               aria-hidden="true"

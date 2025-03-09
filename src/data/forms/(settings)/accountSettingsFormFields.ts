@@ -1,4 +1,5 @@
-import {FormProps} from "@/types/settingsFieldsTypes";
+import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
+import {languages} from "./languages";
 
 export const accountSettingsFormFields = [
   {
@@ -91,10 +92,10 @@ export const accountSettingsFormFields = [
         fieldType: "text",
         fieldInputProps: [
           {
-            id: "",
+            id: "public_current_role",
             placeholder: "Data Analytics",
             type: "text",
-            name: "currentRole",
+            name: "public_current_role",
           },
         ],
       },
@@ -104,10 +105,10 @@ export const accountSettingsFormFields = [
         fieldType: "select",
         fieldInputProps: [
           {
-            id: "lookingFor",
+            id: "looking_for",
             placeholder: "I'm looking for a new job",
             type: "text",
-            name: "lookingFor",
+            name: "looking_for",
             options: [
               {
                 title: "Team Member",
@@ -146,7 +147,7 @@ export const accountSettingsFormFields = [
         fieldInputProps: [
           {
             id: "tagline",
-            placeholder: "I'm a...",
+            placeholder: "Looking for my next entrepreneurial journey",
             type: "text",
             name: "tagline",
           },
@@ -154,15 +155,14 @@ export const accountSettingsFormFields = [
       },
       {
         fieldTitle: "Skills",
-        fieldDescription: "Your main skills (up  to 20)",
+        fieldDescription: "Your main skills (up  to 15)",
         fieldType: "tags",
         fieldInputProps: [
           {
             id: "skills",
-            placeholder: "Select skills",
+            placeholder: "Add a skill",
             type: "text",
             name: "skills",
-            tags: [],
           },
         ],
       },
@@ -172,8 +172,8 @@ export const accountSettingsFormFields = [
         fieldType: "slider",
         fieldInputProps: [
           {
-            id: "availability",
-            name: "availability",
+            id: "work_availability",
+            name: "work_availability",
           },
         ],
       },
@@ -184,27 +184,13 @@ export const accountSettingsFormFields = [
     formData: [
       {
         fieldTitle: "Location & Timezone",
-        fieldType: "dropdown",
+        fieldType: "timezone",
         fieldInputProps: [
           {
-            id: "location",
+            id: "location_timezone",
             placeholder: "London / British Time (UTC +0)",
             type: "text",
-            name: "location",
-            options: [
-              {
-                title: "London / British Time (UTC +0)",
-              },
-              {
-                title: "New York / Eastern Time (UTC -5)",
-              },
-              {
-                title: "Tokyo / Japan Standard Time (UTC +9)",
-              },
-              {
-                title: "Sydney / Australian Time (UTC +10)",
-              },
-            ],
+            name: "location_timezone",
           },
         ],
       },
@@ -215,45 +201,23 @@ export const accountSettingsFormFields = [
         fieldInputProps: [
           {
             id: "languages",
-            placeholder: "Select languages",
+            placeholder: "Add a language",
             type: "text",
             name: "languages",
-            tags: [
-              {
-                label: "English",
-                value: "english",
-              },
-              {
-                label: "Spanish",
-                value: "spanish",
-              },
-              {
-                label: "French",
-                value: "french",
-              },
-              {
-                label: "German",
-                value: "german",
-              },
-
-              {
-                label: "Italian",
-                value: "italian",
-              },
-            ],
+            tags: languages,
           },
         ],
       },
       {
         fieldTitle: "About you",
         fieldDescription: "Write a description for your profile",
-        fieldType: "description",
+        fieldType: "textarea",
         fieldInputProps: [
           {
-            id: "about",
+            id: "about_you",
             placeholder: "Write a description for your profile",
             type: "text",
-            name: "about",
+            name: "about_you",
           },
         ],
       },
@@ -263,10 +227,10 @@ export const accountSettingsFormFields = [
         fieldType: "webiste",
         fieldInputProps: [
           {
-            id: "website",
+            id: "personal_website",
             placeholder: "example.com",
             type: "text",
-            name: "website",
+            name: "personal_website",
           },
         ],
       },
@@ -277,20 +241,35 @@ export const accountSettingsFormFields = [
         fieldType: "social",
         fieldInputProps: [
           {
-            id: "social",
+            id: "social_links",
             placeholder: "example.com",
             type: "text",
-            name: "social",
+            name: "social_links",
             socials: [
               {
-                value: "twitter.com/",
+                title: "x.com/",
               },
               {
-                value: "facebook.com/",
+                title: "github.com/",
               },
               {
-                value: "linkedin.com/company",
+                title: "linkedin.com/",
               },
+            ],
+            options: [
+              {title: "x.com/"},
+              {title: "github.com/"},
+              {title: "linkedin.com/"},
+              {title: "instagram.com/"},
+              {title: "facebook.com/"},
+              {title: "tiktok.com/@"},
+              {title: "youtube.com/c/"},
+              {title: "medium.com/@"},
+              {title: "dribbble.com/"},
+              {title: "reddit.com/u/"},
+              {title: "behance.net/"},
+              {title: "stackoverflow.com/users/"},
+              {title: "leetcode.com/"},
             ],
           },
         ],
@@ -298,3 +277,32 @@ export const accountSettingsFormFields = [
     ],
   },
 ] as FormProps[];
+
+export const accountSettingsFormFieldsTop = [
+  {
+    fieldTitle: "Make Profile Public",
+    fieldDescription: "Enable to make your profile visible to others",
+    fieldType: "makeProfilePublic",
+    fieldInputProps: [
+      {
+        id: "is_profile_public",
+        placeholder: "Make Profile Public",
+        type: "text",
+        name: "is_profile_public",
+      },
+    ],
+  },
+  {
+    fieldTitle: "Account Verification",
+    fieldDescription: "Verify your account to gain trust and visibility.",
+    fieldType: "accountVerification",
+    fieldInputProps: [
+      {
+        id: "is_profile_verified",
+        placeholder: "Account Verification",
+        type: "text",
+        name: "is_profile_verified",
+      },
+    ],
+  },
+] as FormFieldProps[];

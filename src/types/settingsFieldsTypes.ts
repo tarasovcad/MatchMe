@@ -14,7 +14,9 @@ export interface FormFieldProps {
     | "slider"
     | "webiste"
     | "social"
-    | "description";
+    | "description"
+    | "accountVerification"
+    | "makeProfilePublic";
   fieldRequired?: boolean;
   fieldInputProps: [
     {
@@ -43,5 +45,6 @@ export interface DropdownOption {
 }
 
 export interface SocialOption {
-  value: string;
+  title: string;
+  url?: string;
 }

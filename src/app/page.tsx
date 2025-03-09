@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ThemeToggle from "@/components/other/ThemeToggle";
 import SidebarProvider from "@/providers/SidebarProvider";
+
 export default async function HomePage() {
   const supabase = await createClient();
 
@@ -14,7 +15,7 @@ export default async function HomePage() {
 
   if (!user) {
     return (
-      <div className="p-10 flex flex-col gap-4">
+      <div className="flex flex-col gap-4 p-10">
         <ThemeToggle />
         <div>User not logged in</div>
         <div className="flex flex-col gap-4 max-w-[200px]">

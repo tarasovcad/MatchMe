@@ -112,7 +112,7 @@ export function SidebarUserDropdown({
               initial="closed"
               animate={isOpen ? "open" : "closed"}
               variants={menuVariants}
-              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg">
+              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg">
               <div className="space-y-2">
                 <motion.div variants={userInfoVariants}>
                   <DropdownMenuLabel className="p-0 font-normal">

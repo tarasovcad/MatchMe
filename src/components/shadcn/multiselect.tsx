@@ -17,7 +17,7 @@ import {
 
 export interface Option {
   value: string;
-  label: string;
+  label?: string;
   disable?: boolean;
   /** fixed option that can't be removed. */
   fixed?: boolean;

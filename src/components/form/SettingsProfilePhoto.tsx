@@ -5,8 +5,8 @@ import {CloudAdd} from "iconsax-react";
 import MainGradient from "../ui/Text";
 const SettingsProfilePhoto = () => {
   return (
-    <div className="flex items-start gap-6 w-full">
-      <Avatar className="h-[85px] w-[85px] rounded-full">
+    <div className="flex items-start gap-6 w-full max-[1015px]:gap-3 max-[990px]:gap-6">
+      <Avatar className="h-[85px] w-[85px] rounded-full max-[1015px]:h-[75px] max-[1015px]:w-[75px]">
         <AvatarImage
           src={
             "https://lh3.googleusercontent.com/a/ACg8ocKgWPBgzrCGrCCv9RX38lQamdwTQ6VZWgFMipM4DLxjLDXh2nk=s96-c"
