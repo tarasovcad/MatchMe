@@ -45,12 +45,14 @@ const SettingsClientPage = ({
       age: profile.age ?? undefined,
       public_current_role: profile.public_current_role ?? "",
       looking_for: profile.looking_for ?? "",
-      goals: profile.goals ?? "",
+      goal: profile.goal ?? "",
       tagline: profile.tagline ?? "",
       skills: Array.isArray(profile.skills) ? profile.skills : [],
       work_availability: profile.work_availability ?? undefined,
       location_timezone: profile.location_timezone ?? "",
       languages: Array.isArray(profile.languages) ? profile.languages : [],
+      personal_website: profile.personal_website ?? "",
+      about_you: profile.about_you ?? "",
       // social_links_1_platform: profile.social_links_1_platform ?? "",
       // social_links_1: profile.social_links_1 ?? "ASCVDF",
       // social_links_2_platform: profile.social_links_2_platform ?? "",
@@ -63,24 +65,7 @@ const SettingsClientPage = ({
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
-      const processedData = {
-        ...data,
-        socialLinks: [
-          {
-            platform: data.social_links_1_platform,
-            link: data.social_links_1,
-          },
-          {
-            platform: data.social_links_2_platform,
-            link: data.social_links_2,
-          },
-          {
-            platform: data.social_links_3_platform,
-            link: data.social_links_3,
-          },
-        ].filter((link) => link.platform && link.link),
-      };
-      await submitAccountForm(processedData);
+      await submitAccountForm(data);
     } catch (error) {
       console.error("Form submission error:", error);
     }

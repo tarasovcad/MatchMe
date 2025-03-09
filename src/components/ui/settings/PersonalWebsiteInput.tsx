@@ -94,7 +94,7 @@ export default function PersonalWebsiteInput({
       <AnimatePresence>
         {error?.message && (
           <motion.p
-            className="text-xs text-destructive"
+            className="text-destructive text-xs"
             layout
             initial={{opacity: 0, height: 0, marginTop: 0}}
             animate={{opacity: 1, height: "auto", marginTop: 8}}

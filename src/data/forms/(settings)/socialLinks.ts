@@ -1,0 +1,15 @@
+export const socialLinks = [
+  {title: "x.com/"},
+  {title: "github.com/"},
+  {title: "linkedin.com/"},
+  {title: "instagram.com/"},
+  {title: "facebook.com/"},
+  {title: "tiktok.com/@"},
+  {title: "youtube.com/c/"},
+  {title: "medium.com/@"},
+  {title: "dribbble.com/"},
+  {title: "reddit.com/u/"},
+  {title: "behance.net/"},
+  {title: "stackoverflow.com/users/"},
+  {title: "leetcode.com/"},
+];

@@ -28,24 +28,24 @@ export default function NumberFieldInput({
           className={`w-full`}
           name={name}>
           <div className="space-y-2 w-full">
-            <Group className="relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-lg border border-input text-sm shadow-xs shadow-black/5 transition-shadow data-focus-within:border-ring data-disabled:opacity-50 data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20">
+            <Group className="inline-flex relative items-center data-disabled:opacity-50 shadow-black/5 shadow-xs m-0 border border-input data-focus-within:border-ring rounded-lg data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20 w-full h-9 overflow-hidden text-sm whitespace-nowrap transition-shadow">
               <Input
-                className="flex-1 bg-background px-3 py-2 tabular-nums text-foreground focus:outline-hidden"
+                className="flex-1 bg-background px-3 py-2 focus:outline-hidden tabular-nums text-foreground"
                 placeholder="23"
                 inputMode="numeric"
                 pattern="\d*"
                 id={id}
                 {...field}
               />
-              <div className="flex h-[calc(100%+2px)] flex-col">
+              <div className="flex flex-col h-[calc(100%+2px)]">
                 <Button
                   slot="increment"
-                  className="-me-px flex h-1/2 w-6 flex-1 items-center justify-center border border-input bg-background text-sm text-muted-foreground/80 transition-shadow hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50">
+                  className="flex flex-1 justify-center items-center bg-background hover:bg-accent disabled:opacity-50 -me-px border border-input w-6 h-1/2 text-muted-foreground/80 hover:text-foreground text-sm transition-shadow disabled:cursor-not-allowed disabled:pointer-events-none">
                   <ChevronUp size={12} strokeWidth={2} aria-hidden="true" />
                 </Button>
                 <Button
                   slot="decrement"
-                  className="-me-px -mt-px flex h-1/2 w-6 flex-1 items-center justify-center border border-input bg-background text-sm text-muted-foreground/80 transition-shadow hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50">
+                  className="flex flex-1 justify-center items-center bg-background hover:bg-accent disabled:opacity-50 -me-px -mt-px border border-input w-6 h-1/2 text-muted-foreground/80 hover:text-foreground text-sm transition-shadow disabled:cursor-not-allowed disabled:pointer-events-none">
                   <ChevronDown size={12} strokeWidth={2} aria-hidden="true" />
                 </Button>
               </div>
@@ -53,7 +53,7 @@ export default function NumberFieldInput({
             <AnimatePresence>
               {error?.message && (
                 <motion.p
-                  className="text-xs text-destructive"
+                  className="text-destructive text-xs"
                   layout
                   initial={{opacity: 0, height: 0, marginTop: 0}}
                   animate={{opacity: 1, height: "auto", marginTop: 8}}

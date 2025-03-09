@@ -8,7 +8,7 @@ export interface MatchMeUser {
   image: string;
   current_role: string | null;
   looking_for: string | null;
-  goals: string | null;
+  goal: string | null;
   tagline: string | null;
   skills: string | null;
   work_availability: number | null;

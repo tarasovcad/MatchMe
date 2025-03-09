@@ -64,12 +64,17 @@ export default function TagsInput({
                 if (error) {
                   return;
                 }
-
                 const tagArray = Array.isArray(newTags) ? newTags : [];
-                const values = tagArray.map(
-                  (tag: Tag) =>
-                    tag.text.charAt(0).toUpperCase() + tag.text.slice(1),
-                );
+                const normalizedMap = new Map();
+                const uniqueTags = tagArray.filter((tag) => {
+                  const normalized = tag.text.toLowerCase();
+                  if (normalizedMap.has(normalized)) {
+                    return false;
+                  }
+                  normalizedMap.set(normalized, true);
+                  return true;
+                });
+                const values = uniqueTags.map((tag) => tag.text);
                 field.onChange(values);
               }}
               placeholder={placeholder}

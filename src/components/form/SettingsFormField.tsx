@@ -28,7 +28,7 @@ const fieldComponents = {
   textarea: AutogrowingTextarea,
   tags: TagsInput,
   slider: SimpleSlider,
-  // webiste: PersonalWebsiteInput,
+  webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   timezone: TimeZoneInput,
 };
