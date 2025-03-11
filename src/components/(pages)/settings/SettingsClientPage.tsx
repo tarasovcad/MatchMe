@@ -1,17 +1,10 @@
 "use client";
 import React, {useEffect, useState} from "react";
-import SettingsMainButtonts from "@/components/(pages)/settings/SettingsMainButtonts";
+import SettingsMainButtons from "@/components/(pages)/settings/SettingsMainButtons";
 import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
 import PageTitle from "@/components/pages/PageTitle";
-import {submitAccountForm} from "@/actions/settings/submitAccountForm";
 import AccountTab from "@/components/(pages)/settings/AccountTab";
 import SecurityTab from "@/components/(pages)/settings/SecurityTab";
-import {FormProvider, useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {
-  SettingsAccountFormData,
-  settingsAccountValidationSchema,
-} from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 
@@ -24,6 +17,8 @@ const SettingsClientPage = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [handleSave, setHandleSave] = useState<() => void>(() => {});
+  const [handleCancel, setHandleCancel] = useState<() => void>(() => {});
 
   const TabComponents = {
     account: AccountTab,
@@ -32,45 +27,6 @@ const SettingsClientPage = ({
 
   const SelectedComponent =
     TabComponents[tab as keyof typeof TabComponents] || AccountTab;
-
-  const methods = useForm<SettingsAccountFormData>({
-    resolver: zodResolver(settingsAccountValidationSchema),
-    mode: "onChange",
-    defaultValues: {
-      is_profile_public: profile.is_profile_public ?? false,
-      is_profile_verified: profile.is_profile_verified ?? false,
-      name: profile.name ?? "",
-      username: profile.username ?? "",
-      pronouns: profile.pronouns ?? "",
-      age: profile.age ?? undefined,
-      public_current_role: profile.public_current_role ?? "",
-      looking_for: profile.looking_for ?? "",
-      goal: profile.goal ?? "",
-      tagline: profile.tagline ?? "",
-      skills: Array.isArray(profile.skills) ? profile.skills : [],
-      work_availability: profile.work_availability ?? undefined,
-      location_timezone: profile.location_timezone ?? "",
-      languages: Array.isArray(profile.languages) ? profile.languages : [],
-      personal_website: profile.personal_website ?? "",
-      about_you: profile.about_you ?? "",
-      // social_links_1_platform: profile.social_links_1_platform ?? "",
-      // social_links_1: profile.social_links_1 ?? "ASCVDF",
-      // social_links_2_platform: profile.social_links_2_platform ?? "",
-      // social_links_2: profile.social_links_2 ?? "ASCVDF",
-      // social_links_3_platform: profile.social_links_3_platform ?? "",
-      // social_links_3: profile.social_links_3 ?? "AS134DF",
-    },
-  });
-
-  const onSubmit = async (data: SettingsAccountFormData) => {
-    setIsLoading(true);
-    try {
-      await submitAccountForm(data);
-    } catch (error) {
-      console.error("Form submission error:", error);
-    }
-    setIsLoading(false);
-  };
 
   useEffect(() => {
     setIsClient(true);
@@ -85,20 +41,27 @@ const SettingsClientPage = ({
   }
 
   return (
-    <form onSubmit={methods.handleSubmit(onSubmit)}>
-      <FormProvider {...methods}>
-        <div className="flex flex-col gap-8 pb-24">
-          <div className="flex flex-col gap-6">
-            <PageTitle
-              title="Settings"
-              subtitle="Manage your detail and personal preferences here."
-            />
-            <SettingsTabs tab={tab} />
-          </div>
-          <SelectedComponent profile={profile} />
+    <form onSubmit={(e) => e.preventDefault()}>
+      <div className="flex flex-col gap-8 pb-24">
+        <div className="flex flex-col gap-6">
+          <PageTitle
+            title="Settings"
+            subtitle="Manage your detail and personal preferences here."
+          />
+          <SettingsTabs tab={tab} />
         </div>
-        <SettingsMainButtonts isLoading={isLoading} />
-      </FormProvider>
+        <SelectedComponent
+          profile={profile}
+          setIsLoading={setIsLoading}
+          setHandleSave={setHandleSave}
+          setHandleCancel={setHandleCancel}
+        />
+      </div>
+      <SettingsMainButtons
+        isLoading={isLoading}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
+      />
     </form>
   );
 };
