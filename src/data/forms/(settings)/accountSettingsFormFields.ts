@@ -1,5 +1,6 @@
 import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
 import {languages} from "./languages";
+import {socialLinks} from "./socialLinks";
 
 export const accountSettingsFormFields = [
   {
@@ -127,16 +128,16 @@ export const accountSettingsFormFields = [
         ],
       },
       {
-        fieldTitle: "Goals",
+        fieldTitle: "Goal",
         fieldDescription:
           "Describe your current professional aspirations or next steps in your career.",
         fieldType: "textarea",
         fieldInputProps: [
           {
-            id: "goals",
+            id: "goal",
             placeholder: "I want to be a...",
             type: "text",
-            name: "goals",
+            name: "goal",
           },
         ],
       },
@@ -256,21 +257,7 @@ export const accountSettingsFormFields = [
                 title: "linkedin.com/",
               },
             ],
-            options: [
-              {title: "x.com/"},
-              {title: "github.com/"},
-              {title: "linkedin.com/"},
-              {title: "instagram.com/"},
-              {title: "facebook.com/"},
-              {title: "tiktok.com/@"},
-              {title: "youtube.com/c/"},
-              {title: "medium.com/@"},
-              {title: "dribbble.com/"},
-              {title: "reddit.com/u/"},
-              {title: "behance.net/"},
-              {title: "stackoverflow.com/users/"},
-              {title: "leetcode.com/"},
-            ],
+            options: socialLinks,
           },
         ],
       },

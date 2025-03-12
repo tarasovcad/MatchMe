@@ -1,11 +1,12 @@
 import {languages} from "@/data/forms/(settings)/languages";
+import {socialLinks} from "@/data/forms/(settings)/socialLinks";
 import {z} from "zod";
 
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
-
+const allowedSocialLinks = new Set(socialLinks.map((link) => link.title));
 export const settingsAccountValidationSchema = z.object({
-  is_profile_public: z.boolean().optional(),
-  is_profile_verified: z.boolean().optional(),
+  is_profile_public: z.boolean(),
+  is_profile_verified: z.boolean(),
   name: z
     .string()
     .min(1, "Full name is required")
@@ -30,7 +31,7 @@ export const settingsAccountValidationSchema = z.object({
         .number()
         .int()
         .min(18, "You must be at least 18 years old")
-        .max(100, "You must be at most 100 years old"),
+        .max(100, "You must enter a valid age"),
     )
     .optional(),
   public_current_role: z
@@ -47,21 +48,14 @@ export const settingsAccountValidationSchema = z.object({
       message: "Invalid selection. Please select a valid option.",
     })
     .optional(),
-  goals: z
+  goal: z
     .string()
     .max(200, {message: "Goals must be at most 200 characters"})
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Goals cannot be empty if provided",
-    })
     .optional(),
   tagline: z
     .string()
     .max(70, {message: "Tagline must be at most 70 characters"})
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Tagline cannot be empty if provided",
-    })
     .optional(),
-
   skills: z
     .array(
       z
@@ -89,9 +83,9 @@ export const settingsAccountValidationSchema = z.object({
         .string()
         .min(2, {message: "Each language must be at least 2 characters"})
         .max(30, {message: "Each language must be at most 30 characters"})
-        .regex(/^[A-Za-z0-9#+\-* ]+$/, {
+        .regex(/^[A-Za-z]+$/, {
           message:
-            "Languages can only contain letters, numbers, hyphens, # and + symbols",
+            "Languages can only contain letters (no spaces, numbers, or symbols)",
         })
         .refine((val) => allowedLanguages.has(val), {
           message: "Language must be one of the supported languages",
@@ -129,30 +123,73 @@ export const settingsAccountValidationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-  social_links_1_platform: z.string().optional(),
+
+  social_links_1_platform: z
+    .string()
+    .refine((val) => allowedSocialLinks.has(val), {
+      message: "Language must be one of the supported languages",
+    })
+    .optional(),
   social_links_1: z
     .string()
-    .max(10, {message: "Social link must be at most 50 characters"})
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Description cannot be empty if provided",
+    .transform((val) => (val.trim() === "" ? undefined : val))
+    .pipe(
+      z
+        .string()
+        .max(50, {message: "Username must be at most 50 characters"})
+        .regex(/^[a-zA-Z0-9_.-]+$/, {
+          message:
+            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+        })
+        .refine((val) => !val.includes(".."), {
+          message: "Username cannot contain consecutive dots",
+        })
+        .optional(),
+    ),
+  social_links_2_platform: z
+    .string()
+    .refine((val) => allowedSocialLinks.has(val), {
+      message: "Language must be one of the supported languages",
     })
     .optional(),
-  social_links_2_platform: z.string().optional(),
   social_links_2: z
     .string()
-    .max(10, {message: "Social link must be at most 50 characters"})
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Description cannot be empty if provided",
+    .transform((val) => (val.trim() === "" ? undefined : val))
+    .pipe(
+      z
+        .string()
+        .max(50, {message: "Username must be at most 50 characters"})
+        .regex(/^[a-zA-Z0-9_.-]+$/, {
+          message:
+            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+        })
+        .refine((val) => !val.includes(".."), {
+          message: "Username cannot contain consecutive dots",
+        })
+        .optional(),
+    ),
+  social_links_3_platform: z
+    .string()
+    .refine((val) => allowedSocialLinks.has(val), {
+      message: "Language must be one of the supported languages",
     })
     .optional(),
-  social_links_3_platform: z.string().optional(),
   social_links_3: z
     .string()
-    .max(10, {message: "Social link must be at most 50 characters"})
-    .refine((val) => !val || val.trim().length > 0, {
-      message: "Description cannot be empty if provided",
-    })
-    .optional(),
+    .transform((val) => (val.trim() === "" ? undefined : val))
+    .pipe(
+      z
+        .string()
+        .max(50, {message: "Username must be at most 50 characters"})
+        .regex(/^[a-zA-Z0-9_.-]+$/, {
+          message:
+            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+        })
+        .refine((val) => !val.includes(".."), {
+          message: "Username cannot contain consecutive dots",
+        })
+        .optional(),
+    ),
 });
 
 export type SettingsAccountFormData = z.infer<
