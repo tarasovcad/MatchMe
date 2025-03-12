@@ -19,6 +19,7 @@ const SettingsClientPage = ({
   const [isClient, setIsClient] = useState(false);
   const [handleSave, setHandleSave] = useState<() => void>(() => {});
   const [handleCancel, setHandleCancel] = useState<() => void>(() => {});
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const TabComponents = {
     account: AccountTab,
@@ -55,12 +56,14 @@ const SettingsClientPage = ({
           setIsLoading={setIsLoading}
           setHandleSave={setHandleSave}
           setHandleCancel={setHandleCancel}
+          setIsDisabled={setIsDisabled}
         />
       </div>
       <SettingsMainButtons
         isLoading={isLoading}
         handleSave={handleSave}
         handleCancel={handleCancel}
+        isDisabled={isDisabled}
       />
     </form>
   );
