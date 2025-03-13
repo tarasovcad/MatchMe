@@ -45,11 +45,11 @@ const AccountTab = ({
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
     about_you: "",
-    social_links_1_platform: "",
+    social_links_1_platform: "x.com/",
     social_links_1: "",
-    social_links_2_platform: "",
+    social_links_2_platform: "github.com/",
     social_links_2: "",
-    social_links_3_platform: "",
+    social_links_3_platform: "linkedin.com/",
     social_links_3: "",
   };
 
@@ -59,31 +59,53 @@ const AccountTab = ({
     defaultValues: initialValues,
   });
 
+  // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
 
+  // This useEffect tracks changes between current form values and initial values
+  // Purpose: Enable/disable the save button based on whether form has changed
   useEffect(() => {
-    // Pick only the fields that exist in `initialValues`
+    // Filter initialValues to only include properties that are defined, so no empty values are included
     const cleanInitialValues = pickBy(
       initialValues,
       (value) => value !== undefined,
     );
+
+    // Filter formValues to only include keys that exist in initialValues
+    // This ensures we only compare fields that were originally provided
     const cleanFormValues = pickBy(
       formValues,
       (_, key) => key in cleanInitialValues,
     );
 
-    console.log("Initial values:", cleanInitialValues);
-    console.log("Current values:", cleanFormValues);
-    console.log("Are equal?", isEqual(cleanFormValues, cleanInitialValues));
-
+    // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
+
     setIsDisabled(!hasChanged);
   }, [formValues, initialValues, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
-      await submitAccountForm(data);
+      // Create an object containing only the values that differ from initialValues
+      const changedValues = Object.keys(data).reduce((result, key) => {
+        const formKey = key as keyof SettingsAccountFormData;
+
+        // Compare each field with its initial value
+        if (!isEqual(data[formKey], initialValues[formKey])) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          result[formKey] = data[formKey] as any;
+        }
+        return result;
+      }, {} as Partial<SettingsAccountFormData>);
+
+      // Only make an API call if there are actual changes to submit
+      if (Object.keys(changedValues).length > 0) {
+        console.log("Submitting only changed values:", changedValues);
+        await submitAccountForm(changedValues);
+      } else {
+        console.log("No changes to submit");
+      }
     } catch (error) {
       console.error("Form submission error:", error);
     }
