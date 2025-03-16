@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "../shadcn/dialog";
 import {Separator} from "../shadcn/separator";
+import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ALLOWED_FILE_TYPES = [
@@ -43,9 +45,17 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const imgRef = useRef<HTMLImageElement>(null);
+
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
 
+  useEffect(() => {
+    console.log(selectedValue, "selectedValue");
+  }, [selectedValue]);
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -100,11 +110,6 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
       setIsOpen(true);
 
       setFile(selectedFile);
-      // const objectUrl = URL.createObjectURL(selectedFile);
-      // setPreviewUrl(objectUrl);
-      // // Optional: Update the form value to maintain consistency
-      // // You might want to set this to null or some placeholder until actual upload
-      // setValue(name, objectUrl, {shouldDirty: true});
     },
     [setFile],
   );
@@ -154,19 +159,81 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
   };
 
   const handleClose = () => setIsOpen(false);
+
+  // Create the object URL only once when the file changes
+  useEffect(() => {
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      setImageSrc(objectUrl);
+
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    }
+  }, [file]);
+
+  // Function to center and initialize crop properly
+  const onImageLoad = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement>) => {
+      const {width, height} = e.currentTarget;
+      const cropInit = centerCrop(
+        makeAspectCrop(
+          {
+            unit: "%",
+            width: 90,
+          },
+          1, // 1:1 aspect ratio
+          width,
+          height,
+        ),
+        width,
+        height,
+      );
+      setCrop(cropInit);
+    },
+    [],
+  );
+
   const handleApply = async () => {
-    console.log("Applying...");
+    if (imgRef.current && completedCrop?.width && completedCrop.height) {
+      const croppedImageUrl = getCroppedImg(imgRef.current, completedCrop);
+      setPreviewUrl(croppedImageUrl);
+      setValue(name, croppedImageUrl, {shouldDirty: true});
+      setIsOpen(false);
+    }
   };
+
+  function getCroppedImg(image: HTMLImageElement, crop: Crop): string {
+    const canvas = document.createElement("canvas");
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext("2d");
+
+    if (ctx) {
+      ctx.drawImage(
+        image,
+        crop.x * scaleX,
+        crop.y * scaleY,
+        crop.width * scaleX,
+        crop.height * scaleY,
+        0,
+        0,
+        crop.width,
+        crop.height,
+      );
+    }
+
+    return canvas.toDataURL("image/jpeg");
+  }
+
   return (
     <>
       <div className="flex items-start gap-6 max-[1015px]:gap-3 max-[990px]:gap-6 w-full">
         <div className="relative">
           <Avatar className="border border-border rounded-full w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
-            <AvatarImage
-              src={previewUrl || selectedValue}
-              alt={"avatar"}
-              // className="object-cover"
-            />
+            <AvatarImage src={previewUrl || selectedValue} alt={"avatar"} />
             <AvatarFallback className="rounded-lg">CN</AvatarFallback>
           </Avatar>
           {(previewUrl || selectedValue) && (
@@ -225,7 +292,9 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
       </div>
       {file && (
         <Dialog open={isOpen}>
-          <DialogContent className="max-w-lg" onClose={handleClose}>
+          <DialogContent
+            className="w-full !max-w-[550px]"
+            onClose={handleClose}>
             <div className="space-y-4">
               <DialogHeader>
                 <DialogTitle>Crop photo</DialogTitle>
@@ -234,8 +303,29 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
                 </DialogDescription>
               </DialogHeader>
               <Separator />
-              {/* Cropper here */}
-              12312312
+              <div className="relative flex justify-center items-center w-full max-h-[250px] overflow-hidden checkerboard-bg">
+                {file && imageSrc && (
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    circularCrop
+                    aspect={1}>
+                    <img
+                      ref={imgRef}
+                      src={imageSrc}
+                      onLoad={onImageLoad}
+                      style={{
+                        maxHeight: "250px",
+                        width: "auto",
+                        margin: "0 auto",
+                      }}
+                      alt="Crop preview"
+                    />
+                  </ReactCrop>
+                )}
+              </div>
+
               <DialogFooter className="flex sm:flex-row flex-col space-y-2 sm:space-y-0">
                 <Button
                   type="button"
