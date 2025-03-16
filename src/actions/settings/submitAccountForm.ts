@@ -18,8 +18,14 @@ export const submitAccountForm = async (
   // Transform empty strings to null
   const transformedData = Object.entries(formData).reduce(
     (acc, [key, value]) => {
-      // If the value is an empty string, set it to null
-      acc[key] = value === "" ? null : value;
+      // If the value is an empty string or 0 for work_availability, set it to null
+      if (value === "") {
+        acc[key] = null;
+      } else if (key === "work_availability" && value === 0) {
+        acc[key] = null;
+      } else {
+        acc[key] = value;
+      }
       return acc;
     },
     {} as Record<

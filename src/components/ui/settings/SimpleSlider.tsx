@@ -31,7 +31,7 @@ export default function SimpleSlider({
               aria-label="Slider with input"
             />
             <Input
-              className="h-8 w-12 px-2 py-1"
+              className="px-2 py-1 w-12 h-8"
               type="text"
               inputMode="decimal"
               value={value}

@@ -45,7 +45,7 @@ export default function PersonalWebsiteInput({
           <Select
             value={currentProtocol}
             onValueChange={(newProtocol) => {
-              setValue(name, newProtocol + domain, {shouldValidate: true});
+              setValue(name, newProtocol + domain, {shouldValidate: !!domain});
             }}>
             <SelectTrigger
               id={`${id}-protocol`}
@@ -82,9 +82,8 @@ export default function PersonalWebsiteInput({
               type="text"
               value={domain}
               onChange={(e) => {
-                field.onChange(
-                  e.target.value === "" ? "" : currentProtocol + e.target.value,
-                );
+                const newDomain = e.target.value.trim();
+                field.onChange(newDomain ? currentProtocol + newDomain : "");
               }}
               onBlur={field.onBlur}
             />

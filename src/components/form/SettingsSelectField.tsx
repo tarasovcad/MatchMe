@@ -28,7 +28,7 @@ const SettingsSelectField = ({
         <div className="space-y-2">
           <RadioGroup
             value={field.value || ""}
-            className="flex w-full gap-4 max-[1165px]:gap-0 max-[1165px]:flex-col  "
+            className="flex max-[1165px]:flex-col gap-4 max-[1165px]:gap-0 w-full"
             onValueChange={(value) => field.onChange(value)}>
             {options?.map((option, index) => {
               const isActive = field.value === option.title;
@@ -49,10 +49,10 @@ const SettingsSelectField = ({
                     value={option.title}
                     id={`${id}-${option.title}`}
                     aria-describedby={`${id}-2-description`}
-                    className="absolute top-3 right-3 w-[14px] h-[14px]"
+                    className="top-3 right-3 absolute w-[14px] h-[14px]"
                   />
-                  <div className="min-[1165px]:max-w-[134px] w-full flex flex-col gap-[4px]">
-                    <p className="text-sm text-foreground font-medium">
+                  <div className="flex flex-col gap-[4px] w-full min-[1165px]:max-w-[134px]">
+                    <p className="font-medium text-foreground text-sm">
                       {option.title}
                     </p>
                     <p className="text-secondary text-xs">
@@ -66,7 +66,7 @@ const SettingsSelectField = ({
           <AnimatePresence>
             {error?.message && (
               <motion.p
-                className="text-xs text-destructive"
+                className="text-destructive text-xs"
                 layout
                 initial={{opacity: 0, height: 0, marginTop: 0}}
                 animate={{opacity: 1, height: "auto", marginTop: 8}}

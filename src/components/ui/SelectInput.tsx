@@ -34,7 +34,7 @@ export default function SelectInput({
   const handleSelectChange = (value: string) => {
     if (value === internalValue) {
       console.log("Deselected value:", value);
-      setValue(name, "", {shouldValidate: true}); // Reset selection
+      setValue(name, "", {shouldValidate: true});
       setInternalValue(null);
     } else {
       console.log("Selected value:", value);

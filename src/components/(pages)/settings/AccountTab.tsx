@@ -29,6 +29,23 @@ const AccountTab = ({
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const determineDefaultPlatform = (
+    existingPlatforms: string | null,
+    defaultValue: string,
+  ) => {
+    // If the platform is already specified, use it
+    if (existingPlatforms) return existingPlatforms;
+
+    // If the default platform is already used in other fields, return empty string
+    const usedPlatforms = [
+      profile.social_links_1_platform,
+      profile.social_links_2_platform,
+      profile.social_links_3_platform,
+    ].filter(Boolean);
+
+    return usedPlatforms.includes(defaultValue) ? "" : defaultValue;
+  };
+
   const [initialValues, setInitialValues] = useState({
     is_profile_public: profile.is_profile_public ?? false,
     is_profile_verified: profile.is_profile_verified ?? false,
@@ -46,11 +63,20 @@ const AccountTab = ({
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
     about_you: profile.about_you ?? "",
-    social_links_1_platform: profile.social_links_1_platform ?? "x.com/",
+    social_links_1_platform: determineDefaultPlatform(
+      profile.social_links_1_platform,
+      "x.com/",
+    ),
     social_links_1: profile.social_links_1 ?? "",
-    social_links_2_platform: profile.social_links_2_platform ?? "github.com/",
+    social_links_2_platform: determineDefaultPlatform(
+      profile.social_links_2_platform,
+      "github.com/",
+    ),
     social_links_2: profile.social_links_2 ?? "",
-    social_links_3_platform: profile.social_links_3_platform ?? "linkedin.com/",
+    social_links_3_platform: determineDefaultPlatform(
+      profile.social_links_3_platform,
+      "linkedin.com/",
+    ),
     social_links_3: profile.social_links_3 ?? "",
   });
 
