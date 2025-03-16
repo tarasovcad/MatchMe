@@ -19,7 +19,6 @@ export default function NumberFieldInput({
       name={name}
       control={control}
       render={({field}) => {
-        console.log(field.value, "field.value");
         const handleChange = (value: number | string) => {
           // If the input is empty or NaN, pass an empty string to the form
           if (value === "" || Number.isNaN(value)) {
@@ -37,6 +36,7 @@ export default function NumberFieldInput({
             value={field.value}
             onChange={handleChange}
             className={`w-full`}
+            aria-label="Number input"
             name={name}>
             <div className="space-y-2 w-full">
               <Group className="inline-flex relative items-center data-disabled:opacity-50 shadow-black/5 shadow-xs m-0 border border-input data-focus-within:border-ring rounded-lg data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20 w-full h-9 overflow-hidden text-sm whitespace-nowrap transition-shadow">
@@ -46,6 +46,7 @@ export default function NumberFieldInput({
                   inputMode="numeric"
                   pattern="\d*"
                   id={id}
+                  aria-label="Number input"
                   {...field}
                 />
                 <div className="flex flex-col h-[calc(100%+2px)]">

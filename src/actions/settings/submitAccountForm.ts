@@ -15,12 +15,25 @@ export const submitAccountForm = async (
     throw new Error("User not authenticated");
   }
 
-  console.log("Updating profile with data:", formData);
+  // Transform empty strings to null
+  const transformedData = Object.entries(formData).reduce(
+    (acc, [key, value]) => {
+      // If the value is an empty string, set it to null
+      acc[key] = value === "" ? null : value;
+      return acc;
+    },
+    {} as Record<
+      string,
+      Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null
+    >,
+  );
+
+  console.log("Updating profile with data:", transformedData);
 
   // Update the profile that matches the current user's ID
   const {error} = await supabase
     .from("profiles")
-    .update(formData)
+    .update(transformedData)
     .eq("id", user.id)
     .select();
 
