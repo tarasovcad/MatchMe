@@ -1,10 +1,10 @@
 "use client";
-import React, {useState} from "react";
+import React from "react";
 import {DropdownOption} from "@/types/settingsFieldsTypes";
 import {RadioGroup, RadioGroupItem} from "../shadcn/radio-group";
 import {cn} from "@/lib/utils";
 import {Controller, useFormContext} from "react-hook-form";
-import {AnimatePresence, motion} from "framer-motion";
+import FormErrorLabel from "../ui/FormErrorLabel";
 
 const SettingsSelectField = ({
   id,
@@ -63,19 +63,7 @@ const SettingsSelectField = ({
               );
             })}
           </RadioGroup>
-          <AnimatePresence>
-            {error?.message && (
-              <motion.p
-                className="text-destructive text-xs"
-                layout
-                initial={{opacity: 0, height: 0, marginTop: 0}}
-                animate={{opacity: 1, height: "auto", marginTop: 8}}
-                exit={{opacity: 0, height: 0, marginTop: 0}}
-                transition={{duration: 0.1, ease: "easeInOut"}}>
-                {error.message}
-              </motion.p>
-            )}
-          </AnimatePresence>
+          <FormErrorLabel error={error} />
         </div>
       )}
     />

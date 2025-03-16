@@ -16,9 +16,9 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import {CheckIcon, ChevronDownIcon} from "lucide-react";
-import {useCallback, useId, useMemo, useState, memo} from "react";
+import {useCallback, useId, useState, memo} from "react";
 import {Controller, useFormContext} from "react-hook-form";
-import {AnimatePresence, motion} from "framer-motion";
+import FormErrorLabel from "@/components/ui/FormErrorLabel";
 
 // Memoize timezone data calculation
 const timezones = Intl.supportedValuesOf("timeZone");
@@ -130,19 +130,7 @@ function TimeZoneInput({name}: {name: string}) {
                 </Command>
               </PopoverContent>
             </Popover>
-            <AnimatePresence>
-              {error?.message && (
-                <motion.p
-                  className="text-destructive text-xs"
-                  layout
-                  initial={{opacity: 0, height: 0, marginTop: 0}}
-                  animate={{opacity: 1, height: "auto", marginTop: 8}}
-                  exit={{opacity: 0, height: 0, marginTop: 0}}
-                  transition={{duration: 0.1, ease: "easeInOut"}}>
-                  {error.message}
-                </motion.p>
-              )}
-            </AnimatePresence>
+            <FormErrorLabel error={error} />
           </div>
         );
       }}

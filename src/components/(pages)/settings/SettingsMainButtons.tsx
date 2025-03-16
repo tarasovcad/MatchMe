@@ -25,6 +25,7 @@ const SettingsMainButtons = ({
         <Button
           variant={"outline"}
           type="button"
+          disabled={isLoading || isDisabled}
           className="dark:bg-sidebar-background px-[20px]">
           <CircleX size={16} />
           Cancel

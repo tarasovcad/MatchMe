@@ -5,7 +5,7 @@ import {
 } from "@/data/forms/(settings)/accountSettingsFormFields";
 import {cn} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
-import {FormProvider, useForm, useFormContext, useWatch} from "react-hook-form";
+import {FormProvider, useForm, useWatch} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {
   SettingsAccountFormData,
@@ -13,7 +13,7 @@ import {
 } from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
-import {debounce, isEqual, pickBy} from "lodash";
+import {isEqual, pickBy} from "lodash";
 import {toast} from "sonner";
 
 const AccountTab = ({
@@ -46,7 +46,7 @@ const AccountTab = ({
     return usedPlatforms.includes(defaultValue) ? "" : defaultValue;
   };
 
-  const [initialValues, setInitialValues] = useState({
+  const [initialValues, setInitialValues] = useState<SettingsAccountFormData>({
     is_profile_public: profile.is_profile_public ?? false,
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
@@ -126,12 +126,6 @@ const AccountTab = ({
           result[formKey] = currentValue as any;
         }
 
-        console.log(`Field ${formKey}:`, {
-          initialValue: initialValue,
-          currentValue: currentValue,
-          isEqual: isEqual(initialValue, currentValue),
-        });
-
         return result;
       }, {} as Partial<SettingsAccountFormData>);
 
@@ -147,6 +141,7 @@ const AccountTab = ({
           return;
         }
 
+        setInitialValues({...initialValues, ...data});
         setIsLoading(false);
         toast.success(response.message);
       } else {
