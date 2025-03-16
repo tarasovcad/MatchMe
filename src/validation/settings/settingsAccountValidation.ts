@@ -203,6 +203,7 @@ export const settingsAccountValidationSchema = z.object({
         })
         .optional(),
     ),
+  image: z.string().optional(),
 });
 
 export type SettingsAccountFormData = z.infer<

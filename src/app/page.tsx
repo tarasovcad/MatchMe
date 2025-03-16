@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ThemeToggle from "@/components/other/ThemeToggle";
 import SidebarProvider from "@/providers/SidebarProvider";
+import UserImageDropZone from "@/components/ui/settings/UserImageDropZone";
 
 export default async function HomePage() {
   const supabase = await createClient();

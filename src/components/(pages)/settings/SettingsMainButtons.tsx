@@ -1,5 +1,5 @@
 import {Button} from "@/components/shadcn/button";
-import AlertComponent from "@/components/ui/AlertComponent";
+import AlertComponent from "@/components/ui/dialog/AlertComponent";
 import {CircleX, Save} from "lucide-react";
 import React from "react";
 

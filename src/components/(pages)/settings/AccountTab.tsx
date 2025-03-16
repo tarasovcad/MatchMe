@@ -51,6 +51,7 @@ const AccountTab = ({
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
+    image: profile.image ?? "",
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
@@ -88,6 +89,9 @@ const AccountTab = ({
   // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
 
+  // Get the form state to check for errors
+  const {formState} = methods;
+
   useEffect(() => {
     // Filter initialValues to only include properties that are defined, so no empty values are included
     const cleanInitialValues = pickBy(
@@ -105,8 +109,8 @@ const AccountTab = ({
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
 
-    setIsDisabled(!hasChanged);
-  }, [formValues, initialValues, setIsDisabled]);
+    setIsDisabled(!hasChanged || !formState.isValid);
+  }, [formValues, initialValues, formState.isValid, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
