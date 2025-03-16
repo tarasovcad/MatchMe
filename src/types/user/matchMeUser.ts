@@ -16,9 +16,14 @@ export interface MatchMeUser {
   languages: string | null;
   about_you: string | null;
   personal_website: string | null;
-  social_links: string | null;
   is_profile_public: boolean;
   is_profile_verified: boolean;
   created_at: string;
   public_current_role: string | null;
+  social_links_1_platform: string | null;
+  social_links_1: string | null;
+  social_links_2_platform: string | null;
+  social_links_2: string | null;
+  social_links_3_platform: string | null;
+  social_links_3: string | null;
 }

@@ -34,7 +34,13 @@ const fieldComponents = {
 };
 
 const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
-  const {fieldDescription, fieldTitle, fieldType, fieldInputProps} = formField;
+  const {
+    fieldDescription,
+    fieldTitle,
+    fieldType,
+    fieldInputProps,
+    fieldRequired,
+  } = formField;
   const fieldName = fieldInputProps[0].name;
   const InputComponent =
     fieldComponents[fieldType as keyof typeof fieldComponents] || SimpleInput;
@@ -57,7 +63,10 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
         isTopSection() ? "" : "max-[990px]:flex-col",
       )}>
       <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
-        <p className="font-medium text-foreground text-sm">{fieldTitle}</p>
+        <p className="font-medium text-foreground text-sm">
+          {fieldTitle}{" "}
+          {fieldRequired && <span className="text-destructive">*</span>}
+        </p>
         {fieldDescription && (
           <p className="text-muted-foreground text-xs break-words">
             {fieldDescription}

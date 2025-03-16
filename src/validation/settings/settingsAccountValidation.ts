@@ -19,19 +19,27 @@ export const settingsAccountValidationSchema = z.object({
   username: z.string(),
   pronouns: z
     .string()
-    .refine((val) => ["He/Him", "She/Her", "They/Them"].includes(val), {
-      message: "Invalid pronoun choice. Please select a valid option.",
-    })
-    .optional(),
+    .optional()
+    .refine(
+      (val) =>
+        !val || val === "" || ["He/Him", "She/Her", "They/Them"].includes(val),
+      {
+        message: "Invalid pronoun choice. Please select a valid option.",
+      },
+    ),
   age: z
     .union([z.string(), z.number()])
-    .transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+    .transform((val) => {
+      if (val === "") return undefined; // Handle empty string
+      return typeof val === "string" ? parseInt(val, 10) : val;
+    })
     .pipe(
       z
         .number()
         .int()
         .min(18, "You must be at least 18 years old")
-        .max(100, "You must enter a valid age"),
+        .max(100, "You must enter a valid age")
+        .optional(),
     )
     .optional(),
   public_current_role: z
@@ -44,10 +52,16 @@ export const settingsAccountValidationSchema = z.object({
     .optional(),
   looking_for: z
     .string()
-    .refine((val) => ["Team Member", "Co-Founder", "Startups"].includes(val), {
-      message: "Invalid selection. Please select a valid option.",
-    })
-    .optional(),
+    .optional()
+    .refine(
+      (val) =>
+        !val ||
+        val === "" ||
+        ["Team Member", "Co-Founder", "Startups"].includes(val),
+      {
+        message: "Invalid selection. Please select a valid option.",
+      },
+    ),
   goal: z
     .string()
     .max(200, {message: "Goals must be at most 200 characters"})

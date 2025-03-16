@@ -12,11 +12,6 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "MatchMe",
   description: "Find Your Team, Start Your Dream",
@@ -31,7 +26,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className="selection:bg-primary selection:text-white ">
+      className="selection:bg-primary selection:text-white">
       <head>
         <link rel="icon" href="/light-icon.svg" />
       </head>

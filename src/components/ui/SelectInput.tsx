@@ -7,6 +7,7 @@ import {
 } from "@/components/shadcn/select";
 import {DropdownOption} from "@/types/settingsFieldsTypes";
 import {AnimatePresence, motion} from "framer-motion";
+import {useState} from "react";
 import {useFormContext} from "react-hook-form";
 
 export default function SelectInput({
@@ -26,18 +27,35 @@ export default function SelectInput({
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
+  const [internalValue, setInternalValue] = useState<string | null>(
+    selectedValue || null,
+  );
+
+  const handleSelectChange = (value: string) => {
+    if (value === internalValue) {
+      console.log("Deselected value:", value);
+      setValue(name, "", {shouldValidate: true}); // Reset selection
+      setInternalValue(null);
+    } else {
+      console.log("Selected value:", value);
+      setValue(name, value, {shouldValidate: true});
+      setInternalValue(value);
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <Select
-        onValueChange={(value) => setValue(name, value, {shouldValidate: true})}
-        value={selectedValue}>
+      <Select onValueChange={handleSelectChange} value={selectedValue}>
         <SelectTrigger id={id} className={className}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="[&_*[role=option]>span]:end-2 [&_*[role=option]>span]:start-auto [&_*[role=option]]:pe-8 [&_*[role=option]]:ps-2">
           {options.map((option, index) => {
             return (
-              <SelectItem key={index} value={option.title}>
+              <SelectItem
+                key={index}
+                value={option.title}
+                onClick={() => handleSelectChange(option.title)}>
                 {option.title}
               </SelectItem>
             );

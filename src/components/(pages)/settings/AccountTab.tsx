@@ -13,7 +13,8 @@ import {
 } from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
-import {isEqual, pickBy} from "lodash";
+import {debounce, isEqual, pickBy} from "lodash";
+import {toast} from "sonner";
 
 const AccountTab = ({
   profile,
@@ -28,7 +29,7 @@ const AccountTab = ({
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const initialValues = {
+  const [initialValues, setInitialValues] = useState({
     is_profile_public: profile.is_profile_public ?? false,
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
@@ -44,26 +45,23 @@ const AccountTab = ({
     location_timezone: profile.location_timezone ?? "",
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
-    about_you: "",
-    social_links_1_platform: "x.com/",
-    social_links_1: "",
-    social_links_2_platform: "github.com/",
-    social_links_2: "",
-    social_links_3_platform: "linkedin.com/",
-    social_links_3: "",
-  };
+    about_you: profile.about_you ?? "",
+    social_links_1_platform: profile.social_links_1_platform ?? "x.com/",
+    social_links_1: profile.social_links_1 ?? "",
+    social_links_2_platform: profile.social_links_2_platform ?? "github.com/",
+    social_links_2: profile.social_links_2 ?? "",
+    social_links_3_platform: profile.social_links_3_platform ?? "linkedin.com/",
+    social_links_3: profile.social_links_3 ?? "",
+  });
 
   const methods = useForm<SettingsAccountFormData>({
     resolver: zodResolver(settingsAccountValidationSchema),
     mode: "onChange",
     defaultValues: initialValues,
   });
-
   // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
 
-  // This useEffect tracks changes between current form values and initial values
-  // Purpose: Enable/disable the save button based on whether form has changed
   useEffect(() => {
     // Filter initialValues to only include properties that are defined, so no empty values are included
     const cleanInitialValues = pickBy(
@@ -86,33 +84,58 @@ const AccountTab = ({
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
+
     try {
       // Create an object containing only the values that differ from initialValues
       const changedValues = Object.keys(data).reduce((result, key) => {
         const formKey = key as keyof SettingsAccountFormData;
 
+        const currentValue = data[formKey] === undefined ? "" : data[formKey];
+        const initialValue =
+          initialValues[formKey] === undefined ? "" : initialValues[formKey];
+
         // Compare each field with its initial value
-        if (!isEqual(data[formKey], initialValues[formKey])) {
+        if (!isEqual(currentValue, initialValue)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          result[formKey] = data[formKey] as any;
+          result[formKey] = currentValue as any;
         }
+
+        console.log(`Field ${formKey}:`, {
+          initialValue: initialValue,
+          currentValue: currentValue,
+          isEqual: isEqual(initialValue, currentValue),
+        });
+
         return result;
       }, {} as Partial<SettingsAccountFormData>);
 
       // Only make an API call if there are actual changes to submit
       if (Object.keys(changedValues).length > 0) {
-        console.log("Submitting only changed values:", changedValues);
-        await submitAccountForm(changedValues);
+        const response = await submitAccountForm(changedValues);
+        console.log("Response:", response);
+
+        if (response.error) {
+          console.error("Error submitting account form:", response.error);
+          toast.error(response.message);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsLoading(false);
+        toast.success(response.message);
       } else {
         console.log("No changes to submit");
       }
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("Error submitting account form");
     }
     setIsLoading(false);
   };
 
   const handleSave = () => {
+    console.log(initialValues, "initialValues");
+    console.log(formValues, "formValues");
     methods.handleSubmit(onSubmit)();
   };
 
