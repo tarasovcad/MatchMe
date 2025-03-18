@@ -2,6 +2,8 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
+import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
+import {uploadUserAvatar} from "../aws/uploadUserAvatar";
 
 export const submitAccountForm = async (
   formData: Partial<SettingsAccountFormData>,
@@ -40,17 +42,31 @@ export const submitAccountForm = async (
 
   console.log("Updating profile with data:", transformedData);
 
-  // Update the profile that matches the current user's ID
-  const {error} = await supabase
-    .from("profiles")
-    .update(transformedData)
-    .eq("id", user.id)
-    .select();
+  if (transformedData.image) {
+    const signedUrl = await getUploadUrl(user.id);
 
-  if (error) {
-    console.error("Error updating profile:", error);
-    return {error: error, message: "Error updating profile"};
+    const result = await uploadUserAvatar(
+      signedUrl,
+      String(transformedData.image),
+    );
+    if (result.error) {
+      return {error: result.error, message: result.message};
+    } else {
+      console.log(result.message);
+    }
   }
+
+  // // Update the profile that matches the current user's ID
+  // const {error} = await supabase
+  //   .from("profiles")
+  //   .update(transformedData)
+  //   .eq("id", user.id)
+  //   .select();
+
+  // if (error) {
+  //   console.error("Error updating profile:", error);
+  //   return {error: error, message: "Error updating profile"};
+  // }
 
   return {
     error: null,

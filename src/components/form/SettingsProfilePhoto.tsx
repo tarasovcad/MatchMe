@@ -53,9 +53,6 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
 
-  useEffect(() => {
-    console.log(selectedValue, "selectedValue");
-  }, [selectedValue]);
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
