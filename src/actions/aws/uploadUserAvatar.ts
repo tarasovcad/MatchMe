@@ -5,7 +5,6 @@ export async function uploadUserAvatar(signedUrl: string, image: string) {
       message: "Please provide a signed URL and an image",
     };
   }
-
   try {
     const base64Data = image.split(",")[1];
     if (!base64Data) {
@@ -18,12 +17,16 @@ export async function uploadUserAvatar(signedUrl: string, image: string) {
     const response = await fetch(signedUrl, {
       method: "PUT",
       body: imageBuffer,
+      headers: {
+        "Content-Type": "image/jpeg",
+      },
     });
     if (!response.ok) {
       const errorMessage = await response.text();
       console.error("S3 Upload Error:", errorMessage);
       throw new Error("Failed to upload user avatar");
     }
+
     return {
       error: null,
       message: "User avatar uploaded successfully",

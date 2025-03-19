@@ -37,7 +37,7 @@ export function NavMain({
             className="group/collapsible">
             <SidebarMenuItem className="relative">
               {item.title === "Inbox" && (
-                <div className="w-[18px] h-[18px] bg-primary rounded-full flex items-center justify-center text-white text-xs font-medium absolute right-2 top-1/2 -translate-y-1/2 group-data-[state=collapsed]:hidden">
+                <div className="group-data-[state=collapsed]:hidden top-1/2 right-2 absolute flex justify-center items-center bg-primary rounded-full w-[18px] h-[18px] font-medium text-white text-xs -translate-y-1/2">
                   2
                 </div>
               )}
@@ -47,7 +47,7 @@ export function NavMain({
                     tooltip={item.title}
                     isActive={item.isActive}>
                     {item.title === "Notifications" && (
-                      <div className="w-[6px] h-[6px] bg-primary rounded-full absolute top-[17px] left-[17px] outline outline-[1.8px] outline-sidebar-background"></div>
+                      <div className="top-[17px] left-[17px] absolute bg-primary rounded-full outline-[1.8px] outline-sidebar-background w-[6px] h-[6px]"></div>
                     )}
 
                     {item.icon && <item.icon className="stroke-[2.1px]" />}

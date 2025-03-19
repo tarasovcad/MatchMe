@@ -3,7 +3,7 @@ import React from "react";
 import SimpleInput from "../ui/SimpleInput";
 import {FormFieldProps} from "@/types/settingsFieldsTypes";
 import NumberFieldInput from "../ui/NumberFieldInput";
-import SettingsProfilePhoto from "./SettingsProfilePhoto";
+import SettingsProfilePhoto from "../(pages)/settings/SettingsProfilePhoto";
 import SelectInput from "../ui/SelectInput";
 import SettingsSelectField from "./SettingsSelectField";
 import AutogrowingTextarea from "../ui/AutogrowingTextarea";

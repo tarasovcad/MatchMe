@@ -1,11 +1,11 @@
-import {Avatar, AvatarFallback, AvatarImage} from "../shadcn/avatar";
+import {Avatar, AvatarFallback, AvatarImage} from "../../shadcn/avatar";
 import {CloudAdd} from "iconsax-react";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
 import {cn} from "@/lib/utils";
 import {useFormContext} from "react-hook-form";
-import {Tooltip, TooltipContent, TooltipTrigger} from "../shadcn/tooltip";
-import {Button} from "../shadcn/button";
+import {Tooltip, TooltipContent, TooltipTrigger} from "../../shadcn/tooltip";
+import {Button} from "../../shadcn/button";
 import {TrashIcon} from "lucide-react";
 import {
   Dialog,
@@ -14,8 +14,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "../shadcn/dialog";
-import {Separator} from "../shadcn/separator";
+} from "../../shadcn/dialog";
+import Image from "next/image";
+import {Separator} from "../../shadcn/separator";
 import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -146,15 +147,6 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
     };
   }, [previewUrl]);
 
-  const handleDeleteFile = () => {
-    setFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    setValue(name, null, {shouldDirty: true});
-  };
-
   const handleClose = () => setIsOpen(false);
 
   // Create the object URL only once when the file changes
@@ -222,16 +214,35 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
       );
     }
 
-    return canvas.toDataURL("image/jpeg");
+    return canvas.toDataURL("image/jpeg", 1.0);
   }
+
+  const handleDeleteFile = () => {
+    setFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setValue(name, "", {shouldDirty: true});
+  };
 
   return (
     <>
       <div className="flex items-start gap-6 max-[1015px]:gap-3 max-[990px]:gap-6 w-full">
         <div className="relative">
           <Avatar className="border border-border rounded-full w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
-            <AvatarImage src={previewUrl || selectedValue} alt={"avatar"} />
-            <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+            {previewUrl || selectedValue ? (
+              <Image
+                src={previewUrl || selectedValue}
+                alt={"avatar"}
+                width={100}
+                height={100}
+                unoptimized
+                className="rounded-full"
+              />
+            ) : (
+              <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+            )}
           </Avatar>
           {(previewUrl || selectedValue) && (
             <Tooltip>
@@ -240,7 +251,7 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="-right-1 -bottom-1 z-10 absolute bg-background !opacity-100 rounded-full size-8"
+                  className="-right-1 -bottom-1 z-[3] absolute bg-background !opacity-100 rounded-full size-8"
                   onClick={handleDeleteFile}>
                   <TrashIcon className="size-4 shrink-0" />
                 </Button>

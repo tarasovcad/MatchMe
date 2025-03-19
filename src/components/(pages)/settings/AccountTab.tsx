@@ -114,7 +114,6 @@ const AccountTab = ({
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
-
     try {
       // Create an object containing only the values that differ from initialValues
       const changedValues = Object.keys(data).reduce((result, key) => {
@@ -159,8 +158,6 @@ const AccountTab = ({
   };
 
   const handleSave = () => {
-    console.log(initialValues, "initialValues");
-    console.log(formValues, "formValues");
     methods.handleSubmit(onSubmit)();
   };
 

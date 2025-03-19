@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
       },
+      {
+        protocol: "https",
+        hostname: "matchme-me.s3.us-east-1.amazonaws.com",
+      },
     ],
   },
 };

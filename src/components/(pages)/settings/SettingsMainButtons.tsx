@@ -15,7 +15,7 @@ const SettingsMainButtons = ({
   isDisabled?: boolean;
 }) => {
   return (
-    <div className="right-0 bottom-0 left-0 fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
+    <div className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
       <AlertComponent
         title="Reset Form"
         description="Are you sure you want to clear all entered information? This will reset all fields to their default values."

@@ -9,6 +9,7 @@ export const submitAccountForm = async (
   formData: Partial<SettingsAccountFormData>,
 ) => {
   const supabase = await createClient();
+
   const {
     data: {user},
   } = await supabase.auth.getUser();
@@ -39,34 +40,60 @@ export const submitAccountForm = async (
       Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null
     >,
   );
+  try {
+    if (transformedData.image) {
+      const signedUrl = await getUploadUrl(user.id);
 
-  console.log("Updating profile with data:", transformedData);
+      const result = await uploadUserAvatar(
+        signedUrl,
+        String(transformedData.image),
+      );
 
-  if (transformedData.image) {
-    const signedUrl = await getUploadUrl(user.id);
-
-    const result = await uploadUserAvatar(
-      signedUrl,
-      String(transformedData.image),
-    );
-    if (result.error) {
-      return {error: result.error, message: result.message};
-    } else {
-      console.log(result.message);
+      if (result.error) {
+        return {error: result.error, message: result.message};
+      } else {
+        console.log(result.message);
+        transformedData.image = signedUrl.split("?")[0];
+      }
     }
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return {error: error, message: "Error updating profile"};
   }
 
-  // // Update the profile that matches the current user's ID
-  // const {error} = await supabase
-  //   .from("profiles")
-  //   .update(transformedData)
-  //   .eq("id", user.id)
-  //   .select();
+  // Update the profile that matches the current user's ID
+  const {error} = await supabase
+    .from("profiles")
+    .update(transformedData)
+    .eq("id", user.id)
+    .select();
 
-  // if (error) {
-  //   console.error("Error updating profile:", error);
-  //   return {error: error, message: "Error updating profile"};
-  // }
+  if (error) {
+    console.error("Error updating profile:", error);
+    return {error: error, message: "Error updating profile"};
+  }
+
+  if (transformedData.image !== null) {
+    const {error} = await supabase.auth.updateUser({
+      data: {
+        image: transformedData.image,
+      },
+    });
+    if (error) {
+      console.error("Error updating user session:", error);
+      return {error: error, message: "Error updating user session"};
+    }
+  } else {
+    const {error} = await supabase.auth.updateUser({
+      data: {
+        image: "",
+      },
+    });
+    if (error) {
+      console.error("Error updating user session:", error);
+      return {error: error, message: "Error updating user session"};
+    }
+  }
 
   return {
     error: null,

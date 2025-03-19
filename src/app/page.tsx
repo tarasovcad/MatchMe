@@ -13,6 +13,7 @@ export default async function HomePage() {
     data: {user},
   } = await supabase.auth.getUser();
 
+  console.log(user);
   if (!user) {
     return (
       <div className="flex flex-col gap-4 p-10">
