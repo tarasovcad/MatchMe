@@ -9,6 +9,7 @@ import {
 import {cn} from "@/lib/utils";
 import {AnimatePresence, motion} from "framer-motion";
 import {Controller, useFormContext} from "react-hook-form";
+import FormErrorLabel from "../FormErrorLabel";
 
 export default function PersonalWebsiteInput({
   id,
@@ -45,7 +46,7 @@ export default function PersonalWebsiteInput({
           <Select
             value={currentProtocol}
             onValueChange={(newProtocol) => {
-              setValue(name, newProtocol + domain, {shouldValidate: true});
+              setValue(name, newProtocol + domain, {shouldValidate: !!domain});
             }}>
             <SelectTrigger
               id={`${id}-protocol`}
@@ -82,28 +83,15 @@ export default function PersonalWebsiteInput({
               type="text"
               value={domain}
               onChange={(e) => {
-                field.onChange(
-                  e.target.value === "" ? "" : currentProtocol + e.target.value,
-                );
+                const newDomain = e.target.value.trim();
+                field.onChange(newDomain ? currentProtocol + newDomain : "");
               }}
               onBlur={field.onBlur}
             />
           )}
         />
       </div>
-      <AnimatePresence>
-        {error?.message && (
-          <motion.p
-            className="text-destructive text-xs"
-            layout
-            initial={{opacity: 0, height: 0, marginTop: 0}}
-            animate={{opacity: 1, height: "auto", marginTop: 8}}
-            exit={{opacity: 0, height: 0, marginTop: 0}}
-            transition={{duration: 0.1, ease: "easeInOut"}}>
-            {error.message}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      <FormErrorLabel error={error} />
     </div>
   );
 }

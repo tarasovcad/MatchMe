@@ -5,7 +5,7 @@ import {
 } from "@/data/forms/(settings)/accountSettingsFormFields";
 import {cn} from "@/lib/utils";
 import React, {useEffect, useState} from "react";
-import {FormProvider, useForm, useFormContext, useWatch} from "react-hook-form";
+import {FormProvider, useForm, useWatch} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {
   SettingsAccountFormData,
@@ -14,6 +14,7 @@ import {
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
 import {isEqual, pickBy} from "lodash";
+import {toast} from "sonner";
 
 const AccountTab = ({
   profile,
@@ -28,11 +29,29 @@ const AccountTab = ({
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const initialValues = {
+  const determineDefaultPlatform = (
+    existingPlatforms: string | null,
+    defaultValue: string,
+  ) => {
+    // If the platform is already specified, use it
+    if (existingPlatforms) return existingPlatforms;
+
+    // If the default platform is already used in other fields, return empty string
+    const usedPlatforms = [
+      profile.social_links_1_platform,
+      profile.social_links_2_platform,
+      profile.social_links_3_platform,
+    ].filter(Boolean);
+
+    return usedPlatforms.includes(defaultValue) ? "" : defaultValue;
+  };
+
+  const [initialValues, setInitialValues] = useState<SettingsAccountFormData>({
     is_profile_public: profile.is_profile_public ?? false,
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
+    image: profile.image ?? "",
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
@@ -44,48 +63,96 @@ const AccountTab = ({
     location_timezone: profile.location_timezone ?? "",
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
-    about_you: "",
-    social_links_1_platform: "",
-    social_links_1: "",
-    social_links_2_platform: "",
-    social_links_2: "",
-    social_links_3_platform: "",
-    social_links_3: "",
-  };
+    about_you: profile.about_you ?? "",
+    social_links_1_platform: determineDefaultPlatform(
+      profile.social_links_1_platform,
+      "x.com/",
+    ),
+    social_links_1: profile.social_links_1 ?? "",
+    social_links_2_platform: determineDefaultPlatform(
+      profile.social_links_2_platform,
+      "github.com/",
+    ),
+    social_links_2: profile.social_links_2 ?? "",
+    social_links_3_platform: determineDefaultPlatform(
+      profile.social_links_3_platform,
+      "linkedin.com/",
+    ),
+    social_links_3: profile.social_links_3 ?? "",
+  });
 
   const methods = useForm<SettingsAccountFormData>({
     resolver: zodResolver(settingsAccountValidationSchema),
     mode: "onChange",
     defaultValues: initialValues,
   });
-
+  // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
 
+  // Get the form state to check for errors
+  const {formState} = methods;
+
   useEffect(() => {
-    // Pick only the fields that exist in `initialValues`
+    // Filter initialValues to only include properties that are defined, so no empty values are included
     const cleanInitialValues = pickBy(
       initialValues,
       (value) => value !== undefined,
     );
+
+    // Filter formValues to only include keys that exist in initialValues
+    // This ensures we only compare fields that were originally provided
     const cleanFormValues = pickBy(
       formValues,
       (_, key) => key in cleanInitialValues,
     );
 
-    console.log("Initial values:", cleanInitialValues);
-    console.log("Current values:", cleanFormValues);
-    console.log("Are equal?", isEqual(cleanFormValues, cleanInitialValues));
-
+    // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
-    setIsDisabled(!hasChanged);
-  }, [formValues, initialValues, setIsDisabled]);
+
+    setIsDisabled(!hasChanged || !formState.isValid);
+  }, [formValues, initialValues, formState.isValid, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
-      await submitAccountForm(data);
+      // Create an object containing only the values that differ from initialValues
+      const changedValues = Object.keys(data).reduce((result, key) => {
+        const formKey = key as keyof SettingsAccountFormData;
+
+        const currentValue = data[formKey] === undefined ? "" : data[formKey];
+        const initialValue =
+          initialValues[formKey] === undefined ? "" : initialValues[formKey];
+
+        // Compare each field with its initial value
+        if (!isEqual(currentValue, initialValue)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          result[formKey] = currentValue as any;
+        }
+
+        return result;
+      }, {} as Partial<SettingsAccountFormData>);
+
+      // Only make an API call if there are actual changes to submit
+      if (Object.keys(changedValues).length > 0) {
+        const response = await submitAccountForm(changedValues);
+        console.log("Response:", response);
+
+        if (response.error) {
+          console.error("Error submitting account form:", response.error);
+          toast.error(response.message);
+          setIsLoading(false);
+          return;
+        }
+
+        setInitialValues({...initialValues, ...data});
+        setIsLoading(false);
+        toast.success(response.message);
+      } else {
+        console.log("No changes to submit");
+      }
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("Error submitting account form");
     }
     setIsLoading(false);
   };

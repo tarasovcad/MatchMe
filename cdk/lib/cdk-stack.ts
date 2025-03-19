@@ -14,8 +14,8 @@ export class CdkStack extends cdk.Stack {
       ? process.env.ALLOWED_ORIGINS.split(",")
       : ["http://localhost:3000"];
 
-    const skillsImageBucket = new s3.Bucket(this, "skillsImageBucket", {
-      bucketName: "matchme-skills-image-bucket",
+    const matchmeBucket = new s3.Bucket(this, "MatchMeBucket", {
+      bucketName: "matchme-me",
       publicReadAccess: false, // public read access controlled by the bucket policy
       blockPublicAccess: new s3.BlockPublicAccess({
         blockPublicAcls: true,
@@ -39,28 +39,45 @@ export class CdkStack extends cdk.Stack {
     });
 
     const bucketPolicy = new s3.BucketPolicy(this, "BucketPolicy", {
-      bucket: skillsImageBucket,
+      bucket: matchmeBucket,
     });
 
     bucketPolicy.document.addStatements(
+      // Allow authenticated users to upload and delete only from their own folder
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/user-avatars/*`],
+      }),
+
+      // Allow public read access to `user-avatars/` folder
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
         effect: iam.Effect.ALLOW,
         principals: [new iam.AnyPrincipal()],
-        resources: [`${skillsImageBucket.bucketArn}/*`],
+        resources: [`${matchmeBucket.bucketArn}/user-avatars/*`],
+      }),
+
+      // Allow public read access to `skills-image/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/skills-image/*`],
       }),
     );
 
     new cdk.CfnOutput(this, "BucketName", {
-      value: skillsImageBucket.bucketName,
+      value: matchmeBucket.bucketName,
     });
 
     new cdk.CfnOutput(this, "BucketArn", {
-      value: skillsImageBucket.bucketArn,
+      value: matchmeBucket.bucketArn,
     });
 
     new cdk.CfnOutput(this, "BucketWebsiteURL", {
-      value: `https://${skillsImageBucket.bucketName}.s3.amazonaws.com/`,
+      value: `https://${matchmeBucket.bucketName}.s3.amazonaws.com/`,
     });
   }
 }

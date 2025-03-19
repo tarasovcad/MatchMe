@@ -254,3 +254,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+.checkerboard-bg {
+  background: repeating-conic-gradient(#cccccc 0% 25%, #f0f0f0 0% 50%) 0 0/20px
+    20px;
+}

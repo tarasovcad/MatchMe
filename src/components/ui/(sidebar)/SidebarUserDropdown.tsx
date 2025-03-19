@@ -31,6 +31,7 @@ import {useTheme} from "next-themes";
 import Link from "next/link";
 import {motion} from "framer-motion";
 import {useState} from "react";
+import Image from "next/image";
 
 const menuVariants = {
   closed: {
@@ -87,13 +88,21 @@ export function SidebarUserDropdown({
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-text-hover">
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <Avvvatars value="MT" radius={6} />
+              <Avatar className="rounded-lg w-8 h-8">
+                {user.avatar ? (
+                  <Image
+                    src={user.avatar}
+                    alt={user.name}
+                    width={100}
+                    height={100}
+                  />
+                ) : (
+                  <Avvvatars value="MT" radius={6} />
+                )}
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+              <div className="flex-1 grid text-sm text-left leading-tight">
+                <span className="font-semibold truncate">{user.name}</span>
+                <span className="text-xs truncate">{user.email}</span>
               </div>
               <motion.div
                 animate={{rotate: isOpen ? 180 : 0}}
@@ -112,22 +121,28 @@ export function SidebarUserDropdown({
               initial="closed"
               animate={isOpen ? "open" : "closed"}
               variants={menuVariants}
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg">
+              className="rounded-lg w-(--radix-dropdown-menu-trigger-width) min-w-56">
               <div className="space-y-2">
                 <motion.div variants={userInfoVariants}>
                   <DropdownMenuLabel className="p-0 font-normal">
-                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback className="rounded-lg">
-                          CN
-                        </AvatarFallback>
+                    <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
+                      <Avatar className="rounded-lg w-8 h-8">
+                        {user.avatar ? (
+                          <Image
+                            src={user.avatar}
+                            alt={user.name}
+                            width={100}
+                            height={100}
+                          />
+                        ) : (
+                          <Avvvatars value="MT" radius={6} />
+                        )}
                       </Avatar>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">
+                      <div className="flex-1 grid text-sm text-left leading-tight">
+                        <span className="font-semibold truncate">
                           {user.name}
                         </span>
-                        <span className="truncate text-xs">{user.email}</span>
+                        <span className="text-xs truncate">{user.email}</span>
                       </div>
                     </div>
                   </DropdownMenuLabel>
@@ -142,12 +157,12 @@ export function SidebarUserDropdown({
                       onClick={() =>
                         setTheme(theme === "dark" ? "light" : "dark")
                       }>
-                      <DropdownMenuItem className="flex items-center gap-2 justify-between cursor-pointer">
+                      <DropdownMenuItem className="flex justify-between items-center gap-2 cursor-pointer">
                         <div className="flex items-center gap-2">
                           {theme === "dark" ? <Moon /> : <Sun />}
                           Toggle theme
                         </div>
-                        <kbd className="inline-flex h-5 max-h-full items-center rounded border border-border px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
+                        <kbd className="inline-flex items-center px-1 border border-border rounded h-5 max-h-full font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
                           ⌘M
                         </kbd>
                       </DropdownMenuItem>

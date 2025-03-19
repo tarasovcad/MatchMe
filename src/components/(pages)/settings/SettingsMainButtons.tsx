@@ -1,5 +1,5 @@
 import {Button} from "@/components/shadcn/button";
-import AlertComponent from "@/components/ui/AlertComponent";
+import AlertComponent from "@/components/ui/dialog/AlertComponent";
 import {CircleX, Save} from "lucide-react";
 import React from "react";
 
@@ -15,7 +15,7 @@ const SettingsMainButtons = ({
   isDisabled?: boolean;
 }) => {
   return (
-    <div className="right-0 bottom-0 left-0 fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
+    <div className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
       <AlertComponent
         title="Reset Form"
         description="Are you sure you want to clear all entered information? This will reset all fields to their default values."
@@ -25,6 +25,7 @@ const SettingsMainButtons = ({
         <Button
           variant={"outline"}
           type="button"
+          disabled={isLoading || isDisabled}
           className="dark:bg-sidebar-background px-[20px]">
           <CircleX size={16} />
           Cancel

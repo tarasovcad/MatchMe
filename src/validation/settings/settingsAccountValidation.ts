@@ -19,35 +19,49 @@ export const settingsAccountValidationSchema = z.object({
   username: z.string(),
   pronouns: z
     .string()
-    .refine((val) => ["He/Him", "She/Her", "They/Them"].includes(val), {
-      message: "Invalid pronoun choice. Please select a valid option.",
-    })
-    .optional(),
+    .optional()
+    .refine(
+      (val) =>
+        !val || val === "" || ["He/Him", "She/Her", "They/Them"].includes(val),
+      {
+        message: "Invalid pronoun choice. Please select a valid option.",
+      },
+    ),
   age: z
     .union([z.string(), z.number()])
-    .transform((val) => (typeof val === "string" ? parseInt(val, 10) : val))
+    .transform((val) => {
+      if (val === "") return undefined;
+      return typeof val === "string" ? parseInt(val, 10) : val;
+    })
     .pipe(
       z
         .number()
         .int()
         .min(18, "You must be at least 18 years old")
-        .max(100, "You must enter a valid age"),
+        .max(100, "You must enter a valid age")
+        .optional(),
     )
     .optional(),
   public_current_role: z
     .string()
     .max(30, {message: "Current role must be at most 30 characters"})
-    .refine((val) => !val || /^[A-Za-z\s-]+$/.test(val), {
+    .refine((val) => !val || /^[A-Za-z\s-/]+$/.test(val), {
       message:
-        "Current role can only contain English letters, spaces, and hyphens",
+        "Current role can only contain English letters, spaces, hyphens, and forward slashes",
     })
     .optional(),
   looking_for: z
     .string()
-    .refine((val) => ["Team Member", "Co-Founder", "Startups"].includes(val), {
-      message: "Invalid selection. Please select a valid option.",
-    })
-    .optional(),
+    .optional()
+    .refine(
+      (val) =>
+        !val ||
+        val === "" ||
+        ["Team Member", "Co-Founder", "Startups"].includes(val),
+      {
+        message: "Invalid selection. Please select a valid option.",
+      },
+    ),
   goal: z
     .string()
     .max(200, {message: "Goals must be at most 200 characters"})
@@ -62,9 +76,9 @@ export const settingsAccountValidationSchema = z.object({
         .string()
         .min(2, {message: "Each skill must be at least 2 characters"})
         .max(30, {message: "Each skill must be at most 30 characters"})
-        .regex(/^[A-Za-z0-9#+\-* ]+$/, {
+        .regex(/^[A-Za-z0-9#+\-*/ ]+$/, {
           message:
-            "Skills can only contain letters, numbers, hyphens, # and + symbols",
+            "Skills can only contain letters, numbers, hyphens, #, +, and / symbols",
         }),
     )
     .max(15, {message: "Skills must be at most 15 tags"})
@@ -108,11 +122,10 @@ export const settingsAccountValidationSchema = z.object({
         if (!val) return true;
         try {
           const url = new URL(val);
-          // Check if hostname has at least one dot and valid TLD pattern
           return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(
             url.hostname,
           );
-        } catch (e) {
+        } catch {
           return false;
         }
       },
@@ -190,6 +203,7 @@ export const settingsAccountValidationSchema = z.object({
         })
         .optional(),
     ),
+  image: z.string().optional(),
 });
 
 export type SettingsAccountFormData = z.infer<

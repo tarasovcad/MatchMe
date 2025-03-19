@@ -89,17 +89,31 @@ export default function SocialLinksInput({
                 name={fieldName}
                 control={control}
                 defaultValue=""
-                render={({field}) => (
-                  <Input
-                    placeholder={placeholder}
-                    className={cn(
-                      "-ms-px rounded-s-none shadow-none focus-visible:z-10",
-                      fieldError &&
-                        "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
-                    )}
-                    {...field}
-                  />
-                )}
+                render={({field}) => {
+                  const handleChange = (
+                    e: React.ChangeEvent<HTMLInputElement>,
+                  ) => {
+                    const value =
+                      e.target.value === undefined || e.target.value === null
+                        ? ""
+                        : e.target.value;
+                    field.onChange(value);
+                  };
+
+                  return (
+                    <Input
+                      placeholder={placeholder}
+                      className={cn(
+                        "-ms-px rounded-s-none shadow-none focus-visible:z-10",
+                        fieldError &&
+                          "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+                      )}
+                      {...field}
+                      onChange={handleChange}
+                      value={field.value ?? ""}
+                    />
+                  );
+                }}
               />
             </div>
             <AnimatePresence>
