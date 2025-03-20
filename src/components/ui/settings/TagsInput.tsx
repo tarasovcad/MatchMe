@@ -32,14 +32,14 @@ export default function TagsInput({
               animate={{opacity: 1, scale: 1}}
               exit={{opacity: 0, scale: 0.8}}
               transition={{duration: 0.2}}
-              className={`h-7 relative ${error ? "bg-destructive/10" : "bg-tag"} border ${
+              className={`h-7 relative ${error ? "bg-destructive/10" : "bg-tag dark:bg-muted"} border ${
                 error ? "border-destructive/50" : "border-input"
               } rounded-[6px] font-medium text-sm ps-2 pe-7 flex items-center ${
                 error ? "text-destructive" : "text-foreground"
               } ${isActiveTag ? `ring-2 ring-${error ? "destructive/30" : "ring/50"}` : ""} `}>
               {tag.text}
               <motion.button
-                className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
+                className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

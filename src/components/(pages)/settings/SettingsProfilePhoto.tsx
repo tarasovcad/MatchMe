@@ -1,4 +1,4 @@
-import {Avatar, AvatarFallback, AvatarImage} from "../../shadcn/avatar";
+import {Avatar, AvatarFallback} from "../../shadcn/avatar";
 import {CloudAdd} from "iconsax-react";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
@@ -80,7 +80,6 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
   const handleFiles = useCallback(
     (files: FileList) => {
       const selectedFile = files[0];
-      console.log(selectedFile, "selectedFile");
       const fileType = selectedFile.type;
       const fileExtension =
         "." + selectedFile.name.split(".").pop()?.toLowerCase();
@@ -262,8 +261,10 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
         </div>
         <div
           className={cn(
-            "flex flex-col justify-center items-center gap-[6px] bg-sidebar-background py-6 border border-border rounded-[8px] w-full max-w-[329px] text-center",
-            isDragging ? "border-white bg-[#222222] " : "border-border",
+            "flex flex-col justify-center items-center gap-[6px]  py-6 border border-border rounded-[8px] w-full max-w-[329px] text-center",
+            isDragging
+              ? "border border-dashed bg-[#f4f4f5] dark:bg-muted"
+              : "border-border ",
           )}
           onDragEnter={handleDragIn}
           onDragLeave={handleDragOut}

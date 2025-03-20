@@ -4,6 +4,7 @@ import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
 import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
 import {uploadUserAvatar} from "../aws/uploadUserAvatar";
+import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
 
 export const submitAccountForm = async (
   formData: Partial<SettingsAccountFormData>,
@@ -43,7 +44,6 @@ export const submitAccountForm = async (
   try {
     if (transformedData.image) {
       const signedUrl = await getUploadUrl(user.id);
-
       const result = await uploadUserAvatar(
         signedUrl,
         String(transformedData.image),
@@ -53,7 +53,10 @@ export const submitAccountForm = async (
         return {error: result.error, message: result.message};
       } else {
         console.log(result.message);
-        transformedData.image = signedUrl.split("?")[0];
+        transformedData.image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
+
+        // Invalidate the CloudFront cache
+        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
       }
     }
   } catch (error) {
@@ -61,7 +64,7 @@ export const submitAccountForm = async (
     return {error: error, message: "Error updating profile"};
   }
 
-  // Update the profile that matches the current user's ID
+  // Update the profile
   const {error} = await supabase
     .from("profiles")
     .update(transformedData)
@@ -72,7 +75,7 @@ export const submitAccountForm = async (
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
   }
-
+  // Update the user session with the new image
   if (transformedData.image !== null) {
     const {error} = await supabase.auth.updateUser({
       data: {

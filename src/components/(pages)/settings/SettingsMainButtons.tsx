@@ -21,7 +21,7 @@ const SettingsMainButtons = ({
         description="Are you sure you want to clear all entered information? This will reset all fields to their default values."
         cancelButtonText="Cancel"
         confirmButtonText="Reset"
-        onCancel={handleCancel}>
+        onConfirm={handleCancel}>
         <Button
           variant={"outline"}
           type="button"

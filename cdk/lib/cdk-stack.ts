@@ -3,7 +3,8 @@ import {Construct} from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dotenv from "dotenv";
-
+import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 dotenv.config();
 
 export class CdkStack extends cdk.Stack {
@@ -30,6 +31,8 @@ export class CdkStack extends cdk.Stack {
           allowedMethods: [
             s3.HttpMethods.GET, // Allow frontend to fetch images
             s3.HttpMethods.HEAD, // Allow preflight requests
+            s3.HttpMethods.PUT, // Allow authenticated users to upload images
+            s3.HttpMethods.DELETE, // Allow authenticated users to delete images
           ],
           allowedOrigins: allowedOrigins,
           allowedHeaders: ["*"],
@@ -38,16 +41,40 @@ export class CdkStack extends cdk.Stack {
       ],
     });
 
+    // Create CloudFront distribution
+    const distribution = new cloudfront.Distribution(
+      this,
+      "MatchMeDistribution",
+      {
+        defaultBehavior: {
+          origin: origins.S3BucketOrigin.withOriginAccessControl(matchmeBucket),
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        },
+        errorResponses: [
+          {
+            httpStatus: 403,
+            responseHttpStatus: 403,
+            responsePagePath: "/error.html",
+            ttl: cdk.Duration.minutes(30),
+          },
+        ],
+      },
+    );
+
     const bucketPolicy = new s3.BucketPolicy(this, "BucketPolicy", {
       bucket: matchmeBucket,
     });
 
     bucketPolicy.document.addStatements(
-      // Allow authenticated users to upload and delete only from their own folder
       new iam.PolicyStatement({
-        actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject"],
+        actions: ["s3:PutObject"],
         effect: iam.Effect.ALLOW,
-        principals: [new iam.AnyPrincipal()],
+        principals: [
+          new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin"),
+        ],
         resources: [`${matchmeBucket.bucketArn}/user-avatars/*`],
       }),
 
@@ -78,6 +105,10 @@ export class CdkStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "BucketWebsiteURL", {
       value: `https://${matchmeBucket.bucketName}.s3.amazonaws.com/`,
+    });
+
+    new cdk.CfnOutput(this, "CloudFrontURL", {
+      value: distribution.distributionDomainName,
     });
   }
 }
