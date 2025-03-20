@@ -19,7 +19,7 @@ export default function AlertComponent({
   description,
   cancelButtonText = "Cancel",
   confirmButtonText = "Confirm",
-  onCancel,
+  onConfirm,
 }: {
   children: React.ReactNode;
   showAlertIcon?: boolean;
@@ -27,7 +27,7 @@ export default function AlertComponent({
   description?: string;
   cancelButtonText?: string;
   confirmButtonText?: string;
-  onCancel?: () => void;
+  onConfirm?: () => void;
 }) {
   return (
     <AlertDialog>
@@ -53,7 +53,7 @@ export default function AlertComponent({
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelButtonText}</AlertDialogCancel>
-          <AlertDialogAction onClick={onCancel}>
+          <AlertDialogAction onClick={onConfirm}>
             {confirmButtonText}
           </AlertDialogAction>
         </AlertDialogFooter>
