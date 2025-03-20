@@ -15,6 +15,8 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
 import {isEqual, pickBy} from "lodash";
 import {toast} from "sonner";
+import {motion} from "framer-motion";
+import {containerVariants, itemVariants} from "@/utils/other/variants";
 
 const AccountTab = ({
   profile,
@@ -172,43 +174,48 @@ const AccountTab = ({
 
   return (
     <FormProvider {...methods}>
-      <div className="flex flex-col gap-6">
-        <div className="border border-border rounded-[8px]">
-          {accountSettingsFormFieldsTop.map((formField, index) => {
-            return (
-              <div
-                key={formField.fieldTitle}
-                className={cn(
-                  "px-[18px] py-3",
-                  index !== 0 && "border-t border-border",
-                )}>
-                <SettingsFormField formField={formField} />
-              </div>
-            );
-          })}
-        </div>
-        {accountSettingsFormFields.map((formFields, index) => {
-          return (
-            <div
-              key={formFields.formTitle}
-              className={`flex flex-col gap-9 max-[990px]:gap-8 ${index !== 0 && "border-t border-border pt-6"}`}>
-              <h4 className="font-semibold text-foreground text-xl">
-                {formFields.formTitle}
-              </h4>
-              <div className="flex flex-col gap-6">
-                {formFields.formData.map((formField) => {
-                  return (
-                    <SettingsFormField
-                      formField={formField}
-                      key={formField.fieldTitle}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col gap-6">
+        <motion.div
+          variants={itemVariants}
+          className="border border-border rounded-[8px]">
+          {accountSettingsFormFieldsTop.map((formField, index) => (
+            <motion.div
+              key={formField.fieldTitle}
+              variants={itemVariants}
+              className={cn(
+                "px-[18px] py-3",
+                index !== 0 && "border-t border-border",
+              )}>
+              <SettingsFormField formField={formField} />
+            </motion.div>
+          ))}
+        </motion.div>
+        {accountSettingsFormFields.map((formFields, index) => (
+          <motion.div
+            key={formFields.formTitle}
+            variants={itemVariants}
+            className={`flex flex-col gap-9 max-[990px]:gap-8 ${
+              index !== 0 && "border-t border-border pt-6"
+            }`}>
+            <h4 className="font-semibold text-foreground text-xl">
+              {formFields.formTitle}
+            </h4>
+            <motion.div
+              variants={containerVariants}
+              className="flex flex-col gap-6">
+              {formFields.formData.map((formField) => (
+                <motion.div key={formField.fieldTitle} variants={itemVariants}>
+                  <SettingsFormField formField={formField} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        ))}
+      </motion.div>
     </FormProvider>
   );
 };
