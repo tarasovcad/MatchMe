@@ -4,6 +4,7 @@ import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
 import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
 import {uploadUserAvatar} from "../aws/uploadUserAvatar";
+import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
 
 export const submitAccountForm = async (
   formData: Partial<SettingsAccountFormData>,
@@ -52,8 +53,10 @@ export const submitAccountForm = async (
         return {error: result.error, message: result.message};
       } else {
         console.log(result.message);
-        console.log(signedUrl.split("?")[0], "signedUrl");
         transformedData.image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
+
+        // Invalidate the CloudFront cache
+        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
       }
     }
   } catch (error) {
