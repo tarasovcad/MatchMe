@@ -17,6 +17,9 @@ import {cn} from "@/lib/utils";
 import TagsInput from "../ui/settings/TagsInput";
 import TimeZoneInput from "../(pages)/settings/TimeZoneInput";
 import {motion} from "framer-motion";
+import DangerZone from "../ui/settings/DangerZone";
+import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
+import {User} from "@supabase/supabase-js";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -32,9 +35,17 @@ const fieldComponents = {
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   timezone: TimeZoneInput,
+  deleteAccount: DangerZone,
+  connectedAccounts: UserConnectedAccounts,
 };
 
-const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
+const SettingsFormField = ({
+  formField,
+  user,
+}: {
+  formField: FormFieldProps;
+  user: User;
+}) => {
   const {
     fieldDescription,
     fieldTitle,
@@ -100,6 +111,7 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           socials={fieldInputProps[0].socials ?? []}
           register={register(fieldName)}
           error={errors[fieldName]}
+          user={user}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

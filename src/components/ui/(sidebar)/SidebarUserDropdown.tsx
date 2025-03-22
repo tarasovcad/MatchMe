@@ -32,6 +32,7 @@ import Link from "next/link";
 import {motion} from "framer-motion";
 import {useState} from "react";
 import Image from "next/image";
+import {getNameInitials} from "@/functions/getNameInitials";
 
 const menuVariants = {
   closed: {
@@ -97,7 +98,7 @@ export function SidebarUserDropdown({
                     height={100}
                   />
                 ) : (
-                  <Avvvatars value="MT" radius={6} />
+                  <Avvvatars value={getNameInitials(user.name)} radius={6} />
                 )}
               </Avatar>
               <div className="flex-1 grid text-sm text-left leading-tight">

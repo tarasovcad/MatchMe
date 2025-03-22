@@ -6,34 +6,28 @@ import PageTitle from "@/components/pages/PageTitle";
 import AccountTab from "@/components/(pages)/settings/AccountTab";
 import SecurityTab from "@/components/(pages)/settings/SecurityTab";
 import {MatchMeUser} from "@/types/user/matchMeUser";
-import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {motion} from "framer-motion";
 import {
   bottomSectionButtonsVariants,
   containerVariants,
   itemVariants,
 } from "@/utils/other/variants";
+import {User} from "@supabase/supabase-js";
 
 const SettingsClientPage = ({
   tab,
   profile,
+  user,
 }: {
   tab: string | string[];
   profile: MatchMeUser;
+  user: User;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [handleSave, setHandleSave] = useState<() => void>(() => {});
   const [handleCancel, setHandleCancel] = useState<() => void>(() => {});
   const [isDisabled, setIsDisabled] = useState(false);
-
-  const TabComponents = {
-    account: AccountTab,
-    security: SecurityTab,
-  } as const;
-
-  const SelectedComponent =
-    TabComponents[tab as keyof typeof TabComponents] || AccountTab;
 
   useEffect(() => {
     setIsClient(true);
@@ -42,6 +36,25 @@ const SettingsClientPage = ({
   if (!isClient) {
     return <div></div>;
   }
+
+  const renderSelectedComponent = () => {
+    const commonProps = {
+      profile,
+      setIsLoading,
+      setHandleSave,
+      setHandleCancel,
+      setIsDisabled,
+    };
+
+    switch (tab) {
+      case "account":
+        return <AccountTab {...commonProps} />;
+      case "security":
+        return <SecurityTab {...commonProps} user={user} />;
+      default:
+        return <AccountTab {...commonProps} />;
+    }
+  };
 
   return (
     <motion.form
@@ -61,13 +74,7 @@ const SettingsClientPage = ({
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <SelectedComponent
-            profile={profile}
-            setIsLoading={setIsLoading}
-            setHandleSave={setHandleSave}
-            setHandleCancel={setHandleCancel}
-            setIsDisabled={setIsDisabled}
-          />
+          {renderSelectedComponent()}
         </motion.div>
       </motion.div>
 
