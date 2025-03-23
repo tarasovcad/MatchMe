@@ -30,6 +30,7 @@ const SecurityTab = ({
   const [initialValues, setInitialValues] = useState<SettingsSecurityFormData>({
     email: profile.email ?? "",
     username: profile.username ?? "",
+    newUsername: "",
   });
 
   const methods = useForm<SettingsSecurityFormData>({

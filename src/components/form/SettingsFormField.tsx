@@ -20,6 +20,7 @@ import {motion} from "framer-motion";
 import DangerZone from "../ui/settings/DangerZone";
 import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
+import SettingsUsernameInput from "../ui/settings/SettingsUsernameInput";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -37,6 +38,7 @@ const fieldComponents = {
   timezone: TimeZoneInput,
   deleteAccount: DangerZone,
   connectedAccounts: UserConnectedAccounts,
+  username: SettingsUsernameInput,
 };
 
 const SettingsFormField = ({
@@ -112,6 +114,7 @@ const SettingsFormField = ({
           register={register(fieldName)}
           error={errors[fieldName]}
           user={user}
+          mail={fieldInputProps[0].name === "email"}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

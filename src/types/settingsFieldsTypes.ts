@@ -16,7 +16,9 @@ export interface FormFieldProps {
     | "social"
     | "description"
     | "accountVerification"
-    | "makeProfilePublic";
+    | "makeProfilePublic"
+    | "deleteAccount"
+    | "connectedAccounts";
   fieldRequired?: boolean;
   fieldInputProps: [
     {

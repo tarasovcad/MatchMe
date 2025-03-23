@@ -1,6 +1,7 @@
 "use server";
 
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
+import {hasProfanity} from "@/utils/other/profanityCheck";
 import {createClient} from "@/utils/supabase/server";
 export async function checkUsernameAvailabilityAuth(username: string) {
   const startTime = performance.now();
@@ -13,6 +14,18 @@ export async function checkUsernameAvailabilityAuth(username: string) {
     if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
       return {error: "This username is reserved and cannot be used"};
     }
+    if (!username || username.length < 3 || username.length > 20) {
+      return {
+        error: "Username must be between 3 and 20 characters long",
+      };
+    }
+    if (hasProfanity(username)) {
+      return {
+        error:
+          "Username contains inappropriate language. Please choose another.",
+      };
+    }
+
     const supabase = await createClient();
 
     const usernameTrimmed = username.trim().toLowerCase();

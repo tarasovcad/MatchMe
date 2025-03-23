@@ -76,7 +76,6 @@ const UserConnectedAccounts = ({user}: {user: User}) => {
   const githubProvider = userConnections.find(
     (connection) => connection.provider === "github",
   );
-  console.log(userConnections);
 
   return (
     <div className="flex items-center gap-2">
@@ -86,7 +85,10 @@ const UserConnectedAccounts = ({user}: {user: User}) => {
           {...(!githubProvider && {onClick: () => connectProvider("github")})}
           size={"sm"}
           disabled={loading}
-          className={cn("rounded-[8px] h-[42px] bg-muted")}>
+          className={cn(
+            "rounded-[8px] h-[42px] bg-muted cursor-default",
+            !githubProvider && "cursor-pointer",
+          )}>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Image src="svg/github.svg" alt="Github" width={16} height={16} />
@@ -125,7 +127,7 @@ const UserConnectedAccounts = ({user}: {user: User}) => {
           size={"sm"}
           disabled={loading}
           className={cn(
-            "rounded-[8px] h-[42px] bg-destructive hover:bg-destructive/90 text-background hover:text-background",
+            "rounded-[8px] h-[42px] bg-destructive hover:bg-destructive/90 text-background hover:text-background cursor-default",
             !googleProvider && "cursor-pointer",
           )}>
           <div className="flex items-center gap-2">

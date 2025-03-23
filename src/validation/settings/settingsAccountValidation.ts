@@ -1,21 +1,14 @@
 import {languages} from "@/data/forms/(settings)/languages";
 import {socialLinks} from "@/data/forms/(settings)/socialLinks";
 import {z} from "zod";
+import {nameSchema} from "../auth/nameValidation";
 
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
 const allowedSocialLinks = new Set(socialLinks.map((link) => link.title));
 export const settingsAccountValidationSchema = z.object({
   is_profile_public: z.boolean(),
   is_profile_verified: z.boolean(),
-  name: z
-    .string()
-    .min(1, "Full name is required")
-    .min(3, "Full name must be at least 3 characters")
-    .max(20, {message: "Full name must be at most 20 characters"})
-    .regex(
-      /^[A-Z][a-z]+(?:\s[A-Z][a-z]+)+$/,
-      "Enter a valid full name (First Last)",
-    ),
+  name: nameSchema,
   username: z.string(),
   pronouns: z
     .string()

@@ -14,50 +14,21 @@ export const securitySettingsFormFields = [
             placeholder: "johndoe@example.com",
             type: "email",
             name: "email",
-
             readOnly: true,
           },
         ],
       },
       {
         fieldTitle: "Username",
-        fieldType: "text",
+        fieldType: "username",
         fieldRequired: true,
         fieldInputProps: [
           {
             id: "username",
             placeholder: "johndoe",
-            readOnly: true,
+            // readOnly: true,
             type: "text",
             name: "username",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Delete My Account",
-        fieldDescription: "if away for...",
-        fieldType: "dropdown",
-        fieldInputProps: [
-          {
-            id: "deleteIn",
-            placeholder: "12 months",
-            readOnly: true,
-            type: "text",
-            name: "deleteIn",
-            options: [
-              {
-                title: "1 month",
-              },
-              {
-                title: "6 months",
-              },
-              {
-                title: "12 months",
-              },
-              {
-                title: "24 months",
-              },
-            ],
           },
         ],
       },

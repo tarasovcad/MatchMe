@@ -1,8 +1,10 @@
 import {z} from "zod";
+import {usernameSchema} from "../auth/usernameValidation";
 
 export const settingsSecurityValidationSchema = z.object({
   email: z.string().email().optional(),
-  username: z.string().optional(),
+  username: usernameSchema,
+  newUsername: usernameSchema,
 });
 
 export type SettingsSecurityFormData = z.infer<

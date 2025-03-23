@@ -6,7 +6,7 @@ import {cn} from "@/lib/utils";
 import LoadingButtonCirlce from "../ui/LoadingButtonCirlce";
 
 const buttonVariants = cva(
-  "inline-flex justify-center items-center gap-1.5 disabled:opacity-50 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 outline-offset-2 font-medium text-sm whitespace-nowrap transition-colors transition-colors duration-300 ease-in-out [&_svg]:pointer-events-none disabled:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex justify-center items-center gap-1.5 disabled:opacity-50 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70 outline-offset-2 font-medium text-sm whitespace-nowrap transition-colors transition-colors duration-300 ease-in-out cursor-pointer [&_svg]:pointer-events-none disabled:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
