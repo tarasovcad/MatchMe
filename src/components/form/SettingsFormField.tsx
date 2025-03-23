@@ -46,7 +46,7 @@ const SettingsFormField = ({
   user,
 }: {
   formField: FormFieldProps;
-  user: User;
+  user?: User;
 }) => {
   const {
     fieldDescription,

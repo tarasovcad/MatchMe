@@ -14,11 +14,13 @@ const UserNameInput = ({
   username,
   name = "username",
   onAvailabilityChange,
+  autoFocus,
 }: {
   label?: string;
   username?: string;
   name?: string;
   onAvailabilityChange?: (isAvailable: boolean | null) => void;
+  autoFocus?: boolean;
 }) => {
   const [usernameLoading, setUsernameLoading] = useState(false);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<
@@ -126,6 +128,7 @@ const UserNameInput = ({
           name={field.name}
           isUsernameAvailable={isUsernameAvailable}
           value={field.value}
+          autoFocus={autoFocus}
           onChange={(e) => {
             const newValue = e.target.value.toLowerCase();
             field.onChange(newValue);

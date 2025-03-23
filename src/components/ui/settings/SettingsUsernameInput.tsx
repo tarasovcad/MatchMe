@@ -47,8 +47,15 @@ const SettingsUsernameInput = ({
     setOpen(false);
   };
 
+  const handleModalClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      handleClear();
+    }
+    setOpen(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleModalClose}>
       <DialogTrigger asChild>
         <div className="">
           <SimpleInput
@@ -94,8 +101,8 @@ const SettingsUsernameInput = ({
               id={id}
               name={name}
               placeholder={placeholder}
-              value="tarasovcad"
               readOnly
+              {...register}
             />
           </div>
           <div className="*:not-first:mt-2">
@@ -104,6 +111,7 @@ const SettingsUsernameInput = ({
               username={newUsername}
               name="newUsername"
               onAvailabilityChange={setIsUsernameAvailable}
+              autoFocus
             />
           </div>
           <DialogFooter>

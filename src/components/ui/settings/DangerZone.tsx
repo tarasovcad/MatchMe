@@ -16,15 +16,7 @@ import {CircleAlertIcon} from "lucide-react";
 import {useState} from "react";
 import {User} from "@supabase/supabase-js";
 
-const DangerZone = ({
-  id,
-  name,
-  user,
-}: {
-  id: string;
-  name: string;
-  user: User;
-}) => {
+const DangerZone = ({id, user}: {id: string; user: User}) => {
   const username = user?.user_metadata?.username;
   const [inputValue, setInputValue] = useState("");
   return (

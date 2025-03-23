@@ -99,12 +99,12 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props} variant="sidebar">
       <SidebarHeader>
-        <div className="py-3 px-[6px] flex items-center justify-between ">
+        <div className="flex justify-between items-center px-[6px] py-3">
           <Link href={"/"} className="flex items-center gap-[6px] min-h-[29px]">
             <LogoImage size={24} />
-            <LogoText className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden" />
+            <LogoText className="group-data-[state=collapsed]:hidden transition-opacity duration-300 ease-in-out" />
           </Link>
-          <div className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden">
+          <div className="group-data-[state=collapsed]:hidden transition-opacity duration-300 ease-in-out">
             <SidebarTrigger />
           </div>
         </div>

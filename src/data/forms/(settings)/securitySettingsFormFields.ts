@@ -5,7 +5,7 @@ export const securitySettingsFormFields = [
     formTitle: "Security",
     formData: [
       {
-        fieldTitle: "Your Email",
+        fieldTitle: "Email",
         fieldType: "text",
         fieldRequired: true,
         fieldInputProps: [

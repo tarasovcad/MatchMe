@@ -1,3 +1,4 @@
+import {submitSecurityForm} from "@/actions/settings/submitSecurityForm";
 import SettingsFormField from "@/components/form/SettingsFormField";
 import {securitySettingsFormFields} from "@/data/forms/(settings)/securitySettingsFormFields";
 import {MatchMeUser} from "@/types/user/matchMeUser";
@@ -9,8 +10,10 @@ import {
 import {zodResolver} from "@hookform/resolvers/zod";
 import {User} from "@supabase/supabase-js";
 import {motion} from "framer-motion";
-import React, {useState} from "react";
+import {isEqual, pickBy} from "lodash";
+import React, {useEffect, useState} from "react";
 import {FormProvider, useForm} from "react-hook-form";
+import {toast} from "sonner";
 
 const SecurityTab = ({
   profile,
@@ -38,6 +41,86 @@ const SecurityTab = ({
     mode: "onChange",
     defaultValues: initialValues,
   });
+
+  const {formState} = methods;
+  const formValues = methods.watch();
+
+  useEffect(() => {
+    setHandleSave(() => handleSave);
+    setHandleCancel(() => handleCancel);
+  }, [setHandleSave, setHandleCancel]);
+
+  const handleSave = () => {
+    methods.handleSubmit(onSubmit)();
+  };
+  const handleCancel = () => {
+    methods.reset();
+  };
+
+  useEffect(() => {
+    // Filter out 'newUsername' from initialValues and formValues
+    const cleanInitialValues = pickBy(
+      initialValues,
+      (value, key) => key !== "newUsername" && value !== undefined,
+    );
+
+    const cleanFormValues = pickBy(
+      formValues,
+      (_, key) => key in cleanInitialValues && key !== "newUsername",
+    );
+    // Compare cleaned values to determine if form has changed
+    const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
+
+    setIsDisabled(!hasChanged || !formState.isValid);
+  }, [formValues, initialValues, formState.isValid, setIsDisabled]);
+
+  const onSubmit = async (data: SettingsSecurityFormData) => {
+    setIsLoading(true);
+    try {
+      // Remove 'newUsername' from comparison
+      const filteredData = pickBy(data, (_, key) => key !== "newUsername");
+      const filteredInitialValues = pickBy(
+        initialValues,
+        (_, key) => key !== "newUsername",
+      );
+
+      // Create an object containing only the changed values
+      const changedValues = Object.keys(filteredData).reduce((result, key) => {
+        const formKey = key as keyof SettingsSecurityFormData;
+        const currentValue = filteredData[formKey] ?? "";
+        const initialValue = filteredInitialValues[formKey] ?? "";
+
+        if (!isEqual(currentValue, initialValue)) {
+          result[formKey] = currentValue;
+        }
+
+        return result;
+      }, {} as Partial<SettingsSecurityFormData>);
+
+      // Only submit if there are actual changes
+      if (Object.keys(changedValues).length > 0) {
+        console.log("Submitting changes:", changedValues);
+        const response = await submitSecurityForm(changedValues);
+
+        if (response.error) {
+          console.error("Error submitting security form:", response.error);
+          toast.error(response.message);
+          setIsLoading(false);
+          return;
+        }
+
+        // Update initial values and show success notification
+        setInitialValues((prev) => ({...prev, ...filteredData}));
+        toast.success(response.message);
+      } else {
+        console.log("No changes to submit");
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      toast.error("Error submitting security form");
+    }
+    setIsLoading(false);
+  };
 
   return (
     <FormProvider {...methods}>
