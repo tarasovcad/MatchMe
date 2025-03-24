@@ -190,7 +190,7 @@ const AccountTab = ({
                 "px-[18px] py-3",
                 index !== 0 && "border-t border-border",
               )}>
-              <SettingsFormField formField={formField} />
+              <SettingsFormField formField={formField} profile={profile} />
             </motion.div>
           ))}
         </motion.div>

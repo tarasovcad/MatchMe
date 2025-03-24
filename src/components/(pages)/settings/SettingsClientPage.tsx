@@ -15,6 +15,7 @@ import {
 import {User} from "@supabase/supabase-js";
 import Alert from "@/components/ui/Alert";
 import {canChangeUsername} from "@/functions/canChangeUsername";
+import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
 
 const SettingsClientPage = ({
   tab,
@@ -38,10 +39,13 @@ const SettingsClientPage = ({
   if (!isClient) {
     return <div></div>;
   }
+  console.log(isDisabled, "isDisabled");
 
   const usernameChangeStatus = profile?.username_changed_at
     ? canChangeUsername(profile.username_changed_at)
     : {canChange: true, nextAvailableDate: null};
+
+  const {canMakeProfilePublic} = canUserMakeProfilePublic(profile);
 
   const renderSelectedComponent = () => {
     const commonProps = {
@@ -73,8 +77,16 @@ const SettingsClientPage = ({
         className="flex flex-col gap-8 pb-24">
         {tab === "security" && !usernameChangeStatus.canChange && (
           <Alert
-            message={`Your next available change date is ${usernameChangeStatus.nextAvailableDate}`}
+            message={`Your next available change date is ${usernameChangeStatus.nextAvailableDate}.`}
             title="Usernames can only be changed once a month"
+            type="warning"
+          />
+        )}
+        {tab === "account" && !canMakeProfilePublic && (
+          <Alert
+            message="To make your profile public, you need to fill in all required details and provide more information about yourself."
+            title="Your profile is incomplete!"
+            type="warning"
           />
         )}
         <motion.div variants={itemVariants} className="flex flex-col gap-6">

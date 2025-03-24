@@ -1,12 +1,29 @@
 export default function Alert({
   title,
   message,
+  type = "warning",
 }: {
   title: string;
   message: string;
+  type: "warning";
 }) {
+  const alertStyles = {
+    warning: {
+      backgroundColor: "#FFF9EB",
+      borderColor: "#FFC233",
+      color: "#8A6100",
+    },
+  };
+  const currentStyle = alertStyles[type];
+
   return (
-    <div className="bg-[#FFF9EB] p-4 border-[#FFC233] border-l-2 rounded-md rounded-l-none">
+    <div
+      className="p-4 border-l-2 rounded-md rounded-l-none"
+      style={{
+        backgroundColor: currentStyle.backgroundColor,
+        borderColor: currentStyle.borderColor,
+        color: currentStyle.color,
+      }}>
       <div className="flex gap-1">
         <div className="p-1">
           <svg
@@ -24,8 +41,8 @@ export default function Alert({
           </svg>
         </div>
         <div className="space-y-1 px-2 grow">
-          <p className="font-medium text-[#8A6100] text-sm">{title}</p>
-          <ul className="text-[#8A6100] text-sm">
+          <p className="font-medium text-sm">{title}</p>
+          <ul className="text-sm">
             <li>{message}</li>
           </ul>
         </div>

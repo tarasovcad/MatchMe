@@ -70,6 +70,9 @@ const SecurityTab = ({
     );
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
+    console.log("Has changed:", hasChanged);
+    console.log(cleanInitialValues, "cleanInitialValues");
+    console.log(cleanFormValues, "cleanFormValues");
 
     setIsDisabled(!hasChanged || !formState.isValid);
   }, [formValues, initialValues, formState.isValid, setIsDisabled]);
