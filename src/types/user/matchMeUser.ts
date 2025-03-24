@@ -26,4 +26,5 @@ export interface MatchMeUser {
   social_links_2: string | null;
   social_links_3_platform: string | null;
   social_links_3: string | null;
+  username_changed_at: Date | null;
 }

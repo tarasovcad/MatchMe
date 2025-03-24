@@ -21,6 +21,7 @@ import DangerZone from "../ui/settings/DangerZone";
 import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "../ui/settings/SettingsUsernameInput";
+import {MatchMeUser} from "@/types/user/matchMeUser";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -44,9 +45,11 @@ const fieldComponents = {
 const SettingsFormField = ({
   formField,
   user,
+  profile,
 }: {
   formField: FormFieldProps;
   user?: User;
+  profile?: MatchMeUser;
 }) => {
   const {
     fieldDescription,
@@ -113,8 +116,9 @@ const SettingsFormField = ({
           socials={fieldInputProps[0].socials ?? []}
           register={register(fieldName)}
           error={errors[fieldName]}
-          user={user}
+          user={user!}
           mail={fieldInputProps[0].name === "email"}
+          profile={profile}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

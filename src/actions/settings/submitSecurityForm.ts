@@ -17,10 +17,39 @@ export const submitSecurityForm = async (
       throw new Error("User not authenticated");
     }
 
+    const {data: profile, error: fetchError} = await supabase
+      .from("profiles")
+      .select("username_changed_at")
+      .eq("id", user.id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching profile:", fetchError);
+      return {error: fetchError, message: "Error fetching profile data"};
+    }
+
+    if (profile?.username_changed_at) {
+      const lastChangedDate = new Date(profile.username_changed_at);
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      if (lastChangedDate > oneMonthAgo) {
+        return {
+          error: true,
+          message: "You can only change your username once a month.",
+        };
+      }
+    }
+
+    const formDataWithTimestamp = {
+      ...formData,
+      username_changed_at: new Date().toISOString(),
+    };
+
     // Update the profile
     const {error} = await supabase
       .from("profiles")
-      .update(formData)
+      .update(formDataWithTimestamp)
       .eq("id", user.id)
       .select();
 
@@ -31,7 +60,7 @@ export const submitSecurityForm = async (
 
     const {error: sessionError} = await supabase.auth.updateUser({
       data: {
-        username: formData.username,
+        username: formDataWithTimestamp.username,
       },
     });
 

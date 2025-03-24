@@ -7,6 +7,9 @@ export const settingsSecurityValidationSchema = z.object({
   newUsername: usernameSchema,
 });
 
-export type SettingsSecurityFormData = z.infer<
-  typeof settingsSecurityValidationSchema
->;
+export type SettingsSecurityFormData = {
+  username: string;
+  newUsername: string;
+  email?: string;
+  username_changed_at?: string;
+};

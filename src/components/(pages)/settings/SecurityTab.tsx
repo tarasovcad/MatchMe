@@ -139,7 +139,11 @@ const SecurityTab = ({
             className="flex flex-col gap-6">
             {formFields.formData.map((formField) => (
               <motion.div key={formField.fieldTitle} variants={itemVariants}>
-                <SettingsFormField formField={formField} user={user} />
+                <SettingsFormField
+                  formField={formField}
+                  user={user}
+                  profile={profile}
+                />
               </motion.div>
             ))}
           </motion.div>

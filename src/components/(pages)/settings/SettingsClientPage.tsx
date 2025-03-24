@@ -13,6 +13,8 @@ import {
   itemVariants,
 } from "@/utils/other/variants";
 import {User} from "@supabase/supabase-js";
+import Alert from "@/components/ui/Alert";
+import {canChangeUsername} from "@/functions/canChangeUsername";
 
 const SettingsClientPage = ({
   tab,
@@ -36,6 +38,10 @@ const SettingsClientPage = ({
   if (!isClient) {
     return <div></div>;
   }
+
+  const usernameChangeStatus = profile?.username_changed_at
+    ? canChangeUsername(profile.username_changed_at)
+    : {canChange: true, nextAvailableDate: null};
 
   const renderSelectedComponent = () => {
     const commonProps = {
@@ -65,6 +71,12 @@ const SettingsClientPage = ({
       <motion.div
         variants={containerVariants}
         className="flex flex-col gap-8 pb-24">
+        {tab === "security" && !usernameChangeStatus.canChange && (
+          <Alert
+            message={`Your next available change date is ${usernameChangeStatus.nextAvailableDate}`}
+            title="Usernames can only be changed once a month"
+          />
+        )}
         <motion.div variants={itemVariants} className="flex flex-col gap-6">
           <PageTitle
             title="Settings"
