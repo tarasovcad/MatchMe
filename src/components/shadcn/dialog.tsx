@@ -68,7 +68,7 @@ function DialogContent({
           onClick={onClose}>
           <XIcon
             size={16}
-            className="opacity-60 group-hover:opacity-100 transition-opacity"
+            className="opacity-60 group-hover:opacity-100 transition-opacity cursor-pointer"
           />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

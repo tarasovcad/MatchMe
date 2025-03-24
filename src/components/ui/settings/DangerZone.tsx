@@ -11,17 +11,55 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import {Input} from "@/components/shadcn/input";
-import {Label} from "@/components/shadcn/label";
+
 import {CircleAlertIcon} from "lucide-react";
 import {useState} from "react";
 import {User} from "@supabase/supabase-js";
+import {deleteUserAccount} from "@/actions/(auth)/deleteUserAccount";
+import {toast} from "sonner";
+import {useRouter} from "next/navigation";
 
 const DangerZone = ({id, user}: {id: string; user: User}) => {
   const username = user?.user_metadata?.username;
   const [inputValue, setInputValue] = useState("");
+  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const handleClear = () => {
+    setInputValue("");
+    setOpen(false);
+  };
+  const router = useRouter();
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    if (inputValue !== username) {
+      setIsLoading(false);
+      return;
+    }
+    const response = await deleteUserAccount(user);
+    setIsLoading(false);
+    if (response.error) {
+      console.error("Error deleting user account:", response.error);
+      return;
+    }
+    toast.success(response.message);
+
+    router.push("/");
+  };
+
+  const handleModalClose = (isOpen: boolean) => {
+    if (isLoading) {
+      return;
+    }
+    if (!isOpen) {
+      handleClear();
+    }
+    setOpen(isOpen);
+  };
+
   return (
     <div>
-      <Dialog>
+      <Dialog open={open} onOpenChange={handleModalClose}>
         <DialogTrigger asChild>
           <Button
             size={"sm"}
@@ -50,8 +88,9 @@ const DangerZone = ({id, user}: {id: string; user: User}) => {
           <form className="space-y-5">
             <div className="*:not-first:mt-2">
               <p className="font-medium text-secondary text-sm">
-                Type <span className="text-foreground">{username}</span> to
-                confirm.
+                Type{" "}
+                <span className="text-foreground select-none">{username}</span>{" "}
+                to confirm.
               </p>
               <Input
                 id={id}
@@ -67,7 +106,8 @@ const DangerZone = ({id, user}: {id: string; user: User}) => {
                   type="button"
                   variant="outline"
                   className="flex-1"
-                  size={"xs"}>
+                  size={"xs"}
+                  disabled={isLoading}>
                   Cancel
                 </Button>
               </DialogClose>
@@ -76,7 +116,9 @@ const DangerZone = ({id, user}: {id: string; user: User}) => {
                 className="flex-1"
                 size={"xs"}
                 variant={"destructive"}
-                disabled={inputValue !== username}>
+                disabled={inputValue !== username}
+                onClick={handleConfirm}
+                isLoading={isLoading}>
                 Delete
               </Button>
             </DialogFooter>
