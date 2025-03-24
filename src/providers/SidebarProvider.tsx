@@ -5,7 +5,13 @@ import {AppSidebar} from "@/components/ui/(sidebar)/AppSidebar";
 import {createClient} from "@/utils/supabase/server";
 import Navbar from "@/components/ui/(sidebar)/Navbar";
 
-const SidebarProvider = async ({children}: {children: React.ReactNode}) => {
+const SidebarProvider = async ({
+  children,
+  removePadding,
+}: {
+  children: React.ReactNode;
+  removePadding?: boolean;
+}) => {
   const supabase = await createClient();
 
   const {
@@ -22,7 +28,7 @@ const SidebarProvider = async ({children}: {children: React.ReactNode}) => {
         <AppSidebar user={user} />
         <SidebarInset>
           <Navbar />
-          <div className="p-6">{children}</div>
+          <div className={removePadding ? "" : "p-6"}>{children}</div>
         </SidebarInset>
       </SidebarShadcnProvider>
     </>

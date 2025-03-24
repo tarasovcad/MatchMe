@@ -1,5 +1,5 @@
 import {Label} from "@/components/shadcn/label";
-import {CircleCheck, Mail, TriangleAlert} from "lucide-react";
+import {CircleCheck, Mail, Search, TriangleAlert} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {AnimatePresence, motion} from "framer-motion";
 import LoadingButtonCirlce from "./LoadingButtonCirlce";
@@ -19,6 +19,7 @@ const SimpleInput = ({
   loading,
   readOnly,
   isUsernameAvailable,
+  search,
   ...props
 }: SimpleInputProps) => {
   return (
@@ -34,6 +35,7 @@ const SimpleInput = ({
               type === "file" &&
                 "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
               mail && "peer ps-9",
+              search && "peer ps-9",
               loading && "peer pe-9",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
@@ -56,6 +58,11 @@ const SimpleInput = ({
           {mail && (
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <Mail size={16} strokeWidth={2} aria-hidden="true" />
+            </div>
+          )}
+          {search && (
+            <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
+              <Search size={16} strokeWidth={2} aria-hidden="true" />
             </div>
           )}
           {loading && (

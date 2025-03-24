@@ -10,7 +10,9 @@ export interface SimpleInputProps
   register?: UseFormRegisterReturn<string>;
   name?: string;
   readOnly?: boolean;
+
   loading?: boolean;
   error?: {message?: string} | undefined;
   isUsernameAvailable?: boolean | null;
+  search?: boolean;
 }

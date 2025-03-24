@@ -6,7 +6,6 @@ export interface MatchMeUser {
   pronouns: string | null;
   age: number | null;
   image: string;
-  current_role: string | null;
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;
