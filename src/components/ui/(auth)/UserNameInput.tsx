@@ -1,4 +1,3 @@
-import {useState} from "react";
 import {hasProfanity} from "@/utils/other/profanityCheck";
 import {toast} from "sonner";
 import {checkUsernameAvailabilityAuth} from "@/actions/(auth)/checkUsernameAvailabilityAuth";
@@ -15,18 +14,21 @@ const UserNameInput = ({
   name = "username",
   onAvailabilityChange,
   autoFocus,
+  usernameLoading,
+  isUsernameAvailable,
+  setUsernameLoading,
+  setIsUsernameAvailable,
 }: {
   label?: string;
   username?: string;
   name?: string;
   onAvailabilityChange?: (isAvailable: boolean | null) => void;
   autoFocus?: boolean;
+  usernameLoading: boolean;
+  isUsernameAvailable: boolean | null;
+  setUsernameLoading: (loading: boolean) => void;
+  setIsUsernameAvailable: (isAvailable: boolean | null) => void;
 }) => {
-  const [usernameLoading, setUsernameLoading] = useState(false);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
-    boolean | null
-  >(null);
-
   useEffect(() => {
     if (onAvailabilityChange) {
       onAvailabilityChange(isUsernameAvailable);
@@ -45,11 +47,11 @@ const UserNameInput = ({
     setIsUsernameAvailable(null);
 
     if (hasProfanity(username)) {
-      setUsernameLoading(false);
-      setIsUsernameAvailable(false);
       toast.error(
         "Username contains inappropriate language. Please choose another.",
       );
+      setUsernameLoading(false);
+      setIsUsernameAvailable(false);
       return;
     }
     const response = await checkUsernameAvailabilityAuth(username);

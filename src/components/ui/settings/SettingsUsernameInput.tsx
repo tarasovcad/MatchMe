@@ -32,6 +32,7 @@ const SettingsUsernameInput = ({
   profile?: MatchMeUser;
 }) => {
   const [open, setOpen] = useState(false);
+  const [usernameLoading, setUsernameLoading] = useState(false);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<
     boolean | null
   >(null);
@@ -142,6 +143,10 @@ const SettingsUsernameInput = ({
                 name="newUsername"
                 onAvailabilityChange={setIsUsernameAvailable}
                 autoFocus
+                setUsernameLoading={setUsernameLoading}
+                usernameLoading={usernameLoading}
+                isUsernameAvailable={isUsernameAvailable}
+                setIsUsernameAvailable={setIsUsernameAvailable}
               />
             </div>
             <DialogFooter>

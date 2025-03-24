@@ -1,5 +1,5 @@
 "use client";
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useState} from "react";
 import {FormProvider, useForm} from "react-hook-form";
 import {
   SignUpFormData,
@@ -8,20 +8,19 @@ import {
 import {zodResolver} from "@hookform/resolvers/zod";
 import {LogoImage} from "@/components/ui/Logo";
 import AuthTopText from "@/components/auth/AuthTopText";
-import {signInConfig, signUpConfig} from "@/data/auth/stepsConfigs";
+import {signUpConfig} from "@/data/auth/stepsConfigs";
 import AuthButton from "@/components/auth/AuthButton";
-import AuthStep3Form from "@/components/auth/AuthStep3Form";
 import {useRouter, useSearchParams} from "next/navigation";
 import AuthStepsDots from "@/components/auth/AuthStepsDots";
 import {toast} from "sonner";
 import {handleStep3} from "@/actions/(auth)/handleStep3";
-import {debounce} from "lodash";
-import {checkUsernameAvailabilityAuth} from "@/actions/(auth)/checkUsernameAvailabilityAuth";
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
 import {hasProfanity} from "@/utils/other/profanityCheck";
 import {Suspense} from "react";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
+import SimpleInput from "@/components/ui/SimpleInput";
+import UserNameInput from "@/components/ui/(auth)/UserNameInput";
 
 const CompleteProfileClient = () => {
   const [loading, setLoading] = useState(false);
@@ -48,6 +47,11 @@ const CompleteProfileClient = () => {
   const username = methods.watch("username");
   const usernameSchema = signUpSchemaStep3.shape.username;
   const isUsernameValid = usernameSchema.safeParse(username).success;
+
+  const {
+    register,
+    formState: {errors, isValid},
+  } = methods;
 
   const {title, subtitle, buttonText} = signUpConfig()[3];
 
@@ -115,13 +119,33 @@ const CompleteProfileClient = () => {
                 <AuthTopText maintext={title} secText={subtitle} />
               </motion.div>
               <motion.div variants={itemVariants}>
-                <AuthStep3Form />
+                <div className="flex flex-col gap-3">
+                  <SimpleInput
+                    label="Full Name"
+                    register={register("name")}
+                    error={errors.name}
+                    placeholder="Joe Doe"
+                    type="name"
+                    id="name"
+                    name="name"
+                  />
+                  <UserNameInput
+                    label="Username"
+                    username={username}
+                    name="username"
+                    usernameLoading={usernameLoading}
+                    isUsernameAvailable={isUsernameAvailable}
+                    setUsernameLoading={setUsernameLoading}
+                    setIsUsernameAvailable={setIsUsernameAvailable}
+                  />
+                </div>
               </motion.div>
               <motion.div variants={itemVariants}>
                 <AuthButton
                   key={loading ? "loading" : "idle"}
-                  loading={loading}
+                  loading={loading || usernameLoading}
                   text={buttonText}
+                  disabled={!isValid || !isUsernameValid}
                 />
               </motion.div>
             </motion.div>
