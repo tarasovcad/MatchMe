@@ -117,6 +117,12 @@ const AccountTab = ({
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
+      const socialLinkFields = [
+        "social_links_1_platform",
+        "social_links_2_platform",
+        "social_links_3_platform",
+      ];
+
       // Create an object containing only the values that differ from initialValues
       const changedValues = Object.keys(data).reduce((result, key) => {
         const formKey = key as keyof SettingsAccountFormData;
@@ -126,7 +132,12 @@ const AccountTab = ({
           initialValues[formKey] === undefined ? "" : initialValues[formKey];
 
         // Compare each field with its initial value
-        if (!isEqual(currentValue, initialValue)) {
+        if (
+          !isEqual(currentValue, initialValue) ||
+          // Include platform values if the corresponding link has a value
+          (socialLinkFields.includes(key) &&
+            data[key.replace("_platform", "") as keyof SettingsAccountFormData])
+        ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           result[formKey] = currentValue as any;
         }
@@ -144,14 +155,17 @@ const AccountTab = ({
           toast.error(response.message);
           setIsLoading(false);
           return;
+        } else {
+          const newInitialValues = {...initialValues, ...data};
+          setInitialValues(newInitialValues);
+          methods.reset(newInitialValues);
+          setIsLoading(false);
+          toast.success(response.message);
         }
-
-        setInitialValues({...initialValues, ...data});
-        setIsLoading(false);
-        toast.success(response.message);
       } else {
         console.log("No changes to submit");
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Form submission error:", error);
       toast.error("Error submitting account form");
