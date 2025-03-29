@@ -13,6 +13,11 @@ export const profileFormFields = [
     ],
   },
   {
+    fieldTitle: "Details",
+    fieldDescription: "My background and biography",
+    fieldType: "details",
+  },
+  {
     fieldTitle: "Current Goal",
     fieldDescription:
       "Current professional aspirations or next steps in your career.",
