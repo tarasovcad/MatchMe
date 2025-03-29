@@ -67,7 +67,7 @@ export const settingsAccountValidationSchema = z.object({
     .array(
       z
         .string()
-        .min(2, {message: "Each skill must be at least 2 characters"})
+        .min(1, {message: "Each skill must be at least 1 character"})
         .max(30, {message: "Each skill must be at most 30 characters"})
         .regex(/^[A-Za-z0-9#+\-*/ ]+$/, {
           message:

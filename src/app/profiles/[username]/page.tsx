@@ -1,6 +1,8 @@
-import ProfileAboutMe from "@/components/(pages)/profiles/ProfileAboutMe";
+import ProfileAboutMe from "@/components/(pages)/profiles/ExpandedDescription";
+import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
+import {profileFormFields} from "@/data/forms/profile/profileFormFields";
 import {cn} from "@/lib/utils";
 import SidebarProvider from "@/providers/SidebarProvider";
 import {createClient} from "@/utils/supabase/server";
@@ -22,11 +24,20 @@ const UserSinglePage = async ({
     .select("*")
     .eq("username", username)
     .single();
-  console.log(user);
 
   if (error || !user) {
     console.error("Error fetching user:", error);
     return <div>User not found.</div>;
+  }
+
+  const {data: skills, error: skillsError} = await supabase
+    .from("skills")
+    .select("name, image_url")
+    .in("name", user.skills);
+
+  if (skillsError) {
+    console.error("Error fetching skills:", skillsError);
+    return <div>Error fetching skills.</div>;
   }
   return (
     <SidebarProvider removePadding>
@@ -171,17 +182,16 @@ const UserSinglePage = async ({
         </div>
         {/* main section */}
         <div>
-          <div className="flex max-[990px]:flex-col justify-between items-start gap-8 max-[990px]:gap-4">
-            <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
-              <p className="font-medium text-foreground text-sm">About me</p>
-              <p className="text-muted-foreground text-xs break-words">
-                My background and biography
-              </p>
-            </div>
-
-            <div className="w-full min-[990px]:max-w-[652px]">
-              <ProfileAboutMe user={user} />
-            </div>
+          <div className="flex flex-col gap-6 max-[990px]:gap-10">
+            {profileFormFields.map((formField) => (
+              <div key={formField.fieldTitle}>
+                <ProfileFormField
+                  formField={formField}
+                  user={user}
+                  skills={skills}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

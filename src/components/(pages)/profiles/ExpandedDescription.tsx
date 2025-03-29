@@ -5,13 +5,21 @@ import {ArrowUp} from "lucide-react";
 import React, {useRef, useState, useEffect} from "react";
 import {motion} from "framer-motion";
 
-const MAX_LINES = 9;
-const LINE_HEIGHT = 16; // Assuming line-height is 16px
-
-const ProfileAboutMe = ({user}: {user: MatchMeUser}) => {
+const ExpendedDescription = ({
+  user,
+  maxNmberOfLines,
+  id,
+}: {
+  user: MatchMeUser;
+  maxNmberOfLines: number;
+  id: string;
+}) => {
+  const MAX_LINES = maxNmberOfLines || 9;
+  const LINE_HEIGHT = 16;
   const paragraphRef = useRef<HTMLParagraphElement>(null);
   const [isLongText, setIsLongText] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const content = user[id as keyof MatchMeUser];
 
   const calculateLines = () => {
     if (paragraphRef.current) {
@@ -28,23 +36,33 @@ const ProfileAboutMe = ({user}: {user: MatchMeUser}) => {
     calculateLines();
     window.addEventListener("resize", calculateLines);
     return () => window.removeEventListener("resize", calculateLines);
-  }, [user.about_you]);
+  }, [content]);
 
-  if (!user.about_you) return null;
+  if (!content) return null;
 
   return (
     <div className="relative w-full">
-      {/* Animated Container */}
       <motion.div
         className="relative overflow-hidden"
-        animate={{height: expanded ? "auto" : `${MAX_LINES * LINE_HEIGHT}px`}}
-        initial={{height: `${MAX_LINES * LINE_HEIGHT}px`}}
+        animate={{
+          height: expanded
+            ? "auto"
+            : isLongText
+              ? `${MAX_LINES * LINE_HEIGHT}px`
+              : "auto",
+        }}
+        initial={{
+          height: isLongText ? `${MAX_LINES * LINE_HEIGHT}px` : "auto",
+        }}
         transition={{duration: 0.4, ease: "easeInOut"}}>
         <p
           ref={paragraphRef}
           className="text-muted-foreground text-sm"
           dangerouslySetInnerHTML={{
-            __html: user.about_you.replace(/\n/g, "<br />"),
+            __html:
+              typeof content === "string"
+                ? content.replace(/\n/g, "<br />")
+                : content,
           }}
         />
         {!expanded && isLongText && (
@@ -80,4 +98,4 @@ const ProfileAboutMe = ({user}: {user: MatchMeUser}) => {
   );
 };
 
-export default ProfileAboutMe;
+export default ExpendedDescription;

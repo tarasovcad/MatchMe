@@ -1,9 +1,8 @@
 "use client";
 import React from "react";
-import SidebarProvider from "@/providers/SidebarProvider";
 import SimpleInput from "@/components/ui/SimpleInput";
 import {Button} from "@/components/shadcn/button";
-import {FormProvider, useForm, useFormContext} from "react-hook-form";
+import {useForm} from "react-hook-form";
 import {SkillsFormData, skillsValidation} from "../validation/skillsValidation";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {setNewSkills} from "@/actions/aws/setNewSkills";
@@ -20,8 +19,7 @@ const SetSkills = () => {
     mode: "onChange",
     defaultValues: {
       name: "",
-      imageUrl:
-        "https://matchme-skills-image-bucket.s3.us-east-1.amazonaws.com/",
+      imageUrl: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/",
     },
   });
   const [loading, setLoading] = useState(false);
@@ -40,15 +38,14 @@ const SetSkills = () => {
     console.log("resopnse", message);
     reset({
       name: "",
-      imageUrl:
-        "https://matchme-skills-image-bucket.s3.us-east-1.amazonaws.com/",
+      imageUrl: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/",
     });
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="p-10">
-        <div className="flex flex-col gap-4  pb-5">
+        <div className="flex flex-col gap-4 pb-5">
           <SimpleInput
             placeholder="React"
             name="skillName"
@@ -57,7 +54,7 @@ const SetSkills = () => {
             error={errors.name}
           />
           <SimpleInput
-            placeholder="https://matchme-skills-image-bucket.s3.us-east-1.amazonaws.com/react.svg"
+            placeholder="https://d32crm5i3cn4pm.cloudfront.net/skills-image/react.svg"
             name="skillUrl"
             label="Skill Url"
             register={register("imageUrl")}
@@ -65,7 +62,7 @@ const SetSkills = () => {
           />
         </div>
         <Button
-          className="w-full mt-5"
+          className="mt-5 w-full"
           variant={"default"}
           type="submit"
           isLoading={loading}>

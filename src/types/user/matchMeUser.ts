@@ -9,7 +9,7 @@ export interface MatchMeUser {
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;
-  skills: string | null;
+  skills: string[] | null;
   work_availability: number | null;
   location_timezone: string | null;
   languages: string | null;
