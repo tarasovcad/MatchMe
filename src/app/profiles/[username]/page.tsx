@@ -1,3 +1,4 @@
+import ProfileAboutMe from "@/components/(pages)/profiles/ProfileAboutMe";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {cn} from "@/lib/utils";
@@ -169,25 +170,20 @@ const UserSinglePage = async ({
           </div>
         </div>
         {/* main section */}
-        {/* <div className="">
-          <div className="flex justify-between items-start">
+        <div>
+          <div className="flex max-[990px]:flex-col justify-between items-start gap-8 max-[990px]:gap-4">
             <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
-              <p className="font-medium text-foreground text-sm">About</p>
+              <p className="font-medium text-foreground text-sm">About me</p>
               <p className="text-muted-foreground text-xs break-words">
                 My background and biography
               </p>
             </div>
 
-            <div className="w-full max-w-[652px]">
-              <p
-                className="text-muted-foreground text-sm"
-                dangerouslySetInnerHTML={{
-                  __html: user.about_you.replace(/\n/g, "<br />"),
-                }}
-              />
+            <div className="w-full min-[990px]:max-w-[652px]">
+              <ProfileAboutMe user={user} />
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
     </SidebarProvider>
   );
