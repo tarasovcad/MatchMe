@@ -117,6 +117,7 @@ const UserSinglePage = async ({
               userSessionId={userSessionId}
               profileId={user.id}
               isFollowingBack={isFollowingBack}
+              username={username}
             />
             <div className="flex max-[1130px]:flex-col gap-3">
               <Image
@@ -167,6 +168,7 @@ const UserSinglePage = async ({
               userSessionId={userSessionId}
               profileId={user.id}
               isFollowingBack={isFollowingBack}
+              username={username}
             />
             <UserNumbers
               className="min-[950px]:hidden justify-between"
@@ -200,14 +202,16 @@ const UserButtons = ({
   profileId,
   isFollowing,
   isFollowingBack,
+  username,
 }: {
   className?: string;
   userSessionId: string | undefined;
   profileId: string | undefined;
   isFollowing: boolean;
   isFollowingBack?: boolean;
+  username: string;
 }) => {
-  if (userSessionId && userSessionId !== profileId) {
+  if (userSessionId !== profileId) {
     return (
       <div
         className={cn(
@@ -229,14 +233,13 @@ const UserButtons = ({
             />
             Message
           </Button>
-          {userSessionId && userSessionId !== profileId && (
-            <FollowUserButton
-              followerId={userSessionId || ""}
-              followingId={profileId || ""}
-              isFollowing={isFollowing}
-              isFollowingBack={isFollowingBack}
-            />
-          )}
+          <FollowUserButton
+            followerId={userSessionId || ""}
+            followingId={profileId || ""}
+            isFollowing={isFollowing}
+            isFollowingBack={isFollowingBack}
+            username={username}
+          />
         </div>
       </div>
     );

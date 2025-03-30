@@ -18,10 +18,6 @@ const SidebarProvider = async ({
     data: {user},
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return <div>User not logged in</div>;
-  }
-
   return (
     <>
       <SidebarShadcnProvider>

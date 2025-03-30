@@ -30,17 +30,15 @@ import {usePathname} from "next/navigation";
 export function AppSidebar({
   user,
   ...props
-}: React.ComponentProps<typeof Sidebar> & {user?: User}) {
-  if (!user) return null;
-
+}: React.ComponentProps<typeof Sidebar> & {user?: User | null}) {
   const pathname = usePathname();
   const isActive = (url: string) => pathname === url;
 
   const data = {
     user: {
-      name: user.user_metadata.name,
-      email: user.user_metadata.email,
-      avatar: user.user_metadata.image,
+      name: user?.user_metadata.name,
+      email: user?.user_metadata.email,
+      avatar: user?.user_metadata.image,
     },
     navMain: [
       {
@@ -117,7 +115,7 @@ export function AppSidebar({
 
       <SidebarFooter>
         <NavMain items={data.navSecondary} />
-        <SidebarUserDropdown user={data.user} />
+        {user && <SidebarUserDropdown user={data.user} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
