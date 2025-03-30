@@ -75,7 +75,7 @@ const userInfoVariants = {
 export function SidebarUserDropdown({
   user,
 }: {
-  user: {name: string; email: string; avatar: string};
+  user: {name: string; email: string; avatar: string; username: string};
 }) {
   const {isMobile} = useSidebar();
   const {theme, setTheme} = useTheme();
@@ -171,10 +171,12 @@ export function SidebarUserDropdown({
                   </motion.div>
 
                   <motion.div variants={itemVariants}>
-                    <Link className="w-full" href={"/profile"}>
+                    <Link
+                      className="w-full"
+                      href={`/profiles/${user.username}`}>
                       <DropdownMenuItem className="cursor-pointer">
                         <UserCircle />
-                        Profile
+                        My Profile
                       </DropdownMenuItem>
                     </Link>
                   </motion.div>

@@ -10,10 +10,22 @@ import React from "react";
 const ProfilesPage = async () => {
   const supabase = await createClient();
 
-  const {data: profiles, error: profilesError} = await supabase
+  const {
+    data: {user},
+  } = await supabase.auth.getUser();
+
+  let query = supabase
     .from("profiles")
     .select("*")
     .eq("is_profile_public", true);
+
+  // If user is logged in, exclude their profile
+  if (user) {
+    query = query.neq("id", user.id);
+  }
+
+  // Fetch profiles excluding the logged-in user
+  const {data: profiles, error: profilesError} = await query;
 
   return (
     <SidebarProvider>

@@ -94,7 +94,7 @@ const SettingsClientPage = ({
             title="Settings"
             subtitle="Manage your details and personal preferences here."
           />
-          <SettingsTabs tab={tab} />
+          <SettingsTabs tab={tab} user={user} />
         </motion.div>
 
         <motion.div variants={itemVariants}>

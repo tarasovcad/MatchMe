@@ -56,8 +56,7 @@ const TagsList = ({
   return (
     <motion.div
       className="flex flex-wrap items-center gap-[18px] w-full"
-      layout // This enables automatic animations when children change
-    >
+      layout>
       <AnimatePresence initial={false}>
         {skillsToShow?.map((tag: string) => {
           const skill = skills.find((skill) => skill.name === tag);
@@ -88,14 +87,14 @@ const TagsList = ({
         })}
       </AnimatePresence>
 
-      <motion.button
-        layout
-        onClick={toggleExpanded}
-        className="flex items-center gap-1 font-medium text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out cursor-pointer">
-        {expanded
-          ? "Read Less"
-          : user.skills && `+ ${user.skills.length - maxSkills} more`}
-      </motion.button>
+      {user.skills && user.skills.length > maxSkills && (
+        <motion.button
+          layout
+          onClick={toggleExpanded}
+          className="flex items-center gap-1 font-medium text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out cursor-pointer">
+          {expanded ? "Read Less" : `+ ${user.skills.length - maxSkills} more`}
+        </motion.button>
+      )}
     </motion.div>
   );
 };

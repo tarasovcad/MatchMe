@@ -39,6 +39,7 @@ export function AppSidebar({
       name: user?.user_metadata.name,
       email: user?.user_metadata.email,
       avatar: user?.user_metadata.image,
+      username: user?.user_metadata.username,
     },
     navMain: [
       {
