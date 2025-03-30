@@ -17,7 +17,6 @@ const TagsList = ({
   const [skillsToShow, setSkillsToShow] = useState(
     user.skills?.slice(0, maxSkills),
   );
-  console.log(skillsToShow);
 
   const toggleExpanded = () => {
     setExpanded(!expanded);

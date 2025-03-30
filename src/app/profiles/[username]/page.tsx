@@ -1,13 +1,15 @@
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
+import FollowUserButton from "@/components/follows/FollowUserButton";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {profileFormFields} from "@/data/forms/profile/profileFormFields";
 import {cn} from "@/lib/utils";
 import SidebarProvider from "@/providers/SidebarProvider";
+import {MatchMeUser} from "@/types/user/matchMeUser";
 import {createClient} from "@/utils/supabase/server";
 import {Messages2} from "iconsax-react";
-import {Ellipsis, UserRoundPlus} from "lucide-react";
+import {Ellipsis} from "lucide-react";
 import Image from "next/image";
 import React from "react";
 
@@ -39,6 +41,32 @@ const UserSinglePage = async ({
     console.error("Error fetching skills:", skillsError);
     return <div>Error fetching skills.</div>;
   }
+
+  const {data: userSession} = await supabase.auth.getUser();
+  const userSessionId = userSession?.user?.id;
+
+  let isFollowing = false;
+  let isFollowingBack = false;
+  if (userSessionId) {
+    const {data: follow} = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", userSessionId)
+      .eq("following_id", user.id)
+      .single();
+
+    isFollowing = !!follow;
+
+    const {data: followBack} = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", user.id)
+      .eq("following_id", userSessionId)
+      .single();
+    isFollowingBack = !!followBack;
+    console.log(isFollowingBack, "isFollowingBack");
+  }
+
   return (
     <SidebarProvider removePadding>
       <Image
@@ -54,7 +82,13 @@ const UserSinglePage = async ({
       <div className="flex flex-col gap-9 p-6 pt-0 responsive-container">
         <div className="flex flex-col gap-6">
           <div className="relative flex justify-between gap-3">
-            <UserButtons className="max-[620px]:hidden top-0 right-0 absolute pt-[15px]" />
+            <UserButtons
+              className="max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
+              isFollowing={isFollowing}
+              userSessionId={userSessionId}
+              profileId={user.id}
+              isFollowingBack={isFollowingBack}
+            />
             <div className="flex max-[1130px]:flex-col gap-3">
               <Image
                 src={user.image}
@@ -94,7 +128,13 @@ const UserSinglePage = async ({
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <UserButtons className="min-[620px]:hidden w-full" />
+            <UserButtons
+              className="min-[620px]:hidden w-full"
+              isFollowing={isFollowing}
+              userSessionId={userSessionId}
+              profileId={user.id}
+              isFollowingBack={isFollowingBack}
+            />
             <UserNumbers className="min-[950px]:hidden justify-between" />
           </div>
         </div>
@@ -117,7 +157,19 @@ const UserSinglePage = async ({
   );
 };
 
-const UserButtons = ({className}: {className?: string}) => {
+const UserButtons = ({
+  className,
+  userSessionId,
+  profileId,
+  isFollowing,
+  isFollowingBack,
+}: {
+  className?: string;
+  userSessionId: string | undefined;
+  profileId: string | undefined;
+  isFollowing: boolean;
+  isFollowingBack?: boolean;
+}) => {
   return (
     <div
       className={cn(
@@ -139,18 +191,14 @@ const UserButtons = ({className}: {className?: string}) => {
           />
           Message
         </Button>
-        <Button
-          size={"default"}
-          variant={"default"}
-          className="max-[620px]:w-full">
-          <UserRoundPlus
-            size="18"
-            color="currentColor"
-            strokeWidth={2}
-            className="max-[450px]:hidden stroke-2"
+        {userSessionId && userSessionId !== profileId && (
+          <FollowUserButton
+            followerId={userSessionId || ""}
+            followingId={profileId || ""}
+            isFollowing={isFollowing}
+            isFollowingBack={isFollowingBack}
           />
-          Follow
-        </Button>
+        )}
       </div>
     </div>
   );

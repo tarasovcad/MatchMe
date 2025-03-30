@@ -47,7 +47,7 @@ const ProfilesSinlgeCard = ({profile}: {profile: MatchMeUser}) => {
         <p className="text-[14px] text-secondary">{profile.tagline}</p>
         <div className="flex flex-col gap-1 text-[14px] text-secondary">
           <div className="flex items-center gap-2">
-            <Wrench size={16} strokeWidth={2} />
+            <Wrench size={16} strokeWidth={2} className="shrink-0" />
             <span className="line-clamp-1">
               {" "}
               {Array.isArray(profile?.skills)
@@ -56,11 +56,11 @@ const ProfilesSinlgeCard = ({profile}: {profile: MatchMeUser}) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Search size={16} strokeWidth={2} />
+            <Search size={16} strokeWidth={2} className="shrink-0" />
             <span>{profile.looking_for}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Languages size={16} strokeWidth={2} />
+            <Languages size={16} strokeWidth={2} className="shrink-0" />
             <span className="line-clamp-1">
               {Array.isArray(profile?.languages)
                 ? profile?.languages.join(", ")
