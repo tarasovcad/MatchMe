@@ -3,30 +3,47 @@ import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import SidebarProvider from "@/providers/SidebarProvider";
+import {MatchMeUser} from "@/types/user/matchMeUser";
+import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {ChevronDown, PanelBottomClose} from "lucide-react";
 import React from "react";
 
+const CACHE_KEY = "public_profiles";
+const CACHE_TTL = 300;
+
 const ProfilesPage = async () => {
   const supabase = await createClient();
+  const startTime = new Date();
 
-  const {
-    data: {user},
-  } = await supabase.auth.getUser();
+  // Try getting profiles from Redis cache
+  let profiles = (await redis.get(CACHE_KEY)) as MatchMeUser[];
 
-  let query = supabase
-    .from("profiles")
-    .select("*")
-    .eq("is_profile_public", true);
+  if (!profiles) {
+    console.log("Cache miss - fetching from Supabase...");
+    const query = supabase
+      .from("profiles")
+      .select("*")
+      .eq("is_profile_public", true);
 
-  // If user is logged in, exclude their profile
-  if (user) {
-    query = query.neq("id", user.id);
+    const {data, error: profilesError} = await query;
+
+    if (profilesError) {
+      console.log("profilesError fetching profiles:", profilesError.message);
+      return <div>Error fetching profiles</div>;
+    }
+    profiles = data;
+
+    // Store in Redis cache
+    await redis.set(CACHE_KEY, profiles, {ex: CACHE_TTL});
+  } else {
+    console.log("Cache hit - using cached profiles");
   }
 
-  // Fetch profiles excluding the logged-in user
-  const {data: profiles, error: profilesError} = await query;
-
+  const endTime = new Date();
+  console.log(
+    `Fetched profiles in ${endTime.getTime() - startTime.getTime()}ms`,
+  );
   return (
     <SidebarProvider>
       <div>
