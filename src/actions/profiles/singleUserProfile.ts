@@ -16,6 +16,7 @@ interface CachedUserStats {
 
 const USER_PROFILE_CACHE_KEY = (username: string) => `user_profile_${username}`;
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
+const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
 
 export async function getUserProfile(username: string) {
@@ -167,4 +168,31 @@ export async function getUserStats(
     isFollowing,
     isFollowingBack,
   };
+}
+
+export async function isUserFavorite(userId: string, favoriteUserId: string) {
+  if (!userId) return false;
+
+  const supabase = await createClient();
+
+  // Try checking in Redis cache first
+  const cacheKey = FAVORITES_CACHE_KEY(userId);
+  const favoritesData = (await redis.get(cacheKey)) as {
+    favorite_user_id: string;
+  }[];
+
+  if (!favoritesData) {
+    // Cache miss - check directly in database
+    const {data, error} = await supabase
+      .from("favorites_users")
+      .select("favorite_user_id")
+      .eq("user_id", userId)
+      .eq("favorite_user_id", favoriteUserId)
+      .maybeSingle();
+
+    return data !== null;
+  }
+
+  // Check if favorite exists in cached data
+  return favoritesData.some((fav) => fav.favorite_user_id === favoriteUserId);
 }

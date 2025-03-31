@@ -20,12 +20,14 @@ const ProfileAddToFavoriteBtn = ({
 }: FavoriteButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [isFavorited, setIsFavorited] = useState(isFavorite);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const handleFavoriteToggle = async () => {
     if (!userId) {
       // show the modal menu to login
       return;
     }
+    setHasInteracted(true);
     startTransition(async () => {
       const result = await toggleUserFavorite(userId, favoriteUserId);
       if (result?.success) {
@@ -112,7 +114,13 @@ const ProfileAddToFavoriteBtn = ({
           <motion.div
             className="relative"
             initial="initial"
-            animate={isFavorited ? "favorite" : "unfavorite"}
+            animate={
+              hasInteracted
+                ? isFavorited
+                  ? "favorite"
+                  : "unfavorite"
+                : "initial"
+            }
             whileTap="tap"
             variants={iconVariants}>
             <motion.div
@@ -139,9 +147,8 @@ const ProfileAddToFavoriteBtn = ({
 
             {/* Animation effects */}
             <AnimatePresence>
-              {isFavorited && (
+              {isFavorited && hasInteracted && (
                 <>
-                  {/* Burst effect */}
                   <motion.div
                     className="absolute inset-0 rounded-full"
                     style={{
@@ -154,7 +161,6 @@ const ProfileAddToFavoriteBtn = ({
                     variants={burstVariants}
                   />
 
-                  {/* Particles */}
                   <motion.div className="absolute inset-0 pointer-events-none">
                     {[...Array(6)].map((_, i) => (
                       <motion.div

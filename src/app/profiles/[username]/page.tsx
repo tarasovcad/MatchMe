@@ -1,6 +1,7 @@
 import {
   getUserProfile,
   getUserStats,
+  isUserFavorite,
 } from "@/actions/profiles/singleUserProfile";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
@@ -34,8 +35,15 @@ const UserSinglePage = async ({
     return <div>User not found.</div>;
   }
 
+  const [statsData, isFavorite] = await Promise.all([
+    getUserStats(user.id, userSessionId, user),
+    userSessionId
+      ? isUserFavorite(userSessionId, user.id)
+      : Promise.resolve(false),
+  ]);
+
   const {followerCount, followingCount, skills, isFollowing, isFollowingBack} =
-    await getUserStats(user.id, userSessionId, user);
+    statsData;
 
   console.log("Time taken to fetch user:", Date.now() - startTime);
 
@@ -61,6 +69,7 @@ const UserSinglePage = async ({
               profileId={user.id}
               isFollowingBack={isFollowingBack}
               username={username}
+              isFavorite={isFavorite}
             />
             <div className="flex max-[1130px]:flex-col gap-3">
               <Image
@@ -112,6 +121,7 @@ const UserSinglePage = async ({
               profileId={user.id}
               isFollowingBack={isFollowingBack}
               username={username}
+              isFavorite={isFavorite}
             />
             <UserNumbers
               className="min-[950px]:hidden justify-between"
@@ -146,6 +156,7 @@ const UserButtons = ({
   isFollowing,
   isFollowingBack,
   username,
+  isFavorite,
 }: {
   className?: string;
   userSessionId: string | undefined;
@@ -153,6 +164,7 @@ const UserButtons = ({
   isFollowing: boolean;
   isFollowingBack?: boolean;
   username: string;
+  isFavorite: boolean;
 }) => {
   if (userSessionId !== profileId) {
     return (
@@ -161,7 +173,11 @@ const UserButtons = ({
           "flex items-center gap-3 max-[620px] max-[360px]:gap-1",
           className,
         )}>
-        <ProfileOtherButton />
+        <ProfileOtherButton
+          userId={userSessionId}
+          profileId={profileId ?? ""}
+          isFavorite={isFavorite}
+        />
         <div className="flex items-center gap-[10px] max-[360px]:gap-1 max-[620px]:w-full">
           <Button
             size={"default"}
