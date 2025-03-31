@@ -1,5 +1,11 @@
 "use server";
+import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
+
+async function invalidateUserFavoritesCache(userId: string) {
+  const cacheKey = `favorites_${userId}`;
+  await redis.del(cacheKey);
+}
 
 export async function toggleUserFavorite(
   userId: string,
@@ -38,6 +44,9 @@ export async function toggleUserFavorite(
         console.error("Error removing from favorites:", deleteError.message);
         return {success: false, message: "Error removing from favorites"};
       }
+      // Invalidate the favorites cache for this user
+      await invalidateUserFavoritesCache(userId);
+
       return {success: true, message: "Removed from favorites"};
     } else {
       // Add to favorites (insert new entry)
@@ -49,6 +58,9 @@ export async function toggleUserFavorite(
         console.error("Error adding to favorites:", insertError.message);
         return {success: false, message: "Error adding to favorites"};
       }
+      // Invalidate the favorites cache for this user
+      await invalidateUserFavoritesCache(userId);
+
       return {success: true, message: "Added to favorites"};
     }
   } catch (error) {

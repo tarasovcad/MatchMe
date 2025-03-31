@@ -1,3 +1,7 @@
+import {
+  getAllProfiles,
+  getUserFavoritesProfiles,
+} from "@/actions/profiles/profiles";
 import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
 import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/SimpleInput";
@@ -9,9 +13,6 @@ import {createClient} from "@/utils/supabase/server";
 import {ChevronDown, PanelBottomClose} from "lucide-react";
 import React from "react";
 
-const CACHE_KEY = "public_profiles";
-const CACHE_TTL = 300;
-
 const ProfilesPage = async () => {
   const supabase = await createClient();
   const startTime = new Date();
@@ -22,52 +23,18 @@ const ProfilesPage = async () => {
   } = await supabase.auth.getUser();
 
   const userId = user?.id;
+  const profiles = await getAllProfiles();
 
-  // Try getting profiles from Redis cache
-  let profiles = (await redis.get(CACHE_KEY)) as MatchMeUser[];
+  // Filter out current user's profile that is logged in
+  const filteredProfiles = profiles.filter((profile) => profile.id !== userId);
 
-  if (!profiles) {
-    console.log("Cache miss - fetching from Supabase...");
-    const query = supabase
-      .from("profiles")
-      .select("*")
-      .eq("is_profile_public", true);
+  // Get favorites
+  const favorites = userId ? await getUserFavoritesProfiles(userId) : [];
 
-    const {data, error: profilesError} = await query;
-
-    if (profilesError) {
-      console.log("profilesError fetching profiles:", profilesError.message);
-      return <div>Error fetching profiles</div>;
-    }
-    profiles = data;
-
-    // Store in Redis cache
-    await redis.set(CACHE_KEY, profiles, {ex: CACHE_TTL});
-  } else {
-    console.log("Cache hit - using cached profiles");
-  }
-
-  // Filter out the logged-in user's profile
-  profiles = profiles.filter((profile) => profile.id !== userId);
-
-  // Get favorite status for all profiles
-  let favorites = [];
-
-  if (userId) {
-    const {data: favoritesData, error: favoritesError} = await supabase
-      .from("favorites_users")
-      .select("favorite_user_id")
-      .eq("user_id", userId);
-
-    if (favoritesError) {
-      console.log("Error fetching favorites:", favoritesError.message);
-    } else {
-      favorites = favoritesData.map((fav) => fav.favorite_user_id);
-    }
-  }
-  const profilesWithFavorites = profiles.map((profile) => ({
+  const favoritesSet = new Set(favorites);
+  const profilesWithFavorites = filteredProfiles.map((profile) => ({
     ...profile,
-    isFavorite: favorites.includes(profile.id),
+    isFavorite: favoritesSet.has(profile.id),
   }));
 
   const endTime = new Date();
