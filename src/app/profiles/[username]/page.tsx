@@ -1,4 +1,5 @@
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
+import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
 import FollowUserButton from "@/components/follows/FollowUserButton";
 import {Button} from "@/components/shadcn/button";
@@ -218,9 +219,7 @@ const UserButtons = ({
           "flex items-center gap-3 max-[620px] max-[360px]:gap-1",
           className,
         )}>
-        <Button size={"icon"} className="max-[620px]:order-2 h-[38px]">
-          <Ellipsis size={18} strokeWidth={2} />
-        </Button>
+        <ProfileOtherButton />
         <div className="flex items-center gap-[10px] max-[360px]:gap-1 max-[620px]:w-full">
           <Button
             size={"default"}

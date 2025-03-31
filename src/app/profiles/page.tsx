@@ -16,6 +16,13 @@ const ProfilesPage = async () => {
   const supabase = await createClient();
   const startTime = new Date();
 
+  const {
+    data: {user},
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  const userId = user?.id;
+
   // Try getting profiles from Redis cache
   let profiles = (await redis.get(CACHE_KEY)) as MatchMeUser[];
 
@@ -39,6 +46,29 @@ const ProfilesPage = async () => {
   } else {
     console.log("Cache hit - using cached profiles");
   }
+
+  // Filter out the logged-in user's profile
+  profiles = profiles.filter((profile) => profile.id !== userId);
+
+  // Get favorite status for all profiles
+  let favorites = [];
+
+  if (userId) {
+    const {data: favoritesData, error: favoritesError} = await supabase
+      .from("favorites_users")
+      .select("favorite_user_id")
+      .eq("user_id", userId);
+
+    if (favoritesError) {
+      console.log("Error fetching favorites:", favoritesError.message);
+    } else {
+      favorites = favoritesData.map((fav) => fav.favorite_user_id);
+    }
+  }
+  const profilesWithFavorites = profiles.map((profile) => ({
+    ...profile,
+    isFavorite: favorites.includes(profile.id),
+  }));
 
   const endTime = new Date();
   console.log(
@@ -96,8 +126,15 @@ const ProfilesPage = async () => {
             </div>
           </div>
           <div className="gap-6 max-[1200px]:gap-6 max-[1280px]:gap-4 grid grid-cols-3 max-[1200px]:grid-cols-2">
-            {profiles?.map((profile) => {
-              return <ProfilesSinlgeCard profile={profile} key={profile.id} />;
+            {profilesWithFavorites?.map((profile) => {
+              return (
+                <ProfilesSinlgeCard
+                  profile={profile}
+                  userId={userId}
+                  isFavorite={profile.isFavorite}
+                  key={profile.id}
+                />
+              );
             })}
           </div>
         </div>

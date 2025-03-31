@@ -1,3 +1,4 @@
+import ProfileAddToFavoriteBtn from "@/components/favourites/ProfileAddToFavoriteBtn";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {MatchMeUser} from "@/types/user/matchMeUser";
@@ -6,7 +7,15 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-const ProfilesSinlgeCard = ({profile}: {profile: MatchMeUser}) => {
+const ProfilesSinlgeCard = ({
+  profile,
+  userId,
+  isFavorite,
+}: {
+  profile: MatchMeUser;
+  userId: string | undefined | null;
+  isFavorite: boolean;
+}) => {
   return (
     <div className="p-6 max-[1200px]:p-6 max-[1335px]:p-4 border border-border rounded-[12px]">
       <div className="flex flex-col gap-3">
@@ -74,12 +83,11 @@ const ProfilesSinlgeCard = ({profile}: {profile: MatchMeUser}) => {
               View Profile
             </Button>
           </Link>
-          <Button
-            variant={"outline"}
-            size={"icon"}
-            className="flex-shrink-0 h-[40px]">
-            <Bookmark size={16} strokeWidth={2} />
-          </Button>
+          <ProfileAddToFavoriteBtn
+            userId={userId}
+            favoriteUserId={profile.id}
+            isFavorite={isFavorite}
+          />
         </div>
       </div>
     </div>
