@@ -1,3 +1,7 @@
+import {
+  getUserProfile,
+  getUserStats,
+} from "@/actions/profiles/singleUserProfile";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
@@ -24,75 +28,14 @@ const UserSinglePage = async ({
   const {data: userSession} = await supabase.auth.getUser();
   const userSessionId = userSession?.user?.id;
 
-  // Fetch user profile
-  const {data: user, error} = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("username", username)
-    .single();
+  const user = await getUserProfile(username);
 
-  if (error || !user) {
-    console.error("Error fetching user:", error);
+  if (!user) {
     return <div>User not found.</div>;
   }
 
-  // Run all queries in parallel
-  const [
-    followerCountResult,
-    followingCountResult,
-    skillsResult,
-    followStatusResults,
-  ] = await Promise.all([
-    // Follower count
-    supabase
-      .from("follows")
-      .select("*", {count: "exact", head: true})
-      .eq("following_id", user.id),
-
-    // Following count
-    supabase
-      .from("follows")
-      .select("*", {count: "exact", head: true})
-      .eq("follower_id", user.id),
-
-    // Skills
-    supabase.from("skills").select("name, image_url").in("name", user.skills),
-
-    // Only check follow status if logged in for buttons
-    userSessionId
-      ? Promise.all([
-          supabase
-            .from("follows")
-            .select("id")
-            .eq("follower_id", userSessionId)
-            .eq("following_id", user.id)
-            .single(),
-
-          supabase
-            .from("follows")
-            .select("id")
-            .eq("follower_id", user.id)
-            .eq("following_id", userSessionId)
-            .single(),
-        ])
-      : Promise.resolve([{data: null}, {data: null}]),
-  ]);
-
-  // Extract results
-  const followerCount = followerCountResult.error
-    ? 0
-    : followerCountResult.count || 0;
-  const followingCount = followingCountResult.error
-    ? 0
-    : followingCountResult.count || 0;
-  const skills = skillsResult.data || [];
-  const isFollowing = userSessionId ? !!followStatusResults[0].data : false;
-  const isFollowingBack = userSessionId ? !!followStatusResults[1].data : false;
-
-  if (skillsResult.error) {
-    console.error("Error fetching skills:", skillsResult.error);
-    return <div>Error fetching skills.</div>;
-  }
+  const {followerCount, followingCount, skills, isFollowing, isFollowingBack} =
+    await getUserStats(user.id, userSessionId, user);
 
   console.log("Time taken to fetch user:", Date.now() - startTime);
 
