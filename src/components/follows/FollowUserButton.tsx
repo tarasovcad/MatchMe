@@ -1,7 +1,7 @@
 "use client";
 import React, {useTransition} from "react";
 import {Button} from "../shadcn/button";
-import {UserRoundCheck, UserRoundMinus, UserRoundPlus} from "lucide-react";
+import {UserRoundMinus, UserRoundPlus} from "lucide-react";
 import {useState} from "react";
 import {toggleUserFollow} from "@/actions/(follows)/toggleUserFollow";
 import {toast} from "sonner";

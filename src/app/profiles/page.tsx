@@ -7,8 +7,6 @@ import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import SidebarProvider from "@/providers/SidebarProvider";
-import {MatchMeUser} from "@/types/user/matchMeUser";
-import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {ChevronDown, PanelBottomClose} from "lucide-react";
 import React from "react";
@@ -19,7 +17,6 @@ const ProfilesPage = async () => {
 
   const {
     data: {user},
-    error: userError,
   } = await supabase.auth.getUser();
 
   const userId = user?.id;

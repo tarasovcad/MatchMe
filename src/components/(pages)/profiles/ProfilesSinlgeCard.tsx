@@ -2,7 +2,7 @@ import ProfileAddToFavoriteBtn from "@/components/favourites/ProfileAddToFavorit
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {MatchMeUser} from "@/types/user/matchMeUser";
-import {BellRing, Bookmark, Languages, Search, Wrench} from "lucide-react";
+import {BellRing, Languages, Search, Wrench} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";

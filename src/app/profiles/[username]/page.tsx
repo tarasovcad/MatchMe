@@ -10,7 +10,6 @@ import {cn} from "@/lib/utils";
 import SidebarProvider from "@/providers/SidebarProvider";
 import {createClient} from "@/utils/supabase/server";
 import {Messages2} from "iconsax-react";
-import {Ellipsis} from "lucide-react";
 import Image from "next/image";
 import React from "react";
 
