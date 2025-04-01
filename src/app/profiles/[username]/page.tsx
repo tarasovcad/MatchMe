@@ -103,18 +103,20 @@ const UserSinglePage = async ({
               )}
               <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
                 {/* name and verified */}
-                <div>
+                <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <MainGradient as="h1" className="font-semibold text-2xl">
+                    <MainGradient as="h1" className="font-semibold text-[26px]">
                       {user.name}
                     </MainGradient>
-                    <Image
-                      src="/svg/verified.svg"
-                      alt="Verified"
-                      width={18}
-                      height={18}
-                      className="shrink-0"
-                    />
+                    {user.is_profile_verified && (
+                      <Image
+                        src="/svg/verified.svg"
+                        alt="Verified"
+                        width={18}
+                        height={18}
+                        className="shrink-0"
+                      />
+                    )}
                   </div>
                   <p className="text-secondary text-sm">{user.tagline}</p>
                 </div>
