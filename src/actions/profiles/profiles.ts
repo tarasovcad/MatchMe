@@ -8,18 +8,23 @@ const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
 
-export async function getAllProfiles() {
+export async function getAllProfiles(page = 1, perPage: number) {
   const supabase = await createClient();
 
   // Try getting profiles from Redis cache
-  let profiles = (await redis.get(PROFILES_CACHE_KEY)) as MatchMeUser[];
+  const cacheKey = `${PROFILES_CACHE_KEY}_page_${page}_perPage_${perPage}`;
+  let profiles = (await redis.get(cacheKey)) as MatchMeUser[];
 
   if (!profiles) {
+    // Calculate range for pagination
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
     console.log("Cache miss - fetching from Supabase...");
     const query = supabase
       .from("mock_profiles")
       .select("*")
-      .eq("is_profile_public", true);
+      .eq("is_profile_public", true)
+      .range(from, to);
 
     const {data, error: profilesError} = await query;
 
@@ -29,7 +34,7 @@ export async function getAllProfiles() {
     profiles = data;
 
     // Store in Redis cache
-    await redis.set(PROFILES_CACHE_KEY, profiles, {ex: CACHE_TTL});
+    await redis.set(cacheKey, profiles, {ex: CACHE_TTL});
   } else {
     console.log("Cache hit - using cached profiles");
   }

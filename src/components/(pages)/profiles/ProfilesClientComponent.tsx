@@ -1,5 +1,5 @@
 "use client";
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef, useCallback} from "react";
 import {motion} from "framer-motion";
 import {
   getAllProfiles,
@@ -13,6 +13,7 @@ import {ChevronDown, PanelBottomClose} from "lucide-react";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import ProfilesSingleCardSkeleton from "./ProfilesSingleCardSkeleton";
 
 const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   const [profiles, setProfiles] = useState<
@@ -20,39 +21,103 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   >([]);
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [showNextPageSkeletons, setShowNextPageSkeletons] = useState(false);
+  const profilesPerPage = 10;
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  const lastProfileRef = useCallback(
+    (node: HTMLDivElement) => {
+      if (isLoading || loadingMore) return; // Don't observe while loading
+
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          console.log("Last item visible, loading more...");
+          // Show skeleton loading cards immediately
+          setShowNextPageSkeletons(true);
+          // Trigger next page fetch
+          setPage((prevPage) => prevPage + 1);
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [isLoading, hasMore, loadingMore],
+  );
+
   useEffect(() => {
+    console.log("Page changed to:", page);
     fetchProfiles();
-  }, []);
+  }, [page]);
 
   const fetchProfiles = async () => {
-    setIsLoading(true);
+    if (page === 1) {
+      setIsLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     const startTime = new Date();
-
+    console.log(`Starting fetch for page ${page}...`);
     const currentUserId = userSession?.id || "";
-    setUserId(currentUserId);
+    if (page === 1) setUserId(currentUserId);
 
-    const allProfiles = await getAllProfiles();
-    const filteredProfiles = allProfiles.filter(
-      (profile) => profile.id !== currentUserId,
-    );
+    try {
+      const allProfiles = await getAllProfiles(page, profilesPerPage);
+      console.log(`Received ${allProfiles.length} profiles for page ${page}`);
 
-    const favorites = currentUserId
-      ? await getUserFavoritesProfiles(currentUserId)
-      : [];
-    const favoritesSet = new Set(favorites);
+      if (allProfiles.length === 0) {
+        setHasMore(false);
+        return;
+      }
 
-    const profilesWithFavorites = filteredProfiles.map((profile) => ({
-      ...profile,
-      isFavorite: favoritesSet.has(profile.id),
-    }));
+      const filteredProfiles = allProfiles.filter(
+        (profile) => profile.id !== currentUserId,
+      );
 
-    setProfiles(profilesWithFavorites);
+      const favorites = currentUserId
+        ? await getUserFavoritesProfiles(currentUserId)
+        : [];
+      const favoritesSet = new Set(favorites);
 
-    const endTime = new Date();
-    console.log(
-      `Fetched profiles in ${endTime.getTime() - startTime.getTime()}ms`,
-    );
-    setIsLoading(false);
+      const profilesWithFavorites = filteredProfiles.map((profile) => ({
+        ...profile,
+        isFavorite: favoritesSet.has(profile.id),
+      }));
+
+      // Update profiles with new data
+      setProfiles((prev) =>
+        page === 1
+          ? profilesWithFavorites
+          : [...prev, ...profilesWithFavorites],
+      );
+
+      const endTime = new Date();
+      console.log(
+        `Fetched profiles in ${endTime.getTime() - startTime.getTime()}ms`,
+      );
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching profiles:", error);
+    } finally {
+      setShowNextPageSkeletons(false);
+      setIsLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const renderSkeletonCards = () => {
+    return Array(profilesPerPage)
+      .fill(null)
+      .map((_, index) => (
+        <motion.div key={`skeleton-${index}`} variants={profileCardVariants}>
+          <ProfilesSingleCardSkeleton />
+        </motion.div>
+      ));
   };
 
   // Animation variants
@@ -103,19 +168,21 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
     },
   };
 
-  // Improved card variants with custom delay based on index
-  const cardVariants = {
-    hidden: {opacity: 0, y: 50, scale: 0.95},
-    visible: (index: number) => ({
+  const profileCardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 20,
+      scale: 0.95,
+    },
+    visible: {
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
         duration: 0.5,
-        delay: 0.6 + index * 0.1, // Staggered delay based on card index
-        ease: [0.25, 0.1, 0.25, 1],
+        ease: [0.22, 1, 0.36, 1],
       },
-    }),
+    },
   };
 
   return (
@@ -178,32 +245,55 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
         </motion.div>
         <div className="container-query-parent">
           <div className="gap-6 container-grid grid grid-cols-3">
-            {isLoading ? (
-              <div>
-                <LoadingButtonCircle size={16} />
-              </div>
-            ) : (
-              <>
-                {profiles?.map((profile, index) => {
-                  return (
-                    <motion.div
-                      key={profile.id}
-                      variants={cardVariants}
-                      initial="hidden"
-                      animate="visible"
-                      custom={index}>
-                      <ProfilesSinlgeCard
-                        profile={profile}
-                        userId={userId}
-                        isFavorite={profile.isFavorite}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </>
-            )}
+            {profiles.map((profile, index) => {
+              if (profiles.length === index + 1) {
+                return (
+                  <motion.div
+                    ref={lastProfileRef}
+                    key={profile.id}
+                    variants={profileCardVariants}>
+                    <ProfilesSinlgeCard
+                      profile={profile}
+                      userId={userId}
+                      isFavorite={profile.isFavorite}
+                    />
+                  </motion.div>
+                );
+              } else {
+                return (
+                  <motion.div key={profile.id} variants={profileCardVariants}>
+                    <ProfilesSinlgeCard
+                      profile={profile}
+                      userId={userId}
+                      isFavorite={profile.isFavorite}
+                    />
+                  </motion.div>
+                );
+              }
+            })}
+            {/* Skeleton cards for next page */}
+            {showNextPageSkeletons && !isLoading && renderSkeletonCards()}
+
+            {/* Initial loading state */}
+            {isLoading && renderSkeletonCards()}
           </div>
+
+          {(isLoading || loadingMore) && (
+            <div className="flex justify-center col-span-3 py-4">
+              <LoadingButtonCircle size={2} />
+            </div>
+          )}
+          {loadingMore && (
+            <div className="flex justify-center col-span-3 py-4">
+              <LoadingButtonCircle size={22} />
+            </div>
+          )}
         </div>
+        {!isLoading && !loadingMore && !hasMore && profiles.length > 0 && (
+          <div className="py-4 text-foreground/70 text-center">
+            No more profiles to load
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
