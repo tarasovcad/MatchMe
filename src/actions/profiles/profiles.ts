@@ -4,24 +4,27 @@ import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 
-const USER_PROFILES_CACHE_KEY = (userId: string) => `profiles_${userId}`;
+const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
 
-export async function getAllProfiles(userId: string) {
-  if (!userId) throw new Error("User ID is required");
+export async function getAllProfiles(page = 1, perPage: number) {
   const supabase = await createClient();
 
-  const cacheKey = USER_PROFILES_CACHE_KEY(userId);
   // Try getting profiles from Redis cache
+  const cacheKey = `${PROFILES_CACHE_KEY}_page_${page}_perPage_${perPage}`;
   let profiles = (await redis.get(cacheKey)) as MatchMeUser[];
 
   if (!profiles) {
+    // Calculate range for pagination
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
     console.log("Cache miss - fetching from Supabase...");
     const query = supabase
       .from("mock_profiles")
       .select("*")
-      .eq("is_profile_public", true);
+      .eq("is_profile_public", true)
+      .range(from, to);
 
     const {data, error: profilesError} = await query;
 
