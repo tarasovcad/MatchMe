@@ -4,17 +4,15 @@ import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 
-const USER_PROFILES_CACHE_KEY = (userId: string) => `profiles_${userId}`;
+const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
 
-export async function getAllProfiles(userId: string) {
-  if (!userId) throw new Error("User ID is required");
+export async function getAllProfiles() {
   const supabase = await createClient();
 
-  const cacheKey = USER_PROFILES_CACHE_KEY(userId);
   // Try getting profiles from Redis cache
-  let profiles = (await redis.get(cacheKey)) as MatchMeUser[];
+  let profiles = (await redis.get(PROFILES_CACHE_KEY)) as MatchMeUser[];
 
   if (!profiles) {
     console.log("Cache miss - fetching from Supabase...");
@@ -31,7 +29,7 @@ export async function getAllProfiles(userId: string) {
     profiles = data;
 
     // Store in Redis cache
-    await redis.set(cacheKey, profiles, {ex: CACHE_TTL});
+    await redis.set(PROFILES_CACHE_KEY, profiles, {ex: CACHE_TTL});
   } else {
     console.log("Cache hit - using cached profiles");
   }
