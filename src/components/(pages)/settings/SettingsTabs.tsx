@@ -216,7 +216,7 @@ const SingleTab = ({link, title, active, user}: SingleTabProps) => {
               ? `/profiles/${user.user_metadata.username}`
               : `?tab=${link}`
           }
-          className="hover:bg-[#F2F2F5] dark:hover:bg-[#18181B] px-[14px] py-2 border border-border rounded-radius font-medium text-secondary hover:text-[#09090B]! dark:hover:text-[#E4E4E7]! text-sm transition-colors duration-200 cursor-pointer">
+          className="hover:bg-[#F2F2F5] dark:hover:bg-[#18181B] px-[14px] py-2 border border-border rounded-radius font-medium text-secondary hover:text-[#09090B]! dark:hover:text-[#E4E4E7]! text-sm whitespace-nowrap transition-colors duration-200 cursor-pointer">
           {title}
         </Link>
       )}

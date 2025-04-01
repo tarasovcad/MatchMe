@@ -11,9 +11,11 @@ import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {profileFormFields} from "@/data/forms/profile/profileFormFields";
 import {formatNumber} from "@/functions/formatNumber";
+import {getNameInitials} from "@/functions/getNameInitials";
 import {cn} from "@/lib/utils";
 import SidebarProvider from "@/providers/SidebarProvider";
 import {createClient} from "@/utils/supabase/server";
+import Avatar from "boring-avatars";
 import {Messages2} from "iconsax-react";
 import Image from "next/image";
 import React from "react";
@@ -30,7 +32,7 @@ const UserSinglePage = async ({
   const userSessionId = userSession?.user?.id;
 
   const user = await getUserProfile(username);
-
+  console.log(user);
   if (!user) {
     return <div>User not found.</div>;
   }
@@ -59,6 +61,7 @@ const UserSinglePage = async ({
         className="rounded-[6px] rounded-t-none w-full"
         style={{width: "100%", height: "156px"}}
       />
+
       <div className="flex flex-col gap-9 p-6 pt-0 responsive-container">
         <div className="flex flex-col gap-6">
           <div className="relative flex justify-between gap-3">
@@ -72,18 +75,32 @@ const UserSinglePage = async ({
               isFavorite={isFavorite}
             />
             <div className="flex max-[1130px]:flex-col gap-3">
-              <Image
-                src={user.image}
-                alt={user.name}
-                width={125}
-                height={125}
-                className="-mt-9 border-4 border-background rounded-full shrink-0"
-                style={{
-                  width: "clamp(100px, 10vw, 125px)",
-                  height: "clamp(100px, 10vw, 125px)",
-                }}
-                unoptimized
-              />
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.name}
+                  width={125}
+                  height={125}
+                  className="-mt-9 border-4 border-background rounded-full shrink-0"
+                  style={{
+                    width: "clamp(100px, 10vw, 125px)",
+                    height: "clamp(100px, 10vw, 125px)",
+                  }}
+                  unoptimized
+                />
+              ) : (
+                <Avatar
+                  name={getNameInitials(user.name)}
+                  width={125}
+                  height={125}
+                  className="-mt-9 border-4 border-background rounded-full shrink-0"
+                  style={{
+                    width: "clamp(100px, 10vw, 125px)",
+                    height: "clamp(100px, 10vw, 125px)",
+                  }}
+                  variant="beam"
+                />
+              )}
               <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
                 {/* name and verified */}
                 <div>

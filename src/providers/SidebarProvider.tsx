@@ -24,7 +24,9 @@ const SidebarProvider = async ({
         <AppSidebar user={user} />
         <SidebarInset>
           <Navbar />
-          <div className={removePadding ? "" : "p-6"}>{children}</div>
+          <div className={removePadding ? "" : "p-3 sm:p-4 md:p-6"}>
+            {children}
+          </div>
         </SidebarInset>
       </SidebarShadcnProvider>
     </>

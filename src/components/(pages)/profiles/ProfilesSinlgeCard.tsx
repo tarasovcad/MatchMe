@@ -1,11 +1,13 @@
 import ProfileAddToFavoriteBtn from "@/components/favourites/ProfileAddToFavoriteBtn";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
+import {getNameInitials} from "@/functions/getNameInitials";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {BellRing, Languages, Search, Wrench} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import Avatar from "boring-avatars";
 
 const ProfilesSinlgeCard = ({
   profile,
@@ -17,18 +19,28 @@ const ProfilesSinlgeCard = ({
   isFavorite: boolean;
 }) => {
   return (
-    <div className="p-6 max-[1200px]:p-6 max-[1335px]:p-4 border border-border rounded-[12px]">
+    <div className="p-4 border border-border rounded-[12px]">
       <div className="flex flex-col gap-3">
-        <div className="flex justify-between items-center gap-1">
+        <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
-            <Image
-              src={profile.image}
-              alt={`${profile.name} profile picture`}
-              width={45}
-              height={45}
-              className="rounded-full"
-              unoptimized
-            />
+            {profile.image ? (
+              <Image
+                src={profile.image}
+                alt={`${profile.name} profile picture`}
+                width={42}
+                height={42}
+                className="rounded-full min-h-[42px] object-cover shrink-0"
+                unoptimized
+              />
+            ) : (
+              <Avatar
+                name={getNameInitials(profile.name)}
+                size={42}
+                className="rounded-full shrink-0"
+                variant="beam"
+              />
+            )}
+
             <div>
               <Link href={`/profiles/${profile.username}`}>
                 <MainGradient
@@ -53,7 +65,9 @@ const ProfilesSinlgeCard = ({
             <span className="text-[15px]">5d</span>
           </div>
         </div>
-        <p className="text-[14px] text-secondary">{profile.tagline}</p>
+        <p className="text-[14px] text-secondary line-clamp-1">
+          {profile.tagline}
+        </p>
         <div className="flex flex-col gap-1 text-[14px] text-secondary">
           <div className="flex items-center gap-2">
             <Wrench size={16} strokeWidth={2} className="shrink-0" />

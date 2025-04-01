@@ -28,7 +28,7 @@ export async function getUserProfile(username: string) {
   if (!user) {
     console.log("Profile cache miss - fetching from Supabase...");
     const {data, error} = await supabase
-      .from("profiles")
+      .from("mock_profiles")
       .select("*")
       .eq("username", username)
       .single();

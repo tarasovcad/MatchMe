@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/container-queries';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -246,6 +247,26 @@
   }
 }
 
+@layer components {
+  .container-query-parent {
+    container-type: inline-size;
+  }
+
+  .container-grid {
+    /* 1200px */
+    @container (max-width: 896px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    /* 1000px */
+    @container (max-width: 696px) {
+      gap: 1rem;
+    }
+    /* 590px */
+    @container (max-width: 566px) {
+      grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+    }
+  }
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
