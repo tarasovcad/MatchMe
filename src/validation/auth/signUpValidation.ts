@@ -1,7 +1,7 @@
+import {z} from "zod";
+import {nameSchema} from "./nameValidation";
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
 import {hasProfanity} from "@/utils/other/profanityCheck";
-
-import {z} from "zod";
 
 export const signUpSchemaStep1 = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email"),
@@ -10,15 +10,7 @@ export const signUpSchemaStep1 = z.object({
   }),
 });
 export const signUpSchemaStep3 = z.object({
-  name: z
-    .string()
-    .min(1, "Full name is required")
-    .min(3, "Full name must be at least 3 characters")
-    .max(20, {message: "Full name must be at most 20 characters"})
-    .regex(
-      /^[A-Z][a-z]+(?:\s[A-Z][a-z]+)+$/,
-      "Enter a valid full name (First Last)",
-    ),
+  name: nameSchema,
   username: z
     .string()
     .min(4, {message: "Username must be at least 4 characters"})

@@ -18,6 +18,7 @@ import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
 import {LoginFormData, signInSchema} from "@/validation/auth/loginValidation";
 import {motion} from "framer-motion";
+import {containerVariants, itemVariants} from "@/utils/other/variants";
 
 const LoginPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -87,52 +88,26 @@ const LoginPage = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: {opacity: 0},
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.1,
-        when: "beforeChildren",
-        staggerChildren: 0.05,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: {y: 20, opacity: 0},
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 200,
-        damping: 12,
-        duration: 0.2,
-      },
-    },
-  };
-
   return (
-    <div className="min-h-screen flex flex-col px-4 py-8">
+    <div className="flex flex-col px-4 py-8 min-h-screen">
       <AuthHomeLink />
 
       <motion.form
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="flex-1 flex items-center justify-center px-4 py-10"
+        className="flex flex-1 justify-center items-center px-4 py-10"
         onSubmit={methods.handleSubmit((data) => onSubmit(data, "login"))}>
         <FormProvider {...methods}>
           <motion.div
             variants={containerVariants}
-            className="w-full max-w-[400px] flex flex-col gap-[22px] ">
+            className="flex flex-col gap-[22px] w-full max-w-[400px]">
             <motion.div variants={itemVariants}>
               <LogoImage size={32} />
             </motion.div>
             <motion.div
               variants={itemVariants}
-              className="flex flex-col gap-9 w-full justify-center">
+              className="flex flex-col justify-center gap-9 w-full">
               <AuthTopText maintext={title} secText={subtitle} />
               {currentStep === 1 && (
                 <motion.div
@@ -145,7 +120,7 @@ const LoginPage = () => {
             {currentStep === 2 && (
               <motion.div
                 variants={itemVariants}
-                className="flex items-center justify-center w-full">
+                className="flex justify-center items-center w-full">
                 <AuthOTP setOtp={setOtp} />
               </motion.div>
             )}

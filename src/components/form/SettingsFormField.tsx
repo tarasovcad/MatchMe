@@ -16,6 +16,12 @@ import VerifyAccountButton from "../ui/settings/VerifyAccountButton";
 import {cn} from "@/lib/utils";
 import TagsInput from "../ui/settings/TagsInput";
 import TimeZoneInput from "../(pages)/settings/TimeZoneInput";
+import {motion} from "framer-motion";
+import DangerZone from "../ui/settings/DangerZone";
+import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
+import {User} from "@supabase/supabase-js";
+import SettingsUsernameInput from "../ui/settings/SettingsUsernameInput";
+import {MatchMeUser} from "@/types/user/matchMeUser";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -31,9 +37,20 @@ const fieldComponents = {
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   timezone: TimeZoneInput,
+  deleteAccount: DangerZone,
+  connectedAccounts: UserConnectedAccounts,
+  username: SettingsUsernameInput,
 };
 
-const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
+const SettingsFormField = ({
+  formField,
+  user,
+  profile,
+}: {
+  formField: FormFieldProps;
+  user?: User;
+  profile?: MatchMeUser;
+}) => {
   const {
     fieldDescription,
     fieldTitle,
@@ -56,8 +73,22 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
     );
   };
 
+  const itemVariants = {
+    hidden: {y: 20, opacity: 0},
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 200,
+        damping: 12,
+      },
+    },
+  };
+
   return (
-    <div
+    <motion.div
+      variants={itemVariants}
       className={cn(
         "flex justify-between items-start gap-8  max-[990px]:gap-2",
         isTopSection() ? "" : "max-[990px]:flex-col",
@@ -85,10 +116,13 @@ const SettingsFormField = ({formField}: {formField: FormFieldProps}) => {
           socials={fieldInputProps[0].socials ?? []}
           register={register(fieldName)}
           error={errors[fieldName]}
+          user={user!}
+          mail={fieldInputProps[0].name === "email"}
+          profile={profile}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -11,6 +11,7 @@ import {
 } from "@/components/shadcn/sidebar";
 import MainGradient from "../Text";
 import Link from "next/link";
+import {cn} from "@/lib/utils";
 
 export function NavMain({
   items,
@@ -44,6 +45,7 @@ export function NavMain({
               <CollapsibleTrigger asChild>
                 <Link href={item.url}>
                   <SidebarMenuButton
+                    className={cn(!item.isActive && "cursor-pointer")}
                     tooltip={item.title}
                     isActive={item.isActive}>
                     {item.title === "Notifications" && (

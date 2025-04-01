@@ -19,6 +19,8 @@ import Image from "next/image";
 import {Separator} from "../../shadcn/separator";
 import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import Avvvatars from "avvvatars-react";
+import {getNameInitials} from "@/functions/getNameInitials";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const ALLOWED_FILE_TYPES = [
@@ -53,6 +55,7 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
 
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
+  const userName = watch("name");
 
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -229,20 +232,28 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
     <>
       <div className="flex items-start gap-6 max-[1015px]:gap-3 max-[990px]:gap-6 w-full">
         <div className="relative">
-          <Avatar className="border border-border rounded-full w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
-            {previewUrl || selectedValue ? (
+          {previewUrl || selectedValue ? (
+            <div className="border border-border rounded-full w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
               <Image
                 src={previewUrl || selectedValue}
                 alt={"avatar"}
-                width={100}
-                height={100}
+                width={85}
+                height={85}
                 unoptimized
                 className="rounded-full"
               />
-            ) : (
-              <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-            )}
-          </Avatar>
+            </div>
+          ) : (
+            <Avvvatars
+              value={getNameInitials(userName)}
+              size={85}
+              radius={100}
+              border
+              borderSize={1}
+              borderColor="hsl(var(--border))"
+            />
+          )}
+
           {(previewUrl || selectedValue) && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -294,7 +305,7 @@ const SettingsProfilePhoto = ({name}: {name: string}) => {
               <span className="text-foreground/80">or drag and drop</span>
             </p>
             <p className="text-[12px] text-secondary">
-              SVG, PNG and JPG formats, up to 10MB
+              SVG, PNG and JPG formats, up to 5MB
             </p>
           </div>
         </div>

@@ -30,17 +30,16 @@ import {usePathname} from "next/navigation";
 export function AppSidebar({
   user,
   ...props
-}: React.ComponentProps<typeof Sidebar> & {user?: User}) {
-  if (!user) return null;
-
+}: React.ComponentProps<typeof Sidebar> & {user?: User | null}) {
   const pathname = usePathname();
   const isActive = (url: string) => pathname === url;
 
   const data = {
     user: {
-      name: user.user_metadata.name,
-      email: user.user_metadata.email,
-      avatar: user.user_metadata.image,
+      name: user?.user_metadata.name,
+      email: user?.user_metadata.email,
+      avatar: user?.user_metadata.image,
+      username: user?.user_metadata.username,
     },
     navMain: [
       {
@@ -99,12 +98,12 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props} variant="sidebar">
       <SidebarHeader>
-        <div className="py-3 px-[6px] flex items-center justify-between ">
+        <div className="flex justify-between items-center px-[6px] py-3">
           <Link href={"/"} className="flex items-center gap-[6px] min-h-[29px]">
             <LogoImage size={24} />
-            <LogoText className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden" />
+            <LogoText className="group-data-[state=collapsed]:hidden transition-opacity duration-300 ease-in-out" />
           </Link>
-          <div className="transition-opacity duration-300 ease-in-out group-data-[state=collapsed]:hidden">
+          <div className="group-data-[state=collapsed]:hidden transition-opacity duration-300 ease-in-out">
             <SidebarTrigger />
           </div>
         </div>
@@ -117,7 +116,7 @@ export function AppSidebar({
 
       <SidebarFooter>
         <NavMain items={data.navSecondary} />
-        <SidebarUserDropdown user={data.user} />
+        {user && <SidebarUserDropdown user={data.user} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -14,7 +14,7 @@ const MainGradient = ({
   return (
     <Tag
       className={`bg-maingradient bg-clip-text text-transparent w-fit ${className}`}>
-      {children || "undefined"}
+      {children}
     </Tag>
   );
 };
@@ -27,7 +27,7 @@ export const SecGradient = ({
   return (
     <Tag
       className={`bg-secgradient bg-clip-text text-transparent w-fit ${className}`}>
-      {children || "undefined"}
+      {children}
     </Tag>
   );
 };

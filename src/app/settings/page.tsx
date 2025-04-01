@@ -34,10 +34,9 @@ const SettingsPage = async ({searchParams}: PageProps) => {
 
   const params = await searchParams;
   const tab = params?.tab ?? "account";
-
   return (
     <SidebarProvider>
-      <SettingsClientPage tab={tab} profile={profile} />
+      <SettingsClientPage tab={tab} profile={profile} user={user} />
     </SidebarProvider>
   );
 };

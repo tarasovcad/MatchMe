@@ -71,11 +71,11 @@
 
 //   return (
 //     <div
-//       className="overflow-x-auto whitespace-nowrap relative"
+//       className="relative overflow-x-auto whitespace-nowrap"
 //       onMouseLeave={handleContainerMouseLeave}>
-//       <div ref={tabsContainerRef} className="inline-flex items-center relative">
+//       <div ref={tabsContainerRef} className="inline-flex relative items-center">
 //         <motion.div
-//           className="absolute bg-[#F2F2F5] dark:bg-[#18181B] rounded-radius border border-border"
+//           className="absolute bg-[#F2F2F5] dark:bg-[#18181B] border border-border rounded-radius"
 //           initial={false}
 //           animate={{
 //             x: bgPosition.x,
@@ -167,6 +167,7 @@
 
 // export default SettingsTabs;
 import {settingsTabsData} from "@/data/tabs/settingsTabsData";
+import {User} from "@supabase/supabase-js";
 import Link from "next/link";
 import React from "react";
 
@@ -174,9 +175,16 @@ interface SingleTabProps {
   link: string;
   title: string;
   active?: boolean;
+  user: User;
 }
 
-const SettingsTabs = ({tab}: {tab: string | string[] | undefined}) => {
+const SettingsTabs = ({
+  tab,
+  user,
+}: {
+  tab: string | string[] | undefined;
+  user: User;
+}) => {
   return (
     <div className="flex items-center gap-2">
       {settingsTabsData.map((settingsTab) => {
@@ -186,6 +194,7 @@ const SettingsTabs = ({tab}: {tab: string | string[] | undefined}) => {
             link={settingsTab.query}
             title={settingsTab.title}
             active={settingsTab.query === tab}
+            user={user}
           />
         );
       })}
@@ -193,17 +202,21 @@ const SettingsTabs = ({tab}: {tab: string | string[] | undefined}) => {
   );
 };
 
-const SingleTab = ({link, title, active}: SingleTabProps) => {
+const SingleTab = ({link, title, active, user}: SingleTabProps) => {
   return (
     <>
       {active ? (
-        <button className="py-2 px-[14px] border border-border rounded-radius font-medium bg-[#F4F4F5] dark:bg-[#18181B] text-[#09090B] dark:text-[#E4E4E7] cursor-default text-sm">
+        <button className="bg-[#F4F4F5] dark:bg-[#18181B] px-[14px] py-2 border border-border rounded-radius font-medium text-[#09090B] dark:text-[#E4E4E7] text-sm cursor-default">
           {title}
         </button>
       ) : (
         <Link
-          href={`?tab=${link}`}
-          className="py-2 px-[14px] border border-border rounded-radius text-secondary font-medium transition-colors duration-200 hover:bg-[#F2F2F5] hover:text-[#09090B]! dark:hover:bg-[#18181B] dark:hover:text-[#E4E4E7]! cursor-pointer text-sm">
+          href={
+            link === "profile"
+              ? `/profiles/${user.user_metadata.username}`
+              : `?tab=${link}`
+          }
+          className="hover:bg-[#F2F2F5] dark:hover:bg-[#18181B] px-[14px] py-2 border border-border rounded-radius font-medium text-secondary hover:text-[#09090B]! dark:hover:text-[#E4E4E7]! text-sm whitespace-nowrap transition-colors duration-200 cursor-pointer">
           {title}
         </Link>
       )}

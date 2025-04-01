@@ -99,7 +99,7 @@ export default function TagsInput({
               setActiveTagIndex={setActiveTagIndex}
               maxTags={15}
               maxLength={30}
-              minLength={2}
+              minLength={1}
             />
             <AnimatePresence>
               {error && (

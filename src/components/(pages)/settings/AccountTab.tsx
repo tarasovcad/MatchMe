@@ -15,6 +15,8 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
 import {isEqual, pickBy} from "lodash";
 import {toast} from "sonner";
+import {motion} from "framer-motion";
+import {containerVariants, itemVariants} from "@/utils/other/variants";
 
 const AccountTab = ({
   profile,
@@ -115,6 +117,12 @@ const AccountTab = ({
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
     try {
+      const socialLinkFields = [
+        "social_links_1_platform",
+        "social_links_2_platform",
+        "social_links_3_platform",
+      ];
+
       // Create an object containing only the values that differ from initialValues
       const changedValues = Object.keys(data).reduce((result, key) => {
         const formKey = key as keyof SettingsAccountFormData;
@@ -124,7 +132,12 @@ const AccountTab = ({
           initialValues[formKey] === undefined ? "" : initialValues[formKey];
 
         // Compare each field with its initial value
-        if (!isEqual(currentValue, initialValue)) {
+        if (
+          !isEqual(currentValue, initialValue) ||
+          // Include platform values if the corresponding link has a value
+          (socialLinkFields.includes(key) &&
+            data[key.replace("_platform", "") as keyof SettingsAccountFormData])
+        ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           result[formKey] = currentValue as any;
         }
@@ -142,14 +155,17 @@ const AccountTab = ({
           toast.error(response.message);
           setIsLoading(false);
           return;
+        } else {
+          const newInitialValues = {...initialValues, ...data};
+          setInitialValues(newInitialValues);
+          methods.reset(newInitialValues);
+          setIsLoading(false);
+          toast.success(response.message);
         }
-
-        setInitialValues({...initialValues, ...data});
-        setIsLoading(false);
-        toast.success(response.message);
       } else {
         console.log("No changes to submit");
       }
+      setIsLoading(false);
     } catch (error) {
       console.error("Form submission error:", error);
       toast.error("Error submitting account form");
@@ -172,43 +188,48 @@ const AccountTab = ({
 
   return (
     <FormProvider {...methods}>
-      <div className="flex flex-col gap-6">
-        <div className="border border-border rounded-[8px]">
-          {accountSettingsFormFieldsTop.map((formField, index) => {
-            return (
-              <div
-                key={formField.fieldTitle}
-                className={cn(
-                  "px-[18px] py-3",
-                  index !== 0 && "border-t border-border",
-                )}>
-                <SettingsFormField formField={formField} />
-              </div>
-            );
-          })}
-        </div>
-        {accountSettingsFormFields.map((formFields, index) => {
-          return (
-            <div
-              key={formFields.formTitle}
-              className={`flex flex-col gap-9 max-[990px]:gap-8 ${index !== 0 && "border-t border-border pt-6"}`}>
-              <h4 className="font-semibold text-foreground text-xl">
-                {formFields.formTitle}
-              </h4>
-              <div className="flex flex-col gap-6">
-                {formFields.formData.map((formField) => {
-                  return (
-                    <SettingsFormField
-                      formField={formField}
-                      key={formField.fieldTitle}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col gap-6">
+        <motion.div
+          variants={itemVariants}
+          className="border border-border rounded-[8px]">
+          {accountSettingsFormFieldsTop.map((formField, index) => (
+            <motion.div
+              key={formField.fieldTitle}
+              variants={itemVariants}
+              className={cn(
+                "px-[18px] py-3",
+                index !== 0 && "border-t border-border",
+              )}>
+              <SettingsFormField formField={formField} profile={profile} />
+            </motion.div>
+          ))}
+        </motion.div>
+        {accountSettingsFormFields.map((formFields, index) => (
+          <motion.div
+            key={formFields.formTitle}
+            variants={itemVariants}
+            className={`flex flex-col gap-9 max-[990px]:gap-8 ${
+              index !== 0 && "border-t border-border pt-6"
+            }`}>
+            <h4 className="font-semibold text-foreground text-xl">
+              {formFields.formTitle}
+            </h4>
+            <motion.div
+              variants={containerVariants}
+              className="flex flex-col gap-6">
+              {formFields.formData.map((formField) => (
+                <motion.div key={formField.fieldTitle} variants={itemVariants}>
+                  <SettingsFormField formField={formField} />
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+        ))}
+      </motion.div>
     </FormProvider>
   );
 };

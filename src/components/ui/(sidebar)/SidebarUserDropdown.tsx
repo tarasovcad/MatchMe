@@ -32,49 +32,17 @@ import Link from "next/link";
 import {motion} from "framer-motion";
 import {useState} from "react";
 import Image from "next/image";
+import {getNameInitials} from "@/functions/getNameInitials";
+import {
+  itemDropdownVariants,
+  menuVariants,
+  userInfoVariants,
+} from "@/utils/other/variants";
 
-const menuVariants = {
-  closed: {
-    clipPath: "inset(10% 50% 90% 50% round 12px)",
-    transition: {
-      type: "spring",
-      bounce: 0,
-      duration: 0.3,
-    },
-  },
-  open: {
-    clipPath: "inset(0% 0% 0% 0% round 12px)",
-    transition: {
-      type: "spring",
-      bounce: 0,
-      duration: 0.3,
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  closed: {opacity: 0, scale: 0.3, filter: "blur(20px)"},
-  open: {opacity: 1, scale: 1, filter: "blur(0px)"},
-};
-
-const userInfoVariants = {
-  closed: {opacity: 0, filter: "blur(20px)"},
-  open: {
-    opacity: 1,
-    filter: "blur(0px)",
-    transition: {
-      duration: 0.3,
-      type: "spring",
-      bounce: 0,
-    },
-  },
-};
 export function SidebarUserDropdown({
   user,
 }: {
-  user: {name: string; email: string; avatar: string};
+  user: {name: string; email: string; avatar: string; username: string};
 }) {
   const {isMobile} = useSidebar();
   const {theme, setTheme} = useTheme();
@@ -97,7 +65,7 @@ export function SidebarUserDropdown({
                     height={100}
                   />
                 ) : (
-                  <Avvvatars value="MT" radius={6} />
+                  <Avvvatars value={getNameInitials(user.name)} radius={6} />
                 )}
               </Avatar>
               <div className="flex-1 grid text-sm text-left leading-tight">
@@ -151,7 +119,7 @@ export function SidebarUserDropdown({
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup className="space-y-1">
-                  <motion.div variants={itemVariants}>
+                  <motion.div variants={itemDropdownVariants}>
                     <button
                       className="w-full"
                       onClick={() =>
@@ -169,16 +137,18 @@ export function SidebarUserDropdown({
                     </button>
                   </motion.div>
 
-                  <motion.div variants={itemVariants}>
-                    <Link className="w-full" href={"/profile"}>
+                  <motion.div variants={itemDropdownVariants}>
+                    <Link
+                      className="w-full"
+                      href={`/profiles/${user.username}`}>
                       <DropdownMenuItem className="cursor-pointer">
                         <UserCircle />
-                        Profile
+                        My Profile
                       </DropdownMenuItem>
                     </Link>
                   </motion.div>
 
-                  <motion.div variants={itemVariants}>
+                  <motion.div variants={itemDropdownVariants}>
                     <Link className="w-full" href={"/dashboard"}>
                       <DropdownMenuItem className="cursor-pointer">
                         <Home />
@@ -187,7 +157,7 @@ export function SidebarUserDropdown({
                     </Link>
                   </motion.div>
 
-                  <motion.div variants={itemVariants}>
+                  <motion.div variants={itemDropdownVariants}>
                     <Link className="w-full" href={"/projects"}>
                       <DropdownMenuItem className="cursor-pointer">
                         <Folders />
@@ -199,7 +169,7 @@ export function SidebarUserDropdown({
 
                 <DropdownMenuSeparator />
 
-                <motion.div variants={itemVariants}>
+                <motion.div variants={itemDropdownVariants}>
                   <button
                     className="w-full"
                     onClick={() => console.log("logout")}>

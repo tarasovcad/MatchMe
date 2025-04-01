@@ -5,7 +5,7 @@ export const settingsTabsData = [
   },
   {
     query: "profile",
-    title: "Profile",
+    title: "My Profile",
   },
   {
     query: "security",
