@@ -30,24 +30,38 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
 
   const lastProfileRef = useCallback(
     (node: HTMLDivElement) => {
-      if (isLoading || loadingMore) return; // Don't observe while loading
+      // Don't observe when there's no more data or when loading
+      if (isLoading || loadingMore || !hasMore) return;
 
       if (observer.current) observer.current.disconnect();
 
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          console.log("Last item visible, loading more...");
-          // Show skeleton loading cards immediately
-          setShowNextPageSkeletons(true);
-          // Trigger next page fetch
-          setPage((prevPage) => prevPage + 1);
-        }
-      });
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            console.log("Last item visible, loading more...");
+            // Show skeleton loading cards immediately
+            setShowNextPageSkeletons(true);
+            // Trigger next page fetch
+            setPage((prevPage) => prevPage + 1);
+          }
+        },
+        {
+          // Start Fetcing when element is 500px away from viewport
+          rootMargin: "0px 0px 500px 0px", // 500px bottom margin
+          threshold: 0.1, // Trigger when 10% of the element is visible
+        },
+      );
 
       if (node) observer.current.observe(node);
     },
     [isLoading, hasMore, loadingMore],
   );
+
+  useEffect(() => {
+    if (!hasMore && observer.current) {
+      observer.current.disconnect();
+    }
+  }, [hasMore]);
 
   useEffect(() => {
     console.log("Page changed to:", page);
@@ -290,9 +304,13 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
           )}
         </div>
         {!isLoading && !loadingMore && !hasMore && profiles.length > 0 && (
-          <div className="py-4 text-foreground/70 text-center">
+          <motion.div
+            className="py-4 text-foreground/70 text-center"
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            transition={{duration: 0.5}}>
             No more profiles to load
-          </div>
+          </motion.div>
         )}
       </motion.div>
     </motion.div>
