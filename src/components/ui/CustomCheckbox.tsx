@@ -8,6 +8,7 @@ interface CustomCheckboxProps {
   onCheckedChange?: (checked: boolean) => void;
   id: string;
   name: string;
+  showTerms?: boolean;
 }
 
 const CustomCheckbox = ({
@@ -15,6 +16,7 @@ const CustomCheckbox = ({
   onCheckedChange,
   id,
   name,
+  showTerms = true,
   ...props
 }: CustomCheckboxProps) => {
   return (
@@ -34,7 +36,7 @@ const CustomCheckbox = ({
           onCheckedChange={onCheckedChange}
           {...props}
         />
-        <TermsAndPolicy id={id} />
+        {showTerms && <TermsAndPolicy id={id} />}
       </div>
     </div>
   );
@@ -42,11 +44,11 @@ const CustomCheckbox = ({
 
 const TermsAndPolicy = ({id}: {id: string}) => {
   return (
-    <Label htmlFor={id} className="text-sm font-normal">
+    <Label htmlFor={id} className="font-normal text-sm">
       I agree to the{" "}
       <Link
         href={"#"}
-        className="transition-colors duration-300 ease-in-out text-primary hover:text-primary-hover">
+        className="text-primary hover:text-primary-hover transition-colors duration-300 ease-in-out">
         Terms & Policy
       </Link>
     </Label>

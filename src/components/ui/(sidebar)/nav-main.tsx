@@ -43,7 +43,7 @@ export function NavMain({
                 </div>
               )}
               <CollapsibleTrigger asChild>
-                <Link href={item.url}>
+                <Link href={item.url} className="">
                   <SidebarMenuButton
                     className={cn(!item.isActive && "cursor-pointer")}
                     tooltip={item.title}

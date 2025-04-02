@@ -14,6 +14,7 @@ import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import ProfilesSingleCardSkeleton from "./ProfilesSingleCardSkeleton";
+import ProfileFilterPopup from "./ProfileFilterPopup";
 
 const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   const [profiles, setProfiles] = useState<
@@ -247,14 +248,8 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
                 className="text-foreground/90"
               />
             </Button>
-            <Button size={"xs"} className="max-[480px]:w-full">
-              Show Filters
-              <PanelBottomClose
-                size={16}
-                strokeWidth={2}
-                className="text-foreground/90"
-              />
-            </Button>
+
+            <ProfileFilterPopup />
           </div>
         </motion.div>
         <div className="container-query-parent">
