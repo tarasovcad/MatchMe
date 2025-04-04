@@ -10,7 +10,6 @@ import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AlertComponent from "../ui/dialog/AlertComponent";
 
 interface FollowButtonProps {
-  followerId: string;
   followingId: string;
   isFollowing: boolean;
   isFollowingBack?: boolean;
@@ -18,7 +17,6 @@ interface FollowButtonProps {
 }
 
 const FollowUserButton = ({
-  followerId,
   followingId,
   isFollowing,
   isFollowingBack,
@@ -30,7 +28,7 @@ const FollowUserButton = ({
   const handleFollowToggle = () => {
     if (!following) {
       startTransition(async () => {
-        const result = await toggleUserFollow(followerId, followingId);
+        const result = await toggleUserFollow(followingId);
         if (result?.success) {
           toast.success(result.message);
           setFollowing(true);
@@ -41,7 +39,7 @@ const FollowUserButton = ({
 
   const handleUnfollow = () => {
     startTransition(async () => {
-      const result = await toggleUserFollow(followerId, followingId);
+      const result = await toggleUserFollow(followingId);
       if (result?.success) {
         toast.success(result.message);
         setFollowing(false);

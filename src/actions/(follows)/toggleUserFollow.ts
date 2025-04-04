@@ -1,14 +1,22 @@
 "use server";
+import {qstash} from "@/utils/redis/qstash";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
-export async function toggleUserFollow(
-  followerId: string,
-  followingId: string,
-) {
+
+export async function toggleUserFollow(followingId: string) {
   try {
     const supabase = await createClient();
+    const {
+      data: {user},
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {success: false, message: "Unauthorized"};
+    }
+    const followerId = user.id;
 
     if (followerId === followingId) {
       return {
@@ -50,6 +58,20 @@ export async function toggleUserFollow(
         console.error("Error following:", insertError.message);
         return {success: false, message: "Error following user"};
       }
+      const baseUrl =
+        process.env.NODE_ENV === "development"
+          ? "https://ten-lemons-show.loca.lt"
+          : process.env.NEXT_PUBLIC_SITE_URL;
+
+      const response = await qstash.publishJSON({
+        url: `${baseUrl}/api/notifications`,
+        body: {
+          followerId,
+          followingId,
+          type: "follow",
+        },
+      });
+      console.log(response);
       result = {success: true, message: "Followed successfully"};
     }
     // Invalidate caches for both users

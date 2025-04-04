@@ -210,7 +210,6 @@ const UserButtons = ({
             Message
           </Button>
           <FollowUserButton
-            followerId={userSessionId || ""}
             followingId={profileId || ""}
             isFollowing={isFollowing}
             isFollowingBack={isFollowingBack}
