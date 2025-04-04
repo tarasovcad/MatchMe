@@ -12,6 +12,7 @@ import {
 import MainGradient from "../Text";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
+import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 
 export function NavMain({
   items,
@@ -43,19 +44,19 @@ export function NavMain({
                 </div>
               )}
               <CollapsibleTrigger asChild>
-                <Link href={item.url} className="">
-                  <SidebarMenuButton
-                    className={cn(!item.isActive && "cursor-pointer")}
-                    tooltip={item.title}
-                    isActive={item.isActive}>
-                    {item.title === "Notifications" && (
-                      <div className="top-[17px] left-[17px] absolute bg-primary rounded-full outline-[1.8px] outline-sidebar-background w-[6px] h-[6px]"></div>
-                    )}
-
-                    {item.icon && <item.icon className="stroke-[2.1px]" />}
-                    {item.title && <span>{item.title}</span>}
-                  </SidebarMenuButton>
-                </Link>
+                {item.url === "/notifications" ? (
+                  <NotificationsPopover item={item} />
+                ) : (
+                  <Link href={item.url} className="">
+                    <SidebarMenuButton
+                      className={cn(!item.isActive && "cursor-pointer")}
+                      tooltip={item.title}
+                      isActive={item.isActive}>
+                      {item.icon && <item.icon className="stroke-[2.1px]" />}
+                      {item.title && <span>{item.title}</span>}
+                    </SidebarMenuButton>
+                  </Link>
+                )}
               </CollapsibleTrigger>
             </SidebarMenuItem>
           </Collapsible>

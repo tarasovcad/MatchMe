@@ -122,7 +122,7 @@ const filterProfileOptions: {
   },
 ];
 
-export default function ProfileFilterPopup() {
+export default function ProfilesFilterPopup() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const selectedFilter = filterProfileOptions.find(
