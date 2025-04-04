@@ -1,6 +1,8 @@
 "use server";
+import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 
+const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
 export async function toggleUserFollow(
   followerId: string,
   followingId: string,
@@ -21,13 +23,11 @@ export async function toggleUserFollow(
       .eq("following_id", followingId)
       .maybeSingle();
 
-    console.log(existingFollow);
-
     if (error) {
       console.error("Error checking follow status:", error.message);
       return {success: false, message: "Error checking follow status"};
     }
-
+    let result;
     if (existingFollow) {
       // Unfollow (delete entry)
       const {error: deleteError} = await supabase
@@ -39,7 +39,7 @@ export async function toggleUserFollow(
         console.error("Error unfollowing:", deleteError.message);
         return {success: false, message: "Error unfollowing user"};
       }
-      return {success: true, message: "Unfollowed successfully"};
+      result = {success: true, message: "Unfollowed successfully"};
     } else {
       // Follow (insert new entry)
       const {error: insertError} = await supabase
@@ -50,8 +50,15 @@ export async function toggleUserFollow(
         console.error("Error following:", insertError.message);
         return {success: false, message: "Error following user"};
       }
-      return {success: true, message: "Followed successfully"};
+      result = {success: true, message: "Followed successfully"};
     }
+    // Invalidate caches for both users
+    // The user being followed needs their follower count updated
+    await redis.del(USER_STATS_CACHE_KEY(followingId));
+    // The follower needs their following count updated
+    await redis.del(USER_STATS_CACHE_KEY(followerId));
+
+    return result;
   } catch (error) {
     console.error("Error toggling user follow:", error);
     return {
