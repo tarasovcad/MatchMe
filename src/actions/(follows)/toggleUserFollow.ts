@@ -6,6 +6,7 @@ import {createClient} from "@/utils/supabase/server";
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
 
 export async function toggleUserFollow(followingId: string) {
+  const startTime = Date.now();
   try {
     const supabase = await createClient();
     const {
@@ -16,6 +17,7 @@ export async function toggleUserFollow(followingId: string) {
     if (authError || !user) {
       return {success: false, message: "Unauthorized"};
     }
+
     const followerId = user.id;
 
     if (followerId === followingId) {
@@ -58,28 +60,33 @@ export async function toggleUserFollow(followingId: string) {
         console.error("Error following:", insertError.message);
         return {success: false, message: "Error following user"};
       }
+
       const baseUrl =
         process.env.NODE_ENV === "development"
-          ? "https://ten-lemons-show.loca.lt"
+          ? "https://afraid-llamas-rescue.loca.lt"
           : process.env.NEXT_PUBLIC_SITE_URL;
 
-      const response = await qstash.publishJSON({
-        url: `${baseUrl}/api/notifications`,
-        body: {
-          followerId,
-          followingId,
-          type: "follow",
-        },
-      });
-      console.log(response);
+      qstash
+        .publishJSON({
+          url: `${baseUrl}/api/notifications`,
+          body: {
+            followerId,
+            followingId,
+            type: "follow",
+          },
+        })
+        .catch((err) => console.error("Notification error:", err));
+
       result = {success: true, message: "Followed successfully"};
     }
-    // Invalidate caches for both users
-    // The user being followed needs their follower count updated
-    await redis.del(USER_STATS_CACHE_KEY(followingId));
-    // The follower needs their following count updated
-    await redis.del(USER_STATS_CACHE_KEY(followerId));
+    redis
+      .del(USER_STATS_CACHE_KEY(followingId))
+      .catch((err) => console.error("Cache error:", err));
+    redis
+      .del(USER_STATS_CACHE_KEY(followerId))
+      .catch((err) => console.error("Cache error:", err));
 
+    console.log(`Time taken to follow:", ${Date.now() - startTime} ms`);
     return result;
   } catch (error) {
     console.error("Error toggling user follow:", error);

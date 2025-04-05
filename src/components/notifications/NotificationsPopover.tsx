@@ -1,5 +1,5 @@
 "use client";
-import React, {useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {SidebarMenuButton} from "../shadcn/sidebar";
 import {cn} from "@/lib/utils";
 import {CheckCheck, LucideIcon, Maximize2, X} from "lucide-react";
@@ -7,38 +7,102 @@ import {Popover, PopoverContent, PopoverTrigger} from "../shadcn/popover";
 import {Button} from "../shadcn/button";
 import {motion} from "framer-motion";
 import Image from "next/image";
-
-const groupsNames = [
-  {
-    title: "All",
-    id: "all",
-    number: 4,
-  },
-  {
-    title: "Mentions",
-    id: "mentions",
-    number: 3,
-  },
-  {
-    title: "Direct Messages",
-    id: "direct-messages",
-    number: 2,
-  },
-  {
-    title: "Project Updates",
-    id: "project-updates",
-    number: 1,
-  },
-];
+import {Notification} from "@/types/notifications";
+import {supabase} from "@/utils/supabase/client";
+import Link from "next/link";
+import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
 
 const NotificationsPopover = ({
   item,
+  userId,
 }: {
   item: {title: string; url: string; icon?: LucideIcon; isActive?: boolean};
+  userId: string;
 }) => {
-  const [activeTab, setActiveTab] = useState(groupsNames[0]?.id);
   const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [groupsNames, setGroupsNames] = useState([
+    {
+      title: "All",
+      id: "all",
+      number: 0,
+    },
+    {
+      title: "Follower Activity",
+      id: "follower-activity",
+      number: 0,
+    },
+    {
+      title: "Mentions & Tags",
+      id: "mentions-tags",
+      number: 0,
+    },
+    {
+      title: "Direct Messages",
+      id: "direct-messages",
+      number: 0,
+    },
+    {
+      title: "Project Updates",
+      id: "project-updates",
+      number: 0,
+    },
+  ]);
+  const fetchNotifications = async () => {
+    const {data, error} = await supabase
+      .from("notifications")
+      .select(
+        `
+        id,
+        type,
+        created_at,
+        sender_id,
+        recipient_id,
+        is_read,
+        sender:profiles!notifications_sender_id_fkey (id, username, name, image)
+      `,
+      )
+      .eq("recipient_id", userId)
+      .order("created_at", {ascending: false});
+    console.log(data);
+    if (error) console.error("Error fetching notifications:", error);
+    else {
+      const formattedNotifications =
+        data?.map((notification) => ({
+          ...notification,
+          sender: Array.isArray(notification.sender)
+            ? notification.sender[0]
+            : notification.sender,
+        })) || [];
+      setNotifications(formattedNotifications);
+      // Count notifications by type
+      const notificationCounts: {[key: string]: number} = {
+        all: data?.length || 0,
+        "follower-activity":
+          data?.filter((n) => n.type === "follow").length || 0,
+        "mentions-tags":
+          data?.filter((n) => n.type === "mention" || n.type === "tag")
+            .length || 0,
+        "direct-messages":
+          data?.filter((n) => n.type === "message").length || 0,
+        "project-updates":
+          data?.filter((n) => n.type === "project").length || 0,
+      };
+
+      // Update groups with notification counts
+      const updatedGroups = groupsNames.map((group) => ({
+        ...group,
+        number: notificationCounts[group.id] || 0,
+      }));
+
+      setGroupsNames(updatedGroups);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const handleDragScroll = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
@@ -59,6 +123,9 @@ const NotificationsPopover = ({
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
   };
+
+  const [activeTab, setActiveTab] = useState(groupsNames[0]?.id);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -115,7 +182,7 @@ const NotificationsPopover = ({
                       )}>
                       <p className="whitespace-nowrap">{group.title}</p>
                       <div className="flex justify-center items-center border border-border rounded-[6px] w-5 h-5 text-xs">
-                        4
+                        {group.number}
                       </div>
                       {isActive && (
                         <motion.div
@@ -135,80 +202,25 @@ const NotificationsPopover = ({
             </div>
           </div>
           {/* body of the notifications */}
-          <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
-            <div className="flex flex-col">
-              {/* item one */}
-              <button className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius">
-                {/* image */}
-                <div className="relative w-10 h-10">
-                  <Image
-                    src={
-                      "https://d32crm5i3cn4pm.cloudfront.net/user-avatars/3348d7ca-5bde-4b33-8415-4395c3fe847a/image.jpg"
-                    }
-                    width={35}
-                    height={35}
-                    className="rounded-full"
-                    unoptimized
-                    alt="user"
-                  />
-                </div>
-                {/* content */}
-                <div className="w-full text-secondary">
-                  {/* title with dot */}
-                  <div className="flex justify-between items-start gap-2">
-                    <p>
-                      <span className="font-medium text-foreground">
-                        Alice Smith
-                      </span>{" "}
-                      started following you
-                    </p>
-                    <div className="bg-primary rounded-full w-2 h-2"></div>
-                  </div>
-                  {/* date and time */}
-                  <div className="flex justify-between items-center gap-2 text-xs">
-                    <p>Monday, 19:30</p>
-                    <p>2 hours ago</p>
-                  </div>
-                </div>
-              </button>
-              <button className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius">
-                {/* image */}
-                <div className="relative w-10 h-10">
-                  <Image
-                    src={
-                      "https://d32crm5i3cn4pm.cloudfront.net/user-avatars/3348d7ca-5bde-4b33-8415-4395c3fe847a/image.jpg"
-                    }
-                    width={35}
-                    height={35}
-                    className="rounded-full"
-                    unoptimized
-                    alt="user"
-                  />
-                </div>
-                {/* content */}
-                <div className="w-full text-secondary">
-                  {/* title with dot */}
-                  <div className="flex justify-between items-start gap-2 text-start">
-                    <p>
-                      <span className="font-medium text-foreground">
-                        Maria Josh
-                      </span>{" "}
-                      liked your post{" "}
-                      <span className="font-medium text-foreground">
-                        How to start a successful start-up
-                      </span>
-                    </p>
-                    <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
-                  </div>
-                  {/* date and time */}
-                  <div className="flex justify-between items-center gap-2 text-xs">
-                    <p>Monday, 20:03</p>
-                    <p>4 hours ago</p>
-                  </div>
-                </div>
-              </button>
+          {notifications.length === 0 ? (
+            <p>No notifications</p>
+          ) : (
+            <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
+              <div className="flex flex-col">
+                {notifications.map((notification) => {
+                  if (notification.type === "follow") {
+                    return (
+                      <FollowNotification
+                        notification={notification}
+                        key={notification.id}
+                      />
+                    );
+                  }
+                })}
+              </div>
             </div>
-          </div>
+          )}
+
           {/* footer of the notifications */}
           <div className="flex justify-between items-center gap-2 bg-background pt-3 border-t border-border">
             <Button variant={"outline"} size={"xs"}>
@@ -222,6 +234,46 @@ const NotificationsPopover = ({
         </div>
       </PopoverContent>
     </Popover>
+  );
+};
+
+const FollowNotification = ({notification}: {notification: Notification}) => {
+  const {sender} = notification;
+  const {image, name, username} = sender;
+  return (
+    <button className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius">
+      {/* image */}
+      <div className="relative w-10 h-10">
+        <Image
+          src={image}
+          width={35}
+          height={35}
+          className="rounded-full"
+          unoptimized
+          alt="user"
+        />
+      </div>
+      {/* content */}
+      <div className="w-full text-secondary">
+        {/* title with dot */}
+        <div className="flex justify-between items-start gap-2 text-start">
+          <p>
+            <Link href={`/profiles/${username}`}>
+              <span className="font-medium text-foreground hover:underline">
+                {name}
+              </span>
+            </Link>{" "}
+            started following you
+          </p>
+          <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
+        </div>
+        {/* date and time */}
+        <div className="flex justify-between items-center gap-2 text-xs">
+          <p>{formatDateAbsolute(notification.created_at)}</p>
+          <p>{formatTimeRelative(notification.created_at)}</p>
+        </div>
+      </div>
+    </button>
   );
 };
 

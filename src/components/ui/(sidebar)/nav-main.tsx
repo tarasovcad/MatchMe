@@ -13,9 +13,11 @@ import MainGradient from "../Text";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
 import NotificationsPopover from "@/components/notifications/NotificationsPopover";
+import {User} from "@supabase/supabase-js";
 
 export function NavMain({
   items,
+  user,
 }: {
   items: {
     title: string;
@@ -27,6 +29,7 @@ export function NavMain({
       url: string;
     }[];
   }[];
+  user?: User | null;
 }) {
   return (
     <SidebarGroup>
@@ -45,7 +48,7 @@ export function NavMain({
               )}
               <CollapsibleTrigger asChild>
                 {item.url === "/notifications" ? (
-                  <NotificationsPopover item={item} />
+                  <NotificationsPopover item={item} userId={user?.id || ""} />
                 ) : (
                   <Link href={item.url} className="">
                     <SidebarMenuButton
