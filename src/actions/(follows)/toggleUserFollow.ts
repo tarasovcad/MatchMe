@@ -63,7 +63,7 @@ export async function toggleUserFollow(followingId: string) {
 
       const baseUrl =
         process.env.NODE_ENV === "development"
-          ? "https://afraid-llamas-rescue.loca.lt"
+          ? process.env.FAKE_TEST_URL
           : process.env.NEXT_PUBLIC_SITE_URL;
 
       qstash

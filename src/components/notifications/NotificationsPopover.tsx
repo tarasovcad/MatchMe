@@ -1,4 +1,3 @@
-"use client";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {SidebarMenuButton} from "../shadcn/sidebar";
 import {cn} from "@/lib/utils";
@@ -54,7 +53,15 @@ const NotificationsPopover = ({
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
+  const realtimeSubscriptionRef = useRef<{unsubscribe: () => void} | null>(
+    null,
+  );
+
+  console.log("NotificationsPopover executed");
+
   const fetchNotifications = useCallback(async () => {
+    console.log("fetchNotifications started");
     try {
       setIsLoading(true);
       const {data, error} = await supabase
@@ -96,7 +103,6 @@ const NotificationsPopover = ({
 
   const updateNotificationCounts = (notifications: Notification[]) => {
     const unreadNotifications = notifications.filter((n) => !n.is_read);
-
     // Initialize counts
     const counts: {[key: string]: number} = {all: unreadNotifications.length};
 
@@ -116,9 +122,119 @@ const NotificationsPopover = ({
     );
   };
 
+  // Supabase Realtime subscription
+  useEffect(() => {
+    if (!userId) return;
+
+    console.log("useEffect executed for Realtime subscription");
+    const setupRealtimeSubscription = async () => {
+      // Clean up any existing subscription
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe();
+      }
+
+      // Subscribe to INSERT operations on the notifications table for this user
+      const subscription = supabase
+        .channel(`notifications:${userId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `recipient_id=eq.${userId}`,
+          },
+          async (payload) => {
+            // When a new notification is inserted
+            const newNotification = payload.new;
+
+            // Fetch the sender details
+            const {data: senderData, error: senderError} = await supabase
+              .from("profiles")
+              .select("id, username, name, image")
+              .eq("id", newNotification.sender_id)
+              .single();
+
+            if (senderError) {
+              console.error("Error fetching sender details:", senderError);
+              return;
+            }
+
+            // Format the notification with sender details
+            const formattedNotification = {
+              id: newNotification.id,
+              type: newNotification.type,
+              created_at: newNotification.created_at,
+              sender_id: newNotification.sender_id,
+              recipient_id: newNotification.recipient_id,
+              is_read: newNotification.is_read,
+              sender: senderData,
+            } as Notification;
+
+            // Update the notifications state
+            setNotifications((prev) => [formattedNotification, ...prev]);
+            setHasNewNotification(true);
+
+            // Update notification counts
+            updateNotificationCounts([formattedNotification, ...notifications]);
+
+            // Show a toast notification
+            toast.info(`New notification from ${senderData.name}`);
+          },
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "notifications",
+            filter: `recipient_id=eq.${userId}`,
+          },
+          (payload) => {
+            // When a notification is updated (e.g., marked as read)
+            const updatedNotification = payload.new;
+
+            setNotifications((prev) =>
+              prev.map((n) =>
+                n.id === updatedNotification.id
+                  ? {...n, ...updatedNotification}
+                  : n,
+              ),
+            );
+
+            // Update notification counts
+            updateNotificationCounts(
+              notifications.map((n) =>
+                n.id === updatedNotification.id
+                  ? {...n, ...updatedNotification}
+                  : n,
+              ),
+            );
+          },
+        )
+        .subscribe();
+
+      realtimeSubscriptionRef.current = subscription;
+    };
+
+    setupRealtimeSubscription();
+
+    // Cleanup on unmount
+    return () => {
+      if (realtimeSubscriptionRef.current) {
+        realtimeSubscriptionRef.current.unsubscribe();
+      }
+    };
+  }, [userId, notifications]);
+
   useEffect(() => {
     if (open && !hasLoaded) {
       fetchNotifications();
+    }
+
+    // Reset the new notification indicator when opening the popover
+    if (open) {
+      setHasNewNotification(false);
     }
   }, [open, fetchNotifications, hasLoaded]);
 
@@ -149,6 +265,45 @@ const NotificationsPopover = ({
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const unreadNotifications = notifications.filter((n) => !n.is_read);
+      if (unreadNotifications.length === 0) return;
+
+      const {error} = await supabase
+        .from("notifications")
+        .update({is_read: true})
+        .in(
+          "id",
+          unreadNotifications.map((n) => n.id),
+        );
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedNotifications = notifications.map((n) => ({
+        ...n,
+        is_read: true,
+      }));
+      setNotifications(updatedNotifications);
+      updateNotificationCounts(updatedNotifications);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      toast.error("Failed to mark notifications as read");
+    }
+  };
+
+  const getFilteredNotifications = () => {
+    if (activeTab === "all") {
+      return notifications;
+    }
+
+    return notifications.filter(
+      (notification) =>
+        getNotificationTypeGroup(notification.type as string) === activeTab,
+    );
+  };
+
   const handleDragScroll = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
     const startX = e.pageX - scrollRef.current.offsetLeft;
@@ -177,7 +332,9 @@ const NotificationsPopover = ({
           tooltip={item.title}
           isActive={item.isActive}
           onClick={() => setOpen(true)}>
-          <div className="top-[17px] left-[17px] absolute bg-primary rounded-full outline-[1.8px] outline-sidebar-background w-[6px] h-[6px]"></div>
+          {(groupsNames[0].number > 0 || hasNewNotification) && (
+            <div className="top-[17px] left-[17px] absolute bg-primary rounded-full outline-[1.8px] outline-sidebar-background w-[6px] h-[6px]"></div>
+          )}
 
           {item.icon && <item.icon className="stroke-[2.1px]" />}
           {item.title && <span>{item.title}</span>}
@@ -248,20 +405,20 @@ const NotificationsPopover = ({
             </div>
           </div>
           {/* body of the notifications */}
-          {notifications.length === 0 && !isLoading ? (
-            <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
-              <div className="flex flex-col">
-                <p>No notifications</p>
+          {getFilteredNotifications().length === 0 && !isLoading ? (
+            <div className="flex-grow mt-2 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
+              <div className="flex flex-col justify-center items-center h-full">
+                <p className="text-secondary">No notifications</p>
               </div>
             </div>
           ) : (
-            <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
+            <div className="flex-grow mt-2 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
               <div className="flex flex-col">
                 {isLoading ? (
                   <LoadingButtonCircle />
                 ) : (
                   <>
-                    {notifications.map((notification) => {
+                    {getFilteredNotifications().map((notification) => {
                       if (notification.type === "follow") {
                         return (
                           <FollowNotification
@@ -271,6 +428,8 @@ const NotificationsPopover = ({
                           />
                         );
                       }
+                      // Add other notification types here as needed
+                      return null;
                     })}
                   </>
                 )}
@@ -280,9 +439,9 @@ const NotificationsPopover = ({
 
           {/* footer of the notifications */}
           <div className="flex justify-between items-center gap-2 bg-background pt-3 border-t border-border">
-            <Button variant={"outline"} size={"xs"}>
+            <Button variant={"outline"} size={"xs"} onClick={markAllAsRead}>
               <CheckCheck size="16" />
-              Mark as all read
+              Mark all as read
             </Button>
             <Button variant={"secondary"} size={"xs"}>
               View all
