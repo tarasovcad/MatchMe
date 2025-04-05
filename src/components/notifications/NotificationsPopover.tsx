@@ -11,6 +11,7 @@ import {Notification} from "@/types/notifications";
 import {supabase} from "@/utils/supabase/client";
 import Link from "next/link";
 import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
+import {toast} from "sonner";
 
 const NotificationsPopover = ({
   item,
@@ -76,18 +77,24 @@ const NotificationsPopover = ({
             : notification.sender,
         })) || [];
       setNotifications(formattedNotifications);
+
+      const unreadNotifications = formattedNotifications.filter(
+        (n) => !n.is_read,
+      );
+
       // Count notifications by type
       const notificationCounts: {[key: string]: number} = {
-        all: data?.length || 0,
+        all: unreadNotifications?.length || 0,
         "follower-activity":
-          data?.filter((n) => n.type === "follow").length || 0,
+          unreadNotifications?.filter((n) => n.type === "follow").length || 0,
         "mentions-tags":
-          data?.filter((n) => n.type === "mention" || n.type === "tag")
-            .length || 0,
+          unreadNotifications?.filter(
+            (n) => n.type === "mention" || n.type === "tag",
+          ).length || 0,
         "direct-messages":
-          data?.filter((n) => n.type === "message").length || 0,
+          unreadNotifications?.filter((n) => n.type === "message").length || 0,
         "project-updates":
-          data?.filter((n) => n.type === "project").length || 0,
+          unreadNotifications?.filter((n) => n.type === "project").length || 0,
       };
 
       // Update groups with notification counts
@@ -125,6 +132,51 @@ const NotificationsPopover = ({
   };
 
   const [activeTab, setActiveTab] = useState(groupsNames[0]?.id);
+
+  const markAsRead = async (notificationId: string) => {
+    const {error} = await supabase
+      .from("notifications")
+      .update({
+        is_read: true,
+      })
+      .eq("id", notificationId);
+
+    if (error) {
+      console.error("Error marking notification as read:", error.message);
+      toast.error("Error marking notification as read");
+      return;
+    }
+
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? {...n, is_read: true} : n)),
+    );
+    const updatedNotifications = notifications.map((n) =>
+      n.id === notificationId ? {...n, is_read: true} : n,
+    );
+
+    const unreadNotifications = updatedNotifications.filter((n) => !n.is_read);
+
+    const notificationCounts: {[key: string]: number} = {
+      all: unreadNotifications.length,
+      "follower-activity": unreadNotifications.filter(
+        (n) => n.type === "follow",
+      ).length,
+      "mentions-tags": unreadNotifications.filter(
+        (n) => n.type === "mention" || n.type === "tag",
+      ).length,
+      "direct-messages": unreadNotifications.filter((n) => n.type === "message")
+        .length,
+      "project-updates": unreadNotifications.filter((n) => n.type === "project")
+        .length,
+    };
+
+    setGroupsNames(
+      groupsNames.map((group) => ({
+        ...group,
+        number: notificationCounts[group.id] || 0,
+      })),
+    );
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -181,9 +233,12 @@ const NotificationsPopover = ({
                         !isActive && "hover:text-foreground cursor-pointer",
                       )}>
                       <p className="whitespace-nowrap">{group.title}</p>
-                      <div className="flex justify-center items-center border border-border rounded-[6px] w-5 h-5 text-xs">
-                        {group.number}
-                      </div>
+                      {group.number > 0 && (
+                        <div className="flex justify-center items-center border border-border rounded-[6px] w-5 h-5 text-xs">
+                          {group.number}
+                        </div>
+                      )}
+
                       {isActive && (
                         <motion.div
                           layoutId="tab-indicator"
@@ -213,6 +268,7 @@ const NotificationsPopover = ({
                       <FollowNotification
                         notification={notification}
                         key={notification.id}
+                        markAsRead={markAsRead}
                       />
                     );
                   }
@@ -237,11 +293,19 @@ const NotificationsPopover = ({
   );
 };
 
-const FollowNotification = ({notification}: {notification: Notification}) => {
+const FollowNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (id: string) => void;
+}) => {
   const {sender} = notification;
   const {image, name, username} = sender;
   return (
-    <button className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius">
+    <button
+      className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius"
+      onClick={() => markAsRead(notification.id)}>
       {/* image */}
       <div className="relative w-10 h-10">
         <Image
@@ -265,7 +329,9 @@ const FollowNotification = ({notification}: {notification: Notification}) => {
             </Link>{" "}
             started following you
           </p>
-          <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
+          {notification.is_read === false && (
+            <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
+          )}
         </div>
         {/* date and time */}
         <div className="flex justify-between items-center gap-2 text-xs">
