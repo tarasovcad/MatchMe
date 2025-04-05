@@ -1,5 +1,5 @@
 "use client";
-import React, {useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import {SidebarMenuButton} from "../shadcn/sidebar";
 import {cn} from "@/lib/utils";
 import {CheckCheck, LucideIcon, Maximize2, X} from "lucide-react";
@@ -12,6 +12,31 @@ import {supabase} from "@/utils/supabase/client";
 import Link from "next/link";
 import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
 import {toast} from "sonner";
+import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
+
+const NOTIFICATION_GROUPS = [
+  {title: "All", id: "all"},
+  {title: "Follower Activity", id: "follower-activity"},
+  {title: "Mentions & Tags", id: "mentions-tags"},
+  {title: "Direct Messages", id: "direct-messages"},
+  {title: "Project Updates", id: "project-updates"},
+];
+
+const getNotificationTypeGroup = (type: string): string => {
+  switch (type) {
+    case "follow":
+      return "follower-activity";
+    case "mention":
+    case "tag":
+      return "mentions-tags";
+    case "message":
+      return "direct-messages";
+    case "project":
+      return "project-updates";
+    default:
+      return "all";
+  }
+};
 
 const NotificationsPopover = ({
   item,
@@ -23,52 +48,33 @@ const NotificationsPopover = ({
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [groupsNames, setGroupsNames] = useState([
-    {
-      title: "All",
-      id: "all",
-      number: 0,
-    },
-    {
-      title: "Follower Activity",
-      id: "follower-activity",
-      number: 0,
-    },
-    {
-      title: "Mentions & Tags",
-      id: "mentions-tags",
-      number: 0,
-    },
-    {
-      title: "Direct Messages",
-      id: "direct-messages",
-      number: 0,
-    },
-    {
-      title: "Project Updates",
-      id: "project-updates",
-      number: 0,
-    },
-  ]);
-  const fetchNotifications = async () => {
-    const {data, error} = await supabase
-      .from("notifications")
-      .select(
-        `
-        id,
-        type,
-        created_at,
-        sender_id,
-        recipient_id,
-        is_read,
-        sender:profiles!notifications_sender_id_fkey (id, username, name, image)
-      `,
-      )
-      .eq("recipient_id", userId)
-      .order("created_at", {ascending: false});
-    console.log(data);
-    if (error) console.error("Error fetching notifications:", error);
-    else {
+  const [groupsNames, setGroupsNames] = useState(
+    NOTIFICATION_GROUPS.map((group) => ({...group, number: 0})),
+  );
+  const [activeTab, setActiveTab] = useState("all");
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const {data, error} = await supabase
+        .from("notifications")
+        .select(
+          `
+          id,
+          type,
+          created_at,
+          sender_id,
+          recipient_id,
+          is_read,
+          sender:profiles!notifications_sender_id_fkey (id, username, name, image)
+        `,
+        )
+        .eq("recipient_id", userId)
+        .order("created_at", {ascending: false});
+
+      if (error) throw error;
+
       const formattedNotifications =
         data?.map((notification) => ({
           ...notification,
@@ -76,40 +82,72 @@ const NotificationsPopover = ({
             ? notification.sender[0]
             : notification.sender,
         })) || [];
+
       setNotifications(formattedNotifications);
-
-      const unreadNotifications = formattedNotifications.filter(
-        (n) => !n.is_read,
-      );
-
-      // Count notifications by type
-      const notificationCounts: {[key: string]: number} = {
-        all: unreadNotifications?.length || 0,
-        "follower-activity":
-          unreadNotifications?.filter((n) => n.type === "follow").length || 0,
-        "mentions-tags":
-          unreadNotifications?.filter(
-            (n) => n.type === "mention" || n.type === "tag",
-          ).length || 0,
-        "direct-messages":
-          unreadNotifications?.filter((n) => n.type === "message").length || 0,
-        "project-updates":
-          unreadNotifications?.filter((n) => n.type === "project").length || 0,
-      };
-
-      // Update groups with notification counts
-      const updatedGroups = groupsNames.map((group) => ({
-        ...group,
-        number: notificationCounts[group.id] || 0,
-      }));
-
-      setGroupsNames(updatedGroups);
+      updateNotificationCounts(formattedNotifications);
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      toast.error("Failed to load notifications");
+    } finally {
+      setIsLoading(false);
     }
+  }, [userId]);
+
+  const updateNotificationCounts = (notifications: Notification[]) => {
+    const unreadNotifications = notifications.filter((n) => !n.is_read);
+
+    // Initialize counts
+    const counts: {[key: string]: number} = {all: unreadNotifications.length};
+
+    // Count by type
+    NOTIFICATION_GROUPS.slice(1).forEach((group) => {
+      counts[group.id] = unreadNotifications.filter(
+        (n) => getNotificationTypeGroup(n.type as string) === group.id,
+      ).length;
+    });
+
+    // Update groups with counts
+    setGroupsNames(
+      NOTIFICATION_GROUPS.map((group) => ({
+        ...group,
+        number: counts[group.id] || 0,
+      })),
+    );
   };
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (open && !hasLoaded) {
+      fetchNotifications();
+    }
+  }, [open, fetchNotifications, hasLoaded]);
+
+  const markAsRead = async (notificationId: string) => {
+    const notification = notifications.find((n) => n.id === notificationId);
+    if (!notification || notification.is_read === true) {
+      return;
+    }
+
+    try {
+      const {error} = await supabase
+        .from("notifications")
+        .update({is_read: true})
+        .eq("id", notificationId);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedNotifications = notifications.map((n) =>
+        n.id === notificationId ? {...n, is_read: true} : n,
+      );
+
+      setNotifications(updatedNotifications);
+      updateNotificationCounts(updatedNotifications);
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      toast.error("Failed to mark notification as read");
+    }
+  };
 
   const handleDragScroll = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!scrollRef.current) return;
@@ -129,53 +167,6 @@ const NotificationsPopover = ({
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  };
-
-  const [activeTab, setActiveTab] = useState(groupsNames[0]?.id);
-
-  const markAsRead = async (notificationId: string) => {
-    const {error} = await supabase
-      .from("notifications")
-      .update({
-        is_read: true,
-      })
-      .eq("id", notificationId);
-
-    if (error) {
-      console.error("Error marking notification as read:", error.message);
-      toast.error("Error marking notification as read");
-      return;
-    }
-
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notificationId ? {...n, is_read: true} : n)),
-    );
-    const updatedNotifications = notifications.map((n) =>
-      n.id === notificationId ? {...n, is_read: true} : n,
-    );
-
-    const unreadNotifications = updatedNotifications.filter((n) => !n.is_read);
-
-    const notificationCounts: {[key: string]: number} = {
-      all: unreadNotifications.length,
-      "follower-activity": unreadNotifications.filter(
-        (n) => n.type === "follow",
-      ).length,
-      "mentions-tags": unreadNotifications.filter(
-        (n) => n.type === "mention" || n.type === "tag",
-      ).length,
-      "direct-messages": unreadNotifications.filter((n) => n.type === "message")
-        .length,
-      "project-updates": unreadNotifications.filter((n) => n.type === "project")
-        .length,
-    };
-
-    setGroupsNames(
-      groupsNames.map((group) => ({
-        ...group,
-        number: notificationCounts[group.id] || 0,
-      })),
-    );
   };
 
   return (
@@ -257,22 +248,32 @@ const NotificationsPopover = ({
             </div>
           </div>
           {/* body of the notifications */}
-          {notifications.length === 0 ? (
-            <p>No notifications</p>
+          {notifications.length === 0 && !isLoading ? (
+            <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
+              <div className="flex flex-col">
+                <p>No notifications</p>
+              </div>
+            </div>
           ) : (
             <div className="flex-grow mt-4 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
               <div className="flex flex-col">
-                {notifications.map((notification) => {
-                  if (notification.type === "follow") {
-                    return (
-                      <FollowNotification
-                        notification={notification}
-                        key={notification.id}
-                        markAsRead={markAsRead}
-                      />
-                    );
-                  }
-                })}
+                {isLoading ? (
+                  <LoadingButtonCircle />
+                ) : (
+                  <>
+                    {notifications.map((notification) => {
+                      if (notification.type === "follow") {
+                        return (
+                          <FollowNotification
+                            notification={notification}
+                            key={notification.id}
+                            markAsRead={markAsRead}
+                          />
+                        );
+                      }
+                    })}
+                  </>
+                )}
               </div>
             </div>
           )}
