@@ -4,38 +4,15 @@ import {cn} from "@/lib/utils";
 import {CheckCheck, LucideIcon, Maximize2, X} from "lucide-react";
 import {Popover, PopoverContent, PopoverTrigger} from "../shadcn/popover";
 import {Button} from "../shadcn/button";
-import {motion} from "framer-motion";
-import Image from "next/image";
 import {Notification} from "@/types/notifications";
 import {supabase} from "@/utils/supabase/client";
-import Link from "next/link";
-import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
 import {toast} from "sonner";
-import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
-
-const NOTIFICATION_GROUPS = [
-  {title: "All", id: "all"},
-  {title: "Follower Activity", id: "follower-activity"},
-  {title: "Mentions & Tags", id: "mentions-tags"},
-  {title: "Direct Messages", id: "direct-messages"},
-  {title: "Project Updates", id: "project-updates"},
-];
-
-const getNotificationTypeGroup = (type: string): string => {
-  switch (type) {
-    case "follow":
-      return "follower-activity";
-    case "mention":
-    case "tag":
-      return "mentions-tags";
-    case "message":
-      return "direct-messages";
-    case "project":
-      return "project-updates";
-    default:
-      return "all";
-  }
-};
+import NotificationTabs from "./NotificationTabs";
+import NotificationList from "./NotificationList";
+import {
+  getNotificationTypeGroup,
+  NOTIFICATION_GROUPS,
+} from "@/data/tabs/notificationsTabs";
 
 const NotificationsPopover = ({
   item,
@@ -46,7 +23,6 @@ const NotificationsPopover = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [groupsNames, setGroupsNames] = useState(
     NOTIFICATION_GROUPS.map((group) => ({...group, number: 0})),
   );
@@ -297,31 +273,10 @@ const NotificationsPopover = ({
     if (activeTab === "all") {
       return notifications;
     }
-
     return notifications.filter(
       (notification) =>
         getNotificationTypeGroup(notification.type as string) === activeTab,
     );
-  };
-
-  const handleDragScroll = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollRef.current) return;
-    const startX = e.pageX - scrollRef.current.offsetLeft;
-    const scrollLeft = scrollRef.current.scrollLeft;
-
-    const onMouseMove = (event: MouseEvent) => {
-      if (!scrollRef.current) return;
-      const walk = (event.pageX - startX) * 2;
-      scrollRef.current.scrollLeft = scrollLeft - walk;
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
   };
 
   return (
@@ -345,9 +300,8 @@ const NotificationsPopover = ({
         className="relative bg-transparent shadow-none p-3 border-0 w-[442px] h-screen max-h-screen"
         sideOffset={8}>
         <div className="flex flex-col bg-background p-3 border border-border rounded-[12px] h-full">
-          {/* header of the notifications */}
+          {/* Header */}
           <div>
-            {/* text and buttons */}
             <div className="flex justify-between items-center gap-2 mb-3 p-1">
               <p className="font-medium text-[16px]">Notifications</p>
               <div className="flex gap-1">
@@ -363,81 +317,23 @@ const NotificationsPopover = ({
                 </Button>
               </div>
             </div>
-            {/* groups notifications */}
-            <div className="relative border-b border-border">
-              <div
-                className="relative flex overflow-x-auto scrollbar-hide"
-                ref={scrollRef}
-                onMouseDown={handleDragScroll}>
-                {groupsNames.map((group) => {
-                  const isActive = group.id === activeTab;
-                  return (
-                    <button
-                      key={group.id}
-                      onClick={() => setActiveTab(group.id)}
-                      className={cn(
-                        "relative flex items-center gap-1.5 px-3.5 py-2 text-secondary transition-colors font-medium",
-                        isActive && "text-foreground",
-                        !isActive && "hover:text-foreground cursor-pointer",
-                      )}>
-                      <p className="whitespace-nowrap">{group.title}</p>
-                      {group.number > 0 && (
-                        <div className="flex justify-center items-center border border-border rounded-[6px] w-5 h-5 text-xs">
-                          {group.number}
-                        </div>
-                      )}
-
-                      {isActive && (
-                        <motion.div
-                          layoutId="tab-indicator"
-                          className="bottom-0 left-0 absolute bg-foreground w-full h-[2px]"
-                          transition={{
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 30,
-                          }}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Tabs */}
+            <NotificationTabs
+              groups={groupsNames}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
           </div>
-          {/* body of the notifications */}
-          {getFilteredNotifications().length === 0 && !isLoading ? (
-            <div className="flex-grow mt-2 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
-              <div className="flex flex-col justify-center items-center h-full">
-                <p className="text-secondary">No notifications</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-grow mt-2 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-thin">
-              <div className="flex flex-col">
-                {isLoading ? (
-                  <LoadingButtonCircle />
-                ) : (
-                  <>
-                    {getFilteredNotifications().map((notification) => {
-                      if (notification.type === "follow") {
-                        return (
-                          <FollowNotification
-                            notification={notification}
-                            key={notification.id}
-                            markAsRead={markAsRead}
-                          />
-                        );
-                      }
-                      // Add other notification types here as needed
-                      return null;
-                    })}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Notification list */}
+          <div className="flex-grow mt-2 max-h-[calc(100vh-190px)] overflow-y-auto scrollbar-thin">
+            <NotificationList
+              isLoading={isLoading}
+              notifications={getFilteredNotifications()}
+              markAsRead={markAsRead}
+            />
+          </div>
 
-          {/* footer of the notifications */}
+          {/* Footer */}
           <div className="flex justify-between items-center gap-2 bg-background pt-3 border-t border-border">
             <Button variant={"outline"} size={"xs"} onClick={markAllAsRead}>
               <CheckCheck size="16" />
@@ -450,56 +346,6 @@ const NotificationsPopover = ({
         </div>
       </PopoverContent>
     </Popover>
-  );
-};
-
-const FollowNotification = ({
-  notification,
-  markAsRead,
-}: {
-  notification: Notification;
-  markAsRead: (id: string) => void;
-}) => {
-  const {sender} = notification;
-  const {image, name, username} = sender;
-  return (
-    <button
-      className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius"
-      onClick={() => markAsRead(notification.id)}>
-      {/* image */}
-      <div className="relative w-10 h-10">
-        <Image
-          src={image}
-          width={35}
-          height={35}
-          className="rounded-full"
-          unoptimized
-          alt="user"
-        />
-      </div>
-      {/* content */}
-      <div className="w-full text-secondary">
-        {/* title with dot */}
-        <div className="flex justify-between items-start gap-2 text-start">
-          <p>
-            <Link href={`/profiles/${username}`}>
-              <span className="font-medium text-foreground hover:underline">
-                {name}
-              </span>
-            </Link>{" "}
-            started following you
-          </p>
-          {notification.is_read === false && (
-            <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
-          )}
-        </div>
-        {/* date and time */}
-        <div className="flex justify-between items-center gap-2 text-xs">
-          <p>{formatDateAbsolute(notification.created_at)}</p>
-          <p>{formatTimeRelative(notification.created_at)}</p>
-        </div>
-      </div>
-    </button>
   );
 };
 
