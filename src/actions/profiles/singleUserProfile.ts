@@ -18,6 +18,7 @@ const USER_PROFILE_CACHE_KEY = (username: string) => `user_profile_${username}`;
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
+const TABLE_NAME = "profiles";
 
 export async function getUserProfile(username: string) {
   const supabase = await createClient();
@@ -28,7 +29,7 @@ export async function getUserProfile(username: string) {
   if (!user) {
     console.log("Profile cache miss - fetching from Supabase...");
     const {data, error} = await supabase
-      .from("mock_profiles")
+      .from(TABLE_NAME)
       .select("*")
       .eq("username", username)
       .single();

@@ -7,7 +7,7 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
-
+const TABLE_NAME = "profiles";
 export async function getAllProfiles(page = 1, perPage: number) {
   const supabase = await createClient();
 
@@ -21,7 +21,7 @@ export async function getAllProfiles(page = 1, perPage: number) {
     const to = from + perPage - 1;
     console.log("Cache miss - fetching from Supabase...");
     const query = supabase
-      .from("mock_profiles")
+      .from(TABLE_NAME)
       .select("*")
       .eq("is_profile_public", true)
       .range(from, to);

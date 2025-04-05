@@ -266,6 +266,12 @@
       grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
     }
   }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Hide scrollbar on WebKit browsers */
+  }
+  .scrollbar-hide {
+    scrollbar-width: none; /* Hide scrollbar on Firefox */
+  }
 }
 @layer base {
   * {

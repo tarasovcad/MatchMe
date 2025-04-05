@@ -14,6 +14,9 @@ import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import ProfilesSingleCardSkeleton from "./ProfilesSingleCardSkeleton";
+import ProfilesFilterPopup from "./ProfilesFilterPopup";
+import ProfilesOrderBy from "./ProfilesOrderBy";
+import {ProfileQueryParams} from "@/types/profiles/sortProfiles";
 
 const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   const [profiles, setProfiles] = useState<
@@ -27,6 +30,22 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   const [showNextPageSkeletons, setShowNextPageSkeletons] = useState(false);
   const profilesPerPage = 10;
   const observer = useRef<IntersectionObserver | null>(null);
+  const [queryParams, setQueryParams] = useState<ProfileQueryParams>({
+    sort: {
+      field: null,
+      direction: null,
+    },
+    filters: {
+      age: {
+        min: null,
+        max: null,
+      },
+      skills: [],
+      languages: [],
+    },
+  });
+
+  console.log("queryParams:", queryParams);
 
   const lastProfileRef = useCallback(
     (node: HTMLDivElement) => {
@@ -239,22 +258,11 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
             search
           />
           <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
-            <Button size={"xs"} className="max-[480px]:w-full">
-              Order by
-              <ChevronDown
-                size={16}
-                strokeWidth={2}
-                className="text-foreground/90"
-              />
-            </Button>
-            <Button size={"xs"} className="max-[480px]:w-full">
-              Show Filters
-              <PanelBottomClose
-                size={16}
-                strokeWidth={2}
-                className="text-foreground/90"
-              />
-            </Button>
+            <ProfilesOrderBy
+              setQueryParams={setQueryParams}
+              queryParams={queryParams}
+            />
+            <ProfilesFilterPopup />
           </div>
         </motion.div>
         <div className="container-query-parent">

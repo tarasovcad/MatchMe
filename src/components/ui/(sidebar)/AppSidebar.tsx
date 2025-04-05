@@ -111,7 +111,7 @@ export function AppSidebar({
 
       <SidebarContent>
         <OpenSearchModal />
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} user={user} />
       </SidebarContent>
 
       <SidebarFooter>
