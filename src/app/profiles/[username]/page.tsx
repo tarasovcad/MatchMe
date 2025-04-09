@@ -61,12 +61,11 @@ const UserSinglePage = async ({
         className="rounded-[6px] rounded-t-none w-full"
         style={{width: "100%", height: "156px"}}
       />
-
-      <div className="flex flex-col gap-9 p-6 pt-0 responsive-container">
+      <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
         <div className="flex flex-col gap-6">
-          <div className="relative flex justify-between gap-3">
+          <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
             <UserButtons
-              className="max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
+              className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
               isFollowing={isFollowing}
               userSessionId={userSessionId}
               profileId={user.id}
@@ -103,12 +102,14 @@ const UserSinglePage = async ({
               )}
               <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
                 {/* name and verified */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-[6px]">
                   <div className="flex items-center gap-2">
-                    <MainGradient as="h1" className="font-semibold text-[26px]">
+                    <MainGradient
+                      as="h1"
+                      className="font-semibold text-[26px] leading-[26px]">
                       {user.name}
                     </MainGradient>
-                    {user.is_profile_verified && (
+                    {!user.is_profile_verified && (
                       <Image
                         src="/svg/verified.svg"
                         alt="Verified"
@@ -118,7 +119,9 @@ const UserSinglePage = async ({
                       />
                     )}
                   </div>
-                  <p className="text-secondary text-sm">{user.tagline}</p>
+                  <p className="text-secondary text-sm">
+                    {user.tagline} to create a successful career in tech.
+                  </p>
                 </div>
                 {/* social links */}
                 <ProfileSocialLinks user={user} />
@@ -134,7 +137,7 @@ const UserSinglePage = async ({
           </div>
           <div className="flex flex-col gap-4">
             <UserButtons
-              className="min-[620px]:hidden w-full"
+              className="@min-[620px]:hidden w-full"
               isFollowing={isFollowing}
               userSessionId={userSessionId}
               profileId={user.id}
@@ -196,11 +199,12 @@ const UserButtons = ({
           userId={userSessionId}
           profileId={profileId ?? ""}
           isFavorite={isFavorite}
+          buttonClassName="@max-[620px]:order-2"
         />
-        <div className="flex items-center gap-[10px] max-[360px]:gap-1 max-[620px]:w-full">
+        <div className="flex items-center gap-[10px] max-[360px]:gap-1 @max-[620px]:w-full">
           <Button
             size={"default"}
-            className="max-[620px]:order-2 max-[620px]:w-full">
+            className="@max-[620px]:order-2 @max-[620px]:w-full">
             <Messages2
               size="18"
               color="currentColor"
@@ -214,6 +218,7 @@ const UserButtons = ({
             isFollowing={isFollowing}
             isFollowingBack={isFollowingBack}
             username={username}
+            buttonClassName="@max-[620px]:w-full"
           />
         </div>
       </div>

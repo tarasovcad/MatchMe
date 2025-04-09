@@ -8,12 +8,14 @@ import {toast} from "sonner";
 import {motion, AnimatePresence} from "framer-motion";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AlertComponent from "../ui/dialog/AlertComponent";
+import {cn} from "@/lib/utils";
 
 interface FollowButtonProps {
   followingId: string;
   isFollowing: boolean;
   isFollowingBack?: boolean;
   username: string;
+  buttonClassName?: string;
 }
 
 const FollowUserButton = ({
@@ -21,6 +23,7 @@ const FollowUserButton = ({
   isFollowing,
   isFollowingBack,
   username,
+  buttonClassName,
 }: FollowButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [following, setFollowing] = useState(isFollowing);
@@ -60,7 +63,10 @@ const FollowUserButton = ({
           <MotionButton
             size={"default"}
             variant="secondary"
-            className="w-[164px] max-[620px]:w-full transition-all duration-300"
+            className={cn(
+              "w-[164px] transition-all duration-300",
+              buttonClassName,
+            )}
             disabled={isPending}
             whileTap={{scale: 0.95}}>
             <AnimatePresence mode="wait">
@@ -96,7 +102,10 @@ const FollowUserButton = ({
         <MotionButton
           size={"default"}
           variant="default"
-          className="w-[164px] max-[620px]:w-full transition-all duration-300"
+          className={cn(
+            "w-[164px] transition-all duration-300",
+            buttonClassName,
+          )}
           disabled={isPending}
           onClick={handleFollowToggle}
           whileTap={{scale: 0.95}}>
