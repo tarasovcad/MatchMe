@@ -13,6 +13,8 @@ const TagsList = ({
   skills: {name: string; image_url: string}[];
 }) => {
   const [expanded, setExpanded] = useState(false);
+  console.log(skills);
+
   const [maxSkills, setMaxSkills] = useState(10);
   const [skillsToShow, setSkillsToShow] = useState(
     user.skills?.slice(0, maxSkills),

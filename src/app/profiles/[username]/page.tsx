@@ -25,150 +25,176 @@ const UserSinglePage = async ({
 }: {
   params: Promise<{username: string}>;
 }) => {
-  const startTime = Date.now();
-  const supabase = await createClient();
+  const startTime = performance.now();
   const {username} = await params;
-  const {data: userSession} = await supabase.auth.getUser();
-  const userSessionId = userSession?.user?.id;
+  try {
+    const user = await getUserProfile(username);
+    if (!user) {
+      return (
+        <div className="mx-auto p-4 container">
+          <h1 className="font-bold text-xl">User not found</h1>
+          <p>
+            The user you are looking for doesn&apos;t exist or has been removed.
+          </p>
+        </div>
+      );
+    }
+    const supabase = await createClient();
+    const {data: userSession} = await supabase.auth.getUser();
+    const userSessionId = userSession?.user?.id;
 
-  const user = await getUserProfile(username);
-  console.log(user);
-  if (!user) {
-    return <div>User not found.</div>;
-  }
+    const [statsData, isFavorite] = await Promise.all([
+      getUserStats(user.id, userSessionId, user),
+      userSessionId
+        ? isUserFavorite(userSessionId, user.id)
+        : Promise.resolve(false),
+    ]);
 
-  const [statsData, isFavorite] = await Promise.all([
-    getUserStats(user.id, userSessionId, user),
-    userSessionId
-      ? isUserFavorite(userSessionId, user.id)
-      : Promise.resolve(false),
-  ]);
+    const {
+      followerCount,
+      followingCount,
+      skills,
+      isFollowing,
+      isFollowingBack,
+    } = statsData;
 
-  const {followerCount, followingCount, skills, isFollowing, isFollowingBack} =
-    statsData;
-
-  console.log("Time taken to fetch user:", Date.now() - startTime);
-
-  return (
-    <SidebarProvider removePadding>
-      <Image
-        src={"/test.png"}
-        unoptimized
-        alt={user.name}
-        width={0}
-        height={0}
-        sizes="100vw"
-        className="rounded-[6px] rounded-t-none w-full"
-        style={{width: "100%", height: "156px"}}
-      />
-      <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
-        <div className="flex flex-col gap-6">
-          <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
-            <UserButtons
-              className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
-              isFollowing={isFollowing}
-              userSessionId={userSessionId}
-              profileId={user.id}
-              isFollowingBack={isFollowingBack}
-              username={username}
-              isFavorite={isFavorite}
-            />
-            <div className="flex max-[1130px]:flex-col gap-3">
-              {user.image ? (
-                <Image
-                  src={user.image}
-                  alt={user.name}
-                  width={125}
-                  height={125}
-                  className="-mt-9 border-4 border-background rounded-full shrink-0"
-                  style={{
-                    width: "clamp(100px, 10vw, 125px)",
-                    height: "clamp(100px, 10vw, 125px)",
-                  }}
-                  unoptimized
-                />
-              ) : (
-                <Avatar
-                  name={getNameInitials(user.name)}
-                  width={125}
-                  height={125}
-                  className="-mt-9 border-4 border-background rounded-full shrink-0"
-                  style={{
-                    width: "clamp(100px, 10vw, 125px)",
-                    height: "clamp(100px, 10vw, 125px)",
-                  }}
-                  variant="beam"
-                />
-              )}
-              <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
-                {/* name and verified */}
-                <div className="flex flex-col gap-[6px]">
-                  <div className="flex items-center gap-2">
-                    <MainGradient
-                      as="h1"
-                      className="font-semibold text-[26px] leading-[26px]">
-                      {user.name}
-                    </MainGradient>
-                    {!user.is_profile_verified && (
-                      <Image
-                        src="/svg/verified.svg"
-                        alt="Verified"
-                        width={18}
-                        height={18}
-                        className="shrink-0"
-                      />
-                    )}
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Time taken to render ${username}'s profile: ${(performance.now() - startTime).toFixed(2)}ms`,
+      );
+    }
+    return (
+      <SidebarProvider removePadding>
+        <Image
+          src={"/test.png"}
+          unoptimized
+          alt={user.name}
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="rounded-[6px] rounded-t-none w-full"
+          style={{width: "100%", height: "156px"}}
+        />
+        <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
+          <div className="flex flex-col gap-6">
+            <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
+              <UserButtons
+                className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
+                isFollowing={isFollowing}
+                userSessionId={userSessionId}
+                profileId={user.id}
+                isFollowingBack={isFollowingBack}
+                username={username}
+                isFavorite={isFavorite}
+              />
+              <div className="flex max-[1130px]:flex-col gap-3">
+                {user.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name}
+                    width={125}
+                    height={125}
+                    className="-mt-9 border-4 border-background rounded-full shrink-0"
+                    style={{
+                      width: "clamp(100px, 10vw, 125px)",
+                      height: "clamp(100px, 10vw, 125px)",
+                    }}
+                    unoptimized
+                  />
+                ) : (
+                  <Avatar
+                    name={getNameInitials(user.name)}
+                    width={125}
+                    height={125}
+                    className="-mt-9 border-4 border-background rounded-full shrink-0"
+                    style={{
+                      width: "clamp(100px, 10vw, 125px)",
+                      height: "clamp(100px, 10vw, 125px)",
+                    }}
+                    variant="beam"
+                  />
+                )}
+                <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
+                  {/* name and verified */}
+                  <div className="flex flex-col gap-[6px]">
+                    <div className="flex items-center gap-2">
+                      <MainGradient
+                        as="h1"
+                        className="font-semibold text-[26px] leading-[26px]">
+                        {user.name}
+                      </MainGradient>
+                      {!user.is_profile_verified && (
+                        <Image
+                          src="/svg/verified.svg"
+                          alt="Verified"
+                          width={18}
+                          height={18}
+                          className="shrink-0"
+                        />
+                      )}
+                    </div>
+                    <p className="text-secondary text-sm">
+                      {user.tagline} to create a successful career in tech.
+                    </p>
                   </div>
-                  <p className="text-secondary text-sm">
-                    {user.tagline} to create a successful career in tech.
-                  </p>
+                  {/* social links */}
+                  <ProfileSocialLinks user={user} />
                 </div>
-                {/* social links */}
-                <ProfileSocialLinks user={user} />
+              </div>
+              <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
+                <UserNumbers
+                  className="max-[950px]:hidden pt-[75px] pr-[47px]"
+                  followerCount={followerCount}
+                  followingCount={followingCount}
+                />
               </div>
             </div>
-            <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
+            <div className="flex flex-col gap-4">
+              <UserButtons
+                className="@min-[620px]:hidden w-full"
+                isFollowing={isFollowing}
+                userSessionId={userSessionId}
+                profileId={user.id}
+                isFollowingBack={isFollowingBack}
+                username={username}
+                isFavorite={isFavorite}
+              />
               <UserNumbers
-                className="max-[950px]:hidden pt-[75px] pr-[47px]"
+                className="min-[950px]:hidden justify-between"
                 followerCount={followerCount}
                 followingCount={followingCount}
               />
             </div>
           </div>
-          <div className="flex flex-col gap-4">
-            <UserButtons
-              className="@min-[620px]:hidden w-full"
-              isFollowing={isFollowing}
-              userSessionId={userSessionId}
-              profileId={user.id}
-              isFollowingBack={isFollowingBack}
-              username={username}
-              isFavorite={isFavorite}
-            />
-            <UserNumbers
-              className="min-[950px]:hidden justify-between"
-              followerCount={followerCount}
-              followingCount={followingCount}
-            />
+          {/* main section */}
+          <div>
+            <div className="flex flex-col gap-8 max-[990px]:gap-10">
+              {profileFormFields.map((formField) => (
+                <div key={formField.fieldTitle}>
+                  <ProfileFormField
+                    formField={formField}
+                    user={user}
+                    skills={skills}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        {/* main section */}
-        <div>
-          <div className="flex flex-col gap-8 max-[990px]:gap-10">
-            {profileFormFields.map((formField) => (
-              <div key={formField.fieldTitle}>
-                <ProfileFormField
-                  formField={formField}
-                  user={user}
-                  skills={skills}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+      </SidebarProvider>
+    );
+  } catch (error) {
+    console.error("Error rendering user profile:", error);
+    return (
+      <div className="mx-auto p-4 container">
+        <h1 className="font-bold text-xl">Something went wrong</h1>
+        <p>
+          We encountered an error while loading this profile. Please try again
+          later.
+        </p>
       </div>
-    </SidebarProvider>
-  );
+    );
+  }
 };
 
 const UserButtons = ({
