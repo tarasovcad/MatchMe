@@ -1,4 +1,5 @@
 import {
+  getUserFollowRelationship,
   getUserProfile,
   getUserStats,
   isUserFavorite,
@@ -43,20 +44,18 @@ const UserSinglePage = async ({
     const {data: userSession} = await supabase.auth.getUser();
     const userSessionId = userSession?.user?.id;
 
-    const [statsData, isFavorite] = await Promise.all([
+    const [statsData, followRelationship, isFavorite] = await Promise.all([
       getUserStats(user.id, userSessionId, user),
+      userSessionId
+        ? getUserFollowRelationship(userSessionId, user.id)
+        : Promise.resolve({isFollowing: false, isFollowingBack: false}),
       userSessionId
         ? isUserFavorite(userSessionId, user.id)
         : Promise.resolve(false),
     ]);
 
-    const {
-      followerCount,
-      followingCount,
-      skills,
-      isFollowing,
-      isFollowingBack,
-    } = statsData;
+    const {followerCount, followingCount, skills} = statsData;
+    const {isFollowing, isFollowingBack} = followRelationship;
 
     if (process.env.NODE_ENV === "development") {
       console.log(

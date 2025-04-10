@@ -6,12 +6,6 @@ interface CachedUserStats {
   followerCount: number;
   followingCount: number;
   skills: Array<{name: string; image_url: string}>;
-  currentUserFollowInfo: {
-    [userId: string]: {
-      isFollowing: boolean;
-      isFollowingBack: boolean;
-    };
-  };
   lastUpdated: number;
 }
 
@@ -19,14 +13,20 @@ interface UserStats {
   followerCount: number;
   followingCount: number;
   skills: Array<{name: string; image_url: string}>;
+}
+
+interface UserFollowRelationship {
   isFollowing: boolean;
   isFollowingBack: boolean;
+  lastUpdated: number;
 }
 
 const CACHE_KEYS = {
   userProfile: (username: string) => `profile_${username}`,
   userStats: (userId: string) => `stats_${userId}`,
   userFavorites: (userId: string) => `favorites_${userId}`,
+  followRelationship: (userId: string, targetUserId: string) =>
+    `follow_${userId}_${targetUserId}`,
 };
 const CACHE_TTL = 300; // 5 minutes
 const TABLE_NAME = "profiles";
@@ -62,6 +62,69 @@ export async function getUserProfile(username: string) {
   }
 }
 
+export async function getUserFollowRelationship(
+  currentUserId: string,
+  targetUserId: string,
+): Promise<UserFollowRelationship> {
+  const defaultRelationship: UserFollowRelationship = {
+    isFollowing: false,
+    isFollowingBack: false,
+    lastUpdated: Date.now(),
+  };
+
+  if (!currentUserId) return defaultRelationship;
+
+  try {
+    const cacheKey = CACHE_KEYS.followRelationship(currentUserId, targetUserId);
+    const cachedRelationship = (await redis.get(
+      cacheKey,
+    )) as UserFollowRelationship | null;
+
+    if (cachedRelationship) {
+      console.log("Follow relationship cache hit");
+      return cachedRelationship;
+    }
+
+    console.log("Follow relationship cache miss - fetching from Supabase...");
+    const supabase = await createClient();
+
+    // Get both follow statuses in parallel
+    const [followingResult, followedByResult] = await Promise.all([
+      supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", currentUserId)
+        .eq("following_id", targetUserId)
+        .single(),
+
+      supabase
+        .from("follows")
+        .select("id")
+        .eq("follower_id", targetUserId)
+        .eq("following_id", currentUserId)
+        .single(),
+    ]);
+
+    const followInfo: UserFollowRelationship = {
+      isFollowing: !!followingResult.data,
+      isFollowingBack: !!followedByResult.data,
+      lastUpdated: Date.now(),
+    };
+
+    // Cache the follow relationship
+    await redis.set(cacheKey, followInfo, {ex: CACHE_TTL});
+
+    return followInfo;
+  } catch (error) {
+    console.error("Error in getFollowRelationship:", error);
+    return {
+      isFollowing: false,
+      isFollowingBack: false,
+      lastUpdated: Date.now(),
+    };
+  }
+}
+
 export async function getUserStats(
   userId: string,
   currentUserId?: string,
@@ -71,8 +134,6 @@ export async function getUserStats(
     followerCount: 0,
     followingCount: 0,
     skills: [],
-    isFollowing: false,
-    isFollowingBack: false,
   };
 
   if (!user) return defaultStats;
@@ -91,19 +152,7 @@ export async function getUserStats(
         followerCount: cachedStats.followerCount,
         followingCount: cachedStats.followingCount,
         skills: cachedStats.skills,
-        isFollowing: false,
-        isFollowingBack: false,
       };
-      // Add user-specific follow info only if a user is logged in
-      if (
-        currentUserId &&
-        cachedStats.currentUserFollowInfo &&
-        cachedStats.currentUserFollowInfo[currentUserId]
-      ) {
-        const userFollowInfo = cachedStats.currentUserFollowInfo[currentUserId];
-        result.isFollowing = userFollowInfo.isFollowing;
-        result.isFollowingBack = userFollowInfo.isFollowingBack;
-      }
 
       return result;
     }
@@ -112,51 +161,28 @@ export async function getUserStats(
     const supabase = await createClient();
 
     // Run all queries in parallel
-    const [
-      followerCountResult,
-      followingCountResult,
-      skillsResult,
-      followStatusResults,
-    ] = await Promise.all([
-      // Follower count
-      supabase
-        .from("follows")
-        .select("*", {count: "exact", head: true})
-        .eq("following_id", userId),
+    const [followerCountResult, followingCountResult, skillsResult] =
+      await Promise.all([
+        // Follower count
+        supabase
+          .from("follows")
+          .select("*", {count: "exact", head: true})
+          .eq("following_id", userId),
 
-      // Following count
-      supabase
-        .from("follows")
-        .select("*", {count: "exact", head: true})
-        .eq("follower_id", userId),
+        // Following count
+        supabase
+          .from("follows")
+          .select("*", {count: "exact", head: true})
+          .eq("follower_id", userId),
 
-      // Skills - only fetch if user has skills
-      user.skills?.length
-        ? supabase
-            .from("skills")
-            .select("name, image_url")
-            .in("name", user.skills)
-        : Promise.resolve({data: []}),
-
-      // Only check follow status if logged in for buttons
-      currentUserId
-        ? Promise.all([
-            supabase
-              .from("follows")
-              .select("id")
-              .eq("follower_id", currentUserId)
-              .eq("following_id", userId)
-              .single(),
-
-            supabase
-              .from("follows")
-              .select("id")
-              .eq("follower_id", userId)
-              .eq("following_id", currentUserId)
-              .single(),
-          ])
-        : Promise.resolve([{data: null}, {data: null}]),
-    ]);
+        // Skills - only fetch if user has skills
+        user.skills?.length
+          ? supabase
+              .from("skills")
+              .select("name, image_url")
+              .in("name", user.skills)
+          : Promise.resolve({data: []}),
+      ]);
 
     // Extract results
     const followerCount = followerCountResult.error
@@ -166,30 +192,14 @@ export async function getUserStats(
       ? 0
       : followingCountResult.count || 0;
     const skills = skillsResult.data || [];
-    const isFollowing = currentUserId ? !!followStatusResults[0].data : false;
-    const isFollowingBack = currentUserId
-      ? !!followStatusResults[1].data
-      : false;
 
     // Cache the stats
     const statsForCache = {
       followerCount,
       followingCount,
       skills,
-      currentUserFollowInfo: {} as Record<
-        string,
-        {isFollowing: boolean; isFollowingBack: boolean}
-      >,
       lastUpdated: Date.now(),
     };
-
-    // Add the current user's follow info if available
-    if (currentUserId) {
-      statsForCache.currentUserFollowInfo[currentUserId] = {
-        isFollowing,
-        isFollowingBack,
-      };
-    }
 
     await redis.set(cacheKey, statsForCache, {ex: CACHE_TTL});
 
@@ -197,8 +207,6 @@ export async function getUserStats(
       followerCount,
       followingCount,
       skills,
-      isFollowing,
-      isFollowingBack,
     };
   } catch (error) {
     console.error("Error in getUserStats:", error);
@@ -258,4 +266,12 @@ export async function invalidateUserCaches(
   ];
 
   await Promise.all(keys.map((key) => redis.del(key)));
+}
+
+export async function invalidateFollowRelationship(
+  followerId: string,
+  followingId: string,
+): Promise<void> {
+  const key = CACHE_KEYS.followRelationship(followerId, followingId);
+  await redis.del(key);
 }
