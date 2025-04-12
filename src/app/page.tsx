@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ThemeToggle from "@/components/other/ThemeToggle";
 import SidebarProvider from "@/providers/SidebarProvider";
+import SignUpDialog from "@/components/ui/dialog/SignUpDialog";
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -26,6 +27,9 @@ export default async function HomePage() {
           <Button asChild variant={"default"}>
             <Link href="/login">Login</Link>
           </Button>
+          <SignUpDialog>
+            <Button>Open</Button>
+          </SignUpDialog>
         </div>
       </div>
     );

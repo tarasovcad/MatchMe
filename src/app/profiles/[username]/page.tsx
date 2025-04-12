@@ -62,6 +62,7 @@ const UserSinglePage = async ({
         `Time taken to render ${username}'s profile: ${(performance.now() - startTime).toFixed(2)}ms`,
       );
     }
+    console.log(user.image);
     return (
       <SidebarProvider removePadding>
         <Image
@@ -94,6 +95,7 @@ const UserSinglePage = async ({
                     width={125}
                     height={125}
                     className="-mt-9 border-4 border-background rounded-full shrink-0"
+                    loading="eager"
                     style={{
                       width: "clamp(100px, 10vw, 125px)",
                       height: "clamp(100px, 10vw, 125px)",

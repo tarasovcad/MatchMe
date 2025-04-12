@@ -1,9 +1,17 @@
 export const socialLinks = [
-  {title: "x.com/", image: "/social_links/x.svg"},
-  {title: "github.com/", image: "/social_links/github.svg"},
-  {title: "t.me/", image: "/social_links/telegram.svg"},
-  {title: "linkedin.com/", image: "/social_links/linkedin.svg"},
-  {title: "instagram.com/", image: "/social_links/instagram.svg"},
+  {title: "x.com/", image: "/social_links/x.svg", name: "X"},
+  {title: "github.com/", image: "/social_links/github.svg", name: "GitHub"},
+  {title: "t.me/", image: "/social_links/telegram.svg", name: "Telegram"},
+  {
+    title: "linkedin.com/",
+    image: "/social_links/linkedin.svg",
+    name: "LinkedIn",
+  },
+  {
+    title: "instagram.com/",
+    image: "/social_links/instagram.svg",
+    name: "Instagram",
+  },
   {title: "facebook.com/"},
   {title: "tiktok.com/@"},
   {title: "youtube.com/c/"},
