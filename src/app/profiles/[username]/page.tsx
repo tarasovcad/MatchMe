@@ -8,6 +8,7 @@ import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
 import FollowUserButton from "@/components/follows/FollowUserButton";
+import AuthGate from "@/components/other/AuthGate";
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {profileFormFields} from "@/data/forms/profile/profileFormFields";
@@ -222,31 +223,39 @@ const UserButtons = ({
           "flex items-center gap-3 max-[620px] max-[360px]:gap-1",
           className,
         )}>
-        <ProfileOtherButton
-          userId={userSessionId}
-          profileId={profileId ?? ""}
-          isFavorite={isFavorite}
-          buttonClassName="@max-[620px]:order-2"
-        />
-        <div className="flex items-center gap-[10px] max-[360px]:gap-1 @max-[620px]:w-full">
-          <Button
-            size={"default"}
-            className="@max-[620px]:order-2 @max-[620px]:w-full">
-            <Messages2
-              size="18"
-              color="currentColor"
-              strokeWidth={2}
-              className="max-[450px]:hidden stroke-2"
-            />
-            Message
-          </Button>
-          <FollowUserButton
-            followingId={profileId || ""}
-            isFollowing={isFollowing}
-            isFollowingBack={isFollowingBack}
-            username={username}
-            buttonClassName="@max-[620px]:w-full"
+        <AuthGate userSessionId={userSessionId}>
+          <ProfileOtherButton
+            userId={userSessionId}
+            profileId={profileId ?? ""}
+            isFavorite={isFavorite}
+            buttonClassName="@max-[620px]:order-2"
           />
+        </AuthGate>
+
+        <div className="flex items-center gap-[10px] max-[360px]:gap-1 @max-[620px]:w-full">
+          <AuthGate userSessionId={userSessionId}>
+            <Button
+              size={"default"}
+              className="@max-[620px]:order-2 @max-[620px]:w-full">
+              <Messages2
+                size="18"
+                color="currentColor"
+                strokeWidth={2}
+                className="max-[450px]:hidden stroke-2"
+              />
+              Message
+            </Button>
+          </AuthGate>
+          <AuthGate userSessionId={userSessionId}>
+            <FollowUserButton
+              followingId={profileId || ""}
+              isFollowing={isFollowing}
+              isFollowingBack={isFollowingBack}
+              userSessionId={userSessionId}
+              username={username}
+              buttonClassName="@max-[620px]:w-full"
+            />
+          </AuthGate>
         </div>
       </div>
     );

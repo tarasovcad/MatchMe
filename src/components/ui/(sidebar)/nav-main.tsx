@@ -1,19 +1,14 @@
 "use client";
 
-import {ChevronRight, type LucideIcon} from "lucide-react";
-
+import {type LucideIcon} from "lucide-react";
 import {Collapsible, CollapsibleTrigger} from "@/components/shadcn/collapsible";
 import {
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
-import MainGradient from "../Text";
-import Link from "next/link";
-import {cn} from "@/lib/utils";
-import NotificationsPopover from "@/components/notifications/NotificationsPopover";
 import {User} from "@supabase/supabase-js";
+import {NavItemWithAuth} from "./NavItemWithAuth";
 
 export function NavMain({
   items,
@@ -47,19 +42,7 @@ export function NavMain({
                 </div>
               )}
               <CollapsibleTrigger asChild>
-                {item.url === "/notifications" ? (
-                  <NotificationsPopover item={item} userId={user?.id || ""} />
-                ) : (
-                  <Link href={item.url} className="">
-                    <SidebarMenuButton
-                      className={cn(!item.isActive && "cursor-pointer")}
-                      tooltip={item.title}
-                      isActive={item.isActive}>
-                      {item.icon && <item.icon className="stroke-[2.1px]" />}
-                      {item.title && <span>{item.title}</span>}
-                    </SidebarMenuButton>
-                  </Link>
-                )}
+                <NavItemWithAuth item={item} userSessionId={user?.id} />
               </CollapsibleTrigger>
             </SidebarMenuItem>
           </Collapsible>

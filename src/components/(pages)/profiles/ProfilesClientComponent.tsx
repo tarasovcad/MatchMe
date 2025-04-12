@@ -6,10 +6,8 @@ import {
   getUserFavoritesProfiles,
 } from "@/actions/profiles/profiles";
 import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
-import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
-import {ChevronDown, PanelBottomClose} from "lucide-react";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
 import {MatchMeUser} from "@/types/user/matchMeUser";
@@ -300,15 +298,19 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
             </div>
           )}
         </div>
-        {!isLoading && !loadingMore && !hasMore && profiles.length > 0 && (
-          <motion.div
-            className="py-4 text-foreground/70 text-center"
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            transition={{duration: 0.5}}>
-            No more profiles to load
-          </motion.div>
-        )}
+        {!isLoading &&
+          !loadingMore &&
+          !hasMore &&
+          profiles.length > 0 &&
+          profiles.length > 10 && (
+            <motion.div
+              className="py-4 text-foreground/70 text-center"
+              initial={{opacity: 0}}
+              animate={{opacity: 1}}
+              transition={{duration: 0.5}}>
+              No more profiles to load
+            </motion.div>
+          )}
       </motion.div>
     </motion.div>
   );

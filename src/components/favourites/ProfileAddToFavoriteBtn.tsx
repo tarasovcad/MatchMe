@@ -24,7 +24,7 @@ const ProfileAddToFavoriteBtn = ({
 
   const handleFavoriteToggle = async () => {
     if (!userId) {
-      // show the modal menu to login
+      // if not authenticated, dont execute the function
       return;
     }
     setHasInteracted(true);

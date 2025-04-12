@@ -34,7 +34,7 @@ export default function ProfileOtherButton({
 
   const handleFavoriteToggle = async () => {
     if (!userId) {
-      // show the modal menu to login
+      // if user is not authenticated, dont execute the function
       return;
     }
     setHasInteracted(true);

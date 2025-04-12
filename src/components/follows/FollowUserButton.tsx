@@ -16,6 +16,7 @@ interface FollowButtonProps {
   isFollowingBack?: boolean;
   username: string;
   buttonClassName?: string;
+  userSessionId?: string | null | undefined;
 }
 
 const FollowUserButton = ({
@@ -24,6 +25,7 @@ const FollowUserButton = ({
   isFollowingBack,
   username,
   buttonClassName,
+  userSessionId,
 }: FollowButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [following, setFollowing] = useState(isFollowing);
@@ -59,7 +61,7 @@ const FollowUserButton = ({
           title={`Unfollow @${username}?`}
           description="You will no longer see their posts in your feed. Are you sure you want to unfollow?"
           confirmButtonText="Unfollow"
-          onConfirm={handleUnfollow}>
+          onConfirm={userSessionId ? handleUnfollow : undefined}>
           <MotionButton
             size={"default"}
             variant="secondary"
@@ -107,7 +109,7 @@ const FollowUserButton = ({
             buttonClassName,
           )}
           disabled={isPending}
-          onClick={handleFollowToggle}
+          onClick={userSessionId ? handleFollowToggle : undefined}
           whileTap={{scale: 0.95}}>
           <AnimatePresence mode="wait">
             {isPending ? (
