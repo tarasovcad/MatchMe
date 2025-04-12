@@ -38,6 +38,9 @@ import {
   menuVariants,
   userInfoVariants,
 } from "@/utils/other/variants";
+import AlertComponent from "../dialog/AlertComponent";
+import {toast} from "sonner";
+import {signOut} from "@/actions/(auth)/signOut";
 
 export function SidebarUserDropdown({
   user,
@@ -47,7 +50,20 @@ export function SidebarUserDropdown({
   const {isMobile} = useSidebar();
   const {theme, setTheme} = useTheme();
   const [isOpen, setIsOpen] = useState(false);
+  let toastId: string | number = "";
 
+  const handleLogout = async () => {
+    toastId = toast.loading("Logging out...");
+    const response = await signOut();
+    if (response.error) {
+      console.log(response.error);
+      toast.error(response.error, {id: toastId});
+      return;
+    }
+
+    toast.success(response.message, {id: toastId});
+    setIsOpen(false);
+  };
   return (
     <SidebarMenu className="px-2">
       <SidebarMenuItem>
@@ -170,14 +186,21 @@ export function SidebarUserDropdown({
                 <DropdownMenuSeparator />
 
                 <motion.div variants={itemDropdownVariants}>
-                  <button
-                    className="w-full"
-                    onClick={() => console.log("logout")}>
-                    <DropdownMenuItem className="cursor-pointer">
+                  <AlertComponent
+                    cancelButtonText="Cancel"
+                    confirmButtonText="Log out"
+                    onConfirm={handleLogout}
+                    title="Are you sure you want to log out?"
+                    description="This will log you out of all your devices.">
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={(event) => {
+                        event.preventDefault();
+                      }}>
                       <LogOut />
                       Log out
                     </DropdownMenuItem>
-                  </button>
+                  </AlertComponent>
                 </motion.div>
               </div>
             </motion.div>

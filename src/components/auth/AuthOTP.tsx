@@ -35,9 +35,10 @@ const itemVariants = {
 interface AuthOTPProps {
   setOtp: React.Dispatch<React.SetStateAction<string>>;
   otpError?: boolean;
+  size?: number;
 }
 
-export default function AuthOTP({setOtp}: AuthOTPProps) {
+export default function AuthOTP({setOtp, size}: AuthOTPProps) {
   const id = useId();
 
   return (
@@ -55,7 +56,7 @@ export default function AuthOTP({setOtp}: AuthOTPProps) {
           <>
             <motion.div variants={itemVariants} className="flex gap-1">
               {slots.slice(0, 3).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
+                <Slot key={idx} {...slot} size={size} />
               ))}
             </motion.div>
 
@@ -67,7 +68,7 @@ export default function AuthOTP({setOtp}: AuthOTPProps) {
 
             <motion.div variants={itemVariants} className="flex gap-1">
               {slots.slice(3).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
+                <Slot key={idx} {...slot} size={size} />
               ))}
             </motion.div>
           </>
@@ -77,12 +78,17 @@ export default function AuthOTP({setOtp}: AuthOTPProps) {
   );
 }
 
-function Slot({char, hasError}: SlotProps & {hasError?: boolean}) {
+function Slot({
+  char,
+  hasError,
+  size = 48,
+}: SlotProps & {hasError?: boolean; size?: number}) {
   return (
     <motion.div
       variants={itemVariants}
+      style={{width: `${size}px`, height: `${size}px`}}
       className={cn(
-        "flex size-12 items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-xs shadow-black/5 transition-shadow",
+        "flex items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-xs shadow-black/5 transition-shadow ",
         hasError
           ? "border-destructive ring-[3px] ring-ring/20"
           : "border-input",

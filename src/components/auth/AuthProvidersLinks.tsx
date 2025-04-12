@@ -24,12 +24,12 @@ const AuthProvidersLinks = ({
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <div className="flex items-center justify-center w-full ">
-        <div className="flex-1 border-t border-[#71717A] opacity-20 h-[1px]"></div>
+      <div className="flex justify-center items-center w-full">
+        <div className="flex-1 opacity-20 border-[#71717A] border-t h-[1px]"></div>
         <span className="mx-3 text-secondary/80 text-xs">OR</span>
-        <div className="flex-1 border-t border-[#71717A]  opacity-20 h-[1px]"></div>
+        <div className="flex-1 opacity-20 border-[#71717A] border-t h-[1px]"></div>
       </div>
-      <div className="w-full flex flex-col gap-3 justify-center">
+      <div className="flex flex-col justify-center gap-3 w-full">
         <Button
           asChild
           className="gap-3 w-full"
@@ -53,7 +53,12 @@ const AuthProvidersLinks = ({
             {githubProviderLoading ? (
               <LoadingButtonCirlce size={16} />
             ) : (
-              <Image src="github.svg" alt="Github" width={16} height={16} />
+              <Image
+                src="/social_links/github.svg"
+                alt="Github"
+                width={16}
+                height={16}
+              />
             )}
             {page === "login" ? "Log In" : "Sign Up"} with Github
           </Link>

@@ -23,11 +23,11 @@ export default function AlertComponent({
 }: {
   children: React.ReactNode;
   showAlertIcon?: boolean;
-  title?: string;
-  description?: string;
-  cancelButtonText?: string;
-  confirmButtonText?: string;
-  onConfirm?: () => void;
+  title: string;
+  description: string;
+  cancelButtonText: string;
+  confirmButtonText: string;
+  onConfirm: () => void;
 }) {
   return (
     <AlertDialog>
