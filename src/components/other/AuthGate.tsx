@@ -8,12 +8,9 @@ const AuthGate = ({
   children: React.ReactNode;
   userSessionId: string | null | undefined;
 }) => {
+  console.log("AuthGate userSessionId:", userSessionId, "for:", children);
   if (userSessionId === null || !userSessionId) {
-    return (
-      <SignUpDialog>
-        <div>{children}</div>
-      </SignUpDialog>
-    );
+    return <SignUpDialog>{children}</SignUpDialog>;
   } else {
     return <>{children}</>;
   }

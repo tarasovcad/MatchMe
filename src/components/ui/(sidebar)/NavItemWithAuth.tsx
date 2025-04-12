@@ -46,7 +46,7 @@ export function NavItemWithAuth({
       </SidebarMenuButton>
     </Link>
   ) : (
-    <SidebarMenuButton isActive={false}>
+    <SidebarMenuButton isActive={false} tooltip={item.title}>
       {item.icon && <item.icon className="stroke-[2.1px]" />}
       {item.title && <span>{item.title}</span>}
     </SidebarMenuButton>
