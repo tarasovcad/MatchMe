@@ -15,7 +15,7 @@ export const signUpConfig = (email?: string | number): AuthStepConfig => ({
     buttonText: "Continue",
     bottomSubTitle: "Didn't get a code?",
     bottomSubTitleLinkText: "Click to resend",
-    bottomSubTitleHfref: "/signin",
+    isResendLink: true,
   },
   3: {
     title: "Complete your profile",
@@ -39,6 +39,6 @@ export const signInConfig = (email?: string): AuthStepConfig => ({
     buttonText: "Continue",
     bottomSubTitle: "Didn't get a code?",
     bottomSubTitleLinkText: "Click to resend",
-    bottomSubTitleHfref: "/signin",
+    isResendLink: true,
   },
 });

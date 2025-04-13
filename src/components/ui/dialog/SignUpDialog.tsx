@@ -28,6 +28,8 @@ import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
 import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import AuthOTP from "@/components/auth/AuthOTP";
+import {resendOTP} from "@/actions/(auth)/resendOTP";
+import {toast} from "sonner";
 
 export default function SignUpDialog({children}: {children: React.ReactNode}) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -39,7 +41,13 @@ export default function SignUpDialog({children}: {children: React.ReactNode}) {
   const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [totalSteps, setTotalSteps] = useState(3);
+  const [currentPath, setCurrentPath] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    setCurrentPath(path);
+  }, []);
 
   const getSchemaForStep = (step: number) => {
     switch (step) {
@@ -74,6 +82,7 @@ export default function SignUpDialog({children}: {children: React.ReactNode}) {
     bottomSubTitleHfref,
     bottomSubTitleLinkText,
     bottomSubTitle,
+    isResendLink,
   } = signUpConfig(email)[currentStep];
 
   const onProviderClick = async (provider: string) => {
@@ -104,7 +113,27 @@ export default function SignUpDialog({children}: {children: React.ReactNode}) {
         isNewUser,
         setLoading,
         router,
+        currentPath,
       );
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      setLoading(true);
+      console.log("resending otp");
+      const {error, message} = await resendOTP({email});
+      if (error) {
+        toast.error(message);
+        console.error(error);
+      } else {
+        toast.success(message);
+      }
+    } catch (err) {
+      console.error("Error resending code:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -176,6 +205,8 @@ export default function SignUpDialog({children}: {children: React.ReactNode}) {
                 maintext={bottomSubTitle}
                 link={bottomSubTitleLinkText}
                 href={bottomSubTitleHfref}
+                isResendLink={isResendLink}
+                handleResendOTP={handleResendOTP}
               />
             </motion.div>
           </FormProvider>
