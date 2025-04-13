@@ -1,6 +1,6 @@
 import {AuthStepConfig} from "@/types/AuthStepConfig";
 
-export const signUpConfig = (email?: string): AuthStepConfig => ({
+export const signUpConfig = (email?: string | number): AuthStepConfig => ({
   1: {
     title: "Start Your Journey",
     subtitle: "Join and start connecting instantly",
@@ -15,7 +15,7 @@ export const signUpConfig = (email?: string): AuthStepConfig => ({
     buttonText: "Continue",
     bottomSubTitle: "Didn't get a code?",
     bottomSubTitleLinkText: "Click to resend",
-    bottomSubTitleHfref: "/signin",
+    isResendLink: true,
   },
   3: {
     title: "Complete your profile",
@@ -39,6 +39,6 @@ export const signInConfig = (email?: string): AuthStepConfig => ({
     buttonText: "Continue",
     bottomSubTitle: "Didn't get a code?",
     bottomSubTitleLinkText: "Click to resend",
-    bottomSubTitleHfref: "/signin",
+    isResendLink: true,
   },
 });

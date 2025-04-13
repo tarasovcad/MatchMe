@@ -23,10 +23,7 @@ export async function handleFormSubmitStep1(
     const response = await handleStep1({...data, page});
 
     if (response.error) {
-      toast.error(
-        `${page === "signup" ? "Signup" : "Login"} failed: ${response.error}`,
-        {id: toastId},
-      );
+      toast.error(response.error, {id: toastId});
       return;
     }
     toast.success("OTP sent successfully!", {id: toastId});

@@ -23,6 +23,8 @@ import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
+import {toast} from "sonner";
+import {resendOTP} from "@/actions/(auth)/resendOTP";
 
 const SignUpPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -69,6 +71,7 @@ const SignUpPage = () => {
     bottomSubTitleHfref,
     bottomSubTitleLinkText,
     bottomSubTitle,
+    isResendLink,
   } = signUpConfig(email)[currentStep];
 
   const onProviderClick = async (provider: string) => {
@@ -100,6 +103,25 @@ const SignUpPage = () => {
         setLoading,
         router,
       );
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      setLoading(true);
+      console.log("resending otp");
+      const {error, message} = await resendOTP({email});
+      if (error) {
+        toast.error(message);
+        console.error(error);
+      } else {
+        toast.success(message);
+      }
+    } catch (err) {
+      console.error("Error resending code:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -165,6 +187,8 @@ const SignUpPage = () => {
                 maintext={bottomSubTitle}
                 link={bottomSubTitleLinkText}
                 href={bottomSubTitleHfref}
+                isResendLink={isResendLink}
+                handleResendOTP={handleResendOTP}
               />
             </motion.div>
           </motion.div>

@@ -1,13 +1,16 @@
 "use server";
 
 import {createClient} from "@/utils/supabase/server";
-
+import {Ratelimit} from "@upstash/ratelimit";
+import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 export async function handleStep1(data: {
   email: string;
   agreement?: boolean;
   page?: "login" | "signup";
 }) {
   const {email, agreement, page = "login"} = data;
+  const ip = await getClientIp();
 
   // Basic email check
   if (!email || email.length === 0) {
@@ -22,6 +25,38 @@ export async function handleStep1(data: {
   }
 
   try {
+    const emailRatelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "10 m"), // 5 attempts per 10 minutes per email
+      analytics: true,
+      prefix: "ratelimit:email:auth",
+      enableProtection: true,
+    });
+
+    const ipRatelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "10 m"), // 20 attempts per 10 minutes per IP
+      analytics: true,
+      prefix: "ratelimit:ip:auth",
+      enableProtection: true,
+    });
+
+    // Check rate limits
+    const [emailLimit, ipLimit] = await Promise.all([
+      emailRatelimit.limit(data.email),
+      ipRatelimit.limit(ip),
+    ]);
+
+    if (!emailLimit.success) {
+      return {
+        error: "Too many attempts with this email. Please try again later.",
+      };
+    }
+
+    if (!ipLimit.success) {
+      return {error: "Too many login attempts. Please try again later."};
+    }
+
     const supabase = await createClient();
 
     // Run OTP send and profile lookup concurrently

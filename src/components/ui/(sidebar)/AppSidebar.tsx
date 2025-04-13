@@ -26,6 +26,7 @@ import type {User} from "@supabase/supabase-js";
 import Link from "next/link";
 import {SidebarUserDropdown} from "./SidebarUserDropdown";
 import {usePathname} from "next/navigation";
+import SidebarNotAuthButtons from "./SidebarNotAuthButtons";
 
 export function AppSidebar({
   user,
@@ -115,8 +116,9 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <NavMain items={data.navSecondary} />
+        <NavMain items={data.navSecondary} user={user} />
         {user && <SidebarUserDropdown user={data.user} />}
+        {!user && <SidebarNotAuthButtons user={user} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

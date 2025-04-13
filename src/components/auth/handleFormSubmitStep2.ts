@@ -8,6 +8,7 @@ export async function handleFormSubmitStep2(
   isNewUser: boolean,
   setLoading: (loading: boolean) => void,
   router: {push: (url: string) => void},
+  redirectPath: string = "/profiles",
 ) {
   let toastId: string | number = "";
   try {
@@ -22,12 +23,11 @@ export async function handleFormSubmitStep2(
     if (isNewUser) {
       router.push(`/complete-profile?from=/${page}`);
     } else {
-      router.push("/");
+      router.push(redirectPath);
     }
   } catch (error) {
     toast.error("Signup failed. Please try again.", {id: toastId});
   } finally {
     setLoading(false);
-    toast.success("OTP verified successfully!", {id: toastId});
   }
 }

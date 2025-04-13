@@ -8,6 +8,7 @@ const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
 const TABLE_NAME = "profiles";
+
 export async function getAllProfiles(page = 1, perPage: number) {
   const supabase = await createClient();
 
@@ -29,12 +30,23 @@ export async function getAllProfiles(page = 1, perPage: number) {
     const {data, error: profilesError} = await query;
 
     if (profilesError) {
+      console.error("Supabase query error:", profilesError);
       throw new Error(`Error fetching profiles: ${profilesError.message}`);
+    }
+    if (!data) {
+      console.warn("No data returned from Supabase");
+      return [];
     }
     profiles = data;
 
     // Store in Redis cache
-    await redis.set(cacheKey, profiles, {ex: CACHE_TTL});
+
+    try {
+      await redis.set(cacheKey, profiles, {ex: CACHE_TTL});
+      console.log("Successfully cached profiles");
+    } catch (redisCacheError) {
+      console.error("Redis caching error:", redisCacheError);
+    }
   } else {
     console.log("Cache hit - using cached profiles");
   }

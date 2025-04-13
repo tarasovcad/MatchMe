@@ -16,10 +16,10 @@ import {
 
 const NotificationsPopover = ({
   item,
-  userId,
+  userSessionId,
 }: {
   item: {title: string; url: string; icon?: LucideIcon; isActive?: boolean};
-  userId: string;
+  userSessionId: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -34,10 +34,7 @@ const NotificationsPopover = ({
     null,
   );
 
-  console.log("NotificationsPopover executed");
-
   const fetchNotifications = useCallback(async () => {
-    console.log("fetchNotifications started");
     try {
       setIsLoading(true);
       const {data, error} = await supabase
@@ -53,7 +50,7 @@ const NotificationsPopover = ({
           sender:profiles!notifications_sender_id_fkey (id, username, name, image)
         `,
         )
-        .eq("recipient_id", userId)
+        .eq("recipient_id", userSessionId)
         .order("created_at", {ascending: false});
 
       if (error) throw error;
@@ -75,7 +72,7 @@ const NotificationsPopover = ({
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userSessionId]);
 
   const updateNotificationCounts = (notifications: Notification[]) => {
     const unreadNotifications = notifications.filter((n) => !n.is_read);
@@ -100,9 +97,8 @@ const NotificationsPopover = ({
 
   // Supabase Realtime subscription
   useEffect(() => {
-    if (!userId) return;
+    if (!userSessionId) return;
 
-    console.log("useEffect executed for Realtime subscription");
     const setupRealtimeSubscription = async () => {
       // Clean up any existing subscription
       if (realtimeSubscriptionRef.current) {
@@ -111,14 +107,14 @@ const NotificationsPopover = ({
 
       // Subscribe to INSERT operations on the notifications table for this user
       const subscription = supabase
-        .channel(`notifications:${userId}`)
+        .channel(`notifications:${userSessionId}`)
         .on(
           "postgres_changes",
           {
             event: "INSERT",
             schema: "public",
             table: "notifications",
-            filter: `recipient_id=eq.${userId}`,
+            filter: `recipient_id=eq.${userSessionId}`,
           },
           async (payload) => {
             // When a new notification is inserted
@@ -164,7 +160,7 @@ const NotificationsPopover = ({
             event: "UPDATE",
             schema: "public",
             table: "notifications",
-            filter: `recipient_id=eq.${userId}`,
+            filter: `recipient_id=eq.${userSessionId}`,
           },
           (payload) => {
             // When a notification is updated (e.g., marked as read)
@@ -201,9 +197,11 @@ const NotificationsPopover = ({
         realtimeSubscriptionRef.current.unsubscribe();
       }
     };
-  }, [userId, notifications]);
+  }, [userSessionId, notifications]);
 
   useEffect(() => {
+    if (!userSessionId) return;
+
     if (open && !hasLoaded) {
       fetchNotifications();
     }

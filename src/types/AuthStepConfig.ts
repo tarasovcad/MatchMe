@@ -6,5 +6,6 @@ export type AuthStepConfig = {
     bottomSubTitle?: string;
     bottomSubTitleLinkText?: string;
     bottomSubTitleHfref?: string;
+    isResendLink?: boolean;
   };
 };

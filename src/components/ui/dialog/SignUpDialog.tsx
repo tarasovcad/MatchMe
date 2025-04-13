@@ -1,28 +1,37 @@
 "use client";
-import React, {useEffect, useState} from "react";
-import {LogoImage} from "@/components/ui/Logo";
-import {FormProvider, useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import AuthHomeLink from "@/components/auth/AuthHomeLink";
-import AuthTopText from "@/components/auth/AuthTopText";
-import AuthButton from "@/components/auth/AuthButton";
-import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
+import {useEffect, useState} from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/shadcn/dialog";
+import {LogoImage} from "../Logo";
 import AuthStep1Form from "@/components/auth/AuthStep1Form";
-import AuthStepDots from "@/components/auth/AuthStepsDots";
-import AuthOTP from "@/components/auth/AuthOTP";
-import {signInConfig} from "@/data/auth/stepsConfigs";
+import {signUpConfig} from "@/data/auth/stepsConfigs";
+import AuthButton from "@/components/auth/AuthButton";
 import AuthProvidersLinks from "@/components/auth/AuthProvidersLinks";
-import {useRouter} from "next/navigation";
-import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
-import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
-import {LoginFormData, signInSchema} from "@/validation/auth/loginValidation";
+import {useRouter} from "next/navigation";
+import AuthBottomSubTitle from "@/components/auth/AuthBottomSubTitle";
+import {FormProvider, useForm} from "react-hook-form";
+import {
+  SignUpFormData,
+  signUpSchemaStep1,
+  signUpSchemaStep3,
+} from "@/validation/auth/signUpValidation";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {handleFormSubmitStep1} from "@/components/auth/handleFormSubmitStep1";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
+import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
+import AuthOTP from "@/components/auth/AuthOTP";
 import {resendOTP} from "@/actions/(auth)/resendOTP";
 import {toast} from "sonner";
 
-const LoginPage = () => {
+export default function SignUpDialog({children}: {children: React.ReactNode}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -31,14 +40,34 @@ const LoginPage = () => {
   const [githubProviderLoading, setGithubProviderLoading] = useState(false);
   const [otpHas6Symbols, setOtpHas6Symbols] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [totalSteps, setTotalSteps] = useState(2);
+  const [totalSteps, setTotalSteps] = useState(3);
+  const [currentPath, setCurrentPath] = useState("");
   const router = useRouter();
 
-  const methods = useForm<LoginFormData>({
-    resolver: zodResolver(signInSchema),
+  useEffect(() => {
+    const path = window.location.pathname;
+    setCurrentPath(path);
+  }, []);
+
+  const getSchemaForStep = (step: number) => {
+    switch (step) {
+      case 1:
+        return signUpSchemaStep1;
+      case 3:
+        return signUpSchemaStep3;
+      default:
+        return signUpSchemaStep1;
+    }
+  };
+
+  const methods = useForm<SignUpFormData>({
+    resolver: zodResolver(getSchemaForStep(currentStep)),
     mode: "onChange",
     defaultValues: {
       email: "",
+      agreement: false,
+      name: "",
+      username: "",
     },
   });
 
@@ -54,7 +83,7 @@ const LoginPage = () => {
     bottomSubTitleLinkText,
     bottomSubTitle,
     isResendLink,
-  } = signInConfig(email)[currentStep];
+  } = signUpConfig(email)[currentStep];
 
   const onProviderClick = async (provider: string) => {
     await handleProviderAuthAction(
@@ -65,10 +94,7 @@ const LoginPage = () => {
     );
   };
 
-  const onSubmit = async (
-    data: LoginFormData,
-    page: "signup" | "login" = "login",
-  ) => {
+  const onSubmit = async (data: SignUpFormData, page: "signup" | "login") => {
     if (currentStep === 1) {
       await handleFormSubmitStep1(
         page,
@@ -87,6 +113,7 @@ const LoginPage = () => {
         isNewUser,
         setLoading,
         router,
+        currentPath,
       );
     }
   };
@@ -111,39 +138,45 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex flex-col px-4 py-8 min-h-screen">
-      <AuthHomeLink />
-
-      <motion.form
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-        className="flex flex-1 justify-center items-center px-4 py-10"
-        onSubmit={methods.handleSubmit((data) => onSubmit(data, "login"))}>
-        <FormProvider {...methods}>
-          <motion.div
-            variants={containerVariants}
-            className="flex flex-col gap-[22px] w-full max-w-[400px]">
-            <motion.div variants={itemVariants}>
-              <LogoImage size={32} />
-            </motion.div>
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <motion.form
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="flex flex-col gap-[22px] w-full"
+          onSubmit={methods.handleSubmit((data) => onSubmit(data, "signup"))}>
+          <FormProvider {...methods}>
             <motion.div
               variants={itemVariants}
-              className="flex flex-col justify-center gap-9 w-full">
-              <AuthTopText maintext={title} secText={subtitle} />
-              {currentStep === 1 && (
-                <motion.div
-                  variants={itemVariants}
-                  className="flex flex-col gap-4">
-                  <AuthStep1Form page="login" />
-                </motion.div>
-              )}
+              className="flex justify-center items-center self-center border rounded-full size-11 shrink-0"
+              aria-hidden="true">
+              <LogoImage size={25} />
             </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <DialogHeader>
+                <DialogTitle className="sm:text-center">{title}</DialogTitle>
+                <DialogDescription className="sm:text-center">
+                  {subtitle}
+                </DialogDescription>
+              </DialogHeader>
+            </motion.div>
+
+            {currentStep === 1 && (
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col gap-4">
+                <AuthStep1Form page="signup" />
+              </motion.div>
+            )}
+
             {currentStep === 2 && (
               <motion.div
                 variants={itemVariants}
                 className="flex justify-center items-center w-full">
-                <AuthOTP setOtp={setOtp} />
+                <AuthOTP setOtp={setOtp} size={40} />
               </motion.div>
             )}
 
@@ -162,7 +195,7 @@ const LoginPage = () => {
                   handleProviderAuthAction={onProviderClick}
                   googleProviderLoading={googleProviderLoading}
                   githubProviderLoading={githubProviderLoading}
-                  page="login"
+                  page="signup"
                 />
               </motion.div>
             )}
@@ -176,15 +209,9 @@ const LoginPage = () => {
                 handleResendOTP={handleResendOTP}
               />
             </motion.div>
-          </motion.div>
-        </FormProvider>
-      </motion.form>
-
-      <motion.div variants={itemVariants} initial="hidden" animate="visible">
-        <AuthStepDots totalSteps={totalSteps} currentStep={currentStep} />
-      </motion.div>
-    </div>
+          </FormProvider>
+        </motion.form>
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default LoginPage;
+}

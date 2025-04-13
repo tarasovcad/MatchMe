@@ -6,10 +6,8 @@ import {
   getUserFavoritesProfiles,
 } from "@/actions/profiles/profiles";
 import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
-import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
-import {ChevronDown, PanelBottomClose} from "lucide-react";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
 import {MatchMeUser} from "@/types/user/matchMeUser";
@@ -45,8 +43,6 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
     },
   });
 
-  console.log("queryParams:", queryParams);
-
   const lastProfileRef = useCallback(
     (node: HTMLDivElement) => {
       // Don't observe when there's no more data or when loading
@@ -57,7 +53,6 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
       observer.current = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting && hasMore) {
-            console.log("Last item visible, loading more...");
             // Show skeleton loading cards immediately
             setShowNextPageSkeletons(true);
             // Trigger next page fetch
@@ -83,7 +78,6 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   }, [hasMore]);
 
   useEffect(() => {
-    console.log("Page changed to:", page);
     fetchProfiles();
   }, [page]);
 
@@ -94,14 +88,11 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
       setLoadingMore(true);
     }
 
-    const startTime = new Date();
-    console.log(`Starting fetch for page ${page}...`);
     const currentUserId = userSession?.id || "";
     if (page === 1) setUserId(currentUserId);
 
     try {
       const allProfiles = await getAllProfiles(page, profilesPerPage);
-      console.log(`Received ${allProfiles.length} profiles for page ${page}`);
 
       if (allProfiles.length === 0) {
         setHasMore(false);
@@ -129,10 +120,6 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
           : [...prev, ...profilesWithFavorites],
       );
 
-      const endTime = new Date();
-      console.log(
-        `Fetched profiles in ${endTime.getTime() - startTime.getTime()}ms`,
-      );
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching profiles:", error);
@@ -311,15 +298,19 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
             </div>
           )}
         </div>
-        {!isLoading && !loadingMore && !hasMore && profiles.length > 0 && (
-          <motion.div
-            className="py-4 text-foreground/70 text-center"
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            transition={{duration: 0.5}}>
-            No more profiles to load
-          </motion.div>
-        )}
+        {!isLoading &&
+          !loadingMore &&
+          !hasMore &&
+          profiles.length > 0 &&
+          profiles.length > 10 && (
+            <motion.div
+              className="py-4 text-foreground/70 text-center"
+              initial={{opacity: 0}}
+              animate={{opacity: 1}}
+              transition={{duration: 0.5}}>
+              No more profiles to load
+            </motion.div>
+          )}
       </motion.div>
     </motion.div>
   );

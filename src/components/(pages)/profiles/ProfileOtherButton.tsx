@@ -15,15 +15,18 @@ import {useState, useTransition} from "react";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
 import {toast} from "sonner";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
+import {cn} from "@/lib/utils";
 
 export default function ProfileOtherButton({
   userId,
   profileId,
   isFavorite = false,
+  buttonClassName,
 }: {
   userId: string | undefined | null;
   profileId: string;
   isFavorite?: boolean;
+  buttonClassName?: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [isFavorited, setIsFavorited] = useState(isFavorite);
@@ -31,7 +34,7 @@ export default function ProfileOtherButton({
 
   const handleFavoriteToggle = async () => {
     if (!userId) {
-      // show the modal menu to login
+      // if user is not authenticated, dont execute the function
       return;
     }
     setHasInteracted(true);
@@ -70,7 +73,7 @@ export default function ProfileOtherButton({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size={"icon"} className="max-[620px]:order-2 h-[38px]">
+        <Button size={"icon"} className={cn("h-[38px]", buttonClassName)}>
           <Ellipsis size={18} strokeWidth={2} />
         </Button>
       </DropdownMenuTrigger>

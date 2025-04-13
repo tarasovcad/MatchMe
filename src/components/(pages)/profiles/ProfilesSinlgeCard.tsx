@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import Avatar from "boring-avatars";
+import AuthGate from "@/components/other/AuthGate";
 
 const ProfilesSinlgeCard = ({
   profile,
@@ -97,11 +98,13 @@ const ProfilesSinlgeCard = ({
               View Profile
             </Button>
           </Link>
-          <ProfileAddToFavoriteBtn
-            userId={userId}
-            favoriteUserId={profile.id}
-            isFavorite={isFavorite}
-          />
+          <AuthGate userSessionId={userId}>
+            <ProfileAddToFavoriteBtn
+              userId={userId}
+              favoriteUserId={profile.id}
+              isFavorite={isFavorite}
+            />
+          </AuthGate>
         </div>
       </div>
     </div>

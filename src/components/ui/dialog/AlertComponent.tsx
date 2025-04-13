@@ -23,8 +23,8 @@ export default function AlertComponent({
 }: {
   children: React.ReactNode;
   showAlertIcon?: boolean;
-  title?: string;
-  description?: string;
+  title: string;
+  description: string;
   cancelButtonText?: string;
   confirmButtonText?: string;
   onConfirm?: () => void;
