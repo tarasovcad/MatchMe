@@ -1,17 +1,17 @@
 "use server";
 
 import {createClient} from "@/utils/supabase/server";
-import {headers} from "next/headers";
 import {Ratelimit} from "@upstash/ratelimit";
 import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 export async function handleStep1(data: {
   email: string;
   agreement?: boolean;
   page?: "login" | "signup";
 }) {
   const {email, agreement, page = "login"} = data;
-  const rawIp = (await headers()).get("x-forwarded-for") || "";
-  const ip = rawIp.split(",")[0]?.trim() || "127.0.0.1";
+  const ip = await getClientIp();
+
   // Basic email check
   if (!email || email.length === 0) {
     console.log("Email is empty");
@@ -30,13 +30,15 @@ export async function handleStep1(data: {
       limiter: Ratelimit.slidingWindow(5, "10 m"), // 5 attempts per 10 minutes per email
       analytics: true,
       prefix: "ratelimit:email:auth",
+      enableProtection: true,
     });
 
     const ipRatelimit = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(10, "10 m"), // 10 attempts per 10 minutes per IP
+      limiter: Ratelimit.slidingWindow(10, "10 m"), // 20 attempts per 10 minutes per IP
       analytics: true,
       prefix: "ratelimit:ip:auth",
+      enableProtection: true,
     });
 
     // Check rate limits

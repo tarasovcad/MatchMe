@@ -1,10 +1,12 @@
 "use server";
 
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
+import {getClientIp} from "@/utils/network/getClientIp";
 import {hasProfanity} from "@/utils/other/profanityCheck";
+import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
+import {Ratelimit} from "@upstash/ratelimit";
 export async function checkUsernameAvailabilityAuth(username: string) {
-  const startTime = performance.now();
   try {
     if (username.length === 0) {
       return {
@@ -25,6 +27,21 @@ export async function checkUsernameAvailabilityAuth(username: string) {
           "Username contains inappropriate language. Please choose another.",
       };
     }
+    const ip = await getClientIp();
+    const usernameRateLimiter = new Ratelimit({
+      redis: redis,
+      limiter: Ratelimit.slidingWindow(10, "3 m"), // 10 tries per 3 minutes
+      analytics: true,
+      prefix: "ratelimit:ip:username-check",
+      enableProtection: true,
+    });
+    const usernameLimit = await usernameRateLimiter.limit(ip);
+
+    if (!usernameLimit.success) {
+      return {
+        error: "Too many username checks. Please try again later.",
+      };
+    }
 
     const supabase = await createClient();
 
@@ -39,13 +56,6 @@ export async function checkUsernameAvailabilityAuth(username: string) {
       .eq("username", usernameTrimmed);
 
     const isAvailable = count === 0;
-
-    const endTime = performance.now();
-    console.log(
-      `Username availability check completed in ${(endTime - startTime).toFixed(
-        2,
-      )} ms`,
-    );
 
     if (error) {
       return {

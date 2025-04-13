@@ -1,10 +1,45 @@
 "use server";
+import {getClientIp} from "@/utils/network/getClientIp";
+import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
+import {Ratelimit} from "@upstash/ratelimit";
 
 export async function handleStep2(data: {email: string; otp: string}) {
   try {
-    const supabase = await createClient();
     const {email, otp} = data;
+    const ip = await getClientIp();
+
+    const otpEmailLimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "10 m"), // 5 attempts per 10 minutes
+      analytics: true,
+      prefix: "ratelimit:email:otp",
+      enableProtection: true,
+    });
+
+    const otpIpLimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(10, "10 m"), // 20 attempts per IP
+      analytics: true,
+      prefix: "ratelimit:ip:otp",
+      enableProtection: true,
+    });
+
+    // Check limits
+    const [emailLimit, ipLimit] = await Promise.all([
+      otpEmailLimit.limit(email),
+      otpIpLimit.limit(ip),
+    ]);
+
+    if (!emailLimit.success) {
+      return {error: "Too many OTP attempts for this email. Try again later."};
+    }
+
+    if (!ipLimit.success) {
+      return {error: "Too many OTP attempts from this IP. Try again later."};
+    }
+
+    const supabase = await createClient();
 
     // Verify OTP
     const {error, data: authData} = await supabase.auth.verifyOtp({
