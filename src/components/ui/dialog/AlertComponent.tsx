@@ -25,9 +25,9 @@ export default function AlertComponent({
   showAlertIcon?: boolean;
   title: string;
   description: string;
-  cancelButtonText: string;
-  confirmButtonText: string;
-  onConfirm: () => void;
+  cancelButtonText?: string;
+  confirmButtonText?: string;
+  onConfirm?: () => void;
 }) {
   return (
     <AlertDialog>

@@ -61,7 +61,7 @@ const FollowUserButton = ({
           title={`Unfollow @${username}?`}
           description="You will no longer see their posts in your feed. Are you sure you want to unfollow?"
           confirmButtonText="Unfollow"
-          onConfirm={userSessionId ? handleUnfollow : undefined}>
+          onConfirm={userSessionId ? handleUnfollow : () => {}}>
           <MotionButton
             size={"default"}
             variant="secondary"

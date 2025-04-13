@@ -86,7 +86,7 @@ const CompleteProfileClient = () => {
         return;
       }
       toast.success(response.message, {id: toastId});
-      router.push("/");
+      router.push("/profiles");
     } catch (error) {
       toast.error("Signup failed. Please try again.", {id: toastId});
       setLoading(false);
