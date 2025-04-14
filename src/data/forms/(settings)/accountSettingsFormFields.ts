@@ -184,14 +184,15 @@ export const accountSettingsFormFields = [
     formTitle: "Personal Context",
     formData: [
       {
-        fieldTitle: "Location & Timezone",
-        fieldType: "timezone",
+        fieldTitle: "Location",
+        fieldType: "selectWithSearch",
+        fieldDescription: "Your current location",
         fieldInputProps: [
           {
-            id: "location_timezone",
-            placeholder: "London / British Time (UTC +0)",
+            id: "location",
+            placeholder: "Select your location",
             type: "text",
-            name: "location_timezone",
+            name: "location",
           },
         ],
       },

@@ -14,7 +14,7 @@ const VerifyAccountButton = ({name}: {name: string}) => {
         <Button
           variant="outline"
           size="xs"
-          className="w-full max-w-[117px] text-[13px]">
+          className="w-full max-w-[117px] h-fit text-[13px]">
           Verify Now
         </Button>
       )}

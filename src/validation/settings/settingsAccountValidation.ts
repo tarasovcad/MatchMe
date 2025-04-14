@@ -82,7 +82,7 @@ export const settingsAccountValidationSchema = z.object({
     .min(0, {message: "Work availability cannot be negative"})
     .max(168, {message: "Work availability cannot exceed 168 hours per week"})
     .optional(),
-  location_timezone: z.string().optional(),
+  location: z.string().optional(),
 
   languages: z
     .array(

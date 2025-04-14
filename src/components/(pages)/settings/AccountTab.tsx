@@ -62,7 +62,7 @@ const AccountTab = ({
     tagline: profile.tagline ?? "",
     skills: Array.isArray(profile.skills) ? profile.skills : [],
     work_availability: profile.work_availability ?? undefined,
-    location_timezone: profile.location_timezone ?? "",
+    location: profile.location ?? "",
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
     about_you: profile.about_you ?? "",

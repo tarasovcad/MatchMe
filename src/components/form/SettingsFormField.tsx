@@ -22,6 +22,7 @@ import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "../ui/settings/SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import SelectInputWithSearch from "../ui/SelectInputWithSearch";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -31,6 +32,7 @@ const fieldComponents = {
   image: SettingsProfilePhoto,
   dropdown: SelectInput,
   select: SettingsSelectField,
+  selectWithSearch: SelectInputWithSearch,
   textarea: AutogrowingTextarea,
   tags: TagsInput,
   slider: SimpleSlider,
