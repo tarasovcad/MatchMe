@@ -1,4 +1,5 @@
-import {redirect} from "next/navigation";
+import router, {redirect} from "next/navigation";
+import React from "react";
 
 const page = () => {
   redirect("/profiles");

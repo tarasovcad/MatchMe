@@ -42,7 +42,15 @@ export default function RootLayout({
           <SpeedInsights />
           {children}
         </ThemeProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{closeButton: true}}
+          offset={25}
+          mobileOffset={25}
+          gap={20}
+          duration={300000}
+        />
       </body>
     </html>
   );
