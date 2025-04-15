@@ -5,7 +5,8 @@ export interface MatchMeUser {
   email: string;
   pronouns: string | null;
   age: number | null;
-  image: string;
+  profileImage: string | null;
+  backgroundImage: string | null;
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;

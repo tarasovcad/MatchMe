@@ -1,4 +1,4 @@
-export async function uploadUserAvatar(signedUrl: string, image: string) {
+export async function uploadImageBuffer(signedUrl: string, image: string) {
   if (!signedUrl || !image) {
     return {
       error: "Invalid parameters",
@@ -32,8 +32,7 @@ export async function uploadUserAvatar(signedUrl: string, image: string) {
       message: "User avatar uploaded successfully",
     };
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return {
       error: errorMessage,
       message: "Error uploading user avatar",

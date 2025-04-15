@@ -13,13 +13,9 @@ export const settingsAccountValidationSchema = z.object({
   pronouns: z
     .string()
     .optional()
-    .refine(
-      (val) =>
-        !val || val === "" || ["He/Him", "She/Her", "They/Them"].includes(val),
-      {
-        message: "Invalid pronoun choice. Please select a valid option.",
-      },
-    ),
+    .refine((val) => !val || val === "" || ["He/Him", "She/Her", "They/Them"].includes(val), {
+      message: "Invalid pronoun choice. Please select a valid option.",
+    }),
   age: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -47,22 +43,13 @@ export const settingsAccountValidationSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) =>
-        !val ||
-        val === "" ||
-        ["Team Member", "Co-Founder", "Startups"].includes(val),
+      (val) => !val || val === "" || ["Team Member", "Co-Founder", "Startups"].includes(val),
       {
         message: "Invalid selection. Please select a valid option.",
       },
     ),
-  goal: z
-    .string()
-    .max(200, {message: "Goals must be at most 200 characters"})
-    .optional(),
-  tagline: z
-    .string()
-    .max(70, {message: "Tagline must be at most 70 characters"})
-    .optional(),
+  goal: z.string().max(200, {message: "Goals must be at most 200 characters"}).optional(),
+  tagline: z.string().max(70, {message: "Tagline must be at most 70 characters"}).optional(),
   skills: z
     .array(
       z
@@ -70,8 +57,7 @@ export const settingsAccountValidationSchema = z.object({
         .min(1, {message: "Each skill must be at least 1 character"})
         .max(30, {message: "Each skill must be at most 30 characters"})
         .regex(/^[A-Za-z0-9#+\-*/ ]+$/, {
-          message:
-            "Skills can only contain letters, numbers, hyphens, #, +, and / symbols",
+          message: "Skills can only contain letters, numbers, hyphens, #, +, and / symbols",
         }),
     )
     .max(15, {message: "Skills must be at most 15 tags"})
@@ -91,8 +77,7 @@ export const settingsAccountValidationSchema = z.object({
         .min(2, {message: "Each language must be at least 2 characters"})
         .max(30, {message: "Each language must be at most 30 characters"})
         .regex(/^[A-Za-z]+$/, {
-          message:
-            "Languages can only contain letters (no spaces, numbers, or symbols)",
+          message: "Languages can only contain letters (no spaces, numbers, or symbols)",
         })
         .refine((val) => allowedLanguages.has(val), {
           message: "Language must be one of the supported languages",
@@ -115,9 +100,7 @@ export const settingsAccountValidationSchema = z.object({
         if (!val) return true;
         try {
           const url = new URL(val);
-          return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(
-            url.hostname,
-          );
+          return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(url.hostname);
         } catch {
           return false;
         }
@@ -144,8 +127,7 @@ export const settingsAccountValidationSchema = z.object({
         .string()
         .max(50, {message: "Username must be at most 50 characters"})
         .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message:
-            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
         })
         .refine((val) => !val.includes(".."), {
           message: "Username cannot contain consecutive dots",
@@ -166,8 +148,7 @@ export const settingsAccountValidationSchema = z.object({
         .string()
         .max(50, {message: "Username must be at most 50 characters"})
         .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message:
-            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
         })
         .refine((val) => !val.includes(".."), {
           message: "Username cannot contain consecutive dots",
@@ -188,17 +169,15 @@ export const settingsAccountValidationSchema = z.object({
         .string()
         .max(50, {message: "Username must be at most 50 characters"})
         .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message:
-            "Username can only contain letters, numbers, underscores, dots, and hyphens",
+          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
         })
         .refine((val) => !val.includes(".."), {
           message: "Username cannot contain consecutive dots",
         })
         .optional(),
     ),
-  image: z.string().optional(),
+  profileImage: z.string().optional(),
+  backgroundImage: z.string().optional(),
 });
 
-export type SettingsAccountFormData = z.infer<
-  typeof settingsAccountValidationSchema
->;
+export type SettingsAccountFormData = z.infer<typeof settingsAccountValidationSchema>;

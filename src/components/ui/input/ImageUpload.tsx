@@ -210,25 +210,48 @@ const SettingsProfilePhoto = ({
     const canvas = document.createElement("canvas");
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    canvas.width = crop.width;
-    canvas.height = crop.height;
+
+    // Set the canvas to the desired output size (1184 × 156 for background)
+    canvas.width = type === "background" ? 1184 : crop.width;
+    canvas.height = type === "background" ? 156 : crop.height;
+
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
+      const aspectRatio = crop.width / crop.height;
+      const targetAspectRatio = canvas.width / canvas.height;
+
+      let drawWidth,
+        drawHeight,
+        offsetX = 0,
+        offsetY = 0;
+
+      if (aspectRatio > targetAspectRatio) {
+        // Crop is wider than target, scale to match height
+        drawHeight = canvas.height;
+        drawWidth = crop.width * scaleX * (drawHeight / (crop.height * scaleY));
+        offsetX = (canvas.width - drawWidth) / 2;
+      } else {
+        // Crop is taller than target, scale to match width
+        drawWidth = canvas.width;
+        drawHeight = crop.height * scaleY * (drawWidth / (crop.width * scaleX));
+        offsetY = (canvas.height - drawHeight) / 2;
+      }
+
       ctx.drawImage(
         image,
         crop.x * scaleX,
         crop.y * scaleY,
         crop.width * scaleX,
         crop.height * scaleY,
-        0,
-        0,
-        crop.width,
-        crop.height,
+        offsetX,
+        offsetY,
+        drawWidth,
+        drawHeight,
       );
     }
 
-    return canvas.toDataURL("image/jpeg", 1.0);
+    return canvas.toDataURL("image/jpeg", 1);
   }
 
   const handleDeleteFile = () => {
@@ -257,14 +280,17 @@ const SettingsProfilePhoto = ({
     } else if ((previewUrl || selectedValue) && type === "background") {
       // Background with image
       return (
-        <div className="relative w-full h-full">
-          <Image
-            src={previewUrl || selectedValue}
-            alt={"background"}
-            fill
-            className="object-cover"
-          />
-        </div>
+        <>
+          <div className="ring-border rounded-[4px] ring w-[181px] h-[85px] max-[1015px]:h-[80px]">
+            <Image
+              src={previewUrl || selectedValue}
+              alt={"background"}
+              fill
+              unoptimized
+              className="rounded-[4px] object-cover"
+            />
+          </div>
+        </>
       );
     } else if (type === "avatar") {
       // Avatar fallback when no image
@@ -276,9 +302,7 @@ const SettingsProfilePhoto = ({
     } else {
       // Background fallback when no image
       return (
-        <div className="flex justify-center items-center bg-muted border border-border rounded-md w-full h-[120px]">
-          <span className="text-muted-foreground">No image</span>
-        </div>
+        <div className="bg-gray-200 ring-border rounded-[6px] ring w-[181px] h-[85px] max-[1015px]:h-[80px]"></div>
       );
     }
   };
@@ -300,7 +324,7 @@ const SettingsProfilePhoto = ({
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="-right-1 -bottom-1 z-[3] absolute bg-background !opacity-100 rounded-full size-8"
+                  className="-right-2 -bottom-2 z-[3] absolute bg-background !opacity-100 rounded-full size-8"
                   onClick={handleDeleteFile}>
                   <TrashIcon className="size-4 shrink-0" />
                 </Button>

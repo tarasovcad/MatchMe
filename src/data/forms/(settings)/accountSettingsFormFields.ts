@@ -75,10 +75,23 @@ export const accountSettingsFormFields = [
         fieldType: "image",
         fieldInputProps: [
           {
-            id: "image",
+            id: "profileImage",
             placeholder: "Profile Picture",
             type: "file",
-            name: "image",
+            name: "profileImage",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Background Image",
+        fieldDescription: "This backgound will be visible to others",
+        fieldType: "image",
+        fieldInputProps: [
+          {
+            id: "backgroundImage",
+            placeholder: "Background Image",
+            type: "file",
+            name: "backgroundImage",
           },
         ],
       },
@@ -238,8 +251,7 @@ export const accountSettingsFormFields = [
       },
       {
         fieldTitle: "Social Links",
-        fieldDescription:
-          "Add links to your professional social media profiles",
+        fieldDescription: "Add links to your professional social media profiles",
         fieldType: "social",
         fieldInputProps: [
           {

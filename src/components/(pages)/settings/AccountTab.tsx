@@ -31,10 +31,7 @@ const AccountTab = ({
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const determineDefaultPlatform = (
-    existingPlatforms: string | null,
-    defaultValue: string,
-  ) => {
+  const determineDefaultPlatform = (existingPlatforms: string | null, defaultValue: string) => {
     // If the platform is already specified, use it
     if (existingPlatforms) return existingPlatforms;
 
@@ -53,7 +50,8 @@ const AccountTab = ({
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
-    image: profile.image ?? "",
+    profileImage: profile.profileImage ?? "",
+    backgroundImage: profile.backgroundImage ?? "",
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
@@ -66,10 +64,7 @@ const AccountTab = ({
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
     about_you: profile.about_you ?? "",
-    social_links_1_platform: determineDefaultPlatform(
-      profile.social_links_1_platform,
-      "x.com/",
-    ),
+    social_links_1_platform: determineDefaultPlatform(profile.social_links_1_platform, "x.com/"),
     social_links_1: profile.social_links_1 ?? "",
     social_links_2_platform: determineDefaultPlatform(
       profile.social_links_2_platform,
@@ -96,17 +91,11 @@ const AccountTab = ({
 
   useEffect(() => {
     // Filter initialValues to only include properties that are defined, so no empty values are included
-    const cleanInitialValues = pickBy(
-      initialValues,
-      (value) => value !== undefined,
-    );
+    const cleanInitialValues = pickBy(initialValues, (value) => value !== undefined);
 
     // Filter formValues to only include keys that exist in initialValues
     // This ensures we only compare fields that were originally provided
-    const cleanFormValues = pickBy(
-      formValues,
-      (_, key) => key in cleanInitialValues,
-    );
+    const cleanFormValues = pickBy(formValues, (_, key) => key in cleanInitialValues);
 
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
@@ -128,8 +117,7 @@ const AccountTab = ({
         const formKey = key as keyof SettingsAccountFormData;
 
         const currentValue = data[formKey] === undefined ? "" : data[formKey];
-        const initialValue =
-          initialValues[formKey] === undefined ? "" : initialValues[formKey];
+        const initialValue = initialValues[formKey] === undefined ? "" : initialValues[formKey];
 
         // Compare each field with its initial value
         if (
@@ -193,17 +181,12 @@ const AccountTab = ({
         initial="hidden"
         animate="visible"
         className="flex flex-col gap-6">
-        <motion.div
-          variants={itemVariants}
-          className="border border-border rounded-[8px]">
+        <motion.div variants={itemVariants} className="border border-border rounded-[8px]">
           {accountSettingsFormFieldsTop.map((formField, index) => (
             <motion.div
               key={formField.fieldTitle}
               variants={itemVariants}
-              className={cn(
-                "px-[18px] py-3",
-                index !== 0 && "border-t border-border",
-              )}>
+              className={cn("px-[18px] py-3", index !== 0 && "border-t border-border")}>
               <SettingsFormField formField={formField} profile={profile} />
             </motion.div>
           ))}
@@ -215,12 +198,8 @@ const AccountTab = ({
             className={`flex flex-col gap-9 max-[990px]:gap-8 ${
               index !== 0 && "border-t border-border pt-6"
             }`}>
-            <h4 className="font-semibold text-foreground text-xl">
-              {formFields.formTitle}
-            </h4>
-            <motion.div
-              variants={containerVariants}
-              className="flex flex-col gap-6">
+            <h4 className="font-semibold text-foreground text-xl">{formFields.formTitle}</h4>
+            <motion.div variants={containerVariants} className="flex flex-col gap-6">
               {formFields.formData.map((formField) => (
                 <motion.div key={formField.fieldTitle} variants={itemVariants}>
                   <SettingsFormField formField={formField} />

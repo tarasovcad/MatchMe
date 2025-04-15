@@ -25,8 +25,7 @@ const CACHE_KEYS = {
   userProfile: (username: string) => `profile_${username}`,
   userStats: (userId: string) => `stats_${userId}`,
   userFavorites: (userId: string) => `favorites_${userId}`,
-  followRelationship: (userId: string, targetUserId: string) =>
-    `follow_${userId}_${targetUserId}`,
+  followRelationship: (userId: string, targetUserId: string) => `follow_${userId}_${targetUserId}`,
 };
 const CACHE_TTL = 300; // 5 minutes
 const TABLE_NAME = "profiles";
@@ -49,7 +48,7 @@ export async function getUserProfile(username: string) {
       .from(TABLE_NAME)
       .select("*")
       .eq("username", username)
-      .single();
+      .single<MatchMeUser>();
     if (error || !data) {
       console.error("Error fetching user:", error);
       return null;
@@ -76,9 +75,7 @@ export async function getUserFollowRelationship(
 
   try {
     const cacheKey = CACHE_KEYS.followRelationship(currentUserId, targetUserId);
-    const cachedRelationship = (await redis.get(
-      cacheKey,
-    )) as UserFollowRelationship | null;
+    const cachedRelationship = (await redis.get(cacheKey)) as UserFollowRelationship | null;
 
     if (cachedRelationship) {
       console.log("Follow relationship cache hit");
@@ -161,36 +158,22 @@ export async function getUserStats(
     const supabase = await createClient();
 
     // Run all queries in parallel
-    const [followerCountResult, followingCountResult, skillsResult] =
-      await Promise.all([
-        // Follower count
-        supabase
-          .from("follows")
-          .select("*", {count: "exact", head: true})
-          .eq("following_id", userId),
+    const [followerCountResult, followingCountResult, skillsResult] = await Promise.all([
+      // Follower count
+      supabase.from("follows").select("*", {count: "exact", head: true}).eq("following_id", userId),
 
-        // Following count
-        supabase
-          .from("follows")
-          .select("*", {count: "exact", head: true})
-          .eq("follower_id", userId),
+      // Following count
+      supabase.from("follows").select("*", {count: "exact", head: true}).eq("follower_id", userId),
 
-        // Skills - only fetch if user has skills
-        user.skills?.length
-          ? supabase
-              .from("skills")
-              .select("name, image_url")
-              .in("name", user.skills)
-          : Promise.resolve({data: []}),
-      ]);
+      // Skills - only fetch if user has skills
+      user.skills?.length
+        ? supabase.from("skills").select("name, image_url").in("name", user.skills)
+        : Promise.resolve({data: []}),
+    ]);
 
     // Extract results
-    const followerCount = followerCountResult.error
-      ? 0
-      : followerCountResult.count || 0;
-    const followingCount = followingCountResult.error
-      ? 0
-      : followingCountResult.count || 0;
+    const followerCount = followerCountResult.error ? 0 : followerCountResult.count || 0;
+    const followingCount = followingCountResult.error ? 0 : followingCountResult.count || 0;
     const skills = skillsResult.data || [];
 
     // Cache the stats
@@ -214,10 +197,7 @@ export async function getUserStats(
   }
 }
 
-export async function isUserFavorite(
-  userId: string,
-  favoriteUserId: string,
-): Promise<boolean> {
+export async function isUserFavorite(userId: string, favoriteUserId: string): Promise<boolean> {
   if (!userId) return false;
 
   try {
@@ -228,9 +208,7 @@ export async function isUserFavorite(
     }> | null;
     if (favoritesData) {
       // Check cached favorites
-      return favoritesData.some(
-        (fav) => fav.favorite_user_id === favoriteUserId,
-      );
+      return favoritesData.some((fav) => fav.favorite_user_id === favoriteUserId);
     }
     // Cache miss - check directly in database
     const supabase = await createClient();
@@ -255,10 +233,7 @@ export async function isUserFavorite(
 }
 
 // Invalidates user-related caches when data changes
-export async function invalidateUserCaches(
-  userId: string,
-  username: string,
-): Promise<void> {
+export async function invalidateUserCaches(userId: string, username: string): Promise<void> {
   const keys = [
     CACHE_KEYS.userProfile(username),
     CACHE_KEYS.userStats(userId),

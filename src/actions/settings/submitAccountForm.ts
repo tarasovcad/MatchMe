@@ -3,12 +3,10 @@
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
 import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
-import {uploadUserAvatar} from "../aws/uploadUserAvatar";
+import {uploadImageBuffer} from "../aws/uploadImageBuffer";
 import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
 
-export const submitAccountForm = async (
-  formData: Partial<SettingsAccountFormData>,
-) => {
+export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
 
   const {
@@ -36,28 +34,42 @@ export const submitAccountForm = async (
       }
       return acc;
     },
-    {} as Record<
-      string,
-      Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null
-    >,
+    {} as Record<string, Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null>,
   );
   try {
-    if (transformedData.image) {
-      const signedUrl = await getUploadUrl(user.id);
-      const result = await uploadUserAvatar(
-        signedUrl,
-        String(transformedData.image),
+    if (transformedData.profileImage) {
+      const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");
+
+      const profileImage = await uploadImageBuffer(
+        signedProfileImageUrl,
+        String(transformedData.profileImage),
       );
 
-      if (result.error) {
-        return {error: result.error, message: result.message};
-      } else {
-        console.log(result.message);
-        transformedData.image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
-
-        // Invalidate the CloudFront cache
-        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+      if (profileImage.error) {
+        return {error: profileImage.error, message: profileImage.message};
       }
+
+      transformedData.profileImage = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
+
+      // Invalidate the CloudFront cache
+      await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+    }
+
+    if (transformedData.backgroundImage) {
+      const signedBackgroundImageUrl = await getUploadUrl(user.id, "user-backgrounds");
+
+      const backgroundImage = await uploadImageBuffer(
+        signedBackgroundImageUrl,
+        String(transformedData.backgroundImage),
+      );
+
+      if (backgroundImage.error) {
+        return {error: backgroundImage.error, message: backgroundImage.message};
+      }
+
+      transformedData.backgroundImage = `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`;
+
+      await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.jpg`);
     }
   } catch (error) {
     console.error("Error updating profile:", error);
