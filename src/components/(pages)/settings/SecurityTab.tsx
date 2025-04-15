@@ -1,5 +1,5 @@
 import {submitSecurityForm} from "@/actions/settings/submitSecurityForm";
-import SettingsFormField from "@/components/form/SettingsFormField";
+import SettingsFormField from "@/components/ui/settings/SettingsFormField";
 import {securitySettingsFormFields} from "@/data/forms/(settings)/securitySettingsFormFields";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
@@ -82,10 +82,7 @@ const SecurityTab = ({
     try {
       // Remove 'newUsername' from comparison
       const filteredData = pickBy(data, (_, key) => key !== "newUsername");
-      const filteredInitialValues = pickBy(
-        initialValues,
-        (_, key) => key !== "newUsername",
-      );
+      const filteredInitialValues = pickBy(initialValues, (_, key) => key !== "newUsername");
 
       // Create an object containing only the changed values
       const changedValues = Object.keys(filteredData).reduce((result, key) => {
@@ -134,19 +131,11 @@ const SecurityTab = ({
           className={`flex flex-col gap-9 max-[990px]:gap-8 ${
             index !== 0 && "border-t border-border pt-6"
           }`}>
-          <h4 className="font-semibold text-foreground text-xl">
-            {formFields.formTitle}
-          </h4>
-          <motion.div
-            variants={containerVariants}
-            className="flex flex-col gap-6">
+          <h4 className="font-semibold text-foreground text-xl">{formFields.formTitle}</h4>
+          <motion.div variants={containerVariants} className="flex flex-col gap-6">
             {formFields.formData.map((formField) => (
               <motion.div key={formField.fieldTitle} variants={itemVariants}>
-                <SettingsFormField
-                  formField={formField}
-                  user={user}
-                  profile={profile}
-                />
+                <SettingsFormField formField={formField} user={user} profile={profile} />
               </motion.div>
             ))}
           </motion.div>

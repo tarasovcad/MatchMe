@@ -38,10 +38,7 @@ export default function SimpleSlider({
                 inputMode="decimal"
                 value={value}
                 onChange={(e) => {
-                  const newValue = Math.max(
-                    0,
-                    Math.min(168, Number(e.target.value) || 0),
-                  );
+                  const newValue = Math.max(0, Math.min(168, Number(e.target.value) || 0));
                   field.onChange(newValue);
                 }}
                 onBlur={field.onBlur}

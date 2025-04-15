@@ -2,7 +2,7 @@
 import {ChevronDown, ChevronUp} from "lucide-react";
 import {Button, Group, Input, NumberField} from "react-aria-components";
 import {Controller, useFormContext} from "react-hook-form";
-import FormErrorLabel from "./FormErrorLabel";
+import FormErrorLabel from "../FormErrorLabel";
 export default function NumberFieldInput({
   id,
   name,

@@ -32,7 +32,7 @@ import {RadioGroup, RadioGroupItem} from "@/components/shadcn/radio-group";
 import NumberSliderWithGraph from "@/components/ui/NumberSliderWithGraph";
 import {languages} from "@/data/forms/(settings)/languages";
 import {Input} from "@/components/shadcn/input";
-import SimpleInput from "@/components/ui/SimpleInput";
+import SimpleInput from "@/components/ui/form/SimpleInput";
 import CustomCheckbox from "@/components/ui/CustomCheckbox";
 
 const filterProfileOptions: {
@@ -125,9 +125,7 @@ const filterProfileOptions: {
 export default function ProfilesFilterPopup() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  const selectedFilter = filterProfileOptions.find(
-    (option) => option.id === activeCategory,
-  );
+  const selectedFilter = filterProfileOptions.find((option) => option.id === activeCategory);
 
   const getRandomInt = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -148,9 +146,7 @@ export default function ProfilesFilterPopup() {
                     "has-data-[state=checked]:bg-primary/[9%] has-data-[state=checked]:border-primary has-data-[state=checked]:text-primary",
                   )}
                   onClick={() => {
-                    const radioButton = document.getElementById(
-                      `${option.id}-${index}`,
-                    );
+                    const radioButton = document.getElementById(`${option.id}-${index}`);
                     if (radioButton) {
                       radioButton.click();
                     }
@@ -175,15 +171,9 @@ export default function ProfilesFilterPopup() {
             <SimpleInput placeholder="Search for languages" search />
             <div className="flex flex-col gap-2 mt-3">
               {selectedFilter.data?.map((option) => (
-                <div
-                  key={option.value}
-                  className="flex justify-between items-center gap-2 w-full">
+                <div key={option.value} className="flex justify-between items-center gap-2 w-full">
                   <div className="flex items-center gap-2">
-                    <CustomCheckbox
-                      id={option.value}
-                      name={option.value}
-                      showTerms={false}
-                    />
+                    <CustomCheckbox id={option.value} name={option.value} showTerms={false} />
                     <div className="flex items-center gap-1">
                       <p className="text-sm">{option.value}</p>
                       <span className="text-muted-foreground text-sm">
@@ -192,10 +182,7 @@ export default function ProfilesFilterPopup() {
                     </div>
                   </div>
                   <div className="p-1 cursor-pointer">
-                    <XIcon
-                      size={16}
-                      className="opacity-60 hover:opacity-100 transition-opacity"
-                    />
+                    <XIcon size={16} className="opacity-60 hover:opacity-100 transition-opacity" />
                   </div>
                 </div>
               ))}
@@ -203,11 +190,7 @@ export default function ProfilesFilterPopup() {
           </div>
         );
       default:
-        return (
-          <p className="text-muted-foreground text-sm">
-            Select a filter to see options
-          </p>
-        );
+        return <p className="text-muted-foreground text-sm">Select a filter to see options</p>;
     }
   };
 
@@ -222,9 +205,7 @@ export default function ProfilesFilterPopup() {
       <DialogContent className="gap-0 p-0 !max-w-[680px]">
         <div className="flex flex-col gap-2 p-4 border-b border-border">
           <DialogHeader>
-            <DialogTitle className="text-left">
-              Filter for: Profiles
-            </DialogTitle>
+            <DialogTitle className="text-left">Filter for: Profiles</DialogTitle>
             <DialogDescription className="text-left">
               See results in your view based on the filters you select here.
             </DialogDescription>
@@ -265,9 +246,7 @@ export default function ProfilesFilterPopup() {
             {selectedFilter ? (
               <>
                 <div className="mb-3 pb-3 border-b border-border">
-                  <p className="font-medium text-foreground">
-                    {selectedFilter.label}
-                  </p>
+                  <p className="font-medium text-foreground">{selectedFilter.label}</p>
                   <p className="text-muted-foreground text-sm break-words">
                     {selectedFilter.description || "Select an option"}
                   </p>
@@ -275,9 +254,7 @@ export default function ProfilesFilterPopup() {
                 {renderSelectedComponent()}
               </>
             ) : (
-              <p className="text-muted-foreground text-sm">
-                Select a filter to see options
-              </p>
+              <p className="text-muted-foreground text-sm">Select a filter to see options</p>
             )}
           </div>
         </div>

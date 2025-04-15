@@ -7,7 +7,6 @@ import {
   SelectValue,
 } from "@/components/shadcn/select";
 import {cn} from "@/lib/utils";
-import {AnimatePresence, motion} from "framer-motion";
 import {Controller, useFormContext} from "react-hook-form";
 import FormErrorLabel from "../FormErrorLabel";
 

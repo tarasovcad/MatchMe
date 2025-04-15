@@ -1,13 +1,9 @@
 import {DropdownOption} from "@/types/settingsFieldsTypes";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useFormContext} from "react-hook-form";
-import FormErrorLabel from "./FormErrorLabel";
+import FormErrorLabel from "../FormErrorLabel";
 import {CheckIcon, ChevronDownIcon, SearchIcon} from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/shadcn/popover";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
 import {
   Command,
   CommandEmpty,
@@ -16,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/shadcn/command";
-import {Button} from "../shadcn/button";
+import {Button} from "../../shadcn/button";
 import {cn} from "@/lib/utils";
 import {useCountries} from "@/hooks/useCountries";
 
@@ -37,10 +33,13 @@ export default function SelectInputWithSearch({
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
-  const [internalValue, setInternalValue] = useState<string | null>(
-    selectedValue || null,
-  );
+
+  const [internalValue, setInternalValue] = useState<string | null>(selectedValue || null);
   const [open, setOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setInternalValue(selectedValue || null);
+  }, [selectedValue]);
 
   const isCountrySelect = name === "location";
   const {countries} = useCountries(isCountrySelect && open);
@@ -58,6 +57,8 @@ export default function SelectInputWithSearch({
     setOpen(false);
   };
 
+  const selectedOption = options.find((option) => option.title === selectedValue);
+
   return (
     <div className="space-y-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -71,15 +72,8 @@ export default function SelectInputWithSearch({
               "bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               className,
             )}>
-            <span
-              className={cn(
-                "truncate",
-                !selectedValue && "text-muted-foreground",
-              )}>
-              {selectedValue
-                ? options.find((option) => option.title === selectedValue)
-                    ?.title
-                : placeholder}
+            <span className={cn("truncate", !selectedValue && "text-muted-foreground")}>
+              {selectedOption?.title || selectedValue || placeholder}
             </span>
             <ChevronDownIcon
               size={16}
@@ -104,9 +98,7 @@ export default function SelectInputWithSearch({
                       handleSelectChange(currentValue);
                     }}>
                     {option.title}
-                    {selectedValue === option.title && (
-                      <CheckIcon size={16} className="ml-auto" />
-                    )}
+                    {selectedValue === option.title && <CheckIcon size={16} className="ml-auto" />}
                   </CommandItem>
                 ))}
               </CommandGroup>

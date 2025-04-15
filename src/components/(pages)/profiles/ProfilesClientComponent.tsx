@@ -3,7 +3,7 @@ import React, {useState, useEffect, useRef, useCallback} from "react";
 import {motion} from "framer-motion";
 import {getAllProfiles, getUserFavoritesProfiles} from "@/actions/profiles/profiles";
 import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
-import SimpleInput from "@/components/ui/SimpleInput";
+import SimpleInput from "@/components/ui/form/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";

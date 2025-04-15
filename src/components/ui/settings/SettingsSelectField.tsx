@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
 import {DropdownOption} from "@/types/settingsFieldsTypes";
-import {RadioGroup, RadioGroupItem} from "../shadcn/radio-group";
+import {RadioGroup, RadioGroupItem} from "../../shadcn/radio-group";
 import {cn} from "@/lib/utils";
 import {Controller, useFormContext} from "react-hook-form";
-import FormErrorLabel from "../ui/FormErrorLabel";
+import FormErrorLabel from "../FormErrorLabel";
 
 const SettingsSelectField = ({
   id,
@@ -52,12 +52,8 @@ const SettingsSelectField = ({
                     className="top-3 right-3 absolute w-[14px] h-[14px]"
                   />
                   <div className="flex flex-col gap-[4px] w-full min-[1165px]:max-w-[134px]">
-                    <p className="font-medium text-foreground text-sm">
-                      {option.title}
-                    </p>
-                    <p className="text-secondary text-xs">
-                      {option.description}
-                    </p>
+                    <p className="font-medium text-foreground text-sm">{option.title}</p>
+                    <p className="text-secondary text-xs">{option.description}</p>
                   </div>
                 </label>
               );

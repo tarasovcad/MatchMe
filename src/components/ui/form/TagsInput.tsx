@@ -5,13 +5,7 @@ import {useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {X} from "lucide-react";
 import {Controller, useFormContext} from "react-hook-form";
-export default function TagsInput({
-  placeholder,
-  name,
-}: {
-  placeholder: string;
-  name: string;
-}) {
+export default function TagsInput({placeholder, name}: {placeholder: string; name: string}) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   const {control} = useFormContext();
   return (
@@ -45,9 +39,7 @@ export default function TagsInput({
                   e.stopPropagation();
 
                   const currentTags = field.value || [];
-                  const updatedTags = currentTags.filter(
-                    (text: string) => text !== tag.text,
-                  );
+                  const updatedTags = currentTags.filter((text: string) => text !== tag.text);
                   field.onChange(updatedTags);
                 }}>
                 <X className="m-auto size-4" />

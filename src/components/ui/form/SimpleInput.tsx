@@ -2,9 +2,9 @@ import {Label} from "@/components/shadcn/label";
 import {CircleCheck, Mail, Search, TriangleAlert} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {AnimatePresence, motion} from "framer-motion";
-import LoadingButtonCirlce from "./LoadingButtonCirlce";
+import LoadingButtonCirlce from "../LoadingButtonCirlce";
 import {SimpleInputProps} from "@/types/simpleInputProps";
-import FormErrorLabel from "./FormErrorLabel";
+import FormErrorLabel from "../FormErrorLabel";
 
 const SimpleInput = ({
   mail,

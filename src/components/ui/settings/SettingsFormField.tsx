@@ -1,28 +1,27 @@
 "use client";
 import React from "react";
-import SimpleInput from "../ui/SimpleInput";
+import SimpleInput from "../form/SimpleInput";
 import {FormFieldProps} from "@/types/settingsFieldsTypes";
-import NumberFieldInput from "../ui/NumberFieldInput";
-import SettingsProfilePhoto from "../(pages)/settings/SettingsProfilePhoto";
-import SelectInput from "../ui/SelectInput";
+import NumberFieldInput from "../form/NumberFieldInput";
+import SettingsProfilePhoto from "../../(pages)/settings/SettingsProfilePhoto";
+import SelectInput from "../form/SelectInput";
 import SettingsSelectField from "./SettingsSelectField";
-import AutogrowingTextarea from "../ui/AutogrowingTextarea";
-import SimpleSlider from "../ui/settings/SimpleSlider";
-import PersonalWebsiteInput from "../ui/settings/PersonalWebsiteInput";
-import SocialLinksInput from "../ui/settings/SocialLinksInput";
+import AutogrowingTextarea from "../form/AutogrowingTextarea";
+import SimpleSlider from "../form/SimpleSlider";
+import PersonalWebsiteInput from "../form/PersonalWebsiteInput";
+import SocialLinksInput from "./SocialLinksInput";
 import {useFormContext} from "react-hook-form";
-import MakeProfilePublicSwitch from "../ui/settings/MakeProfilePublicSwitch";
-import VerifyAccountButton from "../ui/settings/VerifyAccountButton";
+import MakeProfilePublicSwitch from "./MakeProfilePublicSwitch";
+import VerifyAccountButton from "./VerifyAccountButton";
 import {cn} from "@/lib/utils";
-import TagsInput from "../ui/settings/TagsInput";
-import TimeZoneInput from "../(pages)/settings/TimeZoneInput";
+import TagsInput from "../form/TagsInput";
 import {motion} from "framer-motion";
-import DangerZone from "../ui/settings/DangerZone";
-import UserConnectedAccounts from "../ui/settings/UserConnectedAccounts";
+import DangerZone from "./DangerZone";
+import UserConnectedAccounts from "./UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
-import SettingsUsernameInput from "../ui/settings/SettingsUsernameInput";
+import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
-import SelectInputWithSearch from "../ui/SelectInputWithSearch";
+import SelectInputWithSearch from "../form/SelectInputWithSearch";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -38,7 +37,6 @@ const fieldComponents = {
   slider: SimpleSlider,
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
-  timezone: TimeZoneInput,
   deleteAccount: DangerZone,
   connectedAccounts: UserConnectedAccounts,
   username: SettingsUsernameInput,
@@ -53,16 +51,9 @@ const SettingsFormField = ({
   user?: User;
   profile?: MatchMeUser;
 }) => {
-  const {
-    fieldDescription,
-    fieldTitle,
-    fieldType,
-    fieldInputProps,
-    fieldRequired,
-  } = formField;
+  const {fieldDescription, fieldTitle, fieldType, fieldInputProps, fieldRequired} = formField;
   const fieldName = fieldInputProps[0].name;
-  const InputComponent =
-    fieldComponents[fieldType as keyof typeof fieldComponents] || SimpleInput;
+  const InputComponent = fieldComponents[fieldType as keyof typeof fieldComponents] || SimpleInput;
 
   const {
     register,
@@ -70,9 +61,7 @@ const SettingsFormField = ({
   } = useFormContext();
 
   const isTopSection = () => {
-    return (
-      fieldType === "makeProfilePublic" || fieldType === "accountVerification"
-    );
+    return fieldType === "makeProfilePublic" || fieldType === "accountVerification";
   };
 
   const itemVariants = {
@@ -97,13 +86,10 @@ const SettingsFormField = ({
       )}>
       <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
         <p className="font-medium text-foreground text-sm">
-          {fieldTitle}{" "}
-          {fieldRequired && <span className="text-destructive">*</span>}
+          {fieldTitle} {fieldRequired && <span className="text-destructive">*</span>}
         </p>
         {fieldDescription && (
-          <p className="text-muted-foreground text-xs break-words">
-            {fieldDescription}
-          </p>
+          <p className="text-muted-foreground text-xs break-words">{fieldDescription}</p>
         )}
       </div>
       <div className="w-full min-[990px]:max-w-[652px]">

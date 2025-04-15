@@ -1,4 +1,4 @@
-import ImageUpload from "@/components/ui/input/ImageUpload";
+import ImageUpload from "@/components/ui/form/ImageUpload";
 import React from "react";
 
 const SettingsProfilePhoto = ({name}: {name: string}) => {

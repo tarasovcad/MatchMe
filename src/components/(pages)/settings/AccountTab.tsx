@@ -1,4 +1,4 @@
-import SettingsFormField from "@/components/form/SettingsFormField";
+import SettingsFormField from "@/components/ui/settings/SettingsFormField";
 import {
   accountSettingsFormFields,
   accountSettingsFormFieldsTop,

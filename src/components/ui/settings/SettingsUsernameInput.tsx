@@ -1,5 +1,5 @@
 import React from "react";
-import SimpleInput from "../SimpleInput";
+import SimpleInput from "../form/SimpleInput";
 import {useFormContext, UseFormRegisterReturn} from "react-hook-form";
 import {Button} from "@/components/shadcn/button";
 import {
@@ -33,9 +33,7 @@ const SettingsUsernameInput = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [usernameLoading, setUsernameLoading] = useState(false);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
-    boolean | null
-  >(null);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
 
   const {watch, setValue, formState} = useFormContext();
   const newUsername = watch("newUsername");
@@ -66,19 +64,9 @@ const SettingsUsernameInput = ({
   if (!usernameChangeStatus.canChange) {
     return (
       <>
-        <SimpleInput
-          id={id}
-          name={name}
-          placeholder={placeholder}
-          readOnly
-          {...register}
-        />
-        <p
-          className="mt-2 text-muted-foreground text-xs"
-          role="region"
-          aria-live="polite">
-          Your next username change is available on{" "}
-          {usernameChangeStatus.nextAvailableDate}
+        <SimpleInput id={id} name={name} placeholder={placeholder} readOnly {...register} />
+        <p className="mt-2 text-muted-foreground text-xs" role="region" aria-live="polite">
+          Your next username change is available on {usernameChangeStatus.nextAvailableDate}
         </p>
       </>
     );
@@ -112,9 +100,7 @@ const SettingsUsernameInput = ({
               <CircleAlertIcon className="opacity-80" size={16} />
             </div>
             <DialogHeader>
-              <DialogTitle className="text-left">
-                Change Your Username
-              </DialogTitle>
+              <DialogTitle className="text-left">Change Your Username</DialogTitle>
               <DialogDescription className="text-left">
                 You can update your username only once per month. Choose wisely!
               </DialogDescription>
@@ -123,21 +109,11 @@ const SettingsUsernameInput = ({
 
           <form className="space-y-5">
             <div className="*:not-first:mt-2">
-              <p className="font-medium text-foreground text-sm">
-                Current Username
-              </p>
-              <SimpleInput
-                id={id}
-                name={name}
-                placeholder={placeholder}
-                readOnly
-                {...register}
-              />
+              <p className="font-medium text-foreground text-sm">Current Username</p>
+              <SimpleInput id={id} name={name} placeholder={placeholder} readOnly {...register} />
             </div>
             <div className="*:not-first:mt-2">
-              <p className="font-medium text-foreground text-sm">
-                New Username
-              </p>
+              <p className="font-medium text-foreground text-sm">New Username</p>
               <UserNameInput
                 username={newUsername}
                 name="newUsername"

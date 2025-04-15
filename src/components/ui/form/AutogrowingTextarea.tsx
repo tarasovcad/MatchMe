@@ -1,10 +1,10 @@
 "use client";
 
 import {ChangeEvent, useEffect, useRef} from "react";
-import {Textarea} from "../shadcn/textarea";
+import {Textarea} from "../../shadcn/textarea";
 import {cn} from "@/lib/utils";
 import {UseFormRegisterReturn} from "react-hook-form";
-import FormErrorLabel from "./FormErrorLabel";
+import FormErrorLabel from "../FormErrorLabel";
 
 export default function AutogrowingTextarea({
   id,
@@ -31,20 +31,13 @@ export default function AutogrowingTextarea({
       textarea.style.height = "auto";
 
       const style = window.getComputedStyle(textarea);
-      const borderHeight =
-        parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
-      const paddingHeight =
-        parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+      const borderHeight = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+      const paddingHeight = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
 
       const lineHeight = parseInt(style.lineHeight);
-      const maxHeight = maxRows
-        ? lineHeight * maxRows + borderHeight + paddingHeight
-        : Infinity;
+      const maxHeight = maxRows ? lineHeight * maxRows + borderHeight + paddingHeight : Infinity;
 
-      const newHeight = Math.min(
-        textarea.scrollHeight + borderHeight,
-        maxHeight,
-      );
+      const newHeight = Math.min(textarea.scrollHeight + borderHeight, maxHeight);
       textarea.style.height = `${newHeight}px`;
     }
   }, [maxRows, textareaRef.current?.value]);
@@ -54,15 +47,11 @@ export default function AutogrowingTextarea({
     textarea.style.height = "auto";
 
     const style = window.getComputedStyle(textarea);
-    const borderHeight =
-      parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
-    const paddingHeight =
-      parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+    const borderHeight = parseInt(style.borderTopWidth) + parseInt(style.borderBottomWidth);
+    const paddingHeight = parseInt(style.paddingTop) + parseInt(style.paddingBottom);
 
     const lineHeight = parseInt(style.lineHeight);
-    const maxHeight = maxRows
-      ? lineHeight * maxRows + borderHeight + paddingHeight
-      : Infinity;
+    const maxHeight = maxRows ? lineHeight * maxRows + borderHeight + paddingHeight : Infinity;
 
     const newHeight = Math.min(textarea.scrollHeight + borderHeight, maxHeight);
 

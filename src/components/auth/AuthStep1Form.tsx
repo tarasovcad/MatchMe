@@ -1,6 +1,6 @@
 import React from "react";
 import {Controller, useFormContext} from "react-hook-form";
-import SimpleInput from "../ui/SimpleInput";
+import SimpleInput from "../ui/form/SimpleInput";
 import CustomCheckbox from "../ui/CustomCheckbox";
 import {AnimatePresence, motion} from "framer-motion";
 
@@ -41,7 +41,7 @@ export default function AuthStep1Form({page}: {page: "signup" | "login"}) {
           <AnimatePresence>
             {errors.agreement && (
               <motion.p
-                className="text-xs text-destructive"
+                className="text-destructive text-xs"
                 layout
                 initial={{opacity: 0, height: 0, marginTop: 0}}
                 animate={{opacity: 1, height: "auto", marginTop: 8}}
