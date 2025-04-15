@@ -1,10 +1,7 @@
 "use client";
 import React, {useState, useEffect, useRef, useCallback} from "react";
 import {motion} from "framer-motion";
-import {
-  getAllProfiles,
-  getUserFavoritesProfiles,
-} from "@/actions/profiles/profiles";
+import {getAllProfiles, getUserFavoritesProfiles} from "@/actions/profiles/profiles";
 import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
 import SimpleInput from "@/components/ui/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
@@ -17,9 +14,7 @@ import ProfilesOrderBy from "./ProfilesOrderBy";
 import {ProfileQueryParams} from "@/types/profiles/sortProfiles";
 
 const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
-  const [profiles, setProfiles] = useState<
-    (MatchMeUser & {isFavorite: boolean})[]
-  >([]);
+  const [profiles, setProfiles] = useState<(MatchMeUser & {isFavorite: boolean})[]>([]);
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -99,13 +94,9 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
         return;
       }
 
-      const filteredProfiles = allProfiles.filter(
-        (profile) => profile.id !== currentUserId,
-      );
+      const filteredProfiles = allProfiles.filter((profile) => profile.id !== currentUserId);
 
-      const favorites = currentUserId
-        ? await getUserFavoritesProfiles(currentUserId)
-        : [];
+      const favorites = currentUserId ? await getUserFavoritesProfiles(currentUserId) : [];
       const favoritesSet = new Set(favorites);
 
       const profilesWithFavorites = filteredProfiles.map((profile) => ({
@@ -115,12 +106,8 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
 
       // Update profiles with new data
       setProfiles((prev) =>
-        page === 1
-          ? profilesWithFavorites
-          : [...prev, ...profilesWithFavorites],
+        page === 1 ? profilesWithFavorites : [...prev, ...profilesWithFavorites],
       );
-
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching profiles:", error);
     } finally {
@@ -229,26 +216,17 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
         <SecGradient
           as="h2"
           className="px-3 max-w-[742px] text-[15px] sm:text-[16px] lg:text-[18px] text-center">
-          Explore profiles of skilled individuals who share your vision. Join
-          forces with like-minded creators and turn bold ideas into success
-          stories.
+          Explore profiles of skilled individuals who share your vision. Join forces with
+          like-minded creators and turn bold ideas into success stories.
         </SecGradient>
       </motion.div>
       <motion.div className="flex flex-col gap-4" variants={controlsVariants}>
         <motion.div
           className="flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2"
           variants={controlsVariants}>
-          <SimpleInput
-            placeholder="Search..."
-            type="search"
-            id="search"
-            search
-          />
+          <SimpleInput placeholder="Search..." type="search" id="search" search />
           <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
-            <ProfilesOrderBy
-              setQueryParams={setQueryParams}
-              queryParams={queryParams}
-            />
+            <ProfilesOrderBy setQueryParams={setQueryParams} queryParams={queryParams} />
             <ProfilesFilterPopup />
           </div>
         </motion.div>
@@ -257,10 +235,7 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
             {profiles.map((profile, index) => {
               if (profiles.length === index + 1) {
                 return (
-                  <motion.div
-                    ref={lastProfileRef}
-                    key={profile.id}
-                    variants={profileCardVariants}>
+                  <motion.div ref={lastProfileRef} key={profile.id} variants={profileCardVariants}>
                     <ProfilesSinlgeCard
                       profile={profile}
                       userId={userId}
@@ -298,19 +273,15 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
             </div>
           )}
         </div>
-        {!isLoading &&
-          !loadingMore &&
-          !hasMore &&
-          profiles.length > 0 &&
-          profiles.length > 10 && (
-            <motion.div
-              className="py-4 text-foreground/70 text-center"
-              initial={{opacity: 0}}
-              animate={{opacity: 1}}
-              transition={{duration: 0.5}}>
-              No more profiles to load
-            </motion.div>
-          )}
+        {!isLoading && !loadingMore && !hasMore && profiles.length > 0 && profiles.length > 10 && (
+          <motion.div
+            className="py-4 text-foreground/70 text-center"
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            transition={{duration: 0.5}}>
+            No more profiles to load
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );
