@@ -1,7 +1,7 @@
 "use client";
 import React, {useEffect, useState} from "react";
 import SettingsMainButtons from "@/components/(pages)/settings/SettingsMainButtons";
-import SettingsTabs from "@/components/(pages)/settings/SettingsTabs";
+
 import PageTitle from "@/components/pages/PageTitle";
 import AccountTab from "@/components/(pages)/settings/AccountTab";
 import SecurityTab from "@/components/(pages)/settings/SecurityTab";
@@ -16,6 +16,8 @@ import {User} from "@supabase/supabase-js";
 import Alert from "@/components/ui/Alert";
 import {canChangeUsername} from "@/functions/canChangeUsername";
 import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
+import TabNavigation from "@/components/ui/form/TabNavigation";
+import {settingsTabsData} from "@/data/tabs/settingsTabsData";
 
 const SettingsClientPage = ({
   tab,
@@ -66,15 +68,17 @@ const SettingsClientPage = ({
     }
   };
 
+  const generateSettingsLink = (link: string) => {
+    return link === "profile" ? `/profiles/${user.user_metadata.username}` : `?tab=${link}`;
+  };
+
   return (
     <motion.form
       initial="hidden"
       animate="visible"
       variants={containerVariants}
       onSubmit={(e) => e.preventDefault()}>
-      <motion.div
-        variants={containerVariants}
-        className="flex flex-col gap-8 pb-24">
+      <motion.div variants={containerVariants} className="flex flex-col gap-8 pb-24">
         {tab === "security" && !usernameChangeStatus.canChange && (
           <Alert
             message={`Your next available change date is ${usernameChangeStatus.nextAvailableDate}.`}
@@ -94,12 +98,14 @@ const SettingsClientPage = ({
             title="Settings"
             subtitle="Manage your details and personal preferences here."
           />
-          <SettingsTabs tab={tab} user={user} />
+          <TabNavigation
+            tabsData={settingsTabsData}
+            activeTab={tab}
+            customLinkGenerator={generateSettingsLink}
+          />
         </motion.div>
 
-        <motion.div variants={itemVariants}>
-          {renderSelectedComponent()}
-        </motion.div>
+        <motion.div variants={itemVariants}>{renderSelectedComponent()}</motion.div>
       </motion.div>
 
       <motion.div

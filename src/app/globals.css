@@ -129,16 +129,8 @@
 
     --primary: 246 78% 68%; /* #EA4C89 */
     --secondary: 240 3.8% 46.1%; /* #71717a */
-    --maingradient: linear-gradient(
-      180deg,
-      #1c1d1f 0%,
-      rgba(28, 29, 31, 0.68) 100%
-    );
-    --secgradient: linear-gradient(
-      180deg,
-      #39393a 0%,
-      rgba(28, 29, 31, 0.68) 100%
-    );
+    --maingradient: linear-gradient(180deg, #1c1d1f 0%, rgba(28, 29, 31, 0.68) 100%);
+    --secgradient: linear-gradient(180deg, #39393a 0%, rgba(28, 29, 31, 0.68) 100%);
     --purplegradient: linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%);
     --hoverpurplegradient: linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%);
     --muted-foreground: 240 3.8% 46.1%; /* #71717a */
@@ -186,16 +178,8 @@
     --foreground: 240 4.8% 95.9%; /* #f4f4f5 */
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    --maingradient: linear-gradient(
-      180deg,
-      #ffffff 0%,
-      rgba(255, 255, 255, 0.68) 100%
-    );
-    --secgradient: linear-gradient(
-      180deg,
-      #ffffff 0%,
-      rgba(255, 255, 255, 0.68) 100%
-    );
+    --maingradient: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.68) 100%);
+    --secgradient: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.68) 100%);
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
     --secondary: 240, 5%, 65%;
@@ -283,10 +267,5 @@
 }
 
 .checkerboard-bg {
-  background: repeating-conic-gradient(#cccccc 0% 25%, #f0f0f0 0% 50%) 0 0/20px
-    20px;
-}
-
-html {
-  scrollbar-gutter: stable;
+  background: repeating-conic-gradient(#cccccc 0% 25%, #f0f0f0 0% 50%) 0 0/20px 20px;
 }
