@@ -10,6 +10,6 @@ export interface Notification {
     id: string;
     username: string;
     name: string;
-    image: string;
+    profileImage?: string;
   };
 }

@@ -9,10 +9,7 @@ import {supabase} from "@/utils/supabase/client";
 import {toast} from "sonner";
 import NotificationTabs from "./NotificationTabs";
 import NotificationList from "./NotificationList";
-import {
-  getNotificationTypeGroup,
-  NOTIFICATION_GROUPS,
-} from "@/data/tabs/notificationsTabs";
+import {getNotificationTypeGroup, NOTIFICATION_GROUPS} from "@/data/tabs/notificationsTabs";
 
 const NotificationsPopover = ({
   item,
@@ -30,9 +27,7 @@ const NotificationsPopover = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
-  const realtimeSubscriptionRef = useRef<{unsubscribe: () => void} | null>(
-    null,
-  );
+  const realtimeSubscriptionRef = useRef<{unsubscribe: () => void} | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -47,7 +42,7 @@ const NotificationsPopover = ({
           sender_id,
           recipient_id,
           is_read,
-          sender:profiles!notifications_sender_id_fkey (id, username, name, image)
+          sender:profiles!notifications_sender_id_fkey (id, username, name, profileImage)
         `,
         )
         .eq("recipient_id", userSessionId)
@@ -58,9 +53,7 @@ const NotificationsPopover = ({
       const formattedNotifications =
         data?.map((notification) => ({
           ...notification,
-          sender: Array.isArray(notification.sender)
-            ? notification.sender[0]
-            : notification.sender,
+          sender: Array.isArray(notification.sender) ? notification.sender[0] : notification.sender,
         })) || [];
 
       setNotifications(formattedNotifications);
@@ -168,18 +161,14 @@ const NotificationsPopover = ({
 
             setNotifications((prev) =>
               prev.map((n) =>
-                n.id === updatedNotification.id
-                  ? {...n, ...updatedNotification}
-                  : n,
+                n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
               ),
             );
 
             // Update notification counts
             updateNotificationCounts(
               notifications.map((n) =>
-                n.id === updatedNotification.id
-                  ? {...n, ...updatedNotification}
-                  : n,
+                n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
               ),
             );
           },
@@ -272,8 +261,7 @@ const NotificationsPopover = ({
       return notifications;
     }
     return notifications.filter(
-      (notification) =>
-        getNotificationTypeGroup(notification.type as string) === activeTab,
+      (notification) => getNotificationTypeGroup(notification.type as string) === activeTab,
     );
   };
 
@@ -307,10 +295,7 @@ const NotificationsPopover = ({
                   <Maximize2 size={12} />
                 </Button>
 
-                <Button
-                  size={"icon"}
-                  className="w-6 h-6"
-                  onClick={() => setOpen(false)}>
+                <Button size={"icon"} className="w-6 h-6" onClick={() => setOpen(false)}>
                   <X size={12} />
                 </Button>
               </div>

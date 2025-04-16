@@ -24,9 +24,9 @@ const ProfilesSinlgeCard = ({
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
-            {profile.image ? (
+            {profile.profileImage ? (
               <Image
-                src={profile.image}
+                src={profile.profileImage}
                 alt={`${profile.name} profile picture`}
                 width={42}
                 height={42}
@@ -56,27 +56,18 @@ const ProfilesSinlgeCard = ({
             </div>
           </div>
           <div className="flex items-center gap-1 text-secondary">
-            <BellRing
-              size={14}
-              strokeWidth={2}
-              aria-hidden="true"
-              className="text-secondary"
-            />
+            <BellRing size={14} strokeWidth={2} aria-hidden="true" className="text-secondary" />
             <span className="text-[13px]">•</span>
             <span className="text-[15px]">5d</span>
           </div>
         </div>
-        <p className="text-[14px] text-secondary line-clamp-1">
-          {profile.tagline}
-        </p>
+        <p className="text-[14px] text-secondary line-clamp-1">{profile.tagline}</p>
         <div className="flex flex-col gap-1 text-[14px] text-secondary">
           <div className="flex items-center gap-2">
             <Wrench size={16} strokeWidth={2} className="shrink-0" />
             <span className="line-clamp-1">
               {" "}
-              {Array.isArray(profile?.skills)
-                ? profile?.skills.join(", ")
-                : profile?.skills}
+              {Array.isArray(profile?.skills) ? profile?.skills.join(", ") : profile?.skills}
             </span>
           </div>
           <div className="flex items-center gap-2">

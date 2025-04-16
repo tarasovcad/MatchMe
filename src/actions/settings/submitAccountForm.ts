@@ -5,6 +5,9 @@ import {SettingsAccountFormData} from "@/validation/settings/settingsAccountVali
 import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
 import {uploadImageBuffer} from "../aws/uploadImageBuffer";
 import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
+import {Ratelimit} from "@upstash/ratelimit";
+import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 
 export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
@@ -15,6 +18,42 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
 
   if (!user) {
     throw new Error("User not authenticated");
+  }
+  const ip = await getClientIp();
+
+  const settingsAccountLimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, "5 m"), // 10 attempts per 5 minutes
+    analytics: true,
+    prefix: "ratelimit:settings",
+    enableProtection: true,
+  });
+
+  const settingsAccountIpLimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, "10 m"), // 15 attempts per 10 minutes per IP
+    analytics: true,
+    prefix: "ratelimit:ip:settings",
+    enableProtection: true,
+  });
+
+  const [userLimit, ipLimit] = await Promise.all([
+    settingsAccountLimit.limit(user.id),
+    settingsAccountIpLimit.limit(ip),
+  ]);
+
+  if (!userLimit.success) {
+    return {
+      error: true,
+      message: "Too many security settings update attempts. Please try again later.",
+    };
+  }
+
+  if (!ipLimit.success) {
+    return {
+      error: true,
+      message: "Too many security settings update attempts from this IP. Please try again later.",
+    };
   }
 
   // Transform empty strings to null
@@ -88,10 +127,10 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     return {error: error, message: "Error updating profile"};
   }
   // Update the user session with the new image
-  if (transformedData.image !== null) {
+  if (transformedData.profileImage !== null) {
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: transformedData.image,
+        image: transformedData.profileImage,
       },
     });
     if (error) {
@@ -101,7 +140,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   } else {
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: "",
+        profileImage: "",
       },
     });
     if (error) {

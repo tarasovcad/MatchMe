@@ -2,7 +2,7 @@ import {DropdownOption} from "@/types/settingsFieldsTypes";
 import {useEffect, useState} from "react";
 import {useFormContext} from "react-hook-form";
 import FormErrorLabel from "../FormErrorLabel";
-import {CheckIcon, ChevronDownIcon, SearchIcon} from "lucide-react";
+import {CheckIcon, ChevronDownIcon} from "lucide-react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
 import {
   Command,
