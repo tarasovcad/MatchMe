@@ -6,6 +6,7 @@ export interface FormFieldProps {
   fieldType:
     | "text"
     | "select"
+    | "selectWithSearch"
     | "number"
     | "dropdown"
     | "image"

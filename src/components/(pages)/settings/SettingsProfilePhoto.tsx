@@ -2,7 +2,7 @@ import ImageUpload from "@/components/ui/form/ImageUpload";
 import React from "react";
 
 const SettingsProfilePhoto = ({name}: {name: string}) => {
-  if (name === "profileImage") {
+  if (name === "profileImage" || name === "projectImage") {
     return <ImageUpload name={name} type="avatar" />;
   } else if (name === "backgroundImage") {
     return (
