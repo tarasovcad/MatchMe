@@ -72,7 +72,7 @@ export default function SelectInputWithSearch({
               "bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               className,
             )}>
-            <span className={cn("truncate", !selectedValue && "text-muted-foreground")}>
+            <span className={cn("truncate", !selectedValue && "text-muted-foreground/70")}>
               {selectedOption?.title || selectedValue || placeholder}
             </span>
             <ChevronDownIcon

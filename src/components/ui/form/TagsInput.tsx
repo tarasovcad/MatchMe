@@ -84,7 +84,7 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
                 input: `w-full shadow-none outline-none border-none px-1 bg-transparent text-sm ${
                   error
                     ? "text-destructive placeholder:text-destructive"
-                    : "placeholder:-muted-foreground/70"
+                    : "placeholder:text-muted-foreground/70"
                 }`,
               }}
               activeTagIndex={activeTagIndex}

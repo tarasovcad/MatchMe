@@ -12,23 +12,25 @@ import VerifyAccountButton from "@/components/ui/settings/VerifyAccountButton";
 import {cn} from "@/lib/utils";
 import {FormFieldProps} from "@/types/settingsFieldsTypes";
 import React from "react";
-import SettingsProfilePhoto from "../../settings/SettingsProfilePhoto";
 import SelectInput from "@/components/ui/form/SelectInput";
 import SettingsUsernameInput from "@/components/ui/settings/SettingsUsernameInput";
 import {useFormContext} from "react-hook-form";
+import InputSlug from "@/components/ui/form/InputSlug";
+import ImageTabs from "../../settings/SettingsProfilePhoto";
 
 const fieldComponents = {
   text: SimpleInput,
+  slug: InputSlug,
   textarea: AutogrowingTextarea,
   selectWithSearch: SelectInputWithSearch,
   //   makeProfilePublic: MakeProfilePublicSwitch,
   //   accountVerification: VerifyAccountButton,
   number: NumberFieldInput,
-  image: SettingsProfilePhoto,
+  image: ImageTabs,
   dropdown: SelectInput,
-  //   select: SettingsSelectField,
-  //   tags: TagsInput,
-  //   slider: SimpleSlider,
+  tags: TagsInput,
+  select: SettingsSelectField,
+  slider: SimpleSlider,
   //   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   //   username: SettingsUsernameInput,
@@ -45,16 +47,8 @@ const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
     formState: {errors},
   } = useFormContext();
 
-  const isTopSection = () => {
-    return fieldType === "makeProfilePublic" || fieldType === "accountVerification";
-  };
-
   return (
-    <div
-      className={cn(
-        "flex justify-between items-start gap-8  max-[990px]:gap-2",
-        isTopSection() ? "" : "max-[990px]:flex-col",
-      )}>
+    <div className={cn("flex justify-between items-start gap-8  max-[990px]:gap-2")}>
       <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
         <p className="font-medium text-foreground text-sm">
           {fieldTitle} {fieldRequired && <span className="text-destructive">*</span>}
@@ -76,6 +70,7 @@ const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
           register={register(fieldName)}
           error={errors[fieldName]}
           mail={fieldInputProps[0].name === "email"}
+          slugvalue="AI Powered Language Tutor"
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

@@ -3,7 +3,6 @@ import React from "react";
 import SimpleInput from "../form/SimpleInput";
 import {FormFieldProps} from "@/types/settingsFieldsTypes";
 import NumberFieldInput from "../form/NumberFieldInput";
-import SettingsProfilePhoto from "../../(pages)/settings/SettingsProfilePhoto";
 import SelectInput from "../form/SelectInput";
 import SettingsSelectField from "./SettingsSelectField";
 import AutogrowingTextarea from "../form/AutogrowingTextarea";
@@ -22,13 +21,14 @@ import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
+import ImageTabs from "@/components/(pages)/settings/SettingsProfilePhoto";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
   accountVerification: VerifyAccountButton,
   text: SimpleInput,
   number: NumberFieldInput,
-  image: SettingsProfilePhoto,
+  image: ImageTabs,
   dropdown: SelectInput,
   select: SettingsSelectField,
   selectWithSearch: SelectInputWithSearch,

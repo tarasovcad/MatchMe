@@ -76,22 +76,7 @@ export const accountSettingsFormFields = [
         fieldInputProps: [
           {
             id: "profileImage",
-            placeholder: "Profile Picture",
-            type: "file",
             name: "profileImage",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Background Image",
-        fieldDescription: "This backgound will be visible to others",
-        fieldType: "image",
-        fieldInputProps: [
-          {
-            id: "backgroundImage",
-            placeholder: "Background Image",
-            type: "file",
-            name: "backgroundImage",
           },
         ],
       },

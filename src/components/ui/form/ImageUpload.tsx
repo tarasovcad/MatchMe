@@ -30,7 +30,7 @@ const FILE_CONFIG = {
 
 export interface ImageUploadProps {
   name: string; // Form field name
-  type?: "avatar" | "background" | "project"; // Type of image
+  type?: "avatar" | "background";
   aspectRatio?: number; // Crop aspect ratio (default: 1 for square)
   containerClassName?: string; // Additional container classes
   maxWidth?: number; // Maximum width for the preview image
@@ -38,6 +38,7 @@ export interface ImageUploadProps {
   circularCrop?: boolean; // Whether to use circular crop (default: true for avatar)
   initialCropWidth?: number; // Initial crop width in percent (default: 90%)
   cropInstructions?: string; // Custom instructions for crop dialog
+  showFallback?: boolean; // Whether to show a fallback image
 }
 
 const SettingsProfilePhoto = ({
@@ -50,6 +51,7 @@ const SettingsProfilePhoto = ({
   circularCrop = type === "avatar",
   initialCropWidth = 90,
   cropInstructions = "Adjust the size of the grid to crop your image.",
+  showFallback = true,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -294,11 +296,17 @@ const SettingsProfilePhoto = ({
       );
     } else if (type === "avatar") {
       // Avatar fallback when no image
-      return (
-        <div className="ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
-          <Avatar name={getNameInitials(userName)} size="100%" variant="beam" />
-        </div>
-      );
+      if (showFallback === true) {
+        return (
+          <div className="ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
+            <Avatar name={getNameInitials(userName)} size="100%" variant="beam" />
+          </div>
+        );
+      } else {
+        return (
+          <div className="bg-gray-200 ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]"></div>
+        );
+      }
     } else {
       // Background fallback when no image
       return (
