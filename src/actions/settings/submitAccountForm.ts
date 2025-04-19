@@ -75,6 +75,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     },
     {} as Record<string, Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null>,
   );
+
   try {
     if (transformedData.profileImage) {
       const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");

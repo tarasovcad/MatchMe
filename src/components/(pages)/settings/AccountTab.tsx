@@ -97,6 +97,8 @@ const AccountTab = ({
     // This ensures we only compare fields that were originally provided
     const cleanFormValues = pickBy(formValues, (_, key) => key in cleanInitialValues);
 
+    console.log(cleanFormValues, "cleanFormValues");
+    console.log(cleanInitialValues, "cleanInitialValues");
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
 

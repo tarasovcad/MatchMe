@@ -5,7 +5,7 @@ import {cn} from "@/lib/utils";
 import {useFormContext} from "react-hook-form";
 import {Tooltip, TooltipContent, TooltipTrigger} from "../../shadcn/tooltip";
 import {Button} from "../../shadcn/button";
-import {TrashIcon} from "lucide-react";
+import {ImageIcon, TrashIcon, XIcon} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import {getNameInitials} from "@/functions/getNameInitials";
 import Avatar from "boring-avatars";
+import {formatFileSize} from "@/functions/formatFileSize";
 
 const FILE_CONFIG = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB in bytes
@@ -54,6 +55,8 @@ const SettingsProfilePhoto = ({
   showFallback = true,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileSize, setFileSize] = useState<number | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -68,6 +71,18 @@ const SettingsProfilePhoto = ({
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
   const userName = watch("name");
+
+  useEffect(() => {
+    if (selectedValue === "") {
+      setFile(null);
+      setFileName(null);
+      setFileSize(null);
+      setImageSrc("");
+      setPreviewUrl(null);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+    }
+  }, [selectedValue]);
 
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -126,7 +141,20 @@ const SettingsProfilePhoto = ({
 
     setIsOpen(true);
     setFile(selectedFile);
+    setFileName(selectedFile.name);
+    setFileSize(selectedFile.size);
   }, []);
+
+  const handleDeleteFile = () => {
+    setFile(null);
+    setFileName(null);
+    setFileSize(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    setValue(name, "", {shouldDirty: true});
+  };
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
@@ -256,24 +284,16 @@ const SettingsProfilePhoto = ({
     return canvas.toDataURL("image/jpeg", 1);
   }
 
-  const handleDeleteFile = () => {
-    setFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    setValue(name, "", {shouldDirty: true});
-  };
-
   const renderPreview = () => {
     if ((previewUrl || selectedValue) && type === "avatar") {
       // Avatar with image
       return (
-        <div className="ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
+        <div className="ring-border rounded-full ring size-10">
           <Image
             src={previewUrl || selectedValue}
             alt={"avatar"}
-            fill
+            width={40}
+            height={40}
             unoptimized
             className="rounded-full"
           />
@@ -283,7 +303,7 @@ const SettingsProfilePhoto = ({
       // Background with image
       return (
         <>
-          <div className="ring-border rounded-[4px] ring w-[181px] h-[85px] max-[1015px]:h-[80px]">
+          <div className="ring-border rounded-[4px] ring size-10">
             <Image
               src={previewUrl || selectedValue}
               alt={"background"}
@@ -298,20 +318,16 @@ const SettingsProfilePhoto = ({
       // Avatar fallback when no image
       if (showFallback === true) {
         return (
-          <div className="ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]">
-            <Avatar name={getNameInitials(userName)} size="100%" variant="beam" />
+          <div className="ring-border rounded-full ring size-10">
+            <Avatar name={getNameInitials(userName)} variant="beam" width={40} height={40} />
           </div>
         );
       } else {
-        return (
-          <div className="bg-gray-200 ring-border rounded-full ring w-[85px] max-[1015px]:w-[80px] h-[85px] max-[1015px]:h-[80px]"></div>
-        );
+        return <div className="bg-gray-200 ring-border rounded-full ring size-10"></div>;
       }
     } else {
       // Background fallback when no image
-      return (
-        <div className="bg-gray-200 ring-border rounded-[6px] ring w-[181px] h-[85px] max-[1015px]:h-[80px]"></div>
-      );
+      return <div className="bg-gray-200 ring-border rounded-[6px] ring size-10"></div>;
     }
   };
 
@@ -319,31 +335,12 @@ const SettingsProfilePhoto = ({
     <>
       <div
         className={cn(
-          "flex items-start gap-6 max-[1015px]:gap-3 max-[990px]:gap-6 w-full",
+          "flex flex-col gap-6 max-[1015px]:gap-3 max-[990px]:gap-6 w-full",
           containerClassName,
         )}>
-        <div className="relative">
-          {renderPreview()}
-
-          {(previewUrl || selectedValue) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="-right-2 -bottom-2 z-[3] absolute bg-background !opacity-100 rounded-full size-8"
-                  onClick={handleDeleteFile}>
-                  <TrashIcon className="size-4 shrink-0" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Remove image</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
         <div
           className={cn(
-            "flex flex-col justify-center items-center gap-[6px]  py-6 border border-border rounded-[8px] w-full max-w-[329px] text-center",
+            "flex flex-col justify-center items-center gap-[6px]  py-6 border border-border rounded-[8px] w-full border-dashed  text-center",
             isDragging ? "border border-dashed bg-[#f4f4f5] dark:bg-muted" : "border-border ",
           )}
           onDragEnter={handleDragIn}
@@ -357,8 +354,10 @@ const SettingsProfilePhoto = ({
             className="hidden"
             accept={FILE_CONFIG.ALLOWED_FILE_EXTENSIONS.join(",")}
           />
-          <div className="flex justify-center items-center bg-muted-foreground/10 p-[6px] rounded-full">
-            <CloudAdd size="24" color="hsl(var(--foreground))" className="opacity-80" />
+          <div
+            className="flex justify-center items-center bg-background border rounded-full size-11 shrink-0"
+            aria-hidden="true">
+            <ImageIcon className="opacity-60 size-4" />
           </div>
           <div className="flex flex-col gap-[4px]">
             <p className="font-medium">
@@ -367,7 +366,9 @@ const SettingsProfilePhoto = ({
               </button>{" "}
               <span className="text-foreground/80">or drag and drop</span>
             </p>
-            <p className="text-[12px] text-secondary">SVG, PNG and JPG formats, up to 5MB</p>
+            <p className="text-[12px] text-secondary text-xs">
+              SVG, PNG and JPG formats, up to 5MB
+            </p>
           </div>
         </div>
       </div>

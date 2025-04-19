@@ -7,6 +7,16 @@ export interface MatchMeUser {
   age: number | null;
   profileImage: string | null;
   backgroundImage: string | null;
+  profile_image_metadata: {
+    fileName: string | null;
+    fileSize: number | null;
+    uploadedAt: string | null;
+  } | null;
+  background_image_metadata: {
+    fileName: string | null;
+    fileSize: number | null;
+    uploadedAt: string | null;
+  };
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;
