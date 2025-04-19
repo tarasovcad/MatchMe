@@ -13,7 +13,8 @@ import {zodResolver} from "@hookform/resolvers/zod";
 
 const CreateProject = () => {
   const [initialValues, setInitialValues] = useState<ProjectCreationFormData>({
-    project_name: "",
+    name: "",
+    slug: "",
   });
 
   const methods = useForm<ProjectCreationFormData>({
