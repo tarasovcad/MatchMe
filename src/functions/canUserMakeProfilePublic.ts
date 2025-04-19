@@ -5,7 +5,7 @@ export function canUserMakeProfilePublic(profile: MatchMeUser) {
     "name",
     "username",
     "email",
-    "profileImage",
+    "profile_image",
     "tagline",
     "skills",
     "goal",

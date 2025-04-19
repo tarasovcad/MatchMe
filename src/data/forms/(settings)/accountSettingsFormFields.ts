@@ -75,8 +75,8 @@ export const accountSettingsFormFields = [
         fieldType: "image",
         fieldInputProps: [
           {
-            id: "profileImage",
-            name: "profileImage",
+            id: "profile_image",
+            name: "profile_image",
           },
         ],
       },

@@ -176,8 +176,24 @@ export const settingsAccountValidationSchema = z.object({
         })
         .optional(),
     ),
-  profileImage: z.string().optional(),
-  backgroundImage: z.string().optional(),
+  profile_image: z.string().optional(),
+  profile_image_metadata: z
+    .object({
+      fileName: z.string().optional(),
+      fileSize: z.number().optional(),
+      uploadedAt: z.string().optional(),
+    })
+    .nullable()
+    .optional(),
+  background_image: z.string().optional(),
+  background_image_metadata: z
+    .object({
+      fileName: z.string().optional(),
+      fileSize: z.number().optional(),
+      uploadedAt: z.string().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export type SettingsAccountFormData = z.infer<typeof settingsAccountValidationSchema>;

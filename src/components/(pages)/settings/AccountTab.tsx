@@ -50,8 +50,10 @@ const AccountTab = ({
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
-    profileImage: profile.profileImage ?? "",
-    backgroundImage: profile.backgroundImage ?? "",
+    profile_image: profile.profile_image ?? "",
+    profile_image_metadata: profile.profile_image_metadata ?? undefined,
+    background_image: profile.background_image ?? "",
+    background_image_metadata: profile.background_image_metadata ?? undefined,
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
@@ -97,8 +99,6 @@ const AccountTab = ({
     // This ensures we only compare fields that were originally provided
     const cleanFormValues = pickBy(formValues, (_, key) => key in cleanInitialValues);
 
-    console.log(cleanFormValues, "cleanFormValues");
-    console.log(cleanInitialValues, "cleanInitialValues");
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
 
@@ -138,8 +138,6 @@ const AccountTab = ({
       // Only make an API call if there are actual changes to submit
       if (Object.keys(changedValues).length > 0) {
         const response = await submitAccountForm(changedValues);
-        console.log("Response:", response);
-
         if (response.error) {
           console.error("Error submitting account form:", response.error);
           toast.error(response.message);

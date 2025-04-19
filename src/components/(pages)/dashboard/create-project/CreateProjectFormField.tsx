@@ -16,7 +16,7 @@ import SelectInput from "@/components/ui/form/SelectInput";
 import SettingsUsernameInput from "@/components/ui/settings/SettingsUsernameInput";
 import {useFormContext} from "react-hook-form";
 import InputSlug from "@/components/ui/form/InputSlug";
-import ImageTabs from "../../settings/SettingsProfilePhoto";
+import ImageTabs from "../../settings/ImageTabs";
 
 const fieldComponents = {
   text: SimpleInput,

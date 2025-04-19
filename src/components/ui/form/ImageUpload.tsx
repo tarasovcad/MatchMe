@@ -34,12 +34,9 @@ export interface ImageUploadProps {
   type?: "avatar" | "background";
   aspectRatio?: number; // Crop aspect ratio (default: 1 for square)
   containerClassName?: string; // Additional container classes
-  maxWidth?: number; // Maximum width for the preview image
-  maxHeight?: number; // Maximum height for the preview image
   circularCrop?: boolean; // Whether to use circular crop (default: true for avatar)
   initialCropWidth?: number; // Initial crop width in percent (default: 90%)
   cropInstructions?: string; // Custom instructions for crop dialog
-  showFallback?: boolean; // Whether to show a fallback image
 }
 
 const SettingsProfilePhoto = ({
@@ -47,12 +44,9 @@ const SettingsProfilePhoto = ({
   type = "avatar",
   aspectRatio = 1,
   containerClassName,
-  maxWidth = type === "avatar" ? 85 : 320,
-  maxHeight = type === "avatar" ? 85 : 180,
   circularCrop = type === "avatar",
   initialCropWidth = 90,
   cropInstructions = "Adjust the size of the grid to crop your image.",
-  showFallback = true,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -70,7 +64,14 @@ const SettingsProfilePhoto = ({
 
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
-  const userName = watch("name");
+
+  const metadataName = name + "_metadata";
+
+  const imageMetadata = watch(metadataName) as {
+    fileName: string | undefined;
+    fileSize: number | undefined;
+    uploadedAt: string | undefined;
+  };
 
   useEffect(() => {
     if (selectedValue === "") {
@@ -154,6 +155,7 @@ const SettingsProfilePhoto = ({
       setPreviewUrl(null);
     }
     setValue(name, "", {shouldDirty: true});
+    setValue(metadataName, null, {shouldDirty: true});
   };
 
   const handleDrop = useCallback(
@@ -232,6 +234,15 @@ const SettingsProfilePhoto = ({
       const croppedImageUrl = getCroppedImg(imgRef.current, completedCrop);
       setPreviewUrl(croppedImageUrl);
       setValue(name, croppedImageUrl, {shouldDirty: true});
+      setValue(
+        metadataName,
+        {
+          fileName: fileName,
+          fileSize: fileSize,
+          uploadedAt: new Date().toISOString(),
+        },
+        {shouldDirty: true},
+      );
       setIsOpen(false);
     }
   };
@@ -303,31 +314,18 @@ const SettingsProfilePhoto = ({
       // Background with image
       return (
         <>
-          <div className="ring-border rounded-[4px] ring size-10">
+          <div className="ring-border rounded-[4px]">
             <Image
               src={previewUrl || selectedValue}
               alt={"background"}
-              fill
+              width={114}
+              height={40}
               unoptimized
-              className="rounded-[4px] object-cover"
+              className="rounded-[4px] w-[114px] h-[40px] object-cover"
             />
           </div>
         </>
       );
-    } else if (type === "avatar") {
-      // Avatar fallback when no image
-      if (showFallback === true) {
-        return (
-          <div className="ring-border rounded-full ring size-10">
-            <Avatar name={getNameInitials(userName)} variant="beam" width={40} height={40} />
-          </div>
-        );
-      } else {
-        return <div className="bg-gray-200 ring-border rounded-full ring size-10"></div>;
-      }
-    } else {
-      // Background fallback when no image
-      return <div className="bg-gray-200 ring-border rounded-[6px] ring size-10"></div>;
     }
   };
 
@@ -371,6 +369,30 @@ const SettingsProfilePhoto = ({
             </p>
           </div>
         </div>
+        {(previewUrl || selectedValue) && (
+          <div className="flex justify-between items-center gap-2 bg-background p-2 pe-3 border rounded-lg">
+            <div className="relative flex items-center gap-3 overflow-hidden">
+              {renderPreview()}
+              <div className="flex flex-col gap-0.5">
+                <p className="font-medium text-[13px] truncate">
+                  {fileName || imageMetadata.fileName}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {formatFileSize(fileSize || imageMetadata.fileSize || 0)}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="hover:bg-transparent -me-2 size-8 text-muted-foreground/80 hover:text-foreground"
+              onClick={handleDeleteFile}
+              aria-label="Remove file">
+              <XIcon aria-hidden="true" size={16} />
+            </Button>
+          </div>
+        )}
       </div>
       {file && (
         <Dialog open={isOpen}>

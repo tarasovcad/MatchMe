@@ -77,37 +77,37 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   );
 
   try {
-    if (transformedData.profileImage) {
+    if (transformedData.profile_image) {
       const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");
 
       const profileImage = await uploadImageBuffer(
         signedProfileImageUrl,
-        String(transformedData.profileImage),
+        String(transformedData.profile_image),
       );
 
       if (profileImage.error) {
         return {error: profileImage.error, message: profileImage.message};
       }
 
-      transformedData.profileImage = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
+      transformedData.profile_image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
 
       // Invalidate the CloudFront cache
       await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
     }
 
-    if (transformedData.backgroundImage) {
+    if (transformedData.background_image) {
       const signedBackgroundImageUrl = await getUploadUrl(user.id, "user-backgrounds");
 
       const backgroundImage = await uploadImageBuffer(
         signedBackgroundImageUrl,
-        String(transformedData.backgroundImage),
+        String(transformedData.background_image),
       );
 
       if (backgroundImage.error) {
         return {error: backgroundImage.error, message: backgroundImage.message};
       }
 
-      transformedData.backgroundImage = `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`;
+      transformedData.background_image = `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`;
 
       await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.jpg`);
     }
@@ -128,10 +128,10 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     return {error: error, message: "Error updating profile"};
   }
   // Update the user session with the new image
-  if (transformedData.profileImage !== null) {
+  if (transformedData.profile_image !== null) {
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: transformedData.profileImage,
+        image: transformedData.profile_image,
       },
     });
     if (error) {
@@ -141,7 +141,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   } else {
     const {error} = await supabase.auth.updateUser({
       data: {
-        profileImage: "",
+        profile_image: "",
       },
     });
     if (error) {

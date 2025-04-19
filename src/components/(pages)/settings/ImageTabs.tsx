@@ -6,9 +6,9 @@ const ImageTabs = ({id}: {id: string}) => {
   const [selectedTab, setSelectedTab] = useState<string>("");
 
   useEffect(() => {
-    if (id === "profileImage") {
+    if (id === "profile_image") {
       setSelectedTab("Profile Image");
-    } else if (id === "projectImage") {
+    } else if (id === "project_image") {
       setSelectedTab("Project Image");
     } else {
       setSelectedTab("Profile Image");
@@ -17,22 +17,20 @@ const ImageTabs = ({id}: {id: string}) => {
 
   const renderTabContent = () => {
     if (selectedTab === "Profile Image") {
-      return <ImageUpload name="profileImage" type="avatar" showFallback={false} />;
+      return <ImageUpload name="profile_image" type="avatar" />;
     } else if (selectedTab === "Background Image") {
       return (
         <ImageUpload
-          name="backgroundImage"
+          name="background_image"
           type="background"
           aspectRatio={1184 / 156}
-          maxWidth={1184}
-          maxHeight={156}
           circularCrop={false}
           initialCropWidth={100}
-          cropInstructions="Adjust the grid to crop your background image. "
+          cropInstructions="Adjust the grid to crop your background image"
         />
       );
     } else if (selectedTab === "Project Image") {
-      return <ImageUpload name="projectImage" type="avatar" showFallback={false} />;
+      return <ImageUpload name="project_image" type="avatar" />;
     }
     return null;
   };
@@ -40,7 +38,7 @@ const ImageTabs = ({id}: {id: string}) => {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        {id === "profileImage" ? (
+        {id === "profile_image" ? (
           <>
             <button
               onClick={() => setSelectedTab("Profile Image")}
@@ -61,7 +59,7 @@ const ImageTabs = ({id}: {id: string}) => {
               Background Image
             </button>
           </>
-        ) : id === "projectImage" ? (
+        ) : id === "project_image" ? (
           <>
             <button
               onClick={() => setSelectedTab("Project Image")}

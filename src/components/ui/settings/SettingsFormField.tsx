@@ -21,7 +21,7 @@ import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
-import ImageTabs from "@/components/(pages)/settings/SettingsProfilePhoto";
+import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
