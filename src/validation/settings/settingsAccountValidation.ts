@@ -49,7 +49,7 @@ export const settingsAccountValidationSchema = z.object({
       },
     ),
   goal: z.string().max(200, {message: "Goals must be at most 200 characters"}).optional(),
-  tagline: z.string().max(70, {message: "Tagline must be at most 70 characters"}).optional(),
+  tagline: z.string().max(70, {message: "Tagline must be at most 70 characters"}),
   skills: z
     .array(
       z

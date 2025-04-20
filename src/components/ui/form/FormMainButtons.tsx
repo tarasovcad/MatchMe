@@ -3,7 +3,7 @@ import AlertComponent from "@/components/ui/dialog/AlertComponent";
 import {CircleX, Save} from "lucide-react";
 import React from "react";
 
-const SettingsMainButtons = ({
+const FormMainButtons = ({
   isLoading,
   handleSave,
   handleCancel,
@@ -45,4 +45,4 @@ const SettingsMainButtons = ({
   );
 };
 
-export default SettingsMainButtons;
+export default FormMainButtons;

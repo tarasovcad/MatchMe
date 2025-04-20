@@ -9,6 +9,7 @@ import {DropdownOption} from "@/types/settingsFieldsTypes";
 import {useState} from "react";
 import {useFormContext} from "react-hook-form";
 import FormErrorLabel from "../FormErrorLabel";
+import {cn} from "@/lib/utils";
 
 export default function SelectInput({
   id,
@@ -42,7 +43,13 @@ export default function SelectInput({
   return (
     <div className="space-y-2">
       <Select onValueChange={handleSelectChange} value={selectedValue}>
-        <SelectTrigger id={id} className={className}>
+        <SelectTrigger
+          id={id}
+          className={cn(
+            error &&
+              "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+            className,
+          )}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="[&_*[role=option]]:ps-2 [&_*[role=option]]:pe-8 [&_*[role=option]>span]:end-2 [&_*[role=option]>span]:start-auto">

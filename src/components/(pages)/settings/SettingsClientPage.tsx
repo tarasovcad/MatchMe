@@ -1,7 +1,5 @@
 "use client";
 import React, {useEffect, useState} from "react";
-import SettingsMainButtons from "@/components/(pages)/settings/SettingsMainButtons";
-
 import PageTitle from "@/components/pages/PageTitle";
 import AccountTab from "@/components/(pages)/settings/AccountTab";
 import SecurityTab from "@/components/(pages)/settings/SecurityTab";
@@ -18,6 +16,7 @@ import {canChangeUsername} from "@/functions/canChangeUsername";
 import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
 import TabNavigation from "@/components/ui/form/TabNavigation";
 import {settingsTabsData} from "@/data/tabs/settingsTabsData";
+import FormMainButtons from "@/components/ui/form/FormMainButtons";
 
 const SettingsClientPage = ({
   tab,
@@ -113,7 +112,7 @@ const SettingsClientPage = ({
         animate="visible"
         variants={bottomSectionButtonsVariants}
         className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
-        <SettingsMainButtons
+        <FormMainButtons
           isLoading={isLoading}
           handleSave={handleSave}
           handleCancel={handleCancel}

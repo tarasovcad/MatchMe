@@ -1,19 +1,15 @@
 import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import NumberFieldInput from "@/components/ui/form/NumberFieldInput";
-import PersonalWebsiteInput from "@/components/ui/form/PersonalWebsiteInput";
 import SelectInputWithSearch from "@/components/ui/form/SelectInputWithSearch";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import SimpleSlider from "@/components/ui/form/SimpleSlider";
 import TagsInput from "@/components/ui/form/TagsInput";
-import MakeProfilePublicSwitch from "@/components/ui/settings/MakeProfilePublicSwitch";
 import SettingsSelectField from "@/components/ui/settings/SettingsSelectField";
 import SocialLinksInput from "@/components/ui/settings/SocialLinksInput";
-import VerifyAccountButton from "@/components/ui/settings/VerifyAccountButton";
 import {cn} from "@/lib/utils";
 import {FormFieldProps} from "@/types/settingsFieldsTypes";
 import React from "react";
 import SelectInput from "@/components/ui/form/SelectInput";
-import SettingsUsernameInput from "@/components/ui/settings/SettingsUsernameInput";
 import {useFormContext} from "react-hook-form";
 import InputSlug from "@/components/(pages)/dashboard/create-project/InputSlug";
 import ImageTabs from "../../settings/ImageTabs";
@@ -23,7 +19,6 @@ const fieldComponents = {
   slug: InputSlug,
   textarea: AutogrowingTextarea,
   selectWithSearch: SelectInputWithSearch,
-
   number: NumberFieldInput,
   image: ImageTabs,
   dropdown: SelectInput,
@@ -31,7 +26,6 @@ const fieldComponents = {
   select: SettingsSelectField,
   slider: SimpleSlider,
   social: SocialLinksInput,
-  // username: SettingsUsernameInput,
 };
 
 const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
@@ -42,7 +36,6 @@ const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
 
   const {
     register,
-    watch,
     formState: {errors},
   } = useFormContext();
 

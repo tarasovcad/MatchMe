@@ -60,7 +60,7 @@ export default function SelectInputWithSearch({
   const selectedOption = options.find((option) => option.title === selectedValue);
 
   return (
-    <div className="space-y-2">
+    <div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -70,6 +70,8 @@ export default function SelectInputWithSearch({
             aria-expanded={open}
             className={cn(
               "bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
+              error &&
+                "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               className,
             )}>
             <span className={cn("truncate", !selectedValue && "text-muted-foreground/70")}>

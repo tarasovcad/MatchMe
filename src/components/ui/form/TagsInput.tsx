@@ -5,6 +5,8 @@ import {useState} from "react";
 import {AnimatePresence, motion} from "framer-motion";
 import {X} from "lucide-react";
 import {Controller, useFormContext} from "react-hook-form";
+import {toast} from "sonner";
+import {hasProfanity} from "@/utils/other/profanityCheck";
 export default function TagsInput({placeholder, name}: {placeholder: string; name: string}) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   const {control} = useFormContext();
@@ -17,7 +19,6 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
           id: text,
           text: text,
         }));
-
         const customTagRenderer = (tag: Tag, isActiveTag: boolean) => {
           return (
             <motion.div
@@ -53,10 +54,17 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
             <TagInput
               tags={tags}
               setTags={(newTags) => {
-                if (error) {
+                if (error && error.type !== "too_small") {
                   return;
                 }
                 const tagArray = Array.isArray(newTags) ? newTags : [];
+
+                const hasBadTag = tagArray.some((tag) => hasProfanity(tag.text));
+                if (hasBadTag) {
+                  toast.error("Tag contains inappropriate language. Please choose another.");
+                  return;
+                }
+
                 const normalizedMap = new Map();
                 const uniqueTags = tagArray.filter((tag) => {
                   const normalized = tag.text.toLowerCase();
