@@ -1,9 +1,14 @@
 "use server";
+import {getUploadUrl} from "@/actions/aws/getUploadUrlUserAvatars";
+import {uploadImageBuffer} from "@/actions/aws/uploadImageBuffer";
+import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
 import {getClientIp} from "@/utils/network/getClientIp";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {ProjectCreationFormData} from "@/validation/project/projectCreationValidation";
 import {Ratelimit} from "@upstash/ratelimit";
+
+import {v4 as uuidv4} from "uuid";
 
 const MAX_PROJECTS = 3;
 
@@ -12,7 +17,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
 
   const projectRateLimiter = new Ratelimit({
     redis: redis,
-    limiter: Ratelimit.slidingWindow(3, "1 h"),
+    limiter: Ratelimit.slidingWindow(10, "1 h"),
     analytics: true,
     prefix: "ratelimit:ip:project-creation",
     enableProtection: true,
@@ -23,9 +28,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
   if (!projectLimit.success) {
     return {
       error: true,
-      message: `Rate limit exceeded. Try again in ${Math.ceil(
-        projectLimit.reset - Date.now() / 1000,
-      )} seconds`,
+      message: `Rate limit exceeded. Try again in later`,
     };
   }
 
@@ -83,10 +86,57 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
     {} as Record<string, Partial<ProjectCreationFormData>[keyof ProjectCreationFormData]>,
   );
 
-  const {error} = await supabase.from("projects").insert({
-    ...cleanedData,
-    user_id: user.id,
-  });
+  const projectId = uuidv4();
+
+  try {
+    if (cleanedData.project_image) {
+      const signedProfileImageUrl = await getUploadUrl(projectId, "project-avatars");
+
+      const profileImage = await uploadImageBuffer(
+        signedProfileImageUrl,
+        String(cleanedData.project_image),
+      );
+
+      if (profileImage.error) {
+        return {error: profileImage.error, message: profileImage.message};
+      }
+
+      cleanedData.project_image = `${process.env.CLOUDFRONT_URL}/project-avatars/${projectId}/image.jpg`;
+
+      // Invalidate the CloudFront cache
+      await invalidateCloudFrontCache(`project-avatars/${projectId}/image.jpg`);
+    }
+
+    if (cleanedData.background_image) {
+      const signedBackgroundImageUrl = await getUploadUrl(projectId, "project-backgrounds");
+
+      const backgroundImage = await uploadImageBuffer(
+        signedBackgroundImageUrl,
+        String(cleanedData.background_image),
+      );
+
+      if (backgroundImage.error) {
+        return {error: backgroundImage.error, message: backgroundImage.message};
+      }
+
+      cleanedData.background_image = `${process.env.CLOUDFRONT_URL}/project-backgrounds/${projectId}/image.jpg`;
+
+      await invalidateCloudFrontCache(`project-backgrounds/${projectId}/image.jpg`);
+    }
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    return {error: error, message: "Error updating profile"};
+  }
+
+  const {error} = await supabase
+    .from("projects")
+    .insert({
+      id: projectId,
+      ...cleanedData,
+      user_id: user.id,
+    })
+    .select("*")
+    .single();
 
   if (error) {
     console.error("Detailed error:", error);

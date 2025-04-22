@@ -78,6 +78,19 @@ export class CdkStack extends cdk.Stack {
         resources: [`${matchmeBucket.bucketArn}/user-backgrounds/*`],
       }),
 
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/project-avatars/*`],
+      }),
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/project-backgrounds/*`],
+      }),
+
       // Allow public read access to `user-avatars/` folder
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
@@ -92,6 +105,22 @@ export class CdkStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         principals: [new iam.AnyPrincipal()],
         resources: [`${matchmeBucket.bucketArn}/user-backgrounds/*`],
+      }),
+
+      // Allow public read access to `project-avatars/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/project-avatars/*`],
+      }),
+
+      // Allow public read access to `project-backgrounds/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/project-backgrounds/*`],
       }),
 
       // Allow public read access to `skills-image/` folder

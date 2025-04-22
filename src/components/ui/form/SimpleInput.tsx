@@ -88,7 +88,7 @@ const SimpleInput = ({
               strokeWidth={2}
               aria-hidden="true"
             />
-            Username is already taken
+            {name === "slug" ? "Slug" : "Username"} is already taken
           </motion.div>
         )}
       </AnimatePresence>
@@ -107,7 +107,7 @@ const SimpleInput = ({
               strokeWidth={2}
               aria-hidden="true"
             />
-            Username is available
+            {name === "slug" ? "Slug" : "Username"} is available
           </motion.div>
         )}
       </AnimatePresence>

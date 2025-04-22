@@ -1,7 +1,7 @@
 "use client";
 import PageTitle from "@/components/pages/PageTitle";
 import {projectCreationFormFields} from "@/data/forms/create-project/projectCreationFormFields";
-import {redirect} from "next/navigation";
+import {redirect, useRouter} from "next/navigation";
 import React, {useState} from "react";
 import CreateProjectFormField from "./CreateProjectFormField";
 import {FormProvider, useForm} from "react-hook-form";
@@ -20,28 +20,26 @@ const MAX_PROJECTS = 3;
 
 const CreateProject = ({projectCount}: {projectCount: number}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [initialValues, setInitialValues] = useState<ProjectCreationFormData>({
-    name: "",
-    slug: "",
-    tagline: "",
-    description: "",
-    project_image: "",
-    project_image_metadata: null,
-    background_image: "",
-    background_image_metadata: null,
-    current_stage: "",
-    category: "",
-    why_join: "",
-    language_proficiency: [],
-    technology_stack: [],
-  });
-
   const hasReachedLimit = projectCount >= MAX_PROJECTS;
-
+  const router = useRouter();
   const methods = useForm<ProjectCreationFormData>({
     resolver: zodResolver(projectCreationValidationSchema),
     mode: "onChange",
-    defaultValues: initialValues,
+    defaultValues: {
+      name: "",
+      slug: "",
+      tagline: "",
+      description: "",
+      project_image: "",
+      project_image_metadata: null,
+      background_image: "",
+      background_image_metadata: null,
+      current_stage: "",
+      category: "",
+      why_join: "",
+      language_proficiency: [],
+      technology_stack: [],
+    },
   });
 
   const onSubmit = async (data: ProjectCreationFormData) => {
@@ -55,15 +53,15 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       const response = await createProject(data);
       if (response.error) {
         console.log("Error creating project:", response.error);
-        toast.error(response.error);
+        toast.error(response.message);
         setIsLoading(false);
         return;
       }
       toast.success(response.message);
 
-      // if (response.error === false) {
-      //   router.push("/dashboard?tab=projects");
-      // }
+      if (response.error === false) {
+        router.push("/dashboard?tab=projects");
+      }
     } catch (error) {
       console.log("error", error);
     }

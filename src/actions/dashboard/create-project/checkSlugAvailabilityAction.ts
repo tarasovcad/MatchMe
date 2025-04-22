@@ -39,9 +39,8 @@ export async function checkSlugAvailabilityAction(slug: string) {
 
     const slugTrimmed = slug.trim().toLowerCase();
 
-    // Check if the slug exists in the specified collection
     const {count, error} = await supabase
-      .from("projects") // Use the collection type passed as parameter
+      .from("projects")
       .select("slug", {
         head: true,
         count: "exact",
