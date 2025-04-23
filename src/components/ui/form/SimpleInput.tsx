@@ -20,6 +20,7 @@ const SimpleInput = ({
   readOnly,
   isUsernameAvailable,
   search,
+  ref,
   ...props
 }: SimpleInputProps) => {
   return (
@@ -52,6 +53,7 @@ const SimpleInput = ({
             id={id}
             placeholder={placeholder}
             name={name}
+            ref={ref}
             {...register}
             {...props}
           />

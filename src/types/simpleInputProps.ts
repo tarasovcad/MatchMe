@@ -13,4 +13,5 @@ export interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputEle
   error?: {message?: string} | undefined;
   isUsernameAvailable?: boolean | null;
   search?: boolean;
+  ref?: React.Ref<HTMLInputElement>;
 }

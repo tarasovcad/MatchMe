@@ -12,6 +12,7 @@ import ProfilesSingleCardSkeleton from "./ProfilesSingleCardSkeleton";
 import ProfilesFilterPopup from "./ProfilesFilterPopup";
 import ProfilesOrderBy from "./ProfilesOrderBy";
 import {ProfileQueryParams} from "@/types/profiles/sortProfiles";
+import FilterButton from "@/components/ui/FilterButton";
 
 const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
   const [profiles, setProfiles] = useState<(MatchMeUser & {isFavorite: boolean})[]>([]);
@@ -228,6 +229,7 @@ const ProfilesClientComponent = ({userSession}: {userSession: User | null}) => {
           <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
             <ProfilesOrderBy setQueryParams={setQueryParams} queryParams={queryParams} />
             <ProfilesFilterPopup />
+            <FilterButton />
           </div>
         </motion.div>
         <div className="container-query-parent">

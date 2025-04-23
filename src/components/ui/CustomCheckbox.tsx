@@ -9,6 +9,7 @@ interface CustomCheckboxProps {
   id: string;
   name: string;
   showTerms?: boolean;
+  className?: string;
 }
 
 const CustomCheckbox = ({
@@ -17,6 +18,7 @@ const CustomCheckbox = ({
   id,
   name,
   showTerms = true,
+  className,
   ...props
 }: CustomCheckboxProps) => {
   return (
@@ -34,6 +36,7 @@ const CustomCheckbox = ({
           checked={checked}
           name={name}
           onCheckedChange={onCheckedChange}
+          className={className}
           {...props}
         />
         {showTerms && <TermsAndPolicy id={id} />}
