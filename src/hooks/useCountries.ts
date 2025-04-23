@@ -4,6 +4,9 @@ interface Country {
   name: {
     common: string;
   };
+  flags: {
+    svg: string;
+  };
 }
 
 interface FormattedCountry {
@@ -30,8 +33,7 @@ export const useCountries = (shouldFetch = false) => {
         }));
 
         const sortedCountries = formattedCountries.sort(
-          (a: FormattedCountry, b: FormattedCountry) =>
-            a.title.localeCompare(b.title),
+          (a: FormattedCountry, b: FormattedCountry) => a.title.localeCompare(b.title),
         );
 
         setCountries(sortedCountries);

@@ -16,7 +16,7 @@ export interface MatchMeUser {
     fileName: string | undefined;
     fileSize: number | undefined;
     uploadedAt: string | undefined;
-  };
+  } | null;
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;

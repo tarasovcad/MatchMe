@@ -57,9 +57,9 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
     }
     return (
       <SidebarProvider removePadding>
-        {user.backgroundImage ? (
+        {user.background_image ? (
           <Image
-            src={user.backgroundImage}
+            src={user.background_image}
             unoptimized
             alt={user.name}
             width={0}
@@ -93,9 +93,9 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                 isFavorite={isFavorite}
               />
               <div className="flex max-[1130px]:flex-col gap-3">
-                {user.profileImage ? (
+                {user.profile_image ? (
                   <Image
-                    src={user.profileImage}
+                    src={user.profile_image}
                     alt={user.name}
                     width={125}
                     height={125}

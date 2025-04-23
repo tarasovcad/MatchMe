@@ -24,9 +24,9 @@ const ProfilesSinlgeCard = ({
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
-            {profile.profileImage ? (
+            {profile.profile_image ? (
               <Image
-                src={profile.profileImage}
+                src={profile.profile_image}
                 alt={`${profile.name} profile picture`}
                 width={42}
                 height={42}
