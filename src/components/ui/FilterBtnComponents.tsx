@@ -87,6 +87,11 @@ export const MultiSelect = ({
                 <span className="flex-1">{opt.title}</span>
               </CommandItem>
             ))}
+            {filteredOptions.length > 20 && title === "Tags" && (
+              <div className="px-2 py-2 text-muted-foreground text-sm text-center">
+                Enter a specific skill to find relevant results
+              </div>
+            )}
           </div>
 
           <div className="bottom-0 z-10 sticky flex items-center gap-2 bg-background p-2 border-t">
@@ -105,26 +110,20 @@ export const MultiSelect = ({
   );
 };
 
-export const SearchInput = ({inputRef}: {inputRef: React.RefObject<HTMLInputElement>}) => {
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [inputRef]);
-
-  return (
-    <div className="px-2 py-1.5">
-      <SimpleInput placeholder="Search..." type="search" id="search" ref={inputRef} />
-    </div>
-  );
-};
-
 export const TagsSearch = ({
   inputRef,
   searchQuery,
+  initialSelectedOptions = [],
+  onApply,
+  onCancel,
+  onClosePopover,
 }: {
   inputRef: React.RefObject<HTMLInputElement>;
   searchQuery: string;
+  initialSelectedOptions?: string[];
+  onApply: (selectedOptions: string[]) => void;
+  onCancel: () => void;
+  onClosePopover: () => void;
 }) => {
   const [loading, setLoading] = useState(true);
   const {skills, lastSearchQuery, setSkills} = useSkillsStore();
@@ -152,7 +151,6 @@ export const TagsSearch = ({
 
     if (skills.length > 0 && searchQuery === lastSearchQuery) {
       setLoading(false);
-      console.log("Skipping fetch — already have results for this query");
     } else {
       const debounceTimer = setTimeout(fetchSkills, 300);
       return () => clearTimeout(debounceTimer);
@@ -172,16 +170,56 @@ export const TagsSearch = ({
           <LoadingButtonCircle size={20} />
         </div>
       )}
-      {/* {!loading && skills.length > 0 && <MultiSelect options={skills} searchQuery={searchQuery} />} */}
-      {/* {!loading && skills.length > 0 && skills.length > 20 && (
-        <div className="px-2 pb-2 text-muted-foreground text-sm text-center">
-          Enter a specific skill to find relevant results
-        </div>
-      )} */}
+      {!loading && skills.length > 0 && (
+        <MultiSelect
+          title="Tags"
+          options={skills}
+          searchQuery={searchQuery}
+          initialSelectedOptions={initialSelectedOptions}
+          onApply={onApply}
+          onCancel={onCancel}
+          onClosePopover={onClosePopover}
+        />
+      )}
       {!loading && hasFetchedOnce && skills.length === 0 && (
         <div className="px-2 py-2 text-muted-foreground text-sm">No results found</div>
       )}
     </>
+  );
+};
+
+export const SearchInput = ({
+  inputRef,
+  onApply,
+  defaultValue,
+}: {
+  inputRef: React.RefObject<HTMLInputElement>;
+  onApply: (value: string) => void;
+  defaultValue?: string;
+}) => {
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.value = defaultValue || "";
+    }
+  }, [inputRef, defaultValue]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && inputRef.current?.value) {
+      onApply(inputRef.current.value);
+    }
+  };
+  return (
+    <div className="px-2 py-1.5">
+      <SimpleInput
+        placeholder="Search..."
+        type="search"
+        id="search"
+        ref={inputRef}
+        onKeyDown={handleKeyDown}
+        defaultValue={defaultValue}
+      />
+    </div>
   );
 };
 

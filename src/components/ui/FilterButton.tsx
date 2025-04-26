@@ -5,7 +5,7 @@ import SimpleInput from "./form/SimpleInput";
 import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
 import {MultiSelect, NumberSelect, SearchInput, TagsSearch} from "./FilterBtnComponents";
-import {Filter, MultiSelectFilter, useFilterStore} from "@/store/filterStore";
+import {Filter, MultiSelectFilter, SearchInputFilter, useFilterStore} from "@/store/filterStore";
 
 const TypeComponents = {
   multiSelect: MultiSelect,
@@ -107,6 +107,12 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
 
     const ComponentToRender = TypeComponents[selectedFilter.type as keyof typeof TypeComponents];
 
+    const existingSearchValue =
+      selectedFilter.type === "searchInput"
+        ? (pageFilters.find((f) => f.value === selectedFilter.value) as SearchInputFilter)
+            ?.searchValue || ""
+        : "";
+
     const controlProps = {
       onApply: handleFilterChange,
       onClosePopover: () => setOpen(false),
@@ -123,6 +129,7 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
         options={(selectedFilter as MultiSelectFilter).options}
         searchQuery={searchQuery}
         initialSelectedOptions={getInitialSelectedOptions()}
+        defaultValue={existingSearchValue}
         {...controlProps}
       />
     );
