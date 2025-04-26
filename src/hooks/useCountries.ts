@@ -1,3 +1,4 @@
+import {useCountriesStore} from "@/store/useCountriesStore";
 import {useEffect, useState} from "react";
 
 interface Country {
@@ -14,11 +15,11 @@ interface FormattedCountry {
 }
 
 export const useCountries = (shouldFetch = false) => {
-  const [countries, setCountries] = useState([]);
+  const {countries, isLoaded, setCountries} = useCountriesStore();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!shouldFetch) return;
+    if (!shouldFetch || isLoaded) return;
 
     const fetchCountries = async () => {
       if (countries.length > 0) return;
@@ -45,7 +46,7 @@ export const useCountries = (shouldFetch = false) => {
     };
 
     fetchCountries();
-  }, [shouldFetch, countries.length]);
+  }, [shouldFetch, isLoaded, setCountries]);
 
-  return {countries};
+  return {countries, isLoading};
 };

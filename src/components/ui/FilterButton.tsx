@@ -1,164 +1,27 @@
-import React, {useEffect, useRef, useState} from "react";
-import {ArrowRight, Briefcase, Filter, Search, Wrench} from "lucide-react";
+import React, {useRef, useState} from "react";
+import {ArrowRight, Filter as FilterIcon} from "lucide-react";
 import {Button} from "@/components/shadcn/button";
 import SimpleInput from "./form/SimpleInput";
-import {Checkbox} from "../shadcn/checkbox";
 import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
-import LoadingButtonCircle from "./LoadingButtonCirlce";
-import {getSkillsForFilterBtn} from "@/actions/profiles/getSkillsForFilterBtn";
-import {useSkillsStore} from "@/store/skillsCache";
-
-const MultiSelect = ({
-  options,
-  searchQuery,
-}: {
-  options?: Array<{title: string}>;
-  searchQuery: string;
-}) => {
-  const filteredOptions = options?.filter((opt) =>
-    opt.title.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-  return (
-    <CommandGroup className="p-1">
-      {filteredOptions && filteredOptions.length > 0 ? (
-        filteredOptions.map((opt) => (
-          <CommandItem
-            className="group flex items-center gap-2 [&_svg]:size-auto"
-            key={opt.title}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}>
-            <Checkbox className="group-hover:opacity-100 shadow-xs rounded-[4px] transition-opacity duration-100 ease-in-out" />
-            {opt.title}
-          </CommandItem>
-        ))
-      ) : (
-        <div className="px-2 py-2 text-muted-foreground text-sm">No results found</div>
-      )}
-    </CommandGroup>
-  );
-};
-
-const SearchInput = ({inputRef}: {inputRef: React.RefObject<HTMLInputElement>}) => {
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [inputRef]);
-
-  return (
-    <div className="px-2 py-1.5">
-      <SimpleInput placeholder="Search..." type="search" id="search" ref={inputRef} />
-    </div>
-  );
-};
-
-const TagsSearch = ({
-  inputRef,
-  searchQuery,
-}: {
-  inputRef: React.RefObject<HTMLInputElement>;
-  searchQuery: string;
-}) => {
-  const [loading, setLoading] = useState(true);
-  const {skills, lastSearchQuery, setSkills} = useSkillsStore();
-  const [hasFetchedOnce, setHasFetchedOnce] = useState(false);
-
-  useEffect(() => {
-    const fetchSkills = async () => {
-      setSkills([], "");
-      setLoading(true);
-
-      try {
-        const response = await getSkillsForFilterBtn(searchQuery);
-        setSkills(response, searchQuery);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-        setHasFetchedOnce(true);
-      }
-    };
-    if (searchQuery !== lastSearchQuery) {
-      setSkills([], "");
-      setLoading(true);
-    }
-
-    if (skills.length > 0 && searchQuery === lastSearchQuery) {
-      setLoading(false);
-      console.log("Skipping fetch — already have results for this query");
-    } else {
-      const debounceTimer = setTimeout(fetchSkills, 300);
-      return () => clearTimeout(debounceTimer);
-    }
-  }, [searchQuery]);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [inputRef]);
-
-  return (
-    <>
-      {loading && (
-        <div className="flex justify-around px-2 py-2 text-sm">
-          <LoadingButtonCircle size={20} />
-        </div>
-      )}
-      {!loading && skills.length > 0 && <MultiSelect options={skills} searchQuery={searchQuery} />}
-      {!loading && skills.length > 0 && skills.length > 20 && (
-        <div className="px-2 pb-2 text-muted-foreground text-sm text-center">
-          Enter a specific skill to find relevant results
-        </div>
-      )}
-      {!loading && hasFetchedOnce && skills.length === 0 && (
-        <div className="px-2 py-2 text-muted-foreground text-sm">No results found</div>
-      )}
-    </>
-  );
-};
-
-const data = [
-  {
-    title: "Current Role",
-    icon: Briefcase,
-    value: "currentRole",
-    type: "searchInput",
-    showSearchInput: false,
-  },
-  {
-    title: "Lookling for",
-    icon: Search,
-    value: "lookingFor",
-    type: "multiSelect",
-    options: [{title: "Team Member"}, {title: "Co-Founder"}, {title: "Startups"}],
-    showSearchInput: true,
-  },
-  {
-    title: "Skills",
-    icon: Wrench,
-    value: "skills",
-    type: "tagsSearch",
-    options: [{title: "Team Member"}, {title: "Co-Founder"}, {title: "Startups"}],
-    showSearchInput: true,
-  },
-];
+import {MultiSelect, NumberSelect, SearchInput, TagsSearch} from "./FilterBtnComponents";
+import {Filter, MultiSelectFilter, useFilterStore} from "@/store/filterStore";
 
 const TypeComponents = {
   multiSelect: MultiSelect,
   searchInput: SearchInput,
   tagsSearch: TagsSearch,
+  numberSelect: NumberSelect,
 };
 
-const FilterButton = () => {
+const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [currentSelected, setCurrentSelected] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+
+  const {addFilter, getFiltersForPage} = useFilterStore();
 
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
@@ -176,18 +39,91 @@ const FilterButton = () => {
     }
   };
 
-  const selectedFilter = data.find((item) => item.value === currentSelected);
+  const pageFilters = getFiltersForPage(pageKey);
+  const selectedFilter = data?.find((item) => item.value === currentSelected);
+
+  const getInitialSelectedOptions = () => {
+    if (selectedFilter?.type === "multiSelect") {
+      // Find the filter in the store
+      const existingFilter = pageFilters.find(
+        (f) => f.value === selectedFilter.value,
+      ) as MultiSelectFilter;
+
+      return existingFilter?.selectedOptions || [];
+    }
+    return [];
+  };
+
+  const handleFilterChange = (filterValue: string | string[] | number) => {
+    if (selectedFilter) {
+      // Create updated filter with new value
+      let updatedFilter: Filter;
+
+      switch (selectedFilter.type) {
+        case "searchInput":
+          updatedFilter = {
+            ...selectedFilter,
+            searchValue: String(filterValue),
+          };
+          break;
+        case "multiSelect":
+          updatedFilter = {
+            ...selectedFilter,
+            selectedOptions: Array.isArray(filterValue)
+              ? (filterValue as string[])
+              : [String(filterValue)],
+          };
+          break;
+        case "tagsSearch":
+          updatedFilter = {
+            ...selectedFilter,
+            selectedTags: Array.isArray(filterValue)
+              ? (filterValue as string[])
+              : [String(filterValue)],
+          };
+          break;
+        case "numberSelect":
+          updatedFilter = {
+            ...selectedFilter,
+            selectedValue:
+              typeof filterValue === "number" ? filterValue : parseInt(String(filterValue)),
+          };
+          break;
+        default:
+          updatedFilter = selectedFilter;
+      }
+
+      addFilter(pageKey, updatedFilter);
+      setTimeout(() => {
+        setCurrentSelected(null);
+        setSearchQuery("");
+      }, 200);
+      setOpen(false);
+    }
+  };
 
   const renderComponentByType = () => {
     if (!selectedFilter) return null;
 
     const ComponentToRender = TypeComponents[selectedFilter.type as keyof typeof TypeComponents];
 
+    const controlProps = {
+      onApply: handleFilterChange,
+      onClosePopover: () => setOpen(false),
+      onCancel: () => {
+        setCurrentSelected(null);
+        setSearchQuery("");
+      },
+      inputRef: inputRef as React.RefObject<HTMLInputElement>,
+    };
+
     return (
       <ComponentToRender
-        options={selectedFilter.options}
+        title={selectedFilter.title}
+        options={(selectedFilter as MultiSelectFilter).options}
         searchQuery={searchQuery}
-        inputRef={inputRef as React.RefObject<HTMLInputElement>}
+        initialSelectedOptions={getInitialSelectedOptions()}
+        {...controlProps}
       />
     );
   };
@@ -208,7 +144,7 @@ const FilterButton = () => {
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button size={"xs"} className="max-[480px]:w-full">
-            <Filter size={16} strokeWidth={2} className="text-foreground/90" />
+            <FilterIcon size={16} strokeWidth={2} className="text-foreground/90" />
             Filter
           </Button>
         </PopoverTrigger>
