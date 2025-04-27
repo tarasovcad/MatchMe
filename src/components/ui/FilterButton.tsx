@@ -5,7 +5,13 @@ import SimpleInput from "./form/SimpleInput";
 import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
 import {MultiSelect, NumberSelect, SearchInput, TagsSearch} from "./FilterBtnComponents";
-import {Filter, MultiSelectFilter, SearchInputFilter, useFilterStore} from "@/store/filterStore";
+import {
+  Filter,
+  MultiSelectFilter,
+  SearchInputFilter,
+  TagsSearchFilter,
+  useFilterStore,
+} from "@/store/filterStore";
 
 const TypeComponents = {
   multiSelect: MultiSelect,
@@ -43,15 +49,15 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
   const selectedFilter = data?.find((item) => item.value === currentSelected);
 
   const getInitialSelectedOptions = () => {
-    if (selectedFilter?.type === "multiSelect") {
-      // Find the filter in the store
-      const existingFilter = pageFilters.find(
-        (f) => f.value === selectedFilter.value,
-      ) as MultiSelectFilter;
+    if (!selectedFilter) return [];
 
-      return existingFilter?.selectedOptions || [];
+    const existingFilter = pageFilters.find((f) => f.value === selectedFilter.value);
+
+    if (selectedFilter.type === "multiSelect") {
+      return (existingFilter as MultiSelectFilter)?.selectedOptions || [];
+    } else if (selectedFilter.type === "tagsSearch") {
+      return (existingFilter as TagsSearchFilter)?.selectedTags || [];
     }
-    return [];
   };
 
   const handleFilterChange = (filterValue: string | string[] | number) => {

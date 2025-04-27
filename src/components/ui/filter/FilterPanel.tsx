@@ -1,3 +1,9 @@
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import {Filter, useFilterStore} from "@/store/filterStore";
 import {X} from "lucide-react";
 import React from "react";
@@ -25,33 +31,40 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
   }
 
   return (
-    <div className="flex gap-2 overflow-y-auto">
-      {filters.map((filter) => {
-        const displayValue = getFilterDisplayValue(filter);
-        if (!displayValue) return null;
+    <TooltipProvider delayDuration={0}>
+      <div className="flex gap-2 overflow-y-auto">
+        {filters.map((filter) => {
+          const displayValue = getFilterDisplayValue(filter);
+          if (!displayValue) return null;
 
-        return (
-          <div
-            key={filter.value}
-            className={`h-7 relative border border-input rounded-[6px] font-medium text-sm ps-2 pe-7 flex items-center text-foreground ring-ring/50 w-fit gap-1.5 whitespace-nowrap`}>
-            <span className="text-[13px] text-secondary">{filter.title}</span>{" "}
-            <span>{displayValue}</span>
-            <button
-              className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground hover:text-foreground transition-colors cursor-pointer -end-px"
-              onClick={() => removeFilter(pageKey, filter.value)}>
-              <X className="m-auto size-4" />
-            </button>
-          </div>
-        );
-      })}
-      {/* <div
-        className={`h-7 relative border border-input rounded-[6px] font-medium text-sm ps-2 pe-7 flex items-center text-foreground ring-ring/50 w-fit gap-1.5 whitespace-nowrap`}>
-        <span className="text-[13px] text-secondary">Current Role</span> <span>Full Stack </span>
-        <button className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground hover:text-foreground transition-colors cursor-pointer -end-px">
-          <X className="m-auto size-4" />
-        </button>
-      </div> */}
-    </div>
+          const words = displayValue.split(" ");
+          const shownWords = words.slice(0, 3).join(" ");
+          const remainingCount = words.length - 3;
+
+          return (
+            <div
+              key={filter.value}
+              className="relative flex items-center gap-1.5 ps-2 pe-7 border border-input rounded-[6px] ring-ring/50 w-fit h-7 font-medium text-foreground text-sm whitespace-nowrap">
+              <span className="text-[13px] text-secondary">{filter.title}</span>{" "}
+              <Tooltip>
+                <TooltipTrigger>
+                  <span>{shownWords}</span>
+                  <span>{remainingCount > 0 && ` +${remainingCount}`}</span>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={10} className="px-2 py-1 text-xs">
+                  {displayValue}
+                </TooltipContent>
+              </Tooltip>
+              <button
+                className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground hover:text-foreground transition-colors cursor-pointer -end-px"
+                onClick={() => removeFilter(pageKey, filter.value)}>
+                <X className="m-auto size-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </TooltipProvider>
   );
 };
 
