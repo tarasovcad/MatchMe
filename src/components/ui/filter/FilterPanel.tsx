@@ -12,6 +12,7 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
   const filters = getFiltersForPage(pageKey);
 
+  console.log(filters);
   const getFilterDisplayValue = (filter: Filter) => {
     switch (filter.type) {
       case "searchInput":
@@ -20,7 +21,11 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
         return filter.selectedOptions?.join(", ") || "";
       case "tagsSearch":
         return filter.selectedTags?.join(", ") || "";
+
       case "numberSelect":
+        if (Array.isArray(filter.selectedValue)) {
+          return filter.selectedValue.join(" - ");
+        }
         return filter.selectedValue?.toString() || "";
       default:
         return "";
@@ -50,9 +55,13 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
                 <TooltipTrigger>
                   <span>{shownWords}</span>
                   <span>{remainingCount > 0 && ` +${remainingCount}`}</span>
+                  {filter.title === "Availability" && <span className="text-sm"> hours</span>}
+                  {filter.title === "Age" && <span className="text-sm"> years old</span>}
                 </TooltipTrigger>
                 <TooltipContent sideOffset={10} className="px-2 py-1 text-xs">
                   {displayValue}
+                  {filter.title === "Availability" && <span> hours</span>}
+                  {filter.title === "Age" && <span> years old</span>}
                 </TooltipContent>
               </Tooltip>
               <button

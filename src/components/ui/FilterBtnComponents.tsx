@@ -11,6 +11,7 @@ import {useSliderWithInput} from "@/hooks/use-slider-with-input";
 import {Input} from "../shadcn/input";
 import {useCountries} from "@/hooks/useCountries";
 import {Button} from "../shadcn/button";
+import {cn} from "@/lib/utils";
 
 export const MultiSelect = ({
   title,
@@ -58,6 +59,17 @@ export const MultiSelect = ({
     });
   }, [filteredOptions, initialSelectedOptions]);
 
+  const hasChanges = useMemo(() => {
+    // Check if arrays have different lengths
+    if (selectedOptions.length !== initialSelectedOptions.length) return true;
+
+    // Check if arrays have different items
+    return (
+      selectedOptions.some((option) => !initialSelectedOptions.includes(option)) ||
+      initialSelectedOptions.some((option) => !selectedOptions.includes(option))
+    );
+  }, [selectedOptions, initialSelectedOptions]);
+
   // Toggle selection when an option is clicked
   const handleOptionToggle = (optionTitle: string) => {
     setSelectedOptions((prev) => {
@@ -96,7 +108,10 @@ export const MultiSelect = ({
                 onSelect={() => handleOptionToggle(opt.title)}>
                 <Checkbox
                   checked={selectedOptions.includes(opt.title)}
-                  className="group-hover:opacity-100 shadow-xs rounded-[4px] transition-opacity duration-100 ease-in-out cursor-pointer"
+                  className={cn(
+                    "group-hover:opacity-100 shadow-xs rounded-[4px] transition-opacity duration-100 ease-in-out cursor-pointer",
+                    selectedOptions.includes(opt.title) ? "opacity-100" : "opacity-0",
+                  )}
                   onClick={() => handleOptionToggle(opt.title)}
                   onCheckedChange={() => handleOptionToggle(opt.title)}
                 />
@@ -111,10 +126,20 @@ export const MultiSelect = ({
           </div>
 
           <div className="bottom-0 z-10 sticky flex items-center gap-2 bg-background p-2 border-t">
-            <Button variant="outline" size="xs" className="h-[35px]" onClick={handleCancel}>
+            <Button
+              variant="outline"
+              size="xs"
+              className="h-[35px]"
+              onClick={handleCancel}
+              disabled={!hasChanges}>
               Cancel
             </Button>
-            <Button variant="secondary" size="xs" className="w-full h-[35px]" onClick={handleApply}>
+            <Button
+              variant="secondary"
+              size="xs"
+              className="w-full h-[35px]"
+              onClick={handleApply}
+              disabled={!hasChanges}>
               Apply
             </Button>
           </div>
@@ -242,23 +267,33 @@ export const SearchInput = ({
 export const NumberSelect = ({
   maxValue = 100,
   minValue = 0,
+  onApply,
+  onCancel,
+  onClosePopover,
+  initialValues = {single: 0, range: [0, 0]},
 }: {
   maxValue?: number;
   minValue?: number;
+  onApply: (value: number | number[]) => void;
+  onCancel: () => void;
+  onClosePopover: () => void;
+  initialValues?: {single: number; range: number[]};
 }) => {
-  const [currentTab, setCurrentTab] = useState("tab-1");
+  const hasRangeValues = initialValues.range[0] !== 0 || initialValues.range[1] !== 0;
+  const defaultTab = hasRangeValues ? "tab-2" : "tab-1";
+  const [mode, setMode] = useState<"single" | "range">(hasRangeValues ? "range" : "single");
 
   const singleSlider = useSliderWithInput({
     minValue,
     maxValue,
-    initialValue: [0],
+    initialValue: [initialValues.single],
     defaultValue: [0],
   });
 
   const rangeSlider = useSliderWithInput({
     minValue,
     maxValue,
-    initialValue: [0, 0],
+    initialValue: initialValues.range,
     defaultValue: [0, 0],
   });
 
@@ -280,16 +315,33 @@ export const NumberSelect = ({
     resetToDefault: resetRange,
   } = rangeSlider;
 
+  const handleApply = () => {
+    onClosePopover();
+    setTimeout(() => {
+      if (mode === "single") {
+        onApply(singleValue[0]);
+      } else {
+        onApply(rangeValue);
+      }
+    }, 200);
+  };
+
+  const handleCancel = () => {
+    resetSingle();
+    resetRange();
+    onCancel();
+  };
+
   return (
-    <div className="p-3">
+    <div>
       <Tabs
-        defaultValue="tab-1"
-        className="items-center gap-6"
+        defaultValue={defaultTab}
+        className="items-center gap-6 p-3"
         onValueChange={(value) => {
           if (value === "tab-1") {
-            resetSingle();
+            setMode("single");
           } else if (value === "tab-2") {
-            resetRange();
+            setMode("range");
           }
         }}>
         <TabsList className="p-1 rounded-full w-full">
@@ -378,6 +430,14 @@ export const NumberSelect = ({
           </div>
         </TabsContent>
       </Tabs>
+      <div className="flex items-center gap-2 bg-background p-2 border-t">
+        <Button variant="outline" size="xs" className="h-[35px]" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button variant="secondary" size="xs" className="w-full h-[35px]" onClick={handleApply}>
+          Apply
+        </Button>
+      </div>
     </div>
   );
 };

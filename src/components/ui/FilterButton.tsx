@@ -8,6 +8,7 @@ import {MultiSelect, NumberSelect, SearchInput, TagsSearch} from "./FilterBtnCom
 import {
   Filter,
   MultiSelectFilter,
+  NumberSelectFilter,
   SearchInputFilter,
   TagsSearchFilter,
   useFilterStore,
@@ -60,7 +61,36 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
     }
   };
 
-  const handleFilterChange = (filterValue: string | string[] | number) => {
+  const getInitialNumberValues = () => {
+    if (!selectedFilter || selectedFilter.type !== "numberSelect")
+      return {single: 0, range: [0, 0]};
+
+    const existingFilter = pageFilters.find(
+      (f) => f.value === selectedFilter.value,
+    ) as NumberSelectFilter;
+
+    // If the existing filter has a selected value
+    if (existingFilter?.selectedValue !== undefined) {
+      // If it's an array, it's a range
+      if (Array.isArray(existingFilter.selectedValue)) {
+        return {
+          single: 0,
+          range: existingFilter.selectedValue as number[],
+        };
+      }
+      // If it's a single number
+      else {
+        return {
+          single: existingFilter.selectedValue as number,
+          range: [0, 0],
+        };
+      }
+    }
+
+    return {single: 0, range: [0, 0]};
+  };
+
+  const handleFilterChange = (filterValue: string | string[] | number | number[]) => {
     if (selectedFilter) {
       // Create updated filter with new value
       let updatedFilter: Filter;
@@ -91,8 +121,9 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
         case "numberSelect":
           updatedFilter = {
             ...selectedFilter,
-            selectedValue:
-              typeof filterValue === "number" ? filterValue : parseInt(String(filterValue)),
+            selectedValue: Array.isArray(filterValue)
+              ? (filterValue as number[])
+              : Number(filterValue),
           };
           break;
         default:
@@ -136,6 +167,7 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
         searchQuery={searchQuery}
         initialSelectedOptions={getInitialSelectedOptions()}
         defaultValue={existingSearchValue}
+        initialValues={getInitialNumberValues()}
         {...controlProps}
       />
     );

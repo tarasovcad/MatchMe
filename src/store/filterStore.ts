@@ -38,7 +38,7 @@ export type NumberSelectFilter = BaseFilter & {
   numberSelectProps?: {
     maxValue: number;
   };
-  selectedValue?: number;
+  selectedValue?: number | number[];
 };
 
 export type Filter = MultiSelectFilter | TagsSearchFilter | SearchInputFilter | NumberSelectFilter;
