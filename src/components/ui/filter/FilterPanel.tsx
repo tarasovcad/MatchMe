@@ -12,7 +12,8 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
   const filters = getFiltersForPage(pageKey);
 
-  console.log(filters);
+  if (!filters?.length) return null;
+
   const getFilterDisplayValue = (filter: Filter) => {
     switch (filter.type) {
       case "searchInput":
@@ -23,17 +24,41 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
         return filter.selectedTags?.join(", ") || "";
 
       case "numberSelect":
-        if (Array.isArray(filter.selectedValue)) {
-          return filter.selectedValue.join(" - ");
-        }
-        return filter.selectedValue?.toString() || "";
+        return Array.isArray(filter.selectedValue)
+          ? filter.selectedValue.join(" - ")
+          : filter.selectedValue?.toString() || "";
       default:
         return "";
     }
   };
-  if (!filters || filters.length === 0) {
-    return null;
-  }
+
+  const renderTooltip = (filter: Filter, displayValue: string) => {
+    const words = displayValue.split(" ");
+    const shownWords = words.slice(0, 3).join(" ");
+    const remainingCount = words.length - 3;
+    const suffix =
+      filter.title === "Availability" ? " hours" : filter.title === "Age" ? " years old" : "";
+
+    return remainingCount > 0 ? (
+      <Tooltip>
+        <TooltipTrigger>
+          <span>{shownWords}</span>
+          {remainingCount > 0 && ` +${remainingCount}`}
+          {suffix && <span className="text-sm">{suffix}</span>}
+        </TooltipTrigger>
+        <TooltipContent sideOffset={10} className="px-2 py-1 text-xs">
+          {displayValue}
+          {suffix && <span>{suffix}</span>}
+        </TooltipContent>
+      </Tooltip>
+    ) : (
+      <div>
+        <span>{shownWords}</span>
+        {remainingCount > 0 && ` +${remainingCount}`}
+        {suffix && <span className="text-sm">{suffix}</span>}
+      </div>
+    );
+  };
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -42,28 +67,12 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
           const displayValue = getFilterDisplayValue(filter);
           if (!displayValue) return null;
 
-          const words = displayValue.split(" ");
-          const shownWords = words.slice(0, 3).join(" ");
-          const remainingCount = words.length - 3;
-
           return (
             <div
               key={filter.value}
               className="relative flex items-center gap-1.5 ps-2 pe-7 border border-input rounded-[6px] ring-ring/50 w-fit h-7 font-medium text-foreground text-sm whitespace-nowrap">
               <span className="text-[13px] text-secondary">{filter.title}</span>{" "}
-              <Tooltip>
-                <TooltipTrigger>
-                  <span>{shownWords}</span>
-                  <span>{remainingCount > 0 && ` +${remainingCount}`}</span>
-                  {filter.title === "Availability" && <span className="text-sm"> hours</span>}
-                  {filter.title === "Age" && <span className="text-sm"> years old</span>}
-                </TooltipTrigger>
-                <TooltipContent sideOffset={10} className="px-2 py-1 text-xs">
-                  {displayValue}
-                  {filter.title === "Availability" && <span> hours</span>}
-                  {filter.title === "Age" && <span> years old</span>}
-                </TooltipContent>
-              </Tooltip>
+              {renderTooltip(filter, displayValue)}
               <button
                 className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground hover:text-foreground transition-colors cursor-pointer -end-px"
                 onClick={() => removeFilter(pageKey, filter.value)}>

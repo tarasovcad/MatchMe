@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from "react";
+import React, {useState, useEffect, useRef, useCallback, useMemo} from "react";
 import {motion} from "framer-motion";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
@@ -14,12 +14,12 @@ import {
 import {Button} from "../shadcn/button";
 import {ChevronDown} from "lucide-react";
 import FilterButton from "../ui/FilterButton";
-import {Filter} from "@/store/filterStore";
+import {Filter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";
 
 export type InfiniteListProps<T> = {
   userSession: User | null;
-  fetchItems: (page: number, itemsPerPage: number, userId?: string) => Promise<T[]>;
+  fetchItems: (page: number, itemsPerPage: number, filters?: Filter[]) => Promise<T[]>;
   fetchUserFavorites?: (userId: string) => Promise<string[]>;
   renderItem: (
     item: T & {isFavorite?: boolean},
@@ -56,6 +56,9 @@ const InfiniteItemLoader = <T extends {id: string}>({
 
   const observer = useRef<IntersectionObserver | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const {getFiltersForPage} = useFilterStore();
+  const currentFilters = useMemo(() => getFiltersForPage(type), [type, filtersData]);
 
   const lastItemRef = useCallback(
     (node: HTMLDivElement) => {
@@ -97,8 +100,16 @@ const InfiniteItemLoader = <T extends {id: string}>({
   }, []);
 
   useEffect(() => {
+    console.log("Current filters changed");
+    setPage(1);
+    setItems([]);
+    setHasMore(true);
     fetchData();
-  }, [page]);
+  }, [currentFilters]);
+
+  useEffect(() => {
+    fetchData();
+  }, [page, currentFilters]);
 
   const fetchData = async () => {
     if (page === 1) {
@@ -111,7 +122,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
     if (page === 1) setUserId(currentUserId);
 
     try {
-      const allItems = await fetchItems(page, itemsPerPage);
+      const allItems = await fetchItems(page, itemsPerPage, currentFilters);
 
       if (allItems.length === 0) {
         setHasMore(false);

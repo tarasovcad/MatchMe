@@ -1,0 +1,47 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {Filter} from "@/store/filterStore";
+
+export function applyFiltersToSupabaseQuery(query: any, filters: Filter[]) {
+  if (!filters || filters.length === 0) return query;
+
+  for (const filter of filters) {
+    switch (filter.type) {
+      case "searchInput":
+        if (filter.searchValue) {
+          // For text search - adjust column name based on your schema
+          query = query.ilike(filter.value, `%${filter.searchValue}%`);
+        }
+        break;
+
+      case "multiSelect":
+        if (filter.selectedOptions && filter.selectedOptions.length > 0) {
+          // For multi-select filters
+          query = query.in(filter.value, filter.selectedOptions);
+        }
+        break;
+
+      case "tagsSearch":
+        if (filter.selectedTags && filter.selectedTags.length > 0) {
+          // For tags - assuming tags are stored in an array column
+          query = query.contains(filter.value, filter.selectedTags);
+        }
+        break;
+
+      case "numberSelect":
+        if (filter.selectedValue !== undefined) {
+          if (Array.isArray(filter.selectedValue)) {
+            // Range selection [min, max]
+            query = query
+              .gte(filter.value, filter.selectedValue[0])
+              .lte(filter.value, filter.selectedValue[1]);
+          } else {
+            // Single value selection
+            query = query.eq(filter.value, filter.selectedValue);
+          }
+        }
+        break;
+    }
+  }
+
+  return query;
+}
