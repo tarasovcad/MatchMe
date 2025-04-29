@@ -15,10 +15,11 @@ export type FilterType =
 
 export type BaseFilter = {
   title: string;
-  icon?: LucideIcon;
+  icon: LucideIcon;
   value: string;
   type: FilterType;
   showSearchInput?: boolean;
+  showInFilterBtn: boolean;
 };
 
 export type MultiSelectFilter = BaseFilter & {

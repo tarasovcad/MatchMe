@@ -213,33 +213,37 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
               {currentSelected === null ? (
                 <CommandGroup className="p-1">
                   {filteredData.length > 0 ? (
-                    filteredData.map((item) => (
-                      <CommandItem
-                        className="group flex justify-between items-center"
-                        key={item.value}
-                        onMouseEnter={() => setHoveredItem(item.value)}
-                        onSelect={() => {
-                          setCurrentSelected(item.value);
-                          setSearchQuery("");
-                          setTimeout(() => {
-                            inputRef.current?.focus();
-                          }, 0);
-                        }}>
-                        <div className="flex items-center gap-2">
-                          <item.icon size={16} aria-hidden="true" />
-                          {item.title}
-                        </div>
-                        <ArrowRight
-                          size={16}
-                          className={`${
-                            hoveredItem === item.value
-                              ? "opacity-80"
-                              : "opacity-0 group-hover:opacity-100"
-                          }`}
-                          aria-hidden="true"
-                        />
-                      </CommandItem>
-                    ))
+                    filteredData.map((item) => {
+                      if (item.showInFilterBtn) {
+                        return (
+                          <CommandItem
+                            className="group flex justify-between items-center"
+                            key={item.value}
+                            onMouseEnter={() => setHoveredItem(item.value)}
+                            onSelect={() => {
+                              setCurrentSelected(item.value);
+                              setSearchQuery("");
+                              setTimeout(() => {
+                                inputRef.current?.focus();
+                              }, 0);
+                            }}>
+                            <div className="flex items-center gap-2">
+                              <item.icon size={16} aria-hidden="true" />
+                              {item.title}
+                            </div>
+                            <ArrowRight
+                              size={16}
+                              className={`${
+                                hoveredItem === item.value
+                                  ? "opacity-80"
+                                  : "opacity-0 group-hover:opacity-100"
+                              }`}
+                              aria-hidden="true"
+                            />
+                          </CommandItem>
+                        );
+                      }
+                    })
                   ) : (
                     <div className="px-2 py-1.5 text-muted-foreground text-sm">
                       No results found

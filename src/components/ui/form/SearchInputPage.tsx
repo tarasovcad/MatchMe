@@ -43,6 +43,8 @@ const SearchInputPage = ({
         value: "search",
         title: "Search",
         searchValue: debouncedValue,
+        icon: Search,
+        showInFilterBtn: false,
       });
     }
   }, [debouncedValue]);

@@ -16,7 +16,6 @@ export async function getAllProfiles(
   perPage: number,
   pageFilters?: SerializableFilter[],
 ) {
-  console.log("getAllProfiles");
   const supabase = await createClient();
 
   // Calculate range for pagination
@@ -47,7 +46,6 @@ export async function getAllProfiles(
 
     // Apply pagination
     query = query.range(from, to);
-    console.log("Query:", query);
     const {data, error: profilesError} = await query;
 
     if (profilesError) {

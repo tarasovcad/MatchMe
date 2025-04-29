@@ -9,6 +9,7 @@ export const profileFiltersData: Filter[] = [
     value: "public_current_role",
     type: "searchInput",
     showSearchInput: false,
+    showInFilterBtn: true,
   },
   {
     title: "Lookling for",
@@ -17,6 +18,7 @@ export const profileFiltersData: Filter[] = [
     type: "multiSelect",
     options: [{title: "Team Member"}, {title: "Co-Founder"}, {title: "Startups"}],
     showSearchInput: true,
+    showInFilterBtn: true,
   },
   {
     title: "Skills",
@@ -24,6 +26,7 @@ export const profileFiltersData: Filter[] = [
     value: "skills",
     type: "tagsSearch",
     showSearchInput: true,
+    showInFilterBtn: true,
   },
   {
     title: "Availability",
@@ -34,6 +37,7 @@ export const profileFiltersData: Filter[] = [
     numberSelectProps: {
       maxValue: 40,
     },
+    showInFilterBtn: true,
   },
   {
     title: "Age",
@@ -44,12 +48,14 @@ export const profileFiltersData: Filter[] = [
     numberSelectProps: {
       maxValue: 100,
     },
+    showInFilterBtn: true,
   },
   {
     title: "Location",
     icon: MapPin,
     value: "location",
     type: "multiSelect",
+    showInFilterBtn: true,
   },
   {
     title: "Languages",
@@ -57,5 +63,6 @@ export const profileFiltersData: Filter[] = [
     value: "languages",
     type: "multiSelect",
     options: languages.map((language) => ({title: language.value})),
+    showInFilterBtn: true,
   },
 ];
