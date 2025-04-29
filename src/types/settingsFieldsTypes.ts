@@ -5,7 +5,9 @@ export interface FormFieldProps {
   fieldDescription: string;
   fieldType:
     | "text"
+    | "slug"
     | "select"
+    | "selectWithSearch"
     | "number"
     | "dropdown"
     | "image"

@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import SimpleInput from "@/components/ui/SimpleInput";
+import SimpleInput from "@/components/ui/form/SimpleInput";
 import {Button} from "@/components/shadcn/button";
 import {useForm} from "react-hook-form";
 import {SkillsFormData, skillsValidation} from "../validation/skillsValidation";
@@ -61,11 +61,7 @@ const SetSkills = () => {
             error={errors.imageUrl}
           />
         </div>
-        <Button
-          className="mt-5 w-full"
-          variant={"default"}
-          type="submit"
-          isLoading={loading}>
+        <Button className="mt-5 w-full" variant={"default"} type="submit" isLoading={loading}>
           Add Skill
         </Button>
       </div>

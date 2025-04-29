@@ -1,7 +1,4 @@
-import {
-  CloudFrontClient,
-  CreateInvalidationCommand,
-} from "@aws-sdk/client-cloudfront";
+import {CloudFrontClient, CreateInvalidationCommand} from "@aws-sdk/client-cloudfront";
 
 const cloudfront = new CloudFrontClient({
   region: process.env.AWS_REGION,
@@ -25,7 +22,6 @@ export async function invalidateCloudFrontCache(path: string) {
     });
 
     await cloudfront.send(command);
-    console.log("CloudFront cache invalidated:", path);
   } catch (error) {
     console.error("Error invalidating CloudFront cache:", error);
   }

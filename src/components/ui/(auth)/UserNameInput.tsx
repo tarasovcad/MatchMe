@@ -5,7 +5,7 @@ import {debounce} from "lodash";
 import {RESERVED_USERNAMES} from "@/data/auth/reservedUsernames";
 import {signUpSchemaStep3} from "@/validation/auth/signUpValidation";
 import React, {useCallback, useEffect} from "react";
-import SimpleInput from "../SimpleInput";
+import SimpleInput from "../form/SimpleInput";
 import {Controller, useFormContext} from "react-hook-form";
 
 const UserNameInput = ({
@@ -47,9 +47,7 @@ const UserNameInput = ({
     setIsUsernameAvailable(null);
 
     if (hasProfanity(username)) {
-      toast.error(
-        "Username contains inappropriate language. Please choose another.",
-      );
+      toast.error("Username contains inappropriate language. Please choose another.");
       setUsernameLoading(false);
       setIsUsernameAvailable(false);
       return;
@@ -81,9 +79,7 @@ const UserNameInput = ({
       }
       if (hasProfanity(username)) {
         setIsUsernameAvailable(false);
-        toast.error(
-          "Username contains inappropriate language. Please choose another.",
-        );
+        toast.error("Username contains inappropriate language. Please choose another.");
         return;
       }
       checkUsernameAvailability(username);

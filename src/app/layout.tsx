@@ -23,10 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className="selection:bg-primary selection:text-white">
+    <html lang="en" suppressHydrationWarning className="selection:bg-primary selection:text-white">
       <head>
         <link rel="icon" href="/light-icon.svg" />
       </head>
@@ -42,7 +39,15 @@ export default function RootLayout({
           <SpeedInsights />
           {children}
         </ThemeProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster
+          position="top-right"
+          richColors
+          toastOptions={{closeButton: true}}
+          offset={25}
+          mobileOffset={25}
+          gap={20}
+          // duration={300000}
+        />
       </body>
     </html>
   );

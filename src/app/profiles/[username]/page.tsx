@@ -22,11 +22,7 @@ import {Messages2} from "iconsax-react";
 import Image from "next/image";
 import React from "react";
 
-const UserSinglePage = async ({
-  params,
-}: {
-  params: Promise<{username: string}>;
-}) => {
+const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const startTime = performance.now();
   const {username} = await params;
   try {
@@ -35,9 +31,7 @@ const UserSinglePage = async ({
       return (
         <div className="mx-auto p-4 container">
           <h1 className="font-bold text-xl">User not found</h1>
-          <p>
-            The user you are looking for doesn&apos;t exist or has been removed.
-          </p>
+          <p>The user you are looking for doesn&apos;t exist or has been removed.</p>
         </div>
       );
     }
@@ -50,9 +44,7 @@ const UserSinglePage = async ({
       userSessionId
         ? getUserFollowRelationship(userSessionId, user.id)
         : Promise.resolve({isFollowing: false, isFollowingBack: false}),
-      userSessionId
-        ? isUserFavorite(userSessionId, user.id)
-        : Promise.resolve(false),
+      userSessionId ? isUserFavorite(userSessionId, user.id) : Promise.resolve(false),
     ]);
 
     const {followerCount, followingCount, skills} = statsData;
@@ -65,16 +57,29 @@ const UserSinglePage = async ({
     }
     return (
       <SidebarProvider removePadding>
-        <Image
-          src={"/test.png"}
-          unoptimized
-          alt={user.name}
-          width={0}
-          height={0}
-          sizes="100vw"
-          className="rounded-[6px] rounded-t-none w-full"
-          style={{width: "100%", height: "156px"}}
-        />
+        {user.background_image ? (
+          <Image
+            src={user.background_image}
+            unoptimized
+            alt={user.name}
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="rounded-[6px] rounded-t-none w-full object-cover"
+            style={{
+              width: "100%",
+              height: "clamp(130px, 20vw, 156px)",
+            }}
+          />
+        ) : (
+          <div
+            className="bg-gray-200 rounded-[6px] rounded-t-none w-full"
+            style={{
+              width: "100%",
+              height: "clamp(130px, 20vw, 156px)",
+            }}></div>
+        )}
+
         <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
           <div className="flex flex-col gap-6">
             <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
@@ -88,9 +93,9 @@ const UserSinglePage = async ({
                 isFavorite={isFavorite}
               />
               <div className="flex max-[1130px]:flex-col gap-3">
-                {user.image ? (
+                {user.profile_image ? (
                   <Image
-                    src={user.image}
+                    src={user.profile_image}
                     alt={user.name}
                     width={125}
                     height={125}
@@ -119,9 +124,7 @@ const UserSinglePage = async ({
                   {/* name and verified */}
                   <div className="flex flex-col gap-[6px]">
                     <div className="flex items-center gap-2">
-                      <MainGradient
-                        as="h1"
-                        className="font-semibold text-[26px] leading-[26px]">
+                      <MainGradient as="h1" className="font-semibold text-[26px] leading-[26px]">
                         {user.name}
                       </MainGradient>
                       {!user.is_profile_verified && (
@@ -173,11 +176,7 @@ const UserSinglePage = async ({
             <div className="flex flex-col gap-8 max-[990px]:gap-10">
               {profileFormFields.map((formField) => (
                 <div key={formField.fieldTitle}>
-                  <ProfileFormField
-                    formField={formField}
-                    user={user}
-                    skills={skills}
-                  />
+                  <ProfileFormField formField={formField} user={user} skills={skills} />
                 </div>
               ))}
             </div>
@@ -190,10 +189,7 @@ const UserSinglePage = async ({
     return (
       <div className="mx-auto p-4 container">
         <h1 className="font-bold text-xl">Something went wrong</h1>
-        <p>
-          We encountered an error while loading this profile. Please try again
-          later.
-        </p>
+        <p>We encountered an error while loading this profile. Please try again later.</p>
       </div>
     );
   }
@@ -218,11 +214,7 @@ const UserButtons = ({
 }) => {
   if (userSessionId !== profileId) {
     return (
-      <div
-        className={cn(
-          "flex items-center gap-3 max-[620px] max-[360px]:gap-1",
-          className,
-        )}>
+      <div className={cn("flex items-center gap-3 max-[620px] max-[360px]:gap-1", className)}>
         <AuthGate userSessionId={userSessionId}>
           <ProfileOtherButton
             userId={userSessionId}
@@ -234,9 +226,7 @@ const UserButtons = ({
 
         <div className="flex items-center gap-[10px] max-[360px]:gap-1 @max-[620px]:w-full">
           <AuthGate userSessionId={userSessionId}>
-            <Button
-              size={"default"}
-              className="@max-[620px]:order-2 @max-[620px]:w-full">
+            <Button size={"default"} className="@max-[620px]:order-2 @max-[620px]:w-full">
               <Messages2
                 size="18"
                 color="currentColor"
@@ -274,30 +264,20 @@ const UserNumbers = ({
   return (
     <div className={cn("flex items-center gap-12 ", className)}>
       <div>
-        <span className="text-[13px] text-secondary leading-[16px]">
-          Followers
-        </span>
-        <MainGradient
-          as="h3"
-          className="font-semibold text-[26px] text-secondary leading-[34px]">
+        <span className="text-[13px] text-secondary leading-[16px]">Followers</span>
+        <MainGradient as="h3" className="font-semibold text-[26px] text-secondary leading-[34px]">
           {formatNumber(followerCount)}
         </MainGradient>
       </div>
       <div>
-        <span className="text-[13px] text-secondary leading-[16px]">
-          Following
-        </span>
-        <MainGradient
-          as="h3"
-          className="font-semibold text-[26px] text-secondary leading-[34px]">
+        <span className="text-[13px] text-secondary leading-[16px]">Following</span>
+        <MainGradient as="h3" className="font-semibold text-[26px] text-secondary leading-[34px]">
           {formatNumber(followingCount)}
         </MainGradient>
       </div>
       <div>
         <span className="text-[13px] text-secondary leading-[16px]">Posts</span>
-        <MainGradient
-          as="h3"
-          className="font-semibold text-[26px] text-secondary leading-[34px]">
+        <MainGradient as="h3" className="font-semibold text-[26px] text-secondary leading-[34px]">
           5
         </MainGradient>
       </div>

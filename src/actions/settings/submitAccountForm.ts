@@ -3,12 +3,13 @@
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
 import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
-import {uploadUserAvatar} from "../aws/uploadUserAvatar";
+import {uploadImageBuffer} from "../aws/uploadImageBuffer";
 import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
+import {Ratelimit} from "@upstash/ratelimit";
+import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 
-export const submitAccountForm = async (
-  formData: Partial<SettingsAccountFormData>,
-) => {
+export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
 
   const {
@@ -17,6 +18,42 @@ export const submitAccountForm = async (
 
   if (!user) {
     throw new Error("User not authenticated");
+  }
+  const ip = await getClientIp();
+
+  const settingsAccountLimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, "5 m"), // 10 attempts per 5 minutes
+    analytics: true,
+    prefix: "ratelimit:settings",
+    enableProtection: true,
+  });
+
+  const settingsAccountIpLimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(15, "10 m"), // 15 attempts per 10 minutes per IP
+    analytics: true,
+    prefix: "ratelimit:ip:settings",
+    enableProtection: true,
+  });
+
+  const [userLimit, ipLimit] = await Promise.all([
+    settingsAccountLimit.limit(user.id),
+    settingsAccountIpLimit.limit(ip),
+  ]);
+
+  if (!userLimit.success) {
+    return {
+      error: true,
+      message: "Too many security settings update attempts. Please try again later.",
+    };
+  }
+
+  if (!ipLimit.success) {
+    return {
+      error: true,
+      message: "Too many security settings update attempts from this IP. Please try again later.",
+    };
   }
 
   // Transform empty strings to null
@@ -36,28 +73,43 @@ export const submitAccountForm = async (
       }
       return acc;
     },
-    {} as Record<
-      string,
-      Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null
-    >,
+    {} as Record<string, Partial<SettingsAccountFormData>[keyof SettingsAccountFormData] | null>,
   );
+
   try {
-    if (transformedData.image) {
-      const signedUrl = await getUploadUrl(user.id);
-      const result = await uploadUserAvatar(
-        signedUrl,
-        String(transformedData.image),
+    if (transformedData.profile_image) {
+      const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");
+
+      const profileImage = await uploadImageBuffer(
+        signedProfileImageUrl,
+        String(transformedData.profile_image),
       );
 
-      if (result.error) {
-        return {error: result.error, message: result.message};
-      } else {
-        console.log(result.message);
-        transformedData.image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
-
-        // Invalidate the CloudFront cache
-        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+      if (profileImage.error) {
+        return {error: profileImage.error, message: profileImage.message};
       }
+
+      transformedData.profile_image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
+
+      // Invalidate the CloudFront cache
+      await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+    }
+
+    if (transformedData.background_image) {
+      const signedBackgroundImageUrl = await getUploadUrl(user.id, "user-backgrounds");
+
+      const backgroundImage = await uploadImageBuffer(
+        signedBackgroundImageUrl,
+        String(transformedData.background_image),
+      );
+
+      if (backgroundImage.error) {
+        return {error: backgroundImage.error, message: backgroundImage.message};
+      }
+
+      transformedData.background_image = `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`;
+
+      await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.jpg`);
     }
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -76,10 +128,10 @@ export const submitAccountForm = async (
     return {error: error, message: "Error updating profile"};
   }
   // Update the user session with the new image
-  if (transformedData.image !== null) {
+  if (transformedData.profile_image !== null) {
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: transformedData.image,
+        image: transformedData.profile_image,
       },
     });
     if (error) {
@@ -89,7 +141,7 @@ export const submitAccountForm = async (
   } else {
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: "",
+        profile_image: "",
       },
     });
     if (error) {

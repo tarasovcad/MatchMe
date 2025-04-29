@@ -42,27 +42,22 @@ export class CdkStack extends cdk.Stack {
     });
 
     // Create CloudFront distribution
-    const distribution = new cloudfront.Distribution(
-      this,
-      "MatchMeDistribution",
-      {
-        defaultBehavior: {
-          origin: origins.S3BucketOrigin.withOriginAccessControl(matchmeBucket),
-          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-          viewerProtocolPolicy:
-            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-        },
-        errorResponses: [
-          {
-            httpStatus: 403,
-            responseHttpStatus: 403,
-            responsePagePath: "/error.html",
-            ttl: cdk.Duration.minutes(30),
-          },
-        ],
+    const distribution = new cloudfront.Distribution(this, "MatchMeDistribution", {
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(matchmeBucket),
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
       },
-    );
+      errorResponses: [
+        {
+          httpStatus: 403,
+          responseHttpStatus: 403,
+          responsePagePath: "/error.html",
+          ttl: cdk.Duration.minutes(30),
+        },
+      ],
+    });
 
     const bucketPolicy = new s3.BucketPolicy(this, "BucketPolicy", {
       bucket: matchmeBucket,
@@ -72,10 +67,28 @@ export class CdkStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ["s3:PutObject"],
         effect: iam.Effect.ALLOW,
-        principals: [
-          new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin"),
-        ],
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
         resources: [`${matchmeBucket.bucketArn}/user-avatars/*`],
+      }),
+
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/user-backgrounds/*`],
+      }),
+
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/project-avatars/*`],
+      }),
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/project-backgrounds/*`],
       }),
 
       // Allow public read access to `user-avatars/` folder
@@ -84,6 +97,30 @@ export class CdkStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         principals: [new iam.AnyPrincipal()],
         resources: [`${matchmeBucket.bucketArn}/user-avatars/*`],
+      }),
+
+      // Allow public read access to `user-backgrounds/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/user-backgrounds/*`],
+      }),
+
+      // Allow public read access to `project-avatars/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/project-avatars/*`],
+      }),
+
+      // Allow public read access to `project-backgrounds/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/project-backgrounds/*`],
       }),
 
       // Allow public read access to `skills-image/` folder

@@ -75,10 +75,8 @@ export const accountSettingsFormFields = [
         fieldType: "image",
         fieldInputProps: [
           {
-            id: "image",
-            placeholder: "Profile Picture",
-            type: "file",
-            name: "image",
+            id: "profile_image",
+            name: "profile_image",
           },
         ],
       },
@@ -184,14 +182,15 @@ export const accountSettingsFormFields = [
     formTitle: "Personal Context",
     formData: [
       {
-        fieldTitle: "Location & Timezone",
-        fieldType: "timezone",
+        fieldTitle: "Location",
+        fieldType: "selectWithSearch",
+        fieldDescription: "Your current location",
         fieldInputProps: [
           {
-            id: "location_timezone",
-            placeholder: "London / British Time (UTC +0)",
+            id: "location",
+            placeholder: "Select your location",
             type: "text",
-            name: "location_timezone",
+            name: "location",
           },
         ],
       },
@@ -237,8 +236,7 @@ export const accountSettingsFormFields = [
       },
       {
         fieldTitle: "Social Links",
-        fieldDescription:
-          "Add links to your professional social media profiles",
+        fieldDescription: "Add links to your professional social media profiles",
         fieldType: "social",
         fieldInputProps: [
           {

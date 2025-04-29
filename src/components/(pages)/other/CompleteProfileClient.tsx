@@ -1,10 +1,7 @@
 "use client";
 import React, {useState} from "react";
 import {FormProvider, useForm} from "react-hook-form";
-import {
-  SignUpFormData,
-  signUpSchemaStep3,
-} from "@/validation/auth/signUpValidation";
+import {SignUpFormData, signUpSchemaStep3} from "@/validation/auth/signUpValidation";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {LogoImage} from "@/components/ui/Logo";
 import AuthTopText from "@/components/auth/AuthTopText";
@@ -19,15 +16,13 @@ import {hasProfanity} from "@/utils/other/profanityCheck";
 import {Suspense} from "react";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
-import SimpleInput from "@/components/ui/SimpleInput";
+import SimpleInput from "@/components/ui/form/SimpleInput";
 import UserNameInput from "@/components/ui/(auth)/UserNameInput";
 
 const CompleteProfileClient = () => {
   const [loading, setLoading] = useState(false);
   const [usernameLoading, setUsernameLoading] = useState(false);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
-    boolean | null
-  >(null);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const searchParams = useSearchParams();
   const referrer = searchParams.get("from");
   const nameFromQuery = searchParams.get("name") || "";
@@ -64,9 +59,7 @@ const CompleteProfileClient = () => {
     }
 
     if (hasProfanity(data.username)) {
-      toast.error(
-        "Username contains inappropriate language. Please choose another.",
-      );
+      toast.error("Username contains inappropriate language. Please choose another.");
       return;
     }
     if (RESERVED_USERNAMES.includes(data.username.toLowerCase())) {

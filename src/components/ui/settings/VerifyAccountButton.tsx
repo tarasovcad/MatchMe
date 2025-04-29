@@ -11,10 +11,7 @@ const VerifyAccountButton = ({name}: {name: string}) => {
       {isVerified ? (
         <span>Verified</span>
       ) : (
-        <Button
-          variant="outline"
-          size="xs"
-          className="w-full max-w-[117px] text-[13px]">
+        <Button variant="outline" size="xs" className="w-full max-w-[117px] h-fit text-[13px]">
           Verify Now
         </Button>
       )}
