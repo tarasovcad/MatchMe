@@ -21,6 +21,7 @@ const SimpleInput = ({
   isUsernameAvailable,
   search,
   ref,
+  loadingPlacement = "right",
   ...props
 }: SimpleInputProps) => {
   return (
@@ -37,7 +38,8 @@ const SimpleInput = ({
                 "p-0 pr-3 italic text-muted-foreground/70 file:me-3 file:h-full file:border-0 file:border-r file:border-solid file:border-input file:bg-transparent file:px-3 file:text-sm file:font-medium file:not-italic file:text-foreground",
               mail && "peer ps-9",
               search && "peer ps-9",
-              loading && "peer pe-9",
+              loading && loadingPlacement === "right" && "peer pe-9",
+              loading && loadingPlacement === "left" && "peer ps-9",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               isUsernameAvailable === false &&
@@ -67,8 +69,13 @@ const SimpleInput = ({
               <Search size={16} strokeWidth={2} aria-hidden="true" />
             </div>
           )}
-          {loading && (
+          {loading && loadingPlacement === "right" && (
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 pe-3 text-muted-foreground/80 pointer-events-none end-0">
+              <LoadingButtonCirlce size={16} />
+            </div>
+          )}
+          {loading && loadingPlacement === "left" && (
+            <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <LoadingButtonCirlce size={16} />
             </div>
           )}

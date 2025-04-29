@@ -6,14 +6,14 @@ export const profileFiltersData: Filter[] = [
   {
     title: "Current Role",
     icon: Briefcase,
-    value: "currentRole",
+    value: "public_current_role",
     type: "searchInput",
     showSearchInput: false,
   },
   {
     title: "Lookling for",
     icon: Search,
-    value: "lookingFor",
+    value: "looking_for",
     type: "multiSelect",
     options: [{title: "Team Member"}, {title: "Co-Founder"}, {title: "Startups"}],
     showSearchInput: true,
@@ -29,7 +29,7 @@ export const profileFiltersData: Filter[] = [
   {
     title: "Availability",
     icon: Clock,
-    value: "availability",
+    value: "work_availability",
     type: "numberSelect",
     showSearchInput: false,
     numberSelectProps: {

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {Filter} from "@/store/filterStore";
+import {SerializableFilter} from "@/store/filterStore";
 
-export function applyFiltersToSupabaseQuery(query: any, filters: Filter[]) {
+export function applyFiltersToSupabaseQuery(query: any, filters: SerializableFilter[]) {
   if (!filters || filters.length === 0) return query;
 
   for (const filter of filters) {

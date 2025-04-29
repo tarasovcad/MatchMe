@@ -43,6 +43,38 @@ export type NumberSelectFilter = BaseFilter & {
 
 export type Filter = MultiSelectFilter | TagsSearchFilter | SearchInputFilter | NumberSelectFilter;
 
+export type SerializableBaseFilter = {
+  value: string;
+  type: FilterType;
+  title: string;
+};
+
+export type SerializableMultiSelectFilter = SerializableBaseFilter & {
+  type: "multiSelect";
+  selectedOptions?: string[];
+};
+
+export type SerializableTagsSearchFilter = SerializableBaseFilter & {
+  type: "tagsSearch";
+  selectedTags?: string[];
+};
+
+export type SerializableSearchInputFilter = SerializableBaseFilter & {
+  type: "searchInput";
+  searchValue?: string;
+};
+
+export type SerializableNumberSelectFilter = SerializableBaseFilter & {
+  type: "numberSelect";
+  selectedValue?: number | number[];
+};
+
+export type SerializableFilter =
+  | SerializableMultiSelectFilter
+  | SerializableTagsSearchFilter
+  | SerializableSearchInputFilter
+  | SerializableNumberSelectFilter;
+
 interface FilterStore {
   appliedFilters: Record<string, Filter[]>;
 
@@ -54,6 +86,7 @@ interface FilterStore {
 
   // Get filters for specific page
   getFiltersForPage: (pageKey: string) => Filter[];
+  getSerializableFilters: (pageKey: string) => SerializableFilter[];
 }
 
 export const useFilterStore = create<FilterStore>((set, get) => ({
@@ -119,7 +152,56 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
       };
     }),
 
-  getFiltersForPage: (pageKey) => {
-    return get().appliedFilters[pageKey] || [];
+  getFiltersForPage: (pageKey: string) => {
+    const filters = get().appliedFilters[pageKey];
+    if (!filters) {
+      // Initialize empty array for this page if it doesn't exist
+      set((state) => ({
+        appliedFilters: {
+          ...state.appliedFilters,
+          [pageKey]: [],
+        },
+      }));
+      return [];
+    }
+
+    return filters;
+  },
+  getSerializableFilters: (pageKey: string) => {
+    const filters = get().getFiltersForPage(pageKey);
+
+    return filters.map((filter) => {
+      // Create a basic serializable version with common properties
+      const serializableFilter = {
+        value: filter.value,
+        type: filter.type,
+        title: filter.title,
+      };
+
+      // Add type-specific properties
+      if (filter.type === "multiSelect" && filter.selectedOptions) {
+        return {
+          ...serializableFilter,
+          selectedOptions: filter.selectedOptions,
+        };
+      } else if (filter.type === "tagsSearch" && filter.selectedTags) {
+        return {
+          ...serializableFilter,
+          selectedTags: filter.selectedTags,
+        };
+      } else if (filter.type === "searchInput" && filter.searchValue) {
+        return {
+          ...serializableFilter,
+          searchValue: filter.searchValue,
+        };
+      } else if (filter.type === "numberSelect" && filter.selectedValue) {
+        return {
+          ...serializableFilter,
+          selectedValue: filter.selectedValue,
+        };
+      }
+
+      return serializableFilter;
+    });
   },
 }));

@@ -14,12 +14,12 @@ import {
 import {Button} from "../shadcn/button";
 import {ChevronDown} from "lucide-react";
 import FilterButton from "../ui/FilterButton";
-import {Filter, useFilterStore} from "@/store/filterStore";
+import {Filter, SerializableFilter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";
 
 export type InfiniteListProps<T> = {
   userSession: User | null;
-  fetchItems: (page: number, itemsPerPage: number, filters?: Filter[]) => Promise<T[]>;
+  fetchItems: (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => Promise<T[]>;
   fetchUserFavorites?: (userId: string) => Promise<string[]>;
   renderItem: (
     item: T & {isFavorite?: boolean},
@@ -57,8 +57,9 @@ const InfiniteItemLoader = <T extends {id: string}>({
   const observer = useRef<IntersectionObserver | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const {getFiltersForPage} = useFilterStore();
-  const currentFilters = useMemo(() => getFiltersForPage(type), [type, filtersData]);
+  const {getFiltersForPage, getSerializableFilters} = useFilterStore();
+  const currentFilters = getFiltersForPage(type);
+  const serializableFilters = getSerializableFilters(type);
 
   const lastItemRef = useCallback(
     (node: HTMLDivElement) => {
@@ -100,11 +101,9 @@ const InfiniteItemLoader = <T extends {id: string}>({
   }, []);
 
   useEffect(() => {
-    console.log("Current filters changed");
     setPage(1);
     setItems([]);
     setHasMore(true);
-    fetchData();
   }, [currentFilters]);
 
   useEffect(() => {
@@ -122,7 +121,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
     if (page === 1) setUserId(currentUserId);
 
     try {
-      const allItems = await fetchItems(page, itemsPerPage, currentFilters);
+      const allItems = await fetchItems(page, itemsPerPage, serializableFilters);
 
       if (allItems.length === 0) {
         setHasMore(false);
@@ -195,7 +194,15 @@ const InfiniteItemLoader = <T extends {id: string}>({
         <motion.div
           className="flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2"
           variants={controlsSectionVariants}>
-          <SimpleInput placeholder="Search..." type="search" id="search" search />
+          <SimpleInput
+            placeholder={loading.initial ? "Loading..." : "Search..."}
+            type="search"
+            id="search"
+            search={!loading.initial}
+            loading={loading.initial}
+            loadingPlacement="left"
+          />
+
           <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
             <Button size={"xs"} className="max-[480px]:w-full">
               Order by
@@ -236,6 +243,15 @@ const InfiniteItemLoader = <T extends {id: string}>({
               No more items to load
             </motion.div>
           )}
+        {!loading.initial && items.length === 0 && (
+          <motion.div
+            className="py-14 text-[18px] text-foreground/70 text-center"
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            transition={{duration: 0.5}}>
+            No results found. Try adjusting your filters.
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );

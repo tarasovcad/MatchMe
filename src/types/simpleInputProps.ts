@@ -14,4 +14,5 @@ export interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputEle
   isUsernameAvailable?: boolean | null;
   search?: boolean;
   ref?: React.Ref<HTMLInputElement>;
+  loadingPlacement?: "left" | "right";
 }
