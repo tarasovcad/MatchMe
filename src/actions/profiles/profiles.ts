@@ -3,13 +3,13 @@
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {MatchMeUser} from "@/types/user/matchMeUser";
-import {Filter, SerializableFilter} from "@/store/filterStore";
+import {SerializableFilter} from "@/store/filterStore";
 import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupabaseQuery";
 
 const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
-const TABLE_NAME = "profiles";
+const TABLE_NAME = "mock_profiles";
 
 export async function getAllProfiles(
   page = 1,

@@ -23,7 +23,6 @@ export const profileFiltersData: Filter[] = [
     icon: Wrench,
     value: "skills",
     type: "tagsSearch",
-    options: [{title: "Team Member"}, {title: "Co-Founder"}, {title: "Startups"}],
     showSearchInput: true,
   },
   {

@@ -1,5 +1,5 @@
 import {Label} from "@/components/shadcn/label";
-import {CircleCheck, Mail, Search, TriangleAlert} from "lucide-react";
+import {CircleCheck, Mail, Search, TriangleAlert, X} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {AnimatePresence, motion} from "framer-motion";
 import LoadingButtonCirlce from "../LoadingButtonCirlce";
@@ -22,6 +22,9 @@ const SimpleInput = ({
   search,
   ref,
   loadingPlacement = "right",
+  showClearButton,
+  onClear,
+  value,
   ...props
 }: SimpleInputProps) => {
   return (
@@ -55,6 +58,7 @@ const SimpleInput = ({
             id={id}
             placeholder={placeholder}
             name={name}
+            value={value}
             ref={ref}
             {...register}
             {...props}
@@ -78,6 +82,15 @@ const SimpleInput = ({
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <LoadingButtonCirlce size={16} />
             </div>
+          )}
+
+          {value && showClearButton && (
+            <button
+              className="focus:z-10 absolute inset-y-0 flex justify-center items-center disabled:opacity-50 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 w-9 h-full text-muted-foreground/80 hover:text-foreground transition-[color,box-shadow] cursor-pointer disabled:cursor-not-allowed disabled:pointer-events-none end-0"
+              aria-label="Clear input"
+              onClick={onClear}>
+              <X size={16} aria-hidden="true" />
+            </button>
           )}
         </div>
       </div>

@@ -1,6 +1,5 @@
-import React, {useState, useEffect, useRef, useCallback, useMemo} from "react";
+import React, {useState, useEffect, useRef, useCallback} from "react";
 import {motion} from "framer-motion";
-import SimpleInput from "@/components/ui/form/SimpleInput";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {User} from "@supabase/supabase-js";
@@ -16,6 +15,7 @@ import {ChevronDown} from "lucide-react";
 import FilterButton from "../ui/FilterButton";
 import {Filter, SerializableFilter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";
+import SearchInputPage from "../ui/form/SearchInputPage";
 
 export type InfiniteListProps<T> = {
   userSession: User | null;
@@ -194,15 +194,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
         <motion.div
           className="flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2"
           variants={controlsSectionVariants}>
-          <SimpleInput
-            placeholder={loading.initial ? "Loading..." : "Search..."}
-            type="search"
-            id="search"
-            search={!loading.initial}
-            loading={loading.initial}
-            loadingPlacement="left"
-          />
-
+          <SearchInputPage pageKey={type} loading={loading} />
           <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
             <Button size={"xs"} className="max-[480px]:w-full">
               Order by

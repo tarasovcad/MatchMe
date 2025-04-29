@@ -6,11 +6,16 @@ export type FilterOption = {
   value?: string;
 };
 
-export type FilterType = "searchInput" | "multiSelect" | "tagsSearch" | "numberSelect";
+export type FilterType =
+  | "searchInput"
+  | "multiSelect"
+  | "tagsSearch"
+  | "numberSelect"
+  | "globalSearch";
 
 export type BaseFilter = {
   title: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   value: string;
   type: FilterType;
   showSearchInput?: boolean;
@@ -33,6 +38,11 @@ export type SearchInputFilter = BaseFilter & {
   searchValue?: string;
 };
 
+export type GlobalSearchFilter = BaseFilter & {
+  type: "globalSearch";
+  searchValue?: string;
+};
+
 export type NumberSelectFilter = BaseFilter & {
   type: "numberSelect";
   numberSelectProps?: {
@@ -41,7 +51,12 @@ export type NumberSelectFilter = BaseFilter & {
   selectedValue?: number | number[];
 };
 
-export type Filter = MultiSelectFilter | TagsSearchFilter | SearchInputFilter | NumberSelectFilter;
+export type Filter =
+  | MultiSelectFilter
+  | TagsSearchFilter
+  | SearchInputFilter
+  | NumberSelectFilter
+  | GlobalSearchFilter;
 
 export type SerializableBaseFilter = {
   value: string;
@@ -69,11 +84,17 @@ export type SerializableNumberSelectFilter = SerializableBaseFilter & {
   selectedValue?: number | number[];
 };
 
+export type SerializableGlobalSearchFilter = SerializableBaseFilter & {
+  type: "globalSearch";
+  searchValue?: string;
+};
+
 export type SerializableFilter =
   | SerializableMultiSelectFilter
   | SerializableTagsSearchFilter
   | SerializableSearchInputFilter
-  | SerializableNumberSelectFilter;
+  | SerializableNumberSelectFilter
+  | SerializableGlobalSearchFilter;
 
 interface FilterStore {
   appliedFilters: Record<string, Filter[]>;
@@ -189,7 +210,10 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
           ...serializableFilter,
           selectedTags: filter.selectedTags,
         };
-      } else if (filter.type === "searchInput" && filter.searchValue) {
+      } else if (
+        (filter.type === "searchInput" || filter.type === "globalSearch") &&
+        filter.searchValue
+      ) {
         return {
           ...serializableFilter,
           searchValue: filter.searchValue,

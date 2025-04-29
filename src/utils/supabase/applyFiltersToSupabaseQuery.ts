@@ -40,6 +40,17 @@ export function applyFiltersToSupabaseQuery(query: any, filters: SerializableFil
           }
         }
         break;
+
+      case "globalSearch":
+        if (filter.searchValue) {
+          query = query.or(
+            `username.ilike.%${filter.searchValue}%,` +
+              `name.ilike.%${filter.searchValue}%,` +
+              `about_you.ilike.%${filter.searchValue}%,` +
+              `public_current_role.ilike.%${filter.searchValue}%`,
+          );
+        }
+        break;
     }
   }
 
