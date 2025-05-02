@@ -192,16 +192,10 @@ const InfiniteItemLoader = <T extends {id: string}>({
       </motion.div>
       <motion.div className="flex flex-col gap-4" variants={controlsSectionVariants}>
         <motion.div
-          className="flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2"
+          className="flex justify-between items-center gap-3"
           variants={controlsSectionVariants}>
           <SearchInputPage pageKey={type} loading={loading} />
-          <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
-            <Button size={"xs"} className="max-[480px]:w-full">
-              Order by
-              <ChevronDown size={16} strokeWidth={2} className="text-foreground/90" />
-            </Button>
-            <FilterButton pageKey={type} data={filtersData} />
-          </div>
+          <FilterButton pageKey={type} data={filtersData} />
         </motion.div>
 
         <FilterPanel pageKey={type} />

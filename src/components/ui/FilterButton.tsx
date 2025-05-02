@@ -21,7 +21,15 @@ const TypeComponents = {
   numberSelect: NumberSelect,
 };
 
-const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
+const FilterButton = ({
+  pageKey,
+  data,
+  className,
+}: {
+  pageKey: string;
+  data: Filter[];
+  className?: string;
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [currentSelected, setCurrentSelected] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -185,7 +193,7 @@ const FilterButton = ({pageKey, data}: {pageKey: string; data: Filter[]}) => {
   );
 
   return (
-    <div>
+    <div className={className}>
       <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button size={"xs"} className="max-[480px]:w-full">

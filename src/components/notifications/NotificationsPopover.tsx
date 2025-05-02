@@ -42,7 +42,7 @@ const NotificationsPopover = ({
           sender_id,
           recipient_id,
           is_read,
-          sender:profiles!notifications_sender_id_fkey (id, username, name, profileImage)
+          sender:profiles!notifications_sender_id_fkey (id, username, name, profile_image)
         `,
         )
         .eq("recipient_id", userSessionId)
@@ -116,7 +116,7 @@ const NotificationsPopover = ({
             // Fetch the sender details
             const {data: senderData, error: senderError} = await supabase
               .from("profiles")
-              .select("id, username, name, image")
+              .select("id, username, name, profile_image")
               .eq("id", newNotification.sender_id)
               .single();
 
