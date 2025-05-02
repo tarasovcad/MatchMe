@@ -4,6 +4,7 @@ import Image from "next/image";
 import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
 import {Notification} from "@/types/notifications";
 import Avatar from "boring-avatars";
+import {getNameInitials} from "@/functions/getNameInitials";
 
 const FollowNotification = ({
   notification,
@@ -13,16 +14,15 @@ const FollowNotification = ({
   markAsRead: (id: string) => void;
 }) => {
   const {sender} = notification;
-  const {profileImage, name, username} = sender;
-
+  const {profile_image, name, username} = sender;
   return (
     <button
       className="flex items-start gap-2 hover:bg-muted p-1.5 py-2.5 rounded-radius"
       onClick={() => markAsRead(notification.id)}>
       <div className="relative w-10 h-10">
-        {profileImage ? (
+        {profile_image ? (
           <Image
-            src={profileImage}
+            src={profile_image}
             width={35}
             height={35}
             className="rounded-full"
@@ -31,13 +31,11 @@ const FollowNotification = ({
           />
         ) : (
           <Avatar
-            src={profileImage}
+            name={getNameInitials(name)}
             width={35}
             height={35}
             variant="beam"
             className="rounded-full"
-            unoptimized
-            alt={`${name}'s profile`}
           />
         )}
       </div>
