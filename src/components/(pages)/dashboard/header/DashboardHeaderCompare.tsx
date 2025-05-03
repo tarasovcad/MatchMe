@@ -12,14 +12,9 @@ import {
 import {motion} from "framer-motion";
 import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 import {cn} from "@/lib/utils";
+import {useDashboardStore} from "@/store/useDashboardStore";
 
-const DashboardHeaderCompare = ({
-  setCompareDateRange,
-  compareDateRange,
-}: {
-  setCompareDateRange: (compareDateRange: string) => void;
-  compareDateRange: string;
-}) => {
+const DashboardHeaderCompare = ({className}: {className?: string}) => {
   const [open, setOpen] = useState(false);
 
   const chevronVariants = {
@@ -27,12 +22,14 @@ const DashboardHeaderCompare = ({
     down: {rotate: 0, transition: {duration: 0.2}},
   };
 
+  const {compareDateRange, setCompareDateRange} = useDashboardStore();
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button size={"sm"} className={cn("h-[38px]")}>
+        <Button size={"sm"} className={cn("h-[38px] px-3.5", className)}>
           <div className="flex items-center gap-2">
-            <Scale size={16} strokeWidth={2} />
+            <Scale size={16} strokeWidth={2} className="@max-[422px]:hidden" />
             {compareDateRange}
           </div>
           <motion.div initial="down" animate={open ? "up" : "down"} variants={chevronVariants}>
