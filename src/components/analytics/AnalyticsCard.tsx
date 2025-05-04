@@ -1,29 +1,50 @@
 import React from "react";
 import AnalyticsBadge from "./AnalyticsBadge";
+import {cn} from "@/lib/utils";
+import {formatNumber} from "@/functions/formatNumber";
 
 const AnalyticsCard = ({
   title,
   number,
   type,
   analyticsNumber,
+  badgeDisplayment = "bottom",
+  cardClassName,
+  displayInGraph = false,
+  isSelected = false,
+  onClick,
 }: {
   title: string;
   number: number;
   type: "positive" | "negative";
   analyticsNumber: number;
+  badgeDisplayment?: "top" | "bottom";
+  cardClassName?: string;
+  displayInGraph?: boolean;
+  isSelected?: boolean;
+  onClick?: () => void;
 }) => {
   return (
     <div
-      className={`
-        flex flex-col gap-1.5 p-4 pl-4.5 border border-border w-full whitespace-nowrap
-        min-w-[205px]
-        min-[1174px]:rounded-[12px]
-        max-[1174px]:border-r-0 max-[1174px]:first:rounded-l-[12px] max-[1174px]:last:rounded-r-[12px] max-[1174px]:last:border-r
-        max-[1174px]:bg-black/3
-      `}>
-      <h5 className="font-medium text-foreground/70 text-sm line-clamp-1 leading-4.5">{title}</h5>
-      <h4 className="font-medium text-[28px] text-foreground leading-9">{number}</h4>
-      <div className="flex items-center gap-[3px]">
+      className={cn(
+        "relative flex flex-col gap-1.5 p-4 pl-4.5  w-full whitespace-nowrap min-w-[220px]",
+        displayInGraph
+          ? "first:rounded-tl-[12px] last:rounded-tr-[12px] bg-black/3 border-b border-border border-r "
+          : "min-[1174px]:rounded-[12px] max-[1174px]:border-r-0 max-[1174px]:first:rounded-l-[12px] max-[1174px]:last:rounded-r-[12px] max-[1174px]:last:border-r max-[1174px]:bg-black/3 border border-border",
+        onClick && "cursor-pointer",
+        isSelected &&
+          "after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-primary",
+        cardClassName,
+      )}
+      onClick={onClick}>
+      <div className="flex justify-between items-center gap-1.5">
+        <h5 className="font-medium text-foreground/70 text-sm line-clamp-1 leading-4.5">{title}</h5>
+        <div className={cn("flex-shrink-0", badgeDisplayment === "bottom" && "hidden")}>
+          <AnalyticsBadge number={analyticsNumber} type={type} />
+        </div>
+      </div>
+      <h4 className="font-medium text-[28px] text-foreground leading-9">{formatNumber(number)}</h4>
+      <div className={cn("flex items-center gap-[3px]", badgeDisplayment === "top" && "hidden")}>
         <AnalyticsBadge number={analyticsNumber} type={type} />
         <p className="text-secondary text-xs">vs last month</p>
       </div>

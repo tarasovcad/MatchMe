@@ -2,6 +2,7 @@
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/container-queries';
+@plugin 'tailwind-scrollbar';
 
 @custom-variant dark (&:is(.dark *));
 
