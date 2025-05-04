@@ -1,22 +1,7 @@
 import React from "react";
 import AnalyticsCard from "@/components/analytics/AnalyticsCard";
 import {cn} from "@/lib/utils";
-
-export interface AnalyticsCardListProps {
-  data: {
-    title: string;
-    number: number;
-    type: "positive" | "negative";
-    analyticsNumber: number;
-    chartData?: [];
-  }[];
-  badgeDisplayment?: "top" | "bottom";
-  className?: string;
-  cardClassName?: string;
-  displayInGraph?: boolean;
-  selectedMetric?: string;
-  setSelectedMetric?: (metric: string) => void;
-}
+import {AnalyticsCardListProps} from "@/types/analytics";
 
 const AnalyticsCardList = ({
   data,

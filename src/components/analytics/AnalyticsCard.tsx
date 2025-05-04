@@ -3,6 +3,17 @@ import AnalyticsBadge from "./AnalyticsBadge";
 import {cn} from "@/lib/utils";
 import {formatNumber} from "@/functions/formatNumber";
 
+interface AnalyticsCardProps {
+  title: string;
+  number: number;
+  type: "positive" | "negative";
+  analyticsNumber: number;
+  badgeDisplayment?: "top" | "bottom";
+  cardClassName?: string;
+  displayInGraph?: boolean;
+  isSelected?: boolean;
+  onClick?: () => void;
+}
 const AnalyticsCard = ({
   title,
   number,
@@ -13,17 +24,7 @@ const AnalyticsCard = ({
   displayInGraph = false,
   isSelected = false,
   onClick,
-}: {
-  title: string;
-  number: number;
-  type: "positive" | "negative";
-  analyticsNumber: number;
-  badgeDisplayment?: "top" | "bottom";
-  cardClassName?: string;
-  displayInGraph?: boolean;
-  isSelected?: boolean;
-  onClick?: () => void;
-}) => {
+}: AnalyticsCardProps) => {
   return (
     <div
       className={cn(

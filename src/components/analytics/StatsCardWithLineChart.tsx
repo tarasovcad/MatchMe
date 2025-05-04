@@ -5,63 +5,68 @@ import {Area, AreaChart, CartesianGrid, XAxis} from "recharts";
 import {
   ChartConfig,
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/shadcn/chart";
-import AnalyticsCardList, {AnalyticsCardListProps} from "./AnalyticsCardList";
+
 import {formatNumber} from "@/functions/formatNumber";
+import {AnalyticsCardItem} from "@/types/analytics";
+import AnalyticsCardList from "./AnalyticsCardList";
+import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
-
-const Chart = ({data}: {data: AnalyticsCardListProps["data"]}) => {
-  if (!data || data.length === 0) {
+const Chart = ({
+  data,
+  label,
+  firstKey,
+  secondKey,
+}: {
+  data: AnalyticsCardItem;
+  label: string;
+  firstKey: string;
+  secondKey?: string;
+}) => {
+  if (!data.chartData || data.chartData.length === 0) {
     return (
       <div className="flex justify-center items-center h-[210px] text-foreground/50">
         No chart data available
       </div>
     );
   }
+
   return (
-    <ChartContainer config={chartConfig} className="w-full h-[210px] aspect-auto">
-      <AreaChart
-        accessibilityLayer
-        data={data}
-        margin={{
-          left: 12,
-          right: 12,
-        }}>
+    <ChartContainer config={data.chartConfig || {}} className="w-full h-[210px] aspect-auto">
+      <AreaChart accessibilityLayer data={data.chartData || []}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="month"
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={(value) => value.slice(0, 3)}
+          interval={"preserveStartEnd"}
         />
-        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-        <Area
-          dataKey="mobile"
-          type="natural"
-          fill="transparent"
-          fillOpacity={0.4}
-          stroke="#C0C0C0"
-          stackId="a"
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent indicator="dot" labelKey={label} />}
         />
+        {secondKey && (
+          <Area
+            dataKey={secondKey}
+            type="natural"
+            fill="transparent"
+            fillOpacity={0.4}
+            stroke="#C0C0C0"
+            stackId="a"
+          />
+        )}
         <Area
-          dataKey="desktop"
+          dataKey={firstKey}
           type="natural"
-          fill="transparent"
+          // fill="transparent"
+          fill="hsl(var(--chart-1))"
           fillOpacity={0.4}
-          stroke="var(--color-desktop)"
+          stroke="hsl(var(--chart-1))"
           stackId="a"
         />
       </AreaChart>
@@ -69,7 +74,19 @@ const Chart = ({data}: {data: AnalyticsCardListProps["data"]}) => {
   );
 };
 
-const StatsCardWithLineChart = ({data}: {data: AnalyticsCardListProps["data"]}) => {
+const StatsCardWithLineChart = ({
+  data,
+  label,
+  firstKey,
+  secondKey,
+  isLoading,
+}: {
+  data: AnalyticsCardItem[];
+  label: string;
+  firstKey: string;
+  secondKey?: string;
+  isLoading: boolean;
+}) => {
   const [selectedMetric, setSelectedMetric] = useState(data[0].title);
 
   const selectedData = data.find((item) => item.title === selectedMetric) || data[0];
@@ -88,7 +105,18 @@ const StatsCardWithLineChart = ({data}: {data: AnalyticsCardListProps["data"]}) 
               <AnalyticsBadge number={selectedData.analyticsNumber} type={selectedData.type} />
             </div>
           </div>
-          <Chart data={selectedData.chartData || []} />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-[210px] text-foreground/50">
+              <LoadingButtonCircle size={22} />
+            </div>
+          ) : (
+            <Chart
+              data={selectedData || []}
+              label={label}
+              firstKey={firstKey}
+              secondKey={secondKey}
+            />
+          )}
         </div>
 
         {/* Right Column Cards */}
@@ -119,12 +147,22 @@ const StatsCardWithLineChart = ({data}: {data: AnalyticsCardListProps["data"]}) 
           data={data}
           badgeDisplayment="top"
           displayInGraph
-          cardClassName=""
           selectedMetric={selectedMetric}
           setSelectedMetric={setSelectedMetric}
         />
-        <div className="border border-t-0 border-border rounded-[12px] rounded-t-none">
-          <Chart data={selectedData.chartData || []} />
+        <div className="px-2.5 pt-2 border border-t-0 border-border rounded-[12px] rounded-t-none">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-[210px] text-foreground/50">
+              <LoadingButtonCircle size={22} />
+            </div>
+          ) : (
+            <Chart
+              data={selectedData || []}
+              label={label}
+              firstKey={firstKey}
+              secondKey={secondKey}
+            />
+          )}
         </div>
       </div>
     </>

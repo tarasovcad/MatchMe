@@ -8,7 +8,7 @@ type DashboardStore = {
 };
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
-  dateRange: "Last 24 hours",
+  dateRange: "Today",
   compareDateRange: "Previous Period",
   setDateRange: (range) => set({dateRange: range}),
   setCompareDateRange: (range) => set({compareDateRange: range}),
