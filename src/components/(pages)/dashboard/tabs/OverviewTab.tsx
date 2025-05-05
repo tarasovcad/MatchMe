@@ -7,9 +7,10 @@ import {useEffect, useState} from "react";
 
 const OverviewTab = ({user}: {user: User}) => {
   const userUsername = user.user_metadata.username;
-  const {dateRange} = useDashboardStore();
+  const {dateRange, compareDateRange} = useDashboardStore();
   const [viewsData, setViewsData] = useState(null);
   const [totalViews, setTotalViews] = useState(0);
+  const [totalCompareViews, setTotalCompareViews] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,8 +19,10 @@ const OverviewTab = ({user}: {user: User}) => {
       const startTime = new Date();
 
       try {
+        // Your API route already handles both primary and comparison data
+        // You don't need to make a second API call
         const res = await fetch(
-          `/api/profile-views?slug=${userUsername}&dateRange=${encodeURIComponent(dateRange)}`,
+          `/api/profile-views?slug=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
         );
 
         if (!res.ok) {
@@ -29,13 +32,24 @@ const OverviewTab = ({user}: {user: User}) => {
 
         const data = await res.json();
         console.log(data);
-        const total = data.chartData.reduce(
-          (sum: number, item: ChartDataPoint) => sum + item.firstDate,
-          0,
-        );
 
+        // Set the total views from primary data
+        setTotalViews(data.totalViews || 0);
+
+        // Set the views data with already merged data from API
         setViewsData(data.chartData);
-        setTotalViews(total);
+
+        // If comparison was enabled, calculate total comparison views
+        if (compareDateRange !== "Disabled" && data.comparisonChartData) {
+          const totalCompare = data.comparisonChartData.reduce(
+            (sum: number, item: ChartDataPoint) => sum + item.firstDate,
+            0,
+          );
+          setTotalCompareViews(totalCompare);
+        } else {
+          // Reset comparison data when disabled
+          setTotalCompareViews(0);
+        }
 
         const endTime = new Date();
         console.log(`Fetched views in ${endTime.getTime() - startTime.getTime()}ms`);
@@ -47,8 +61,9 @@ const OverviewTab = ({user}: {user: User}) => {
     };
 
     fetchViews();
-  }, [dateRange, userUsername]);
+  }, [dateRange, compareDateRange, userUsername]);
 
+  // Rest of the component remains the same
   const data: AnalyticsCardItem[] = [
     {
       title: "Total Views",
@@ -97,6 +112,7 @@ const OverviewTab = ({user}: {user: User}) => {
         label="views"
         firstKey="firstDate"
         isLoading={isLoading}
+        secondKey={compareDateRange !== "Disabled" ? "secondDate" : undefined}
       />
     </div>
   );

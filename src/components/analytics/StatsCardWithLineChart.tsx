@@ -54,7 +54,8 @@ const Chart = ({
           <Area
             dataKey={secondKey}
             type="natural"
-            fill="transparent"
+            // fill="transparent"
+
             fillOpacity={0.4}
             stroke="#C0C0C0"
             stackId="a"
