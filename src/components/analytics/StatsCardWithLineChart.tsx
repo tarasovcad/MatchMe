@@ -15,6 +15,7 @@ import {formatNumber} from "@/functions/formatNumber";
 import {AnalyticsCardItem} from "@/types/analytics";
 import AnalyticsCardList from "./AnalyticsCardList";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
+import {useDashboardStore} from "@/store/useDashboardStore";
 
 const Chart = ({
   data,
@@ -48,7 +49,23 @@ const Chart = ({
         />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent indicator="dot" labelKey={label} />}
+          content={
+            <ChartTooltipContent
+              hideLabel
+              formatter={(value, name, item) => (
+                <div className="flex flex-1 justify-between items-center leading-none">
+                  <div className="gap-1.5 grid">
+                    <span className="text-muted-foreground">{item.payload.date}</span>
+                  </div>
+                  {value && (
+                    <span className="font-mono font-medium tabular-nums text-foreground">
+                      {value.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              )}
+            />
+          }
         />
         {secondKey && (
           <Area
