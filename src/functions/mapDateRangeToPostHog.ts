@@ -2,18 +2,30 @@ import {PostHogDateRange} from "@/types/analytics";
 
 export function mapDateRangeToPostHog(dateRange: string): PostHogDateRange {
   switch (dateRange) {
-    case "Today":
+    case "Today": {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISOString = today.toISOString();
       return {
-        date_from: "dStart",
-        date_to: "dEnd",
+        date_from: todayISOString,
+
         interval: "hour",
       };
-    case "Yesterday":
+    }
+    case "Yesterday": {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+      const yesterdayISOString = yesterday.toISOString();
+      const yesterdayEnd = new Date(yesterday);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+      const yesterdayEndISOString = yesterdayEnd.toISOString();
       return {
-        date_from: "-1dStart", // Start of yesterday
-        date_to: "-1dEnd", // End of yesterday
+        date_from: yesterdayISOString,
+        date_to: yesterdayEndISOString,
         interval: "hour",
       };
+    }
     case "Past 7 days":
       return {date_from: "-7d", interval: "day"};
     case "Past 14 days":

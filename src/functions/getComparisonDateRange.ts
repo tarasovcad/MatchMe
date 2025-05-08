@@ -1,5 +1,5 @@
 import {PostHogDateRange} from "@/types/analytics";
-import {mapDateRangeToPostHog} from "./mapDateRangeToPostHog";
+import {mapDateRangeToPostHog} from "@/functions/mapDateRangeToPostHog";
 
 export function getComparisonDateRange(
   dateRange: string,
@@ -7,18 +7,34 @@ export function getComparisonDateRange(
 ): PostHogDateRange | null {
   if (comparisonType === "Previous Period") {
     switch (dateRange) {
-      case "Today":
+      case "Today": {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        const yesterdayISOString = yesterday.toISOString();
+        const yesterdayEnd = new Date(yesterday);
+        yesterdayEnd.setHours(23, 59, 59, 999);
+        const yesterdayEndISOString = yesterdayEnd.toISOString();
         return {
-          date_from: "-1dStart", // Yesterday start
-          date_to: "-1dEnd", // Yesterday end
+          date_from: yesterdayISOString,
+          date_to: yesterdayEndISOString,
           interval: "hour",
         };
-      case "Yesterday":
+      }
+      case "Yesterday": {
+        const twoDaysAgo = new Date();
+        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        twoDaysAgo.setHours(0, 0, 0, 0);
+        const twoDaysAgoISOString = twoDaysAgo.toISOString();
+        const twoDaysAgoEnd = new Date(twoDaysAgo);
+        twoDaysAgoEnd.setHours(23, 59, 59, 999);
+        const twoDaysAgoEndISOString = twoDaysAgoEnd.toISOString();
         return {
-          date_from: "-2dStart", // Day before yesterday start
-          date_to: "-2dEnd", // Day before yesterday end
+          date_from: twoDaysAgoISOString,
+          date_to: twoDaysAgoEndISOString,
           interval: "hour",
         };
+      }
       case "Past 7 days":
         return {date_from: "-14d", date_to: "-8d", interval: "day"};
       case "Past 14 days":
@@ -40,17 +56,33 @@ export function getComparisonDateRange(
     const lastYear = currentYear - 1;
 
     switch (dateRange) {
-      case "Today":
+      case "Today": {
         // Same day last year
+        const lastYearToday = new Date();
+        lastYearToday.setFullYear(lastYear);
+        lastYearToday.setHours(0, 0, 0, 0);
+        const lastYearTodayISOString = lastYearToday.toISOString();
+        const lastYearTodayEnd = new Date(lastYearToday);
+        lastYearTodayEnd.setHours(23, 59, 59, 999);
+        const lastYearTodayEndISOString = lastYearTodayEnd.toISOString();
         return {
-          date_from: `${lastYear}-${now.getMonth() + 1}-${now.getDate()}`,
+          date_from: lastYearTodayISOString,
+          date_to: lastYearTodayEndISOString,
           interval: "hour",
         };
+      }
       case "Yesterday": {
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
+        const lastYearYesterday = new Date();
+        lastYearYesterday.setFullYear(lastYear);
+        lastYearYesterday.setDate(lastYearYesterday.getDate() - 1);
+        lastYearYesterday.setHours(0, 0, 0, 0);
+        const lastYearYesterdayISOString = lastYearYesterday.toISOString();
+        const lastYearYesterdayEnd = new Date(lastYearYesterday);
+        lastYearYesterdayEnd.setHours(23, 59, 59, 999);
+        const lastYearYesterdayEndISOString = lastYearYesterdayEnd.toISOString();
         return {
-          date_from: `${lastYear}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`,
+          date_from: lastYearYesterdayISOString,
+          date_to: lastYearYesterdayEndISOString,
           interval: "hour",
         };
       }

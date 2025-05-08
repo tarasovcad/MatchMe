@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
 
     const response = await fetch(
       `https://app.posthog.com/api/projects/${projectId}/insights/trend`,
+
       {
         method: "POST",
         headers: {
@@ -119,6 +120,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       chartData: compareDateRange !== "Disabled" ? mergedChartData : primaryChartData,
       totalViews: primaryChartData.reduce((sum, item) => sum + item.firstDate, 0),
+      primaryData: primaryData,
     });
   } catch (error) {
     console.error("Error fetching profile views:", error);

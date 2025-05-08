@@ -29,6 +29,7 @@ export interface PostHogProperty {
   key: string;
   value: string;
   type: "event";
+  operator?: "exact" | "contains";
 }
 
 export interface PostHogEvent {
@@ -41,7 +42,7 @@ export interface PostHogEvent {
 
 export interface PostHogRequestBody {
   events: PostHogEvent[];
-  interval: string;
+  interval?: string;
   date_from: string;
   date_to?: string;
 }
