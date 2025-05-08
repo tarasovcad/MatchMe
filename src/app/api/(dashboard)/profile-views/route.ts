@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
     let comparisonChartData: ChartDataPoint[] = [];
 
-    if (compareDateRange !== "Disabled") {
+    if (compareDateRange !== "Disabled" && dateRange !== "All Time") {
       // Calculate comparison date parameters based on comparison type
       const comparisonParams = getComparisonDateRange(dateRange, compareDateRange);
 
@@ -119,7 +119,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       chartData: compareDateRange !== "Disabled" ? mergedChartData : primaryChartData,
-      totalViews: primaryChartData.reduce((sum, item) => sum + item.firstDate, 0),
+      totalViews: primaryChartData.reduce((sum, item) => {
+        // For "All Time" view, include partial day data
+        const views =
+          dateRange === "All Time"
+            ? Math.round(item.firstDate) // Include partial views
+            : item.firstDate;
+        return sum + views;
+      }, 0),
       primaryData: primaryData,
     });
   } catch (error) {

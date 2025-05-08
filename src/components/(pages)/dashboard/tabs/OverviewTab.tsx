@@ -112,7 +112,9 @@ const OverviewTab = ({user}: {user: User}) => {
         label="views"
         firstKey="firstDate"
         isLoading={isLoading}
-        secondKey={compareDateRange !== "Disabled" ? "secondDate" : undefined}
+        secondKey={
+          compareDateRange !== "Disabled" && dateRange !== "All Time" ? "secondDate" : undefined
+        }
       />
     </div>
   );
