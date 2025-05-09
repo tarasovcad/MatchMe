@@ -8,16 +8,16 @@ export function getComparisonDateRange(
   if (comparisonType === "Previous Period") {
     switch (dateRange) {
       case "Today": {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
-        const yesterdayISOString = yesterday.toISOString();
-        const yesterdayEnd = new Date(yesterday);
-        yesterdayEnd.setHours(23, 59, 59, 999);
-        const yesterdayEndISOString = yesterdayEnd.toISOString();
+        const now = new Date();
+        const yesterday = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1, 0, 0, 0, 0),
+        );
+        const yesterdayEnd = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1, 23, 59, 59, 999),
+        );
         return {
-          date_from: yesterdayISOString,
-          date_to: yesterdayEndISOString,
+          date_from: yesterday.toISOString(),
+          date_to: yesterdayEnd.toISOString(),
           interval: "hour",
         };
       }
@@ -35,18 +35,101 @@ export function getComparisonDateRange(
           interval: "hour",
         };
       }
-      case "Past 7 days":
-        return {date_from: "-14d", date_to: "-8d", interval: "day"};
-      case "Past 14 days":
-        return {date_from: "-28d", date_to: "-15d", interval: "day"};
-      case "Past 30 days":
-        return {date_from: "-60d", date_to: "-31d", interval: "day"};
-      case "Past Quarter":
-        return {date_from: "-180d", date_to: "-91d", interval: "day"};
-      case "Past Half Year":
-        return {date_from: "-360d", date_to: "-181d", interval: "day"};
-      case "Past Year":
-        return {date_from: "-730d", date_to: "-366d", interval: "day"};
+      case "Past 7 days": {
+        const now = new Date();
+        const twoWeeksAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 14, 0, 0, 0, 0),
+        );
+        const oneWeekAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7, 0, 0, 0, 0),
+        );
+        return {
+          date_from: twoWeeksAgo.toISOString(),
+          date_to: oneWeekAgo.toISOString(),
+          interval: "day",
+        };
+      }
+      case "Past 14 days": {
+        const now = new Date();
+        const fourWeeksAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 28, 0, 0, 0, 0),
+        );
+        const twoWeeksAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 14, 0, 0, 0, 0),
+        );
+        return {
+          date_from: fourWeeksAgo.toISOString(),
+          date_to: twoWeeksAgo.toISOString(),
+          interval: "day",
+        };
+      }
+      case "Past 30 days": {
+        const now = new Date();
+        const sixtyDaysAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 60, 0, 0, 0, 0),
+        );
+        const thirtyDaysAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30, 0, 0, 0, 0),
+        );
+        return {
+          date_from: sixtyDaysAgo.toISOString(),
+          date_to: thirtyDaysAgo.toISOString(),
+          interval: "day",
+        };
+      }
+      case "Past Quarter": {
+        const now = new Date();
+        const sixMonthsAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, now.getUTCDate(), 0, 0, 0, 0),
+        );
+        const threeMonthsAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, now.getUTCDate(), 0, 0, 0, 0),
+        );
+        return {
+          date_from: sixMonthsAgo.toISOString(),
+          date_to: threeMonthsAgo.toISOString(),
+          interval: "day",
+        };
+      }
+      case "Past Half Year": {
+        const now = new Date();
+        const oneYearAgo = new Date(
+          Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+        );
+        const sixMonthsAgo = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 6, now.getUTCDate(), 0, 0, 0, 0),
+        );
+        return {
+          date_from: oneYearAgo.toISOString(),
+          date_to: sixMonthsAgo.toISOString(),
+          interval: "month",
+        };
+      }
+      case "Past Year": {
+        const now = new Date();
+        const twoYearsAgo = new Date(
+          Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+        );
+        const oneYearAgo = new Date(
+          Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0),
+        );
+        return {
+          date_from: twoYearsAgo.toISOString(),
+          date_to: oneYearAgo.toISOString(),
+          interval: "month",
+        };
+      }
+      case "Last 24 hours": {
+        const now = new Date();
+        const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000); // 48 hours ago
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+
+        return {
+          date_from: twoDaysAgo.toISOString(),
+          date_to: oneDayAgo.toISOString(),
+          interval: "hour",
+        };
+      }
       default:
         return {date_from: "-14d", date_to: "-8d", interval: "day"};
     }
@@ -102,6 +185,20 @@ export function getComparisonDateRange(
           date_from: `-2y-365d`,
           interval: "day",
         };
+      case "Last 24 hours": {
+        // Same 24 hour period but a year ago
+        const now = new Date();
+        const oneYearAgo = new Date(now.getTime());
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const twentyFourHoursAgo = new Date(oneYearAgo.getTime() - 24 * 60 * 60 * 1000);
+
+        return {
+          date_from: twentyFourHoursAgo.toISOString(),
+          date_to: oneYearAgo.toISOString(),
+          interval: "hour",
+        };
+      }
       default:
         return null;
     }

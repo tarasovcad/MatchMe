@@ -3,7 +3,7 @@ export function getPreviousPeriodDate(date: string, dateRange: string): string {
 
   switch (dateRange) {
     case "Today":
-    case "24 hours": {
+    case "Last 24 hours": {
       // Subtract 1 day
       currentDate.setDate(currentDate.getDate() - 1);
       return currentDate.toISOString();

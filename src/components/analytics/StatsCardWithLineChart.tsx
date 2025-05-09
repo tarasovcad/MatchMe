@@ -1,15 +1,7 @@
 import AnalyticsBadge from "@/components/analytics/AnalyticsBadge";
 import React, {useEffect, useState} from "react";
-import {TrendingUp} from "lucide-react";
 import {Area, AreaChart, CartesianGrid, XAxis} from "recharts";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/shadcn/chart";
+import {ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/shadcn/chart";
 
 import {formatNumber} from "@/functions/formatNumber";
 import {formatChartDate} from "@/functions/formatChartDate";
@@ -73,7 +65,9 @@ const Chart = ({
                         <div
                           className="rounded-full w-2 h-2"
                           style={{
-                            backgroundColor: isSecondDate ? "#C0C0C0" : "hsl(var(--chart-1))",
+                            backgroundColor: isSecondDate
+                              ? "hsl(var(--chart-2))"
+                              : "hsl(var(--chart-1))",
                           }}
                         />
                         <div className="gap-1.5 grid">
@@ -94,23 +88,21 @@ const Chart = ({
             />
           }
         />
-
         <Area
           dataKey={firstKey}
-          type="natural"
-          fill="hsl(var(--chart-1))"
-          fillOpacity={0.4}
+          type="linear"
+          fill="transparent"
           stroke="hsl(var(--chart-1))"
           stackId="a"
         />
         {secondKey && (
           <Area
             dataKey={secondKey}
-            type="natural"
-            fill="hsl(var(--chart-2))"
-            fillOpacity={0.4}
-            stroke="transparent"
-            stackId="a"
+            type="linear"
+            fill="transparent"
+            stroke="hsl(var(--chart-2))"
+            strokeDasharray="5 5"
+            strokeWidth={1.5}
           />
         )}
       </AreaChart>

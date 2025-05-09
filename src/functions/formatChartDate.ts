@@ -19,7 +19,7 @@ export function formatChartDate(date: string, dateRange: string): string {
         year: "numeric",
       });
     }
-    case "24 hours":
+    case "Last 24 hours":
     case "Yesterday":
     case "Today": {
       // Format as "07 Apr 11:00"

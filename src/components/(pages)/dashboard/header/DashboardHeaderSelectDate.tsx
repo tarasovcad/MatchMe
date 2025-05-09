@@ -52,11 +52,19 @@ const DashboardHeaderSelectDate = ({className}: {className?: string}) => {
                 Today
               </DropdownMenuItem>
             </motion.div>
+
             <motion.div variants={itemDropdownVariants}>
               <DropdownMenuItem
                 className={cn("cursor-pointer", dateRange === "Yesterday" && "bg-accent")}
                 onClick={() => setDateRange("Yesterday")}>
                 Yesterday
+              </DropdownMenuItem>
+            </motion.div>
+            <motion.div variants={itemDropdownVariants}>
+              <DropdownMenuItem
+                className={cn("cursor-pointer", dateRange === "Last 24 hours" && "bg-accent")}
+                onClick={() => setDateRange("Last 24 hours")}>
+                Last 24 hours
               </DropdownMenuItem>
             </motion.div>
           </DropdownMenuGroup>

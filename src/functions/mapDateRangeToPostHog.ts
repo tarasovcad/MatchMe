@@ -23,12 +23,26 @@ export function mapDateRangeToPostHog(dateRange: string): PostHogDateRange {
 
       return {
         date_from: utcToday.toISOString(),
+        date_to: utcNow.toISOString(),
         interval: "hour",
       };
     }
-    case "24 hours": {
+    case "Last 24 hours": {
+      const twentyFourHoursAgo = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          now.getUTCHours(),
+          now.getUTCMinutes(),
+          now.getUTCSeconds(),
+        ) -
+          24 * 60 * 60 * 1000,
+      );
+
       return {
-        date_from: "-1d",
+        date_from: twentyFourHoursAgo.toISOString(),
+        date_to: utcNow.toISOString(),
         interval: "hour",
       };
     }
