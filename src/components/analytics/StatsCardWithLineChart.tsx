@@ -12,19 +12,19 @@ import {
 } from "@/components/shadcn/chart";
 
 import {formatNumber} from "@/functions/formatNumber";
+import {formatChartDate} from "@/functions/formatChartDate";
 import {AnalyticsCardItem} from "@/types/analytics";
 import AnalyticsCardList from "./AnalyticsCardList";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {useDashboardStore} from "@/store/useDashboardStore";
+import {getPreviousPeriodDate} from "@/functions/dashboard/getPreviousPeriodDate";
 
 const Chart = ({
   data,
-  label,
   firstKey,
   secondKey,
 }: {
   data: AnalyticsCardItem;
-  label: string;
   firstKey: string;
   secondKey?: string;
 }) => {
@@ -36,6 +36,8 @@ const Chart = ({
     );
   }
 
+  const dateRange = useDashboardStore((state) => state.dateRange);
+
   return (
     <ChartContainer config={data.chartConfig || {}} className="w-full h-[210px] aspect-auto">
       <AreaChart
@@ -44,52 +46,73 @@ const Chart = ({
         margin={{top: 20, right: 20, left: 0, bottom: 0}}>
         <CartesianGrid vertical={false} />
         <XAxis
-          dataKey="month"
+          dataKey="date"
           tickLine={false}
           axisLine={false}
           tickMargin={8}
           interval={"preserveStartEnd"}
+          tickFormatter={(date) => formatChartDate(date, dateRange)}
         />
         <ChartTooltip
           cursor={false}
           content={
             <ChartTooltipContent
               hideLabel
-              formatter={(value, name, item) => (
-                <div className="flex flex-1 justify-between items-center leading-none">
-                  <div className="gap-1.5 grid">
-                    <span className="text-muted-foreground">{item.payload.date}</span>
+              formatter={(value, name, item, index) => {
+                const isSecondDate = name === secondKey;
+                const date = isSecondDate
+                  ? getPreviousPeriodDate(item.payload.date, dateRange)
+                  : item.payload.date;
+
+                const showTitle = index === 0;
+                return (
+                  <div className="flex flex-col gap-1.5 w-full">
+                    {showTitle && <span className="font-medium text-foreground">{data.title}</span>}
+                    <div className="flex flex-1 justify-between items-center gap-2 leading-none">
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className="rounded-full w-2 h-2"
+                          style={{
+                            backgroundColor: isSecondDate ? "#C0C0C0" : "hsl(var(--chart-1))",
+                          }}
+                        />
+                        <div className="gap-1.5 grid">
+                          <span className="text-muted-foreground">
+                            {formatChartDate(date, dateRange)}
+                          </span>
+                        </div>
+                      </div>
+                      {value && (
+                        <span className="font-mono font-medium tabular-nums text-foreground">
+                          {value.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {value && (
-                    <span className="font-mono font-medium tabular-nums text-foreground">
-                      {value.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              )}
+                );
+              }}
             />
           }
         />
-        {secondKey && (
-          <Area
-            dataKey={secondKey}
-            type="natural"
-            // fill="transparent"
 
-            fillOpacity={0.4}
-            stroke="#C0C0C0"
-            stackId="a"
-          />
-        )}
         <Area
           dataKey={firstKey}
           type="natural"
-          // fill="transparent"
           fill="hsl(var(--chart-1))"
           fillOpacity={0.4}
           stroke="hsl(var(--chart-1))"
           stackId="a"
         />
+        {secondKey && (
+          <Area
+            dataKey={secondKey}
+            type="natural"
+            fill="hsl(var(--chart-2))"
+            fillOpacity={0.4}
+            stroke="transparent"
+            stackId="a"
+          />
+        )}
       </AreaChart>
     </ChartContainer>
   );
@@ -97,13 +120,11 @@ const Chart = ({
 
 const StatsCardWithLineChart = ({
   data,
-  label,
   firstKey,
   secondKey,
   isLoading,
 }: {
   data: AnalyticsCardItem[];
-  label: string;
   firstKey: string;
   secondKey?: string;
   isLoading: boolean;
@@ -131,12 +152,7 @@ const StatsCardWithLineChart = ({
               <LoadingButtonCircle size={22} />
             </div>
           ) : (
-            <Chart
-              data={selectedData || []}
-              label={label}
-              firstKey={firstKey}
-              secondKey={secondKey}
-            />
+            <Chart data={selectedData || []} firstKey={firstKey} secondKey={secondKey} />
           )}
         </div>
 
@@ -177,12 +193,7 @@ const StatsCardWithLineChart = ({
               <LoadingButtonCircle size={22} />
             </div>
           ) : (
-            <Chart
-              data={selectedData || []}
-              label={label}
-              firstKey={firstKey}
-              secondKey={secondKey}
-            />
+            <Chart data={selectedData || []} firstKey={firstKey} secondKey={secondKey} />
           )}
         </div>
       </div>

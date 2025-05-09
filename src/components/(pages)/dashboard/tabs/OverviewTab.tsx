@@ -63,7 +63,6 @@ const OverviewTab = ({user}: {user: User}) => {
     fetchViews();
   }, [dateRange, compareDateRange, userUsername]);
 
-  // Rest of the component remains the same
   const data: AnalyticsCardItem[] = [
     {
       title: "Total Views",
@@ -109,7 +108,6 @@ const OverviewTab = ({user}: {user: User}) => {
     <div>
       <StatsCardWithLineChart
         data={data}
-        label="views"
         firstKey="firstDate"
         isLoading={isLoading}
         secondKey={

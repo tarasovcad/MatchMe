@@ -120,11 +120,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       chartData: compareDateRange !== "Disabled" ? mergedChartData : primaryChartData,
       totalViews: primaryChartData.reduce((sum, item) => {
-        // For "All Time" view, include partial day data
-        const views =
-          dateRange === "All Time"
-            ? Math.round(item.firstDate) // Include partial views
-            : item.firstDate;
+        // Always use Math.round to handle partial views consistently
+        const views = Math.round(item.firstDate);
         return sum + views;
       }, 0),
       primaryData: primaryData,
