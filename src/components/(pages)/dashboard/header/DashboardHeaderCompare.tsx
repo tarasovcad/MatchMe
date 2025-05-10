@@ -72,19 +72,7 @@ const DashboardHeaderCompare = ({className}: {className?: string}) => {
                 Year Over Year
               </DropdownMenuItem>
             </motion.div>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className={cn(
-                  "cursor-pointer",
-                  compareDateRange === " Custom Period" && "bg-accent",
-                )}
-                onClick={() => setCompareDateRange(" Custom Period")}>
-                Custom Period
-              </DropdownMenuItem>
-            </motion.div>
           </DropdownMenuGroup>
-
-          {/* <DropdownMenuSeparator /> */}
         </motion.div>
       </DropdownMenuContent>
     </DropdownMenu>

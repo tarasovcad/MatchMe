@@ -13,7 +13,6 @@ import {motion} from "framer-motion";
 import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 import {cn} from "@/lib/utils";
 import {useDashboardStore} from "@/store/useDashboardStore";
-
 const DashboardHeaderSelectDate = ({className}: {className?: string}) => {
   const [open, setOpen] = useState(false);
 
@@ -129,21 +128,6 @@ const DashboardHeaderSelectDate = ({className}: {className?: string}) => {
                 className={cn("cursor-pointer", dateRange === "All Time" && "bg-accent")}
                 onClick={() => setDateRange("All Time")}>
                 All Time
-              </DropdownMenuItem>
-            </motion.div>
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className={cn(
-                  "cursor-pointer",
-                  dateRange === "Custom fixed date range..." && "bg-accent",
-                )}
-                onClick={() => setDateRange("Custom fixed date range...")}>
-                Custom fixed date range...
               </DropdownMenuItem>
             </motion.div>
           </DropdownMenuGroup>

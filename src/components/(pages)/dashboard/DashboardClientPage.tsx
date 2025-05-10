@@ -1,5 +1,5 @@
 "use client";
-import React, {useState} from "react";
+import React from "react";
 
 import {dashboardTabsData} from "@/data/tabs/dashboardTabs";
 import OverviewTab from "./tabs/OverviewTab";
