@@ -1,9 +1,9 @@
-import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 import {mapDateRangeToPostHog} from "@/functions/mapDateRangeToPostHog";
 import {transformPostHogData} from "@/functions/transformPostHogData";
 import {calculateAnalyticsBadgeData} from "@/functions/analytics/calculateAnalyticsBadgeData";
 import {ChartDataPoint, PostHogRequestBody, PostHogResponse} from "@/types/analytics";
 import {NextRequest, NextResponse} from "next/server";
+import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 
 export async function GET(req: NextRequest) {
   try {

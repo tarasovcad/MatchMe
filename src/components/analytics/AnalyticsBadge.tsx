@@ -39,7 +39,6 @@ const AnalyticsBadge = ({number, type, tooltipData}: AnalyticsBadgeProps) => {
   );
 
   if (!tooltipData) {
-    console.log("No tooltip data provided");
     return badge;
   }
 
@@ -48,8 +47,6 @@ const AnalyticsBadge = ({number, type, tooltipData}: AnalyticsBadgeProps) => {
     percentageChange: number,
     changeType: type,
   });
-
-  console.log("Tooltip message:", tooltipMessage);
 
   return (
     <TooltipProvider>
