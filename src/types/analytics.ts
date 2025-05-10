@@ -3,8 +3,14 @@ import {ChartConfig} from "@/components/shadcn/chart";
 export interface AnalyticsCardItem {
   title: string;
   number: number;
-  type: "positive" | "negative";
+  type: "positive" | "negative" | "neutral";
   analyticsNumber: number;
+  shouldShowBadge?: boolean;
+  tooltipData?: {
+    metricName: string;
+    currentValue: number;
+    previousValue: number;
+  };
   chartData?: unknown[];
   chartConfig?: ChartConfig;
 }

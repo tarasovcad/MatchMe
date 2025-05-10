@@ -10,17 +10,17 @@ const OverviewTab = ({user}: {user: User}) => {
   const {dateRange, compareDateRange} = useDashboardStore();
   const [viewsData, setViewsData] = useState(null);
   const [totalViews, setTotalViews] = useState(0);
-  const [totalCompareViews, setTotalCompareViews] = useState(0);
+  const [previousPeriodViews, setPreviousPeriodViews] = useState(0);
+  const [percentageChange, setPercentageChange] = useState(0);
+  const [changeType, setChangeType] = useState<"positive" | "negative" | "neutral">("neutral");
+  const [shouldShowBadge, setShouldShowBadge] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchViews = async () => {
       setIsLoading(true);
-      const startTime = new Date();
 
       try {
-        // Your API route already handles both primary and comparison data
-        // You don't need to make a second API call
         const res = await fetch(
           `/api/profile-views?slug=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
         );
@@ -33,26 +33,12 @@ const OverviewTab = ({user}: {user: User}) => {
         const data = await res.json();
         console.log(data);
 
-        // Set the total views from primary data
         setTotalViews(data.totalViews || 0);
-
-        // Set the views data with already merged data from API
+        setPreviousPeriodViews(data.previousPeriodViews || 0);
         setViewsData(data.chartData);
-
-        // If comparison was enabled, calculate total comparison views
-        if (compareDateRange !== "Disabled" && data.comparisonChartData) {
-          const totalCompare = data.comparisonChartData.reduce(
-            (sum: number, item: ChartDataPoint) => sum + item.firstDate,
-            0,
-          );
-          setTotalCompareViews(totalCompare);
-        } else {
-          // Reset comparison data when disabled
-          setTotalCompareViews(0);
-        }
-
-        const endTime = new Date();
-        console.log(`Fetched views in ${endTime.getTime() - startTime.getTime()}ms`);
+        setPercentageChange(data.percentageChange || 0);
+        setChangeType(data.changeType || "neutral");
+        setShouldShowBadge(data.shouldShowBadge);
       } catch (error) {
         console.error("Error fetching profile views:", error);
       } finally {
@@ -67,8 +53,16 @@ const OverviewTab = ({user}: {user: User}) => {
     {
       title: "Total Views",
       number: totalViews || 0,
-      type: "positive",
-      analyticsNumber: 12,
+      type: changeType,
+      analyticsNumber: percentageChange,
+      shouldShowBadge,
+      tooltipData: shouldShowBadge
+        ? {
+            metricName: "Page views",
+            currentValue: totalViews,
+            previousValue: previousPeriodViews,
+          }
+        : undefined,
       chartData: viewsData || [],
       chartConfig: {
         views: {
@@ -89,18 +83,21 @@ const OverviewTab = ({user}: {user: User}) => {
       number: 53,
       type: "positive",
       analyticsNumber: 6,
+      shouldShowBadge: false,
     },
     {
       title: "Posts Created",
       number: 163,
       type: "positive",
       analyticsNumber: 12,
+      shouldShowBadge: false,
     },
     {
       title: "Posts Likes",
       number: 6,
       type: "negative",
       analyticsNumber: 7,
+      shouldShowBadge: false,
     },
   ];
 

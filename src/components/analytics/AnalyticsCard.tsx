@@ -6,19 +6,28 @@ import {formatNumber} from "@/functions/formatNumber";
 interface AnalyticsCardProps {
   title: string;
   number: number;
-  type: "positive" | "negative";
+  type: "positive" | "negative" | "neutral";
   analyticsNumber: number;
+  tooltipData?: {
+    metricName: string;
+    currentValue: number;
+    previousValue: number;
+  };
+  shouldShowBadge?: boolean;
   badgeDisplayment?: "top" | "bottom";
   cardClassName?: string;
   displayInGraph?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
 }
+
 const AnalyticsCard = ({
   title,
   number,
   type,
   analyticsNumber,
+  tooltipData,
+  shouldShowBadge = true,
   badgeDisplayment = "bottom",
   cardClassName,
   displayInGraph = false,
@@ -40,15 +49,19 @@ const AnalyticsCard = ({
       onClick={onClick}>
       <div className="flex justify-between items-center gap-1.5">
         <h5 className="font-medium text-foreground/70 text-sm line-clamp-1 leading-4.5">{title}</h5>
-        <div className={cn("flex-shrink-0", badgeDisplayment === "bottom" && "hidden")}>
-          <AnalyticsBadge number={analyticsNumber} type={type} />
-        </div>
+        {shouldShowBadge && (
+          <div className={cn("flex-shrink-0", badgeDisplayment === "bottom" && "hidden")}>
+            <AnalyticsBadge number={analyticsNumber} type={type} tooltipData={tooltipData} />
+          </div>
+        )}
       </div>
       <h4 className="font-medium text-[28px] text-foreground leading-9">{formatNumber(number)}</h4>
-      <div className={cn("flex items-center gap-[3px]", badgeDisplayment === "top" && "hidden")}>
-        <AnalyticsBadge number={analyticsNumber} type={type} />
-        <p className="text-secondary text-xs">vs last month</p>
-      </div>
+      {shouldShowBadge && (
+        <div className={cn("flex items-center gap-[3px]", badgeDisplayment === "top" && "hidden")}>
+          <AnalyticsBadge number={analyticsNumber} type={type} tooltipData={tooltipData} />
+          <p className="text-secondary text-xs">vs last month</p>
+        </div>
+      )}
     </div>
   );
 };

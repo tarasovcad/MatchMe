@@ -136,7 +136,13 @@ const StatsCardWithLineChart = ({
               <h4 className="font-medium text-[32px] text-foreground leading-[28px]">
                 {formatNumber(selectedData.number)}
               </h4>
-              <AnalyticsBadge number={selectedData.analyticsNumber} type={selectedData.type} />
+              {selectedData.shouldShowBadge && (
+                <AnalyticsBadge
+                  number={selectedData.analyticsNumber}
+                  type={selectedData.type}
+                  tooltipData={selectedData.tooltipData}
+                />
+              )}
             </div>
           </div>
           {isLoading ? (
@@ -164,7 +170,13 @@ const StatsCardWithLineChart = ({
                   <h4 className="font-medium text-[28px] text-foreground group-hover:text-foreground/80 leading-[28px]">
                     {formatNumber(item.number)}
                   </h4>
-                  <AnalyticsBadge number={item.analyticsNumber} type={item.type} />
+                  {item.shouldShowBadge && (
+                    <AnalyticsBadge
+                      number={item.analyticsNumber}
+                      type={item.type}
+                      tooltipData={item.tooltipData}
+                    />
+                  )}
                 </div>
               </div>
             ))}

@@ -1,6 +1,7 @@
 import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 import {mapDateRangeToPostHog} from "@/functions/mapDateRangeToPostHog";
 import {transformPostHogData} from "@/functions/transformPostHogData";
+import {calculateAnalyticsBadgeData} from "@/functions/analytics/calculateAnalyticsBadgeData";
 import {ChartDataPoint, PostHogRequestBody, PostHogResponse} from "@/types/analytics";
 import {NextRequest, NextResponse} from "next/server";
 
@@ -117,13 +118,38 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // Calculate total views for both periods
+    const currentPeriodViews = primaryChartData.reduce((sum, item) => {
+      const views = Math.round(item.firstDate);
+      return sum + views;
+    }, 0);
+
+    const previousPeriodViews = comparisonChartData.reduce((sum, item) => {
+      const views = Math.round(item.firstDate);
+      return sum + views;
+    }, 0);
+
+    const {percentageChange, changeType, shouldShowBadge} = calculateAnalyticsBadgeData(
+      currentPeriodViews,
+      previousPeriodViews,
+      compareDateRange,
+    );
+
+    console.log("API calculation:", {
+      currentPeriodViews,
+      previousPeriodViews,
+      percentageChange,
+      changeType,
+      shouldShowBadge,
+    });
+
     return NextResponse.json({
       chartData: compareDateRange !== "Disabled" ? mergedChartData : primaryChartData,
-      totalViews: primaryChartData.reduce((sum, item) => {
-        // Always use Math.round to handle partial views consistently
-        const views = Math.round(item.firstDate);
-        return sum + views;
-      }, 0),
+      totalViews: currentPeriodViews,
+      previousPeriodViews,
+      percentageChange,
+      changeType,
+      shouldShowBadge,
       primaryData: primaryData,
     });
   } catch (error) {
