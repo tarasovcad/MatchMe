@@ -31,6 +31,12 @@ export interface PostHogDateRange {
   interval: "hour" | "day" | "week" | "month";
 }
 
+export interface SupabaseDateRange {
+  date_from: string;
+  date_to?: string;
+  interval: "hour" | "day" | "week" | "month";
+}
+
 export interface PostHogProperty {
   key: string;
   value: string;

@@ -19,8 +19,6 @@ interface AnalyticsBadgeProps {
 }
 
 const AnalyticsBadge = ({number, type, tooltipData}: AnalyticsBadgeProps) => {
-  console.log("AnalyticsBadge props:", {number, type, tooltipData});
-
   const badge = (
     <div
       className="flex items-center gap-[3px] px-1 py-0.5 ring-border rounded-[5px] ring font-medium text-xs"

@@ -1,5 +1,6 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
+import {useEffect, useState} from "react";
 
 type DashboardStore = {
   dateRange: string;
@@ -8,7 +9,8 @@ type DashboardStore = {
   setCompareDateRange: (range: string) => void;
 };
 
-export const useDashboardStore = create<DashboardStore>()(
+// Create the store
+const useDashboardStoreBase = create<DashboardStore>()(
   persist(
     (set) => ({
       dateRange: "Today",
@@ -21,3 +23,18 @@ export const useDashboardStore = create<DashboardStore>()(
     },
   ),
 );
+
+// Wrapper hook with hydration tracking
+export const useDashboardStore = () => {
+  const store = useDashboardStoreBase();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return {
+    ...store,
+    hydrated,
+  };
+};

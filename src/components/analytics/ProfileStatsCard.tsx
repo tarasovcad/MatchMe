@@ -7,7 +7,7 @@ import {useEffect, useState} from "react";
 
 const ProfileStatsCard = ({user}: {user: User}) => {
   const userUsername = user.user_metadata.username;
-  const {dateRange, compareDateRange} = useDashboardStore();
+  const {dateRange, compareDateRange, hydrated} = useDashboardStore();
   const [viewsData, setViewsData] = useState(null);
   const [uniqueVisitorsData, setUniqueVisitorsData] = useState(null);
   const [totalViews, setTotalViews] = useState(0);
@@ -24,36 +24,62 @@ const ProfileStatsCard = ({user}: {user: User}) => {
   >("neutral");
   const [shouldShowViewsBadge, setShouldShowViewsBadge] = useState(false);
   const [shouldShowVisitorsBadge, setShouldShowVisitorsBadge] = useState(false);
+  // Follower stats
+  const [followersData, setFollowersData] = useState(null);
+  const [totalFollowers, setTotalFollowers] = useState(0);
+  const [previousPeriodFollowers, setPreviousPeriodFollowers] = useState(0);
+  const [followersPercentageChange, setFollowersPercentageChange] = useState(0);
+  const [followersChangeType, setFollowersChangeType] = useState<
+    "positive" | "negative" | "neutral"
+  >("neutral");
+  const [shouldShowFollowersBadge, setShouldShowFollowersBadge] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!hydrated) return;
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(
+        // Fetch profile stats
+        const profileStatsResponse = await fetch(
           `/api/profile-stats?slug=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
         );
-        if (!res.ok) {
-          console.error("Failed to fetch profile stats:", res.status);
-          throw new Error(`Failed to fetch profile stats: ${res.status}`);
+
+        // Fetch follower stats
+        const followerStatsResponse = await fetch(
+          `/api/follower-stats?username=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
+        );
+
+        if (!profileStatsResponse.ok) {
+          console.error("Failed to fetch profile stats:", profileStatsResponse.status);
+          throw new Error(`Failed to fetch profile stats: ${profileStatsResponse.status}`);
         }
-        const data = await res.json();
+
+        const profileData = await profileStatsResponse.json();
 
         // Set views data
-        setTotalViews(data.views.totalViews || 0);
-        setPreviousPeriodViews(data.views.previousPeriodViews || 0);
-        setViewsData(data.views.chartData);
-        setViewsPercentageChange(data.views.percentageChange || 0);
-        setViewsChangeType(data.views.changeType || "neutral");
-        setShouldShowViewsBadge(data.views.shouldShowBadge);
+        setTotalViews(profileData.views.totalViews || 0);
+        setPreviousPeriodViews(profileData.views.previousPeriodViews || 0);
+        setViewsData(profileData.views.chartData);
+        setViewsPercentageChange(profileData.views.percentageChange || 0);
+        setViewsChangeType(profileData.views.changeType || "neutral");
+        setShouldShowViewsBadge(profileData.views.shouldShowBadge);
 
         // Set unique visitors data
-        setTotalUniqueVisitors(data.uniqueVisitors.totalVisitors || 0);
-        setPreviousPeriodVisitors(data.uniqueVisitors.previousPeriodVisitors || 0);
-        setUniqueVisitorsData(data.uniqueVisitors.chartData);
-        setUniqueVisitorsPercentageChange(data.uniqueVisitors.percentageChange || 0);
-        setUniqueVisitorsChangeType(data.uniqueVisitors.changeType || "neutral");
-        setShouldShowVisitorsBadge(data.uniqueVisitors.shouldShowBadge);
+        setTotalUniqueVisitors(profileData.uniqueVisitors.totalVisitors || 0);
+        setPreviousPeriodVisitors(profileData.uniqueVisitors.previousPeriodVisitors || 0);
+        setUniqueVisitorsData(profileData.uniqueVisitors.chartData);
+        setUniqueVisitorsPercentageChange(profileData.uniqueVisitors.percentageChange || 0);
+        setUniqueVisitorsChangeType(profileData.uniqueVisitors.changeType || "neutral");
+        setShouldShowVisitorsBadge(profileData.uniqueVisitors.shouldShowBadge);
+
+        const followerData = await followerStatsResponse.json();
+        setFollowersData(followerData.chartData || []);
+        setTotalFollowers(followerData.totalFollowers || 0);
+        setPreviousPeriodFollowers(followerData.previousPeriodFollowers || 0);
+        setFollowersPercentageChange(followerData.percentageChange || 0);
+        setFollowersChangeType(followerData.changeType || "neutral");
+        setShouldShowFollowersBadge(followerData.shouldShowBadge);
       } catch (error) {
         console.error("Error fetching profile stats:", error);
       } finally {
@@ -80,9 +106,6 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         : undefined,
       chartData: viewsData || [],
       chartConfig: {
-        views: {
-          label: "Total Views",
-        },
         firstDate: {
           label: "First Date",
           color: "hsl(var(--chart-1))",
@@ -108,9 +131,6 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         : undefined,
       chartData: uniqueVisitorsData || [],
       chartConfig: {
-        views: {
-          label: "Unique Visitors",
-        },
         firstDate: {
           label: "First Date",
           color: "hsl(var(--chart-1))",
@@ -123,10 +143,28 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     },
     {
       title: "Followers Gained",
-      number: 53,
-      type: "positive",
-      analyticsNumber: 6,
-      shouldShowBadge: true,
+      number: totalFollowers || 0,
+      type: followersChangeType,
+      analyticsNumber: followersPercentageChange,
+      shouldShowBadge: shouldShowFollowersBadge,
+      tooltipData: shouldShowFollowersBadge
+        ? {
+            metricName: "Followers gained",
+            currentValue: totalFollowers,
+            previousValue: previousPeriodFollowers,
+          }
+        : undefined,
+      chartData: followersData || [],
+      chartConfig: {
+        firstDate: {
+          label: "First Date",
+          color: "hsl(var(--chart-1))",
+        },
+        secondDate: {
+          label: "Second Date",
+          color: "hsl(var(--chart-2))",
+        },
+      } satisfies ChartConfig,
     },
     {
       title: "Profile Interactions",

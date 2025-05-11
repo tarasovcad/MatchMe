@@ -1,9 +1,9 @@
+import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 import {mapDateRangeToPostHog} from "@/functions/mapDateRangeToPostHog";
 import {transformPostHogData} from "@/functions/transformPostHogData";
 import {calculateAnalyticsBadgeData} from "@/functions/analytics/calculateAnalyticsBadgeData";
 import {ChartDataPoint, PostHogRequestBody, PostHogResponse} from "@/types/analytics";
 import {NextRequest, NextResponse} from "next/server";
-import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
           id: "$pageview",
           name: "$pageview",
           type: "events",
-          math: "dau", // dau = daily active users
+          math: "dau", // dau = daily active users, which gives us unique visitors
           properties: [
             {
               key: "$pathname",
@@ -104,7 +104,10 @@ export async function GET(req: NextRequest) {
         ? await viewsResponse.text()
         : await uniqueVisitorsResponse.text();
       console.error("PostHog API error:", errorText);
-      return NextResponse.json({error: "Failed to fetch data from PostHog"}, {status: 500});
+      return NextResponse.json(
+        {error: "Failed to fetch data from PostHog", details: errorText},
+        {status: 500},
+      );
     }
 
     const viewsData = (await viewsResponse.json()) as PostHogResponse;
@@ -171,76 +174,123 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Merge chart data with comparison data
-    const mergedViewsChartData = viewsChartData.map((item, index) => {
-      return {
-        ...item,
-        secondDate: viewsComparisonChartData[index]?.firstDate || 0,
-      };
-    });
+    try {
+      // Merge chart data with comparison data
+      const mergedViewsChartData = viewsChartData.map((item, index) => {
+        return {
+          ...item,
+          secondDate: viewsComparisonChartData[index]?.firstDate || 0,
+        };
+      });
 
-    const mergedUniqueVisitorsChartData = uniqueVisitorsChartData.map((item, index) => {
-      return {
-        ...item,
-        secondDate: uniqueVisitorsComparisonChartData[index]?.firstDate || 0,
-      };
-    });
+      const mergedUniqueVisitorsChartData = uniqueVisitorsChartData.map((item, index) => {
+        return {
+          ...item,
+          secondDate: uniqueVisitorsComparisonChartData[index]?.firstDate || 0,
+        };
+      });
 
-    // Calculate totals for current period
-    const currentPeriodViews = viewsChartData.reduce((sum, item) => {
-      const views = Math.round(item.firstDate);
-      return sum + views;
-    }, 0);
+      // Calculate totals for current period
+      const currentPeriodViews = viewsChartData.reduce((sum, item) => {
+        const views = Math.round(item.firstDate);
+        return sum + views;
+      }, 0);
 
-    const currentPeriodUniqueVisitors = uniqueVisitorsChartData.reduce((sum, item) => {
-      const visitors = Math.round(item.firstDate);
-      return sum + visitors;
-    }, 0);
+      const currentPeriodUniqueVisitors = uniqueVisitorsChartData.reduce((sum, item) => {
+        const visitors = Math.round(item.firstDate);
+        return sum + visitors;
+      }, 0);
 
-    // Calculate totals for previous period
-    const previousPeriodViews = viewsComparisonChartData.reduce((sum, item) => {
-      const views = Math.round(item.firstDate);
-      return sum + views;
-    }, 0);
+      // Calculate totals for previous period
+      const previousPeriodViews = viewsComparisonChartData.reduce((sum, item) => {
+        const views = Math.round(item.firstDate);
+        return sum + views;
+      }, 0);
 
-    const previousPeriodUniqueVisitors = uniqueVisitorsComparisonChartData.reduce((sum, item) => {
-      const visitors = Math.round(item.firstDate);
-      return sum + visitors;
-    }, 0);
+      const previousPeriodUniqueVisitors = uniqueVisitorsComparisonChartData.reduce((sum, item) => {
+        const visitors = Math.round(item.firstDate);
+        return sum + visitors;
+      }, 0);
 
-    // Calculate percentage changes and badge data
-    const viewsBadgeData = calculateAnalyticsBadgeData(
-      currentPeriodViews,
-      previousPeriodViews,
-      compareDateRange,
-    );
-
-    const uniqueVisitorsBadgeData = calculateAnalyticsBadgeData(
-      currentPeriodUniqueVisitors,
-      previousPeriodUniqueVisitors,
-      compareDateRange,
-    );
-
-    return NextResponse.json({
-      views: {
-        chartData: mergedViewsChartData,
-        totalViews: currentPeriodViews,
+      // Calculate percentage changes and badge data
+      const viewsBadgeData = calculateAnalyticsBadgeData(
+        currentPeriodViews,
         previousPeriodViews,
-        percentageChange: viewsBadgeData.percentageChange,
-        changeType: viewsBadgeData.changeType,
-        shouldShowBadge: viewsBadgeData.shouldShowBadge,
-      },
-      uniqueVisitors: {
-        chartData: mergedUniqueVisitorsChartData,
-        totalVisitors: currentPeriodUniqueVisitors,
-        previousPeriodVisitors: previousPeriodUniqueVisitors,
-        percentageChange: uniqueVisitorsBadgeData.percentageChange,
-        changeType: uniqueVisitorsBadgeData.changeType,
-        shouldShowBadge: uniqueVisitorsBadgeData.shouldShowBadge,
-      },
-    });
+        compareDateRange,
+      );
+
+      const uniqueVisitorsBadgeData = calculateAnalyticsBadgeData(
+        currentPeriodUniqueVisitors,
+        previousPeriodUniqueVisitors,
+        compareDateRange,
+      );
+
+      return NextResponse.json({
+        views: {
+          chartData: mergedViewsChartData,
+          totalViews: currentPeriodViews,
+          previousPeriodViews,
+          percentageChange: viewsBadgeData.percentageChange,
+          changeType: viewsBadgeData.changeType,
+          shouldShowBadge: viewsBadgeData.shouldShowBadge,
+        },
+        uniqueVisitors: {
+          chartData: mergedUniqueVisitorsChartData,
+          totalVisitors: currentPeriodUniqueVisitors,
+          previousPeriodVisitors: previousPeriodUniqueVisitors,
+          percentageChange: uniqueVisitorsBadgeData.percentageChange,
+          changeType: uniqueVisitorsBadgeData.changeType,
+          shouldShowBadge: uniqueVisitorsBadgeData.shouldShowBadge,
+        },
+      });
+    } catch (error) {
+      console.error("Error in profile-stats API route:", error);
+      // Return more detailed error information to the client
+      return NextResponse.json(
+        {
+          views: {
+            chartData: [],
+            totalViews: 0,
+            previousPeriodViews: 0,
+            percentageChange: 0,
+            changeType: "neutral",
+            shouldShowBadge: false,
+          },
+          uniqueVisitors: {
+            chartData: [],
+            totalVisitors: 0,
+            previousPeriodVisitors: 0,
+            percentageChange: 0,
+            changeType: "neutral",
+            shouldShowBadge: false,
+          },
+          followers: {
+            chartData: [],
+            totalFollowers: 0,
+            previousPeriodFollowers: 0,
+            percentageChange: 0,
+            changeType: "neutral",
+            shouldShowBadge: false,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          error: "Error fetching profile stats",
+          message: error instanceof Error ? error.message : String(error),
+          stack:
+            process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : null,
+        },
+        {status: 200},
+      );
+    }
   } catch (error) {
     console.error("Error fetching profile stats:", error);
-    return NextResponse.json({error: "Error fetching profile stats"}, {status: 500});
+    return NextResponse.json(
+      {
+        error: "Error fetching profile stats",
+        message: error instanceof Error ? error.message : String(error),
+        stack:
+          process.env.NODE_ENV === "development" && error instanceof Error ? error.stack : null,
+      },
+      {status: 500},
+    );
   }
 }
