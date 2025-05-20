@@ -8,12 +8,7 @@ import * as React from "react";
 import {forwardRef, useEffect} from "react";
 
 import {cn} from "@/lib/utils";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/shadcn/command";
+import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
 
 export interface Option {
   value: string;
@@ -131,18 +126,14 @@ function removePickedOption(groupOption: GroupOption, picked: Option[]) {
   const cloneOption = JSON.parse(JSON.stringify(groupOption)) as GroupOption;
 
   for (const [key, value] of Object.entries(cloneOption)) {
-    cloneOption[key] = value.filter(
-      (val) => !picked.find((p) => p.value === val.value),
-    );
+    cloneOption[key] = value.filter((val) => !picked.find((p) => p.value === val.value));
   }
   return cloneOption;
 }
 
 function isOptionsExist(groupOption: GroupOption, targetOption: Option[]) {
   for (const [, value] of Object.entries(groupOption)) {
-    if (
-      value.some((option) => targetOption.find((p) => p.value === option.value))
-    ) {
+    if (value.some((option) => targetOption.find((p) => p.value === option.value))) {
       return true;
     }
   }
@@ -175,10 +166,7 @@ const CommandEmpty = forwardRef<
 
 CommandEmpty.displayName = "CommandEmpty";
 
-const MultipleSelector = React.forwardRef<
-  MultipleSelectorRef,
-  MultipleSelectorProps
->(
+const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorProps>(
   (
     {
       value,
@@ -441,14 +429,9 @@ const MultipleSelector = React.forwardRef<
           handleKeyDown(e);
           commandProps?.onKeyDown?.(e);
         }}
-        className={cn(
-          "h-auto overflow-visible bg-transparent",
-          commandProps?.className,
-        )}
+        className={cn("h-auto overflow-visible bg-transparent", commandProps?.className)}
         shouldFilter={
-          commandProps?.shouldFilter !== undefined
-            ? commandProps.shouldFilter
-            : !onSearch
+          commandProps?.shouldFilter !== undefined ? commandProps.shouldFilter : !onSearch
         } // When onSearch is provided, we don&lsquo;t want to filter the options. You can still override it.
         filter={commandFilter()}>
         <div
@@ -478,7 +461,7 @@ const MultipleSelector = React.forwardRef<
                   data-disabled={disabled || undefined}>
                   {option.label}
                   <button
-                    className="text-muted-foreground/80 hover:text-foreground outline-ring/30 dark:outline-ring/40 absolute -inset-y-px -end-px flex size-7 items-center justify-center rounded-e-lg border border-transparent p-0 outline-hidden transition-colors focus-visible:outline-2"
+                    className="absolute -inset-y-px flex justify-center items-center p-0 border border-transparent rounded-e-lg outline-hidden outline-ring/30 focus-visible:outline-2 dark:outline-ring/40 size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         handleUnselect(option);
@@ -518,11 +501,7 @@ const MultipleSelector = React.forwardRef<
                 }
                 inputProps?.onFocus?.(event);
               }}
-              placeholder={
-                hidePlaceholderWhenSelected && selected.length !== 0
-                  ? ""
-                  : placeholder
-              }
+              placeholder={hidePlaceholderWhenSelected && selected.length !== 0 ? "" : placeholder}
               className={cn(
                 "placeholder:text-muted-foreground flex-1 bg-transparent outline-hidden disabled:cursor-not-allowed",
                 {
@@ -562,7 +541,7 @@ const MultipleSelector = React.forwardRef<
             data-state={open ? "open" : "closed"}>
             {open && (
               <CommandList
-                className="bg-popover text-popover-foreground shadow-lg outline-hidden"
+                className="bg-popover shadow-lg outline-hidden text-popover-foreground"
                 onMouseLeave={() => {
                   setOnScrollbar(false);
                 }}
@@ -578,14 +557,9 @@ const MultipleSelector = React.forwardRef<
                   <>
                     {EmptyItem()}
                     {CreatableItem()}
-                    {!selectFirstItem && (
-                      <CommandItem value="-" className="hidden" />
-                    )}
+                    {!selectFirstItem && <CommandItem value="-" className="hidden" />}
                     {Object.entries(selectables).map(([key, dropdowns]) => (
-                      <CommandGroup
-                        key={key}
-                        heading={key}
-                        className="h-full overflow-auto">
+                      <CommandGroup key={key} heading={key} className="h-full overflow-auto">
                         <>
                           {dropdowns.map((option) => {
                             return (

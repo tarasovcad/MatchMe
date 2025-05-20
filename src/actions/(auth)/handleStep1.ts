@@ -62,10 +62,7 @@ export async function handleStep1(data: {
     // Run OTP send and profile lookup concurrently
     const [otpResponse, profileResponse] = await Promise.all([
       supabase.auth.signInWithOtp({email}),
-      supabase
-        .from("profiles")
-        .select("id", {head: true, count: "exact"})
-        .eq("email", email),
+      supabase.from("profiles").select("id", {head: true, count: "exact"}).eq("email", email),
     ]);
 
     // Check for OTP errors first
@@ -96,8 +93,7 @@ export async function handleStep1(data: {
   } catch (error) {
     console.log("Unexpected error in handleStep1:", error);
     return {
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }

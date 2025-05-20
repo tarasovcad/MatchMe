@@ -1,6 +1,7 @@
-import React, {useRef} from "react";
+import React from "react";
 import {motion} from "framer-motion";
 import {cn} from "@/lib/utils";
+import {useDragScroll} from "@/hooks/useDragScroll";
 
 const NotificationTabs = ({
   groups,
@@ -11,27 +12,7 @@ const NotificationTabs = ({
   activeTab: string;
   onTabChange: (tabId: string) => void;
 }) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const handleDragScroll = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!scrollRef.current) return;
-    const startX = e.pageX - scrollRef.current.offsetLeft;
-    const scrollLeft = scrollRef.current.scrollLeft;
-
-    const onMouseMove = (event: MouseEvent) => {
-      if (!scrollRef.current) return;
-      const walk = (event.pageX - startX) * 2;
-      scrollRef.current.scrollLeft = scrollLeft - walk;
-    };
-
-    const onMouseUp = () => {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  };
+  const {scrollRef, handleDragScroll} = useDragScroll();
 
   return (
     <div className="relative border-b border-border">

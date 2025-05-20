@@ -1,10 +1,11 @@
 import React from "react";
-import AnalyticsCardList, {AnalyticsCardListProps} from "@/components/analytics/AnalyticsCardList";
+import AnalyticsCardList from "@/components/analytics/AnalyticsCardList";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import {Button} from "@/components/shadcn/button";
 import {Filter} from "lucide-react";
 import {CirclePlus} from "lucide-react";
 import Link from "next/link";
+import {AnalyticsCardListProps} from "@/types/analytics";
 
 const ProjectsTab = () => {
   const analyticsData = [
