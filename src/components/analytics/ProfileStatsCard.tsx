@@ -4,6 +4,7 @@ import {useDashboardStore} from "@/store/useDashboardStore";
 import {AnalyticsCardItem} from "@/types/analytics";
 import {User} from "@supabase/supabase-js";
 import {useEffect, useState} from "react";
+import {toast} from "sonner";
 
 const ProfileStatsCard = ({user}: {user: User}) => {
   const userUsername = user.user_metadata.username;
@@ -24,7 +25,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
   >("neutral");
   const [shouldShowViewsBadge, setShouldShowViewsBadge] = useState(false);
   const [shouldShowVisitorsBadge, setShouldShowVisitorsBadge] = useState(false);
-  // Follower stats
+
   const [followersData, setFollowersData] = useState(null);
   const [totalFollowers, setTotalFollowers] = useState(0);
   const [previousPeriodFollowers, setPreviousPeriodFollowers] = useState(0);
@@ -51,8 +52,24 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         );
 
         if (!profileStatsResponse.ok) {
-          console.error("Failed to fetch profile stats:", profileStatsResponse.status);
-          throw new Error(`Failed to fetch profile stats: ${profileStatsResponse.status}`);
+          const errorData = await profileStatsResponse.json();
+          console.error("Profile stats error:", errorData);
+          toast.error(errorData.detail || errorData.error || "Failed to fetch profile statistics", {
+            description: "Please try again later",
+          });
+          return;
+        }
+
+        if (!followerStatsResponse.ok) {
+          const errorData = await followerStatsResponse.json();
+          console.error("Follower stats error:", errorData);
+          toast.error(
+            errorData.detail || errorData.error || "Failed to fetch follower statistics",
+            {
+              description: "Please try again later",
+            },
+          );
+          return;
         }
 
         const profileData = await profileStatsResponse.json();
@@ -74,6 +91,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         setShouldShowVisitorsBadge(profileData.uniqueVisitors.shouldShowBadge);
 
         const followerData = await followerStatsResponse.json();
+        console.log(followerData);
         setFollowersData(followerData.chartData || []);
         setTotalFollowers(followerData.totalFollowers || 0);
         setPreviousPeriodFollowers(followerData.previousPeriodFollowers || 0);
@@ -81,14 +99,17 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         setFollowersChangeType(followerData.changeType || "neutral");
         setShouldShowFollowersBadge(followerData.shouldShowBadge);
       } catch (error) {
-        console.error("Error fetching profile stats:", error);
+        console.error("Error fetching stats:", error);
+        toast.error("Failed to fetch statistics", {
+          description: "An unexpected error occurred. Please try again later.",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchStats();
-  }, [dateRange, compareDateRange, userUsername]);
+  }, [dateRange, compareDateRange, userUsername, hydrated]);
 
   const data: AnalyticsCardItem[] = [
     {

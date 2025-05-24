@@ -43,7 +43,9 @@ const Chart = ({
           axisLine={false}
           tickMargin={8}
           interval={"preserveStartEnd"}
-          tickFormatter={(date) => formatChartDate(date, dateRange)}
+          tickFormatter={(date) => {
+            return formatChartDate(date, dateRange);
+          }}
         />
         <ChartTooltip
           cursor={false}
