@@ -1,12 +1,10 @@
 import {NextRequest, NextResponse} from "next/server";
 import {createClient} from "@/utils/supabase/server";
-
-type ChartDataPoint = {
-  month: string;
-  date: string;
-  firstDate: number;
-  secondDate?: number;
-};
+import {
+  getChartGranularity,
+  getDateRange,
+  transformFollowerDataForChart,
+} from "@/functions/analytics/analyticsDataTransformation";
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,7 +37,6 @@ export async function GET(req: NextRequest) {
     const profileCreatedAt = profileData.created_at;
 
     const {start, end} = getDateRange(dateRange, profileCreatedAt);
-    console.log("Query range:", {start, end});
 
     const {data: followsData, error: followsError} = await supabase
       .from("follows")
@@ -49,15 +46,25 @@ export async function GET(req: NextRequest) {
       .lt("created_at", end)
       .order("created_at", {ascending: true});
 
+    console.log(start, end);
+
     if (followsError) {
       return NextResponse.json(
         {error: "Error fetching follows data", details: followsError.message},
         {status: 500},
       );
     }
+    const granularity = getChartGranularity(dateRange);
 
+    const chartData = transformFollowerDataForChart(followsData, start, end, granularity);
+
+    console.log(chartData);
     return NextResponse.json({
-      data: followsData,
+      chartData,
+      totalFollowers: followsData?.length || 0,
+      percentageChange: 0,
+      changeType: "neutral",
+      shouldShowBadge: false,
     });
   } catch (error) {
     console.error("Error fetching follower stats:", error);
@@ -69,90 +76,5 @@ export async function GET(req: NextRequest) {
       },
       {status: 500},
     );
-  }
-}
-
-function getDateRange(range: string, profileCreatedAt: string) {
-  const now = new Date();
-  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-
-  switch (range) {
-    case "Today":
-      return {
-        start: today.toISOString(),
-        end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-    case "Yesterday": {
-      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      return {
-        start: yesterday.toISOString(),
-        end: today.toISOString(),
-      };
-    }
-
-    case "Last 24 hours": {
-      const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      return {
-        start: last24Hours.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-
-    case "Past 7 days": {
-      const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      return {
-        start: sevenDaysAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-    case "Past 14 days": {
-      const fourteenDaysAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-      return {
-        start: fourteenDaysAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-
-    case "Past 30 days": {
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-      return {
-        start: thirtyDaysAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-
-    case "Past Quarter": {
-      const quarterAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
-      return {
-        start: quarterAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-    case "Past Half Year": {
-      const halfYearAgo = new Date(today.getTime() - 180 * 24 * 60 * 60 * 1000);
-      return {
-        start: halfYearAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-    case "Past Year": {
-      const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
-      return {
-        start: yearAgo.toISOString(),
-        end: now.toISOString(),
-      };
-    }
-    case "All Time":
-      return {
-        start: new Date(profileCreatedAt).toISOString(),
-        end: now.toISOString(),
-      };
-
-    default:
-      return {
-        start: today.toISOString(),
-        end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      };
   }
 }
