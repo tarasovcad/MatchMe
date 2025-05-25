@@ -4,12 +4,20 @@ type ChartDataPoint = {
   firstDate: number;
   secondDate?: number;
 };
+interface AnalyticsBadgeData {
+  percentageChange: number;
+  changeType: "positive" | "negative" | "neutral";
+  shouldShowBadge: boolean;
+}
 
 export function transformFollowerDataForChart(
   followsData: Array<{id: string; created_at: string}>,
   startDate: string,
   endDate: string,
   granularity: "hour" | "day" | "month",
+  comparisonFollowsData?: Array<{id: string; created_at: string}>,
+  comparisonStartDate?: string,
+  comparisonEndDate?: string,
 ) {
   const chartData: ChartDataPoint[] = [];
   const timePoints: Date[] = [];
@@ -55,6 +63,26 @@ export function transformFollowerDataForChart(
       return followDate >= timePoint && followDate < nextTimePoint;
     }).length;
 
+    // Count comparison followers if comparison data is provided
+    let comparisonFollowersInPeriod = 0;
+    if (comparisonFollowsData && comparisonStartDate && comparisonEndDate) {
+      const comparisonStart = new Date(comparisonStartDate);
+      const comparisonEnd = new Date(comparisonEndDate);
+
+      // Calculate the equivalent time point in the comparison period
+      const timeDiff = timePoint.getTime() - start.getTime();
+      const comparisonTimePoint = new Date(comparisonStart.getTime() + timeDiff);
+      const comparisonNextTimePoint =
+        index < timePoints.length - 1
+          ? new Date(comparisonStart.getTime() + (nextTimePoint.getTime() - start.getTime()))
+          : comparisonEnd;
+
+      comparisonFollowersInPeriod = comparisonFollowsData.filter((follow) => {
+        const followDate = new Date(follow.created_at);
+        return followDate >= comparisonTimePoint && followDate < comparisonNextTimePoint;
+      }).length;
+    }
+
     // Format the date based on granularity
     if (granularity === "hour") {
       formattedDate = timePoint.toISOString().slice(0, 13) + ":00:00.000Z";
@@ -64,11 +92,18 @@ export function transformFollowerDataForChart(
       formattedDate = timePoint.toISOString().slice(0, 7) + "-01T00:00:00.000Z";
     }
 
-    chartData.push({
+    const dataPoint: ChartDataPoint = {
       month: formattedDate,
       date: formattedDate,
       firstDate: followersInPeriod,
-    });
+    };
+
+    // Add comparison data if available
+    if (comparisonFollowsData) {
+      dataPoint.secondDate = comparisonFollowersInPeriod;
+    }
+
+    chartData.push(dataPoint);
   });
 
   return chartData;
@@ -172,4 +207,110 @@ export function getDateRange(range: string, profileCreatedAt: string) {
         end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString(),
       };
   }
+}
+
+export function getComparisonDateRange(
+  dateRange: string,
+  compareDateRange: string,
+  profileCreatedAt: string,
+): {start: string; end: string} {
+  if (compareDateRange === "Previous Period") {
+    const currentRange = getDateRange(dateRange, profileCreatedAt);
+    const currentStart = new Date(currentRange.start);
+    const currentEnd = new Date(currentRange.end);
+    const duration = currentEnd.getTime() - currentStart.getTime();
+
+    const compareEnd = new Date(currentStart.getTime());
+    const compareStart = new Date(currentStart.getTime() - duration);
+
+    return {
+      start: compareStart.toISOString(),
+      end: compareEnd.toISOString(),
+    };
+  }
+
+  if (compareDateRange === "Year over year") {
+    const currentRange = getDateRange(dateRange, profileCreatedAt);
+    const currentStart = new Date(currentRange.start);
+    const currentEnd = new Date(currentRange.end);
+
+    // Go back exactly one year
+    const compareStart = new Date(currentStart);
+    compareStart.setUTCFullYear(compareStart.getUTCFullYear() - 1);
+
+    const compareEnd = new Date(currentEnd);
+    compareEnd.setUTCFullYear(compareEnd.getUTCFullYear() - 1);
+
+    return {
+      start: compareStart.toISOString(),
+      end: compareEnd.toISOString(),
+    };
+  }
+
+  // Default fallback
+  return getDateRange(dateRange, profileCreatedAt);
+}
+
+export function getPreviousPeriodDate(currentDate: string, dateRange: string): string {
+  const date = new Date(currentDate);
+
+  switch (dateRange) {
+    case "Today":
+    case "Yesterday":
+    case "Last 24 hours":
+      return new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past 7 days":
+      return new Date(date.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past 14 days":
+      return new Date(date.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past 30 days":
+      return new Date(date.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past Quarter":
+      return new Date(date.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past Half Year":
+      return new Date(date.getTime() - 180 * 24 * 60 * 60 * 1000).toISOString();
+
+    case "Past Year":
+      return new Date(date.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString();
+
+    default:
+      return new Date(date.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  }
+}
+
+export function calculateAnalyticsBadgeData(
+  currentPeriodViews: number,
+  previousPeriodViews: number,
+  compareDateRange: string,
+): AnalyticsBadgeData {
+  let percentageChange = 0;
+  let changeType: "positive" | "negative" | "neutral" = "neutral";
+  let shouldShowBadge = true;
+
+  // Don't show badge if comparison is disabled
+  if (compareDateRange === "Disabled") {
+    shouldShowBadge = false;
+  }
+  // Don't show badge if there's no previous period data
+  else if (previousPeriodViews === 0) {
+    shouldShowBadge = false;
+  }
+  // Calculate percentage change if we have previous period data
+  else if (previousPeriodViews > 0) {
+    percentageChange = Math.round(
+      ((currentPeriodViews - previousPeriodViews) / previousPeriodViews) * 100,
+    );
+    changeType = percentageChange > 0 ? "positive" : percentageChange < 0 ? "negative" : "neutral";
+  }
+
+  return {
+    percentageChange: Math.abs(percentageChange),
+    changeType,
+    shouldShowBadge,
+  };
 }

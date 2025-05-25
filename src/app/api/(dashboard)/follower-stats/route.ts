@@ -4,6 +4,8 @@ import {
   getChartGranularity,
   getDateRange,
   transformFollowerDataForChart,
+  getComparisonDateRange,
+  calculateAnalyticsBadgeData,
 } from "@/functions/analytics/analyticsDataTransformation";
 
 export async function GET(req: NextRequest) {
@@ -38,6 +40,7 @@ export async function GET(req: NextRequest) {
 
     const {start, end} = getDateRange(dateRange, profileCreatedAt);
 
+    // Get current period data
     const {data: followsData, error: followsError} = await supabase
       .from("follows")
       .select("id, created_at")
@@ -46,25 +49,71 @@ export async function GET(req: NextRequest) {
       .lt("created_at", end)
       .order("created_at", {ascending: true});
 
-    console.log(start, end);
-
     if (followsError) {
       return NextResponse.json(
         {error: "Error fetching follows data", details: followsError.message},
         {status: 500},
       );
     }
+
+    // Get comparison period data
+    let comparisonFollowsData = null;
+    let comparisonStart = "";
+    let comparisonEnd = "";
+    let percentageChange = 0;
+    let changeType: "positive" | "negative" | "neutral" = "neutral";
+    let shouldShowBadge = false;
+
+    if (compareDateRange && compareDateRange !== "None") {
+      const comparisonRange = getComparisonDateRange(dateRange, compareDateRange, profileCreatedAt);
+      comparisonStart = comparisonRange.start;
+      comparisonEnd = comparisonRange.end;
+
+      const {data: comparisonData, error: comparisonError} = await supabase
+        .from("follows")
+        .select("id, created_at")
+        .eq("following_id", profileId)
+        .gte("created_at", comparisonStart)
+        .lt("created_at", comparisonEnd)
+        .order("created_at", {ascending: true});
+
+      if (!comparisonError && comparisonData) {
+        comparisonFollowsData = comparisonData;
+
+        // Calculate percentage change
+        const currentTotal = followsData?.length || 0;
+        const previousTotal = comparisonData?.length || 0;
+        const changeResult = calculateAnalyticsBadgeData(
+          currentTotal,
+          previousTotal,
+          compareDateRange,
+        );
+
+        percentageChange = changeResult.percentageChange;
+        changeType = changeResult.changeType;
+        shouldShowBadge = true;
+      }
+    }
+
     const granularity = getChartGranularity(dateRange);
 
-    const chartData = transformFollowerDataForChart(followsData, start, end, granularity);
+    const chartData = transformFollowerDataForChart(
+      followsData || [],
+      start,
+      end,
+      granularity,
+      comparisonFollowsData || undefined,
+      comparisonStart || undefined,
+      comparisonEnd || undefined,
+    );
 
-    console.log(chartData);
     return NextResponse.json({
       chartData,
       totalFollowers: followsData?.length || 0,
-      percentageChange: 0,
-      changeType: "neutral",
-      shouldShowBadge: false,
+      previousPeriodFollowers: comparisonFollowsData?.length || 0,
+      percentageChange,
+      changeType,
+      shouldShowBadge,
     });
   } catch (error) {
     console.error("Error fetching follower stats:", error);

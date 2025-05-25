@@ -73,7 +73,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         }
 
         const profileData = await profileStatsResponse.json();
-
+        console.log(profileData, "profileData");
         // Set views data
         setTotalViews(profileData.views.totalViews || 0);
         setPreviousPeriodViews(profileData.views.previousPeriodViews || 0);
@@ -91,7 +91,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         setShouldShowVisitorsBadge(profileData.uniqueVisitors.shouldShowBadge);
 
         const followerData = await followerStatsResponse.json();
-        console.log(followerData);
+        console.log(followerData, "followerData");
         setFollowersData(followerData.chartData || []);
         setTotalFollowers(followerData.totalFollowers || 0);
         setPreviousPeriodFollowers(followerData.previousPeriodFollowers || 0);
@@ -195,7 +195,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
       shouldShowBadge: true,
     },
   ];
-
+  console.log(data);
   return (
     <StatsCardWithLineChart
       data={data}

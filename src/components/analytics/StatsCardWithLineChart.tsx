@@ -9,7 +9,7 @@ import {AnalyticsCardItem} from "@/types/analytics";
 import AnalyticsCardList from "./AnalyticsCardList";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {useDashboardStore} from "@/store/useDashboardStore";
-import {getPreviousPeriodDate} from "@/functions/dashboard/getPreviousPeriodDate";
+import {getPreviousPeriodDate} from "@/functions/analytics/analyticsDataTransformation";
 
 const Chart = ({
   data,
