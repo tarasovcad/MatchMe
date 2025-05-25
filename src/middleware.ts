@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect users with incomplete profiles, except on the complete-profile page
   //if (!isProfileComplete && pathname !== "/complete-profile") {
-    //return NextResponse.redirect(new URL("/complete-profile", request.url));
+  //return NextResponse.redirect(new URL("/complete-profile", request.url));
   //}
 
   if (data.user) {

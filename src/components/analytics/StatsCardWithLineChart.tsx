@@ -9,7 +9,7 @@ import {AnalyticsCardItem} from "@/types/analytics";
 import AnalyticsCardList from "./AnalyticsCardList";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {useDashboardStore} from "@/store/useDashboardStore";
-import {getPreviousPeriodDate} from "@/functions/dashboard/getPreviousPeriodDate";
+import {getPreviousPeriodDate} from "@/functions/analytics/analyticsDataTransformation";
 
 const Chart = ({
   data,
@@ -43,7 +43,9 @@ const Chart = ({
           axisLine={false}
           tickMargin={8}
           interval={"preserveStartEnd"}
-          tickFormatter={(date) => formatChartDate(date, dateRange)}
+          tickFormatter={(date) => {
+            return formatChartDate(date, dateRange);
+          }}
         />
         <ChartTooltip
           cursor={false}
@@ -59,7 +61,9 @@ const Chart = ({
                 const showTitle = index === 0;
                 return (
                   <div className="flex flex-col gap-1.5 w-full">
-                    {showTitle && <span className="font-medium text-foreground">{data.title}</span>}
+                    {showTitle && (
+                      <span className="font-medium text-foreground">{data.title} (UTC)</span>
+                    )}
                     <div className="flex flex-1 justify-between items-center gap-2 leading-none">
                       <div className="flex items-center gap-1.5">
                         <div

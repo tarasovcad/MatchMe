@@ -1,7 +1,8 @@
+import {calculateAnalyticsBadgeData} from "@/functions/analytics/analyticsDataTransformation";
 import {getComparisonDateRange} from "@/functions/getComparisonDateRange";
 import {mapDateRangeToPostHog} from "@/functions/mapDateRangeToPostHog";
 import {transformPostHogData} from "@/functions/transformPostHogData";
-import {calculateAnalyticsBadgeData} from "@/functions/analytics/calculateAnalyticsBadgeData";
+
 import {ChartDataPoint, PostHogRequestBody, PostHogResponse} from "@/types/analytics";
 import {NextRequest, NextResponse} from "next/server";
 
