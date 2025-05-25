@@ -1,131 +1,107 @@
 import StatsCardWithLineChart from "@/components/analytics/StatsCardWithLineChart";
 import {ChartConfig} from "@/components/shadcn/chart";
+import {useFollowerStats, useUniqueVisitors, useViewsStats} from "@/hooks/query/use-stats";
 import {useDashboardStore} from "@/store/useDashboardStore";
 import {AnalyticsCardItem} from "@/types/analytics";
 import {User} from "@supabase/supabase-js";
-import {useEffect, useState} from "react";
+import {useMemo} from "react";
 import {toast} from "sonner";
 
 const ProfileStatsCard = ({user}: {user: User}) => {
   const userUsername = user.user_metadata.username;
-  const {dateRange, compareDateRange, hydrated} = useDashboardStore();
-  const [viewsData, setViewsData] = useState(null);
-  const [uniqueVisitorsData, setUniqueVisitorsData] = useState(null);
-  const [totalViews, setTotalViews] = useState(0);
-  const [totalUniqueVisitors, setTotalUniqueVisitors] = useState(0);
-  const [previousPeriodViews, setPreviousPeriodViews] = useState(0);
-  const [previousPeriodVisitors, setPreviousPeriodVisitors] = useState(0);
-  const [viewsPercentageChange, setViewsPercentageChange] = useState(0);
-  const [uniqueVisitorsPercentageChange, setUniqueVisitorsPercentageChange] = useState(0);
-  const [viewsChangeType, setViewsChangeType] = useState<"positive" | "negative" | "neutral">(
-    "neutral",
+  const {dateRange, compareDateRange} = useDashboardStore();
+  const statsParams = useMemo(
+    () => ({
+      username: userUsername,
+      dateRange,
+      compareDateRange,
+    }),
+    [userUsername, dateRange, compareDateRange],
   );
-  const [uniqueVisitorsChangeType, setUniqueVisitorsChangeType] = useState<
-    "positive" | "negative" | "neutral"
-  >("neutral");
-  const [shouldShowViewsBadge, setShouldShowViewsBadge] = useState(false);
-  const [shouldShowVisitorsBadge, setShouldShowVisitorsBadge] = useState(false);
 
-  const [followersData, setFollowersData] = useState(null);
-  const [totalFollowers, setTotalFollowers] = useState(0);
-  const [previousPeriodFollowers, setPreviousPeriodFollowers] = useState(0);
-  const [followersPercentageChange, setFollowersPercentageChange] = useState(0);
-  const [followersChangeType, setFollowersChangeType] = useState<
-    "positive" | "negative" | "neutral"
-  >("neutral");
-  const [shouldShowFollowersBadge, setShouldShowFollowersBadge] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    data: viewsData,
+    isLoading: isViewsLoading,
+    error: viewsError,
+  } = useViewsStats(statsParams);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    const fetchStats = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch profile stats
-        const profileStatsResponse = await fetch(
-          `/api/profile-stats?slug=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
-        );
+  const {
+    data: followersData,
+    isLoading: isFollowersLoading,
+    error: followersError,
+  } = useFollowerStats(statsParams);
 
-        // Fetch follower stats
-        const followerStatsResponse = await fetch(
-          `/api/follower-stats?username=${userUsername}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
-        );
+  const {
+    data: visitorsData,
+    isLoading: isVisitorsLoading,
+    error: visitorsError,
+  } = useUniqueVisitors(statsParams);
 
-        if (!profileStatsResponse.ok) {
-          const errorData = await profileStatsResponse.json();
-          console.error("Profile stats error:", errorData);
-          toast.error(errorData.detail || errorData.error || "Failed to fetch profile statistics", {
-            description: "Please try again later",
-          });
-          return;
-        }
+  if (viewsError) {
+    toast.error(viewsError.message, {
+      description: "Please try again later",
+    });
+  }
 
-        if (!followerStatsResponse.ok) {
-          const errorData = await followerStatsResponse.json();
-          console.error("Follower stats error:", errorData);
-          toast.error(
-            errorData.detail || errorData.error || "Failed to fetch follower statistics",
-            {
-              description: "Please try again later",
-            },
-          );
-          return;
-        }
+  if (followersError) {
+    toast.error(followersError.message, {
+      description: "Please try again later",
+    });
+  }
 
-        const profileData = await profileStatsResponse.json();
-        console.log(profileData, "profileData");
-        // Set views data
-        setTotalViews(profileData.views.totalViews || 0);
-        setPreviousPeriodViews(profileData.views.previousPeriodViews || 0);
-        setViewsData(profileData.views.chartData);
-        setViewsPercentageChange(profileData.views.percentageChange || 0);
-        setViewsChangeType(profileData.views.changeType || "neutral");
-        setShouldShowViewsBadge(profileData.views.shouldShowBadge);
+  if (visitorsError) {
+    toast.error(visitorsError.message, {
+      description: "Please try again later",
+    });
+  }
 
-        // Set unique visitors data
-        setTotalUniqueVisitors(profileData.uniqueVisitors.totalVisitors || 0);
-        setPreviousPeriodVisitors(profileData.uniqueVisitors.previousPeriodVisitors || 0);
-        setUniqueVisitorsData(profileData.uniqueVisitors.chartData);
-        setUniqueVisitorsPercentageChange(profileData.uniqueVisitors.percentageChange || 0);
-        setUniqueVisitorsChangeType(profileData.uniqueVisitors.changeType || "neutral");
-        setShouldShowVisitorsBadge(profileData.uniqueVisitors.shouldShowBadge);
+  const isLoading = isViewsLoading || isFollowersLoading || isVisitorsLoading;
 
-        const followerData = await followerStatsResponse.json();
-        console.log(followerData, "followerData");
-        setFollowersData(followerData.chartData || []);
-        setTotalFollowers(followerData.totalFollowers || 0);
-        setPreviousPeriodFollowers(followerData.previousPeriodFollowers || 0);
-        setFollowersPercentageChange(followerData.percentageChange || 0);
-        setFollowersChangeType(followerData.changeType || "neutral");
-        setShouldShowFollowersBadge(followerData.shouldShowBadge);
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-        toast.error("Failed to fetch statistics", {
-          description: "An unexpected error occurred. Please try again later.",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [dateRange, compareDateRange, userUsername, hydrated]);
+  const metrics = useMemo(
+    () => ({
+      views: {
+        total: viewsData?.totalViews || 0,
+        previousPeriod: viewsData?.previousPeriodViews || 0,
+        percentageChange: viewsData?.percentageChange || 0,
+        changeType: viewsData?.changeType || "neutral",
+        shouldShowBadge: viewsData?.shouldShowBadge || false,
+        chartData: viewsData?.chartData || [],
+      },
+      visitors: {
+        total: visitorsData?.totalUniqueVisitors || 0,
+        previousPeriod: visitorsData?.previousPeriodUniqueVisitors || 0,
+        percentageChange: visitorsData?.percentageChange || 0,
+        changeType: visitorsData?.changeType || "neutral",
+        shouldShowBadge: visitorsData?.shouldShowBadge || false,
+        chartData: visitorsData?.chartData || [],
+      },
+      followers: {
+        total: followersData?.totalFollowers || 0,
+        previousPeriod: followersData?.previousPeriodFollowers || 0,
+        percentageChange: followersData?.percentageChange || 0,
+        changeType: followersData?.changeType || "neutral",
+        shouldShowBadge: followersData?.shouldShowBadge || false,
+        chartData: followersData?.chartData || [],
+      },
+    }),
+    [viewsData, visitorsData, followersData],
+  );
 
   const data: AnalyticsCardItem[] = [
     {
       title: "Total Views",
-      number: totalViews || 0,
-      type: viewsChangeType,
-      analyticsNumber: viewsPercentageChange,
-      shouldShowBadge: shouldShowViewsBadge,
-      tooltipData: shouldShowViewsBadge
+      number: metrics.views.total,
+      type: metrics.views.changeType,
+      analyticsNumber: metrics.views.percentageChange,
+      shouldShowBadge: metrics.views.shouldShowBadge,
+      tooltipData: metrics.views.shouldShowBadge
         ? {
             metricName: "Page views",
-            currentValue: totalViews,
-            previousValue: previousPeriodViews,
+            currentValue: metrics.views.total,
+            previousValue: metrics.views.previousPeriod,
           }
         : undefined,
-      chartData: viewsData || [],
+      chartData: metrics.views.chartData,
       chartConfig: {
         firstDate: {
           label: "First Date",
@@ -139,18 +115,18 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     },
     {
       title: "Unique Visitors",
-      number: totalUniqueVisitors || 0,
-      type: uniqueVisitorsChangeType,
-      analyticsNumber: uniqueVisitorsPercentageChange,
-      shouldShowBadge: shouldShowVisitorsBadge,
-      tooltipData: shouldShowVisitorsBadge
+      number: metrics.visitors.total,
+      type: metrics.visitors.changeType,
+      analyticsNumber: metrics.visitors.percentageChange,
+      shouldShowBadge: metrics.visitors.shouldShowBadge,
+      tooltipData: metrics.visitors.shouldShowBadge
         ? {
             metricName: "Unique visitors",
-            currentValue: totalUniqueVisitors,
-            previousValue: previousPeriodVisitors,
+            currentValue: metrics.visitors.total,
+            previousValue: metrics.visitors.previousPeriod,
           }
         : undefined,
-      chartData: uniqueVisitorsData || [],
+      chartData: metrics.visitors.chartData,
       chartConfig: {
         firstDate: {
           label: "First Date",
@@ -164,18 +140,18 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     },
     {
       title: "Followers Gained",
-      number: totalFollowers || 0,
-      type: followersChangeType,
-      analyticsNumber: followersPercentageChange,
-      shouldShowBadge: shouldShowFollowersBadge,
-      tooltipData: shouldShowFollowersBadge
+      number: metrics.followers.total,
+      type: metrics.followers.changeType,
+      analyticsNumber: metrics.followers.percentageChange,
+      shouldShowBadge: metrics.followers.shouldShowBadge,
+      tooltipData: metrics.followers.shouldShowBadge
         ? {
             metricName: "Followers gained",
-            currentValue: totalFollowers,
-            previousValue: previousPeriodFollowers,
+            currentValue: metrics.followers.total,
+            previousValue: metrics.followers.previousPeriod,
           }
         : undefined,
-      chartData: followersData || [],
+      chartData: metrics.followers.chartData,
       chartConfig: {
         firstDate: {
           label: "First Date",
@@ -195,7 +171,6 @@ const ProfileStatsCard = ({user}: {user: User}) => {
       shouldShowBadge: true,
     },
   ];
-  console.log(data);
   return (
     <StatsCardWithLineChart
       data={data}

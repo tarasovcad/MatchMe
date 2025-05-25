@@ -8,6 +8,7 @@ import GlobaleHotkeys from "@/utils/other/globaleHotkeys";
 import {Analytics} from "@vercel/analytics/react";
 import {SpeedInsights} from "@vercel/speed-insights/next";
 import {PostHogProvider} from "@/providers/PostHogProvider";
+import QueryProvider from "@/providers/QueryProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -29,28 +30,29 @@ export default function RootLayout({
         <link rel="icon" href="/light-icon.svg" />
       </head>
       <body className={`${geistSans.variable} antialiased`}>
-        <PostHogProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange>
-            <FaviconUpdater />
-            <GlobaleHotkeys />
-            <Analytics />
-            <SpeedInsights />
-            {children}
-          </ThemeProvider>
-          <Toaster
-            position="top-right"
-            richColors
-            toastOptions={{closeButton: true}}
-            offset={25}
-            mobileOffset={25}
-            gap={20}
-            // duration={300000}
-          />
-        </PostHogProvider>
+        <QueryProvider>
+          <PostHogProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem
+              disableTransitionOnChange>
+              <FaviconUpdater />
+              <GlobaleHotkeys />
+              <Analytics />
+              <SpeedInsights />
+              {children}
+            </ThemeProvider>
+            <Toaster
+              position="top-right"
+              richColors
+              toastOptions={{closeButton: true}}
+              offset={25}
+              mobileOffset={25}
+              gap={20}
+            />
+          </PostHogProvider>
+        </QueryProvider>
       </body>
     </html>
   );

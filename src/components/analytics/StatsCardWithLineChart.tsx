@@ -29,7 +29,6 @@ const Chart = ({
   }
 
   const {dateRange} = useDashboardStore();
-
   return (
     <ChartContainer config={data.chartConfig || {}} className="w-full h-[210px] aspect-auto">
       <AreaChart

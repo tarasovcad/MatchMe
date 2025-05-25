@@ -1,9 +1,11 @@
 import {ChartConfig} from "@/components/shadcn/chart";
 
+export type ChangeType = "positive" | "negative" | "neutral";
+
 export interface AnalyticsCardItem {
   title: string;
   number: number;
-  type: "positive" | "negative" | "neutral";
+  type: ChangeType;
   analyticsNumber: number;
   shouldShowBadge?: boolean;
   tooltipData?: {
@@ -95,4 +97,13 @@ export interface ChartDataPoint {
   month: string;
   date: string;
   firstDate: number;
+}
+
+export interface MetricData {
+  total: number;
+  previousPeriod: number;
+  percentageChange: number;
+  changeType: ChangeType;
+  shouldShowBadge: boolean;
+  chartData: ChartDataPoint[];
 }
