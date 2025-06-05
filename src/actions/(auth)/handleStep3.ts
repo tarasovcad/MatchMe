@@ -2,11 +2,7 @@
 
 import {createClient} from "@/utils/supabase/server";
 
-export async function handleStep3(data: {
-  email: string;
-  name: string;
-  username: string;
-}) {
+export async function handleStep3(data: {email: string; name: string; username: string}) {
   try {
     const supabase = await createClient();
     const {name, username} = data;
@@ -41,10 +37,17 @@ export async function handleStep3(data: {
       console.log("Undexpected error in handleStep3:", profileError);
       return {
         error:
-          profileError instanceof Error
-            ? profileError.message
-            : "An unexpected error occurred",
+          profileError instanceof Error ? profileError.message : "An unexpected error occurred",
       };
+    }
+
+    // Create initial profile_visits row for the new user
+    const {error: profileVisitsError} = await supabase.from("profile_visits").insert({
+      profile_owner_id: userData.user.id,
+    });
+
+    if (profileVisitsError) {
+      console.log("Error creating profile_visits row:", profileVisitsError);
     }
 
     const role = email === process.env.ADMIN_EMAIL ? "admin" : "user";
@@ -67,10 +70,7 @@ export async function handleStep3(data: {
     if (error) {
       console.log("Undexpected error in handleStep3:", error);
       return {
-        error:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
       };
     }
     return {
@@ -79,8 +79,7 @@ export async function handleStep3(data: {
   } catch (error) {
     console.log("Undexpected error in handleStep3:", error);
     return {
-      error:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+      error: error instanceof Error ? error.message : "An unexpected error occurred",
     };
   }
 }

@@ -105,6 +105,7 @@ export async function POST(req: Request) {
       location_counts: currentCounts.location_counts,
       language_counts: currentCounts.language_counts,
       current_role_counts: currentCounts.current_role_counts,
+      updated_at: new Date().toISOString(),
     });
 
     if (upsertError) {
