@@ -333,24 +333,6 @@ export function calculateAnalyticsBadgeData(
 
 // POSTHOG UTILS
 
-export function transformPostHogData(data: PostHogResponse, dateRange?: string): ChartDataPoint[] {
-  if (!data.result?.[0]?.data || !Array.isArray(data.result[0].data)) {
-    return [];
-  }
-
-  const seriesData = data.result[0].data;
-  const timePoints = data.result[0].days || [];
-
-  return timePoints.map((timeString, index) => {
-    const normalizedTimeString = normalizePostHogTimestamp(timeString);
-    return {
-      month: normalizedTimeString,
-      date: normalizedTimeString,
-      firstDate: seriesData[index] || 0,
-    };
-  });
-}
-
 export function normalizePostHogTimestamp(timestamp: string): string {
   // If timestamp doesn't end with 'Z' or have timezone info, treat as UTC
   if (!timestamp.includes("Z") && !timestamp.includes("+") && !timestamp.includes("-", 10)) {
@@ -488,7 +470,6 @@ export function getComparisonDateRangeForPostHog(
 export function transformPostHogDataWithComparison(
   currentData: PostHogResponse,
   comparisonData?: PostHogResponse,
-  dateRange?: string,
 ): ChartDataPoint[] {
   if (!currentData.result?.[0]?.data || !Array.isArray(currentData.result[0].data)) {
     return [];

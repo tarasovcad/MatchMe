@@ -2,6 +2,7 @@ import React from "react";
 import AnalyticsBadge from "./AnalyticsBadge";
 import {cn} from "@/lib/utils";
 import {formatNumber} from "@/functions/formatNumber";
+import {motion} from "framer-motion";
 
 interface AnalyticsCardProps {
   title: string;
@@ -42,12 +43,10 @@ const AnalyticsCard = ({
           ? "first:rounded-tl-[12px] last:rounded-tr-[12px] bg-black/3 border-b border-border border-r "
           : "min-[1174px]:rounded-[12px] max-[1174px]:border-r-0 max-[1174px]:first:rounded-l-[12px] max-[1174px]:last:rounded-r-[12px] max-[1174px]:last:border-r max-[1174px]:bg-black/3 border border-border",
         onClick && "cursor-pointer",
-        isSelected &&
-          "after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-primary",
         cardClassName,
       )}
       onClick={onClick}>
-      <div className="flex justify-between items-center gap-1.5">
+      <div className="flex justify-between items-center gap-1.5 h-[20px]">
         <h5 className="font-medium text-foreground/70 text-sm line-clamp-1 leading-4.5">{title}</h5>
         {shouldShowBadge && (
           <div className={cn("flex-shrink-0", badgeDisplayment === "bottom" && "hidden")}>
@@ -61,6 +60,19 @@ const AnalyticsCard = ({
           <AnalyticsBadge number={analyticsNumber} type={type} tooltipData={tooltipData} />
           <p className="text-secondary text-xs">vs last month</p>
         </div>
+      )}
+
+      {isSelected && (
+        <motion.div
+          layoutId="analytics-card-underline"
+          className="bottom-0 left-0 absolute bg-primary w-full h-[2px]"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 30,
+          }}
+        />
       )}
     </div>
   );

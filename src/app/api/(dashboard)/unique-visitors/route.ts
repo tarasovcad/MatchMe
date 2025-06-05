@@ -138,7 +138,6 @@ export async function GET(req: NextRequest) {
     const uniqueVisitorsChartData = transformPostHogDataWithComparison(
       uniqueVisitorsData,
       comparisonUniqueVisitorsData,
-      dateRange,
     );
 
     // Calculate totals for current period

@@ -135,11 +135,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform data with comparison
-    const viewsChartData = transformPostHogDataWithComparison(
-      viewsData,
-      comparisonViewsData,
-      dateRange,
-    );
+    const viewsChartData = transformPostHogDataWithComparison(viewsData, comparisonViewsData);
 
     // Calculate totals for current period
     const currentPeriodViews = viewsChartData.reduce((sum, item) => {

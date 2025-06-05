@@ -4,6 +4,7 @@ import {
   getUserStats,
   isUserFavorite,
 } from "@/actions/profiles/singleUserProfile";
+import {trackProfileVisit} from "@/actions/profiles/trackProfileVisit";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
@@ -23,7 +24,6 @@ import Image from "next/image";
 import React from "react";
 
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
-  const startTime = performance.now();
   const {username} = await params;
   try {
     const user = await getUserProfile(username);
@@ -47,14 +47,14 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
       userSessionId ? isUserFavorite(userSessionId, user.id) : Promise.resolve(false),
     ]);
 
+    // track profile visit
+    if (userSessionId && userSessionId !== user.id) {
+      await trackProfileVisit(userSessionId, user.id);
+    }
+
     const {followerCount, followingCount, skills} = statsData;
     const {isFollowing, isFollowingBack} = followRelationship;
 
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `Time taken to render ${username}'s profile: ${(performance.now() - startTime).toFixed(2)}ms`,
-      );
-    }
     return (
       <SidebarProvider removePadding>
         {user.background_image ? (
