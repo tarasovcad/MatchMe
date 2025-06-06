@@ -3,7 +3,7 @@ import {createClient} from "@/utils/supabase/server";
 import {
   getChartGranularity,
   getDateRange,
-  transformFollowerDataForChart,
+  transformSupabaseDataForChart,
   getComparisonDateRange,
   calculateAnalyticsBadgeData,
 } from "@/functions/analytics/analyticsDataTransformation";
@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
   try {
     const {searchParams} = new URL(req.url);
     const username = searchParams.get("username");
-    const dateRange = searchParams.get("dateRange") ?? "Past 7 days";
-    const compareDateRange = searchParams.get("compareDateRange") ?? "Previous Period";
+    const dateRange = searchParams.get("dateRange") ?? "Today";
+    const compareDateRange = searchParams.get("compareDateRange") ?? "Disabled";
 
     if (!username) {
       return NextResponse.json({error: "Username is required"}, {status: 400});
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     let changeType: "positive" | "negative" | "neutral" = "neutral";
     let shouldShowBadge = false;
 
-    if (compareDateRange && compareDateRange !== "None") {
+    if (compareDateRange && compareDateRange !== "Disabled") {
       const comparisonRange = getComparisonDateRange(dateRange, compareDateRange, profileCreatedAt);
       comparisonStart = comparisonRange.start;
       comparisonEnd = comparisonRange.end;
@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
 
     const granularity = getChartGranularity(dateRange);
 
-    const chartData = transformFollowerDataForChart(
+    const chartData = transformSupabaseDataForChart(
       followsData || [],
       start,
       end,

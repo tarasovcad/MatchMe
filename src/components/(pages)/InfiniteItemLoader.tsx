@@ -10,8 +10,6 @@ import {
   pageContainerVariants,
   pageHeaderVariants,
 } from "@/utils/other/variants";
-import {Button} from "../shadcn/button";
-import {ChevronDown} from "lucide-react";
 import FilterButton from "../ui/FilterButton";
 import {Filter, SerializableFilter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";

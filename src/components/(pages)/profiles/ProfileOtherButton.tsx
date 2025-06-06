@@ -33,10 +33,8 @@ export default function ProfileOtherButton({
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const handleFavoriteToggle = async () => {
-    if (!userId) {
-      // if user is not authenticated, dont execute the function
-      return;
-    }
+    if (!userId) return;
+
     setHasInteracted(true);
     startTransition(async () => {
       const result = await toggleUserFavorite(userId, profileId);
@@ -102,11 +100,7 @@ export default function ProfileOtherButton({
                       className="relative"
                       initial="initial"
                       animate={
-                        hasInteracted
-                          ? isFavorited
-                            ? "favorite"
-                            : "unfavorite"
-                          : "initial"
+                        hasInteracted ? (isFavorited ? "favorite" : "unfavorite") : "initial"
                       }
                       whileTap="tap"
                       variants={iconVariants}>
