@@ -1,16 +1,14 @@
 "use server";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
+import {postProfileInteraction} from "../profiles/profileInteractions";
 
 async function invalidateUserFavoritesCache(userId: string) {
   const cacheKey = `favorites_${userId}`;
   await redis.del(cacheKey);
 }
 
-export async function toggleUserFavorite(
-  userId: string,
-  favoriteUserId: string,
-) {
+export async function toggleUserFavorite(userId: string, favoriteUserId: string) {
   try {
     const supabase = await createClient();
 
@@ -18,6 +16,16 @@ export async function toggleUserFavorite(
       return {
         error: "You cannot add yourself to favorites",
       };
+    }
+
+    const profileInteraction = await postProfileInteraction(
+      favoriteUserId,
+      userId,
+      "save_to_favourites",
+    );
+
+    if (!profileInteraction.success) {
+      return {success: false, message: "Error posting profile interaction"};
     }
 
     // Check if the user is already in the favorites list

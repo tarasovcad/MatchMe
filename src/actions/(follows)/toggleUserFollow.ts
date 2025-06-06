@@ -2,11 +2,11 @@
 import {qstash} from "@/utils/redis/qstash";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
+import {postProfileInteraction} from "../profiles/profileInteractions";
 
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
 
 export async function toggleUserFollow(followingId: string) {
-  const startTime = Date.now();
   try {
     const supabase = await createClient();
     const {
@@ -25,6 +25,12 @@ export async function toggleUserFollow(followingId: string) {
         error: "You cannot follow yourself",
       };
     }
+
+    const profileInteraction = await postProfileInteraction(followingId, followerId, "follow");
+    if (!profileInteraction.success) {
+      return {success: false, message: "Error posting profile interaction"};
+    }
+
     // Check if the user is already following
     const {data: existingFollow, error} = await supabase
       .from("follows")
@@ -79,14 +85,9 @@ export async function toggleUserFollow(followingId: string) {
 
       result = {success: true, message: "Followed successfully"};
     }
-    redis
-      .del(USER_STATS_CACHE_KEY(followingId))
-      .catch((err) => console.error("Cache error:", err));
-    redis
-      .del(USER_STATS_CACHE_KEY(followerId))
-      .catch((err) => console.error("Cache error:", err));
+    redis.del(USER_STATS_CACHE_KEY(followingId)).catch((err) => console.error("Cache error:", err));
+    redis.del(USER_STATS_CACHE_KEY(followerId)).catch((err) => console.error("Cache error:", err));
 
-    console.log(`Time taken to follow:", ${Date.now() - startTime} ms`);
     return result;
   } catch (error) {
     console.error("Error toggling user follow:", error);
