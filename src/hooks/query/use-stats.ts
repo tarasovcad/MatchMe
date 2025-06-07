@@ -47,6 +47,19 @@ const fetchUniqueVisitors = async ({username, dateRange, compareDateRange}: Stat
   return response.json();
 };
 
+const fetchProfileInteractions = async ({username, dateRange, compareDateRange}: StatsParams) => {
+  const response = await fetch(
+    `/api/profile-interactions?username=${username}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || errorData.error || "Failed to fetch profile interactions");
+  }
+
+  return response.json();
+};
+
 export const useViewsStats = (params: StatsParams) => {
   return useQuery({
     queryKey: ["views-stats", params.username, params.dateRange, params.compareDateRange],
@@ -67,6 +80,13 @@ export const useUniqueVisitors = (params: StatsParams) => {
   return useQuery({
     queryKey: ["unique-visitors", params.username, params.dateRange, params.compareDateRange],
     queryFn: () => fetchUniqueVisitors(params),
+    enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
+  });
+};
+export const useProfileInteractions = (params: StatsParams) => {
+  return useQuery({
+    queryKey: ["profile-interactions", params.username, params.dateRange, params.compareDateRange],
+    queryFn: () => fetchProfileInteractions(params),
     enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
   });
 };
