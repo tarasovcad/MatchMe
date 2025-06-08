@@ -1,6 +1,11 @@
 import StatsCardWithLineChart from "@/components/analytics/StatsCardWithLineChart";
 import {ChartConfig} from "@/components/shadcn/chart";
-import {useFollowerStats, useUniqueVisitors, useViewsStats} from "@/hooks/query/use-stats";
+import {
+  useFollowerStats,
+  useProfileInteractions,
+  useUniqueVisitors,
+  useViewsStats,
+} from "@/hooks/query/dashboard/use-stats";
 import {useDashboardStore} from "@/store/useDashboardStore";
 import {AnalyticsCardItem} from "@/types/analytics";
 import {User} from "@supabase/supabase-js";
@@ -37,6 +42,12 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     error: visitorsError,
   } = useUniqueVisitors(statsParams);
 
+  const {
+    data: profileInteractionsData,
+    isLoading: isProfileInteractionsLoading,
+    error: profileInteractionsError,
+  } = useProfileInteractions(statsParams);
+
   if (viewsError) {
     toast.error(viewsError.message, {
       description: "Please try again later",
@@ -55,7 +66,14 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     });
   }
 
-  const isLoading = isViewsLoading || isFollowersLoading || isVisitorsLoading;
+  if (profileInteractionsError) {
+    toast.error(profileInteractionsError.message, {
+      description: "Please try again later",
+    });
+  }
+
+  const isLoading =
+    isViewsLoading || isFollowersLoading || isVisitorsLoading || isProfileInteractionsLoading;
 
   const metrics = useMemo(
     () => ({
@@ -83,8 +101,16 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         shouldShowBadge: followersData?.shouldShowBadge || false,
         chartData: followersData?.chartData || [],
       },
+      profileInteractions: {
+        total: profileInteractionsData?.totalInteractions || 0,
+        previousPeriod: profileInteractionsData?.previousPeriodInteractions || 0,
+        percentageChange: profileInteractionsData?.percentageChange || 0,
+        changeType: profileInteractionsData?.changeType || "neutral",
+        shouldShowBadge: profileInteractionsData?.shouldShowBadge || false,
+        chartData: profileInteractionsData?.chartData || [],
+      },
     }),
-    [viewsData, visitorsData, followersData],
+    [viewsData, visitorsData, followersData, profileInteractionsData],
   );
 
   const data: AnalyticsCardItem[] = [
@@ -165,10 +191,24 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     },
     {
       title: "Profile Interactions",
-      number: 163,
-      type: "positive",
-      analyticsNumber: 12,
-      shouldShowBadge: true,
+      number: metrics.profileInteractions.total,
+      type: metrics.profileInteractions.changeType,
+      analyticsNumber: metrics.profileInteractions.percentageChange,
+      shouldShowBadge: metrics.profileInteractions.shouldShowBadge,
+      tooltipData: metrics.profileInteractions.shouldShowBadge
+        ? {
+            metricName: "Profile interactions",
+            currentValue: metrics.profileInteractions.total,
+            previousValue: metrics.profileInteractions.previousPeriod,
+          }
+        : undefined,
+      chartData: metrics.profileInteractions.chartData,
+      chartConfig: {
+        firstDate: {
+          label: "First Date",
+          color: "hsl(var(--chart-1))",
+        },
+      } satisfies ChartConfig,
     },
   ];
   return (

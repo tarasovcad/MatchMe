@@ -32,6 +32,7 @@ const Chart = ({
   return (
     <ChartContainer config={data.chartConfig || {}} className="w-full h-[210px] aspect-auto">
       <AreaChart
+        key={data.title}
         accessibilityLayer
         data={data.chartData || []}
         margin={{top: 20, right: 20, left: 0, bottom: 0}}>

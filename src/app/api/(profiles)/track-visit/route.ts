@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     if (metadata.skills && Array.isArray(metadata.skills)) {
       metadata.skills.forEach((skill: string) => {
-        incrementCount(currentCounts.skill_counts, skill);
+        incrementCount(currentCounts.skill_counts, skill, true);
       });
     }
 
