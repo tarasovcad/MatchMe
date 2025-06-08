@@ -2,8 +2,9 @@ import {UserRound, Wrench} from "lucide-react";
 import React from "react";
 import AnalyticsBarList from "./AnalyticsBarList";
 import {User} from "@supabase/supabase-js";
-import {useBarList} from "@/hooks/query/dashboard/bar-list";
+
 import {toast} from "sonner";
+import {useAnalyticsVisits} from "@/hooks/query/dashboard/analytics-visits";
 
 const ProfileBarLists = ({user}: {user: User}) => {
   const userProfileId = user.id;
@@ -12,7 +13,7 @@ const ProfileBarLists = ({user}: {user: User}) => {
     data: roleData,
     isLoading: isRoleDataLoading,
     error: roleDataError,
-  } = useBarList({
+  } = useAnalyticsVisits({
     id: userProfileId,
     type: "role_counts",
     table: "profile_visits",
@@ -22,7 +23,7 @@ const ProfileBarLists = ({user}: {user: User}) => {
     data: skillsData,
     isLoading: isSkillsDataLoading,
     error: skillsDataError,
-  } = useBarList({
+  } = useAnalyticsVisits({
     id: userProfileId,
     type: "skill_counts",
     table: "profile_visits",
