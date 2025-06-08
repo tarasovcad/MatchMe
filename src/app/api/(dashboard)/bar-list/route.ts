@@ -1,12 +1,11 @@
 import {NextRequest, NextResponse} from "next/server";
 import {createClient} from "@/utils/supabase/server";
 
-type CountData = Record<string, number>;
-
 interface TransformedItem {
   label: string;
   count: number;
-  percentage: number;
+  percentage: number; // of total views
+  relative: number; // 0-100, scaled to the max
 }
 
 export async function GET(req: NextRequest) {
@@ -28,13 +27,20 @@ export async function GET(req: NextRequest) {
   }
 
   const rawCounts = data[type as keyof typeof data];
+
+  if (!rawCounts || Object.keys(rawCounts).length === 0) {
+    return NextResponse.json([], {status: 200});
+  }
+
   const total = Object.values(rawCounts).reduce((sum, count) => sum + count, 0);
+  const maxCount = Math.max(...Object.values(rawCounts));
 
   const transformed: TransformedItem[] = Object.entries(rawCounts)
-    .map(([key, value]) => ({
+    .map(([key, count]) => ({
       label: key,
-      count: value,
-      percentage: parseFloat(((value / total) * 100).toFixed(1)),
+      count: count,
+      percentage: parseFloat(((count / total) * 100).toFixed(1)), // share of total
+      relative: parseFloat(((count / maxCount) * 100).toFixed(1)), // scaled to biggest bar
     }))
     .sort((a, b) => b.count - a.count);
 

@@ -2,6 +2,8 @@
 import React from "react";
 import {motion} from "framer-motion";
 import AnalyticsSectionHeader from "./AnalyticsSectionHeader";
+import {Button} from "@/components/shadcn/button";
+import {Maximize} from "lucide-react";
 
 const AnalyticsBarList = ({
   title,
@@ -16,6 +18,7 @@ const AnalyticsBarList = ({
     label: string;
     count: number;
     percentage: number;
+    relative: number;
   }[];
 }) => {
   const containerVariants = {
@@ -59,14 +62,25 @@ const AnalyticsBarList = ({
   };
 
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px]">
+    <div className="w-full border border-border rounded-[12px] p-[18px] relative">
       <AnalyticsSectionHeader title={title} description={description} icon={icon} />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+        <Button size="xs" className="h-[34px] w-[100px] rounded-[8px] " variant="outline">
+          View More
+        </Button>
+      </div>
       <motion.div
-        className="w-full flex flex-col gap-1.5 mt-[18px] mb-10"
+        className="w-full flex flex-col gap-1.5 mt-[18px] mb-[2px] relative"
         variants={containerVariants}
         initial="hidden"
-        animate="visible">
-        {data?.slice(0, 8).map((item) => {
+        animate="visible"
+        style={{
+          maskImage:
+            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
+        }}>
+        {data?.slice(0, 10).map((item) => {
           return (
             <motion.div
               key={item.label + item.percentage}
@@ -77,11 +91,11 @@ const AnalyticsBarList = ({
                 variants={barVariants}
                 style={
                   {
-                    "--target-width": `${item.percentage}%`,
+                    "--target-width": `${item.relative}%`,
                   } as React.CSSProperties
                 }
               />
-              <span className="text-[13px] pl-1.5 z-10 text-foreground">{item.label}</span>
+              <span className="text-[13px] pl-1.5 z-10 text-foreground/90">{item.label}</span>
               <div className="flex items-center gap-2">
                 <span className="text-[13px] text-foreground/60 pr-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-x-2 group-hover:translate-x-0">
                   {item.count}
