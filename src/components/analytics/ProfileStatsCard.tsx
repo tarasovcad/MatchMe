@@ -5,7 +5,7 @@ import {
   useProfileInteractions,
   useUniqueVisitors,
   useViewsStats,
-} from "@/hooks/query/use-stats";
+} from "@/hooks/query/dashboard/use-stats";
 import {useDashboardStore} from "@/store/useDashboardStore";
 import {AnalyticsCardItem} from "@/types/analytics";
 import {User} from "@supabase/supabase-js";

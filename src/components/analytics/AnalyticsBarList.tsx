@@ -7,20 +7,17 @@ const AnalyticsBarList = ({
   title,
   description,
   icon,
+  data,
 }: {
   title: string;
   description: string;
   icon: React.ReactNode;
+  data: {
+    label: string;
+    count: number;
+    percentage: number;
+  }[];
 }) => {
-  const barChartData = [
-    {role: "Full Stack Developer", count: 3, percentage: 100},
-    {role: "Frontend Developer", count: 1, percentage: 5},
-    {role: "Backend Developer", count: 2, percentage: 10},
-    {role: "UI/UX Designer", count: 1, percentage: 5},
-    {role: "Product Manager", count: 1, percentage: 5},
-    {role: "Scrum Master", count: 1, percentage: 5},
-  ];
-
   const containerVariants = {
     hidden: {opacity: 0},
     visible: {
@@ -69,10 +66,10 @@ const AnalyticsBarList = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible">
-        {barChartData.map((item, index) => {
+        {data?.slice(0, 8).map((item) => {
           return (
             <motion.div
-              key={item.role + item.percentage}
+              key={item.label + item.percentage}
               className="h-[30px] relative w-full font-medium flex items-center justify-between group"
               variants={itemVariants}>
               <motion.div
@@ -84,9 +81,9 @@ const AnalyticsBarList = ({
                   } as React.CSSProperties
                 }
               />
-              <span className="text-[13px] pl-1 z-10 text-foreground">{item.role}</span>
+              <span className="text-[13px] pl-1.5 z-10 text-foreground">{item.label}</span>
               <div className="flex items-center gap-2">
-                <span className="text-[13px] text-foreground/60 pr-1 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-x-2 group-hover:translate-x-0">
+                <span className="text-[13px] text-foreground/60 pr-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-x-2 group-hover:translate-x-0">
                   {item.count}
                 </span>
                 <span className="text-[13px] text-foreground pr-1 z-10">{item.percentage}%</span>
