@@ -6,6 +6,7 @@ import {Button} from "@/components/shadcn/button";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyticsVariants";
 import {cn} from "@/lib/utils";
+import {ChevronDown} from "lucide-react";
 
 export const SingleBarSkeleton = () => {
   return (
@@ -84,8 +85,23 @@ const AnalyticsBarList = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] relative">
-      <AnalyticsSectionHeader title={title} description={description} icon={icon} />
+    <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container">
+      <AnalyticsSectionHeader
+        title={title}
+        description={description}
+        icon={icon}
+        button={
+          <Button
+            size="xs"
+            className="h-[34px] w-full rounded-[8px] text-sm @min-[370px]:max-w-[138px]">
+            See Viewers
+            <ChevronDown
+              size={16}
+              className="ml-1.5 transition-transform duration-300 ease-in-out"
+            />
+          </Button>
+        }
+      />
       {!isLoading && !error && (
         <>
           <AnalyticsBarListDialog title={title} data={data} isOpen={isOpen} setIsOpen={setIsOpen} />

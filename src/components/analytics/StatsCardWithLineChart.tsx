@@ -70,7 +70,7 @@ const Chart = ({
                           className="rounded-full w-2 h-2"
                           style={{
                             backgroundColor: isSecondDate
-                              ? "hsl(var(--chart-2))"
+                              ? "hsl(var(--chart-gray))"
                               : "hsl(var(--chart-1))",
                           }}
                         />
@@ -104,7 +104,7 @@ const Chart = ({
             dataKey={secondKey}
             type="linear"
             fill="transparent"
-            stroke="hsl(var(--chart-2))"
+            stroke="hsl(var(--chart-gray))"
             strokeDasharray="5 5"
             strokeWidth={1.5}
           />

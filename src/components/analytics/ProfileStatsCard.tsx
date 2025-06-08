@@ -160,7 +160,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         },
         secondDate: {
           label: "Second Date",
-          color: "hsl(var(--chart-2))",
+          color: "hsl(var(--chart-gray))",
         },
       } satisfies ChartConfig,
     },
@@ -185,7 +185,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
         },
         secondDate: {
           label: "Second Date",
-          color: "hsl(var(--chart-2))",
+          color: "hsl(var(--chart-gray))",
         },
       } satisfies ChartConfig,
     },

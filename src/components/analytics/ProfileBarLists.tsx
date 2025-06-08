@@ -33,7 +33,7 @@ const ProfileBarLists = ({user}: {user: User}) => {
   }
 
   return (
-    <div className="flex @max-[890px]:gap-[12px]  @max-[650px]:flex-col @max-[650px]:gap-[30px]  gap-[18px]">
+    <div className="flex @max-[890px]:gap-[12px]  @max-[650px]:flex-col  gap-[18px]">
       <AnalyticsBarList
         title="Role-Based Insights (All Time)"
         data={roleData}
