@@ -56,6 +56,9 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
   --color-sidebar-background: hsl(var(--sidebar-background));
 
+  --color-analytics-bar: hsl(var(--analytics-bar));
+  --color-analytics-bar-hover: hsl(var(--analytics-bar-hover));
+
   --background-image-maingradient: var(--maingradient);
   --background-image-secgradient: var(--secgradient);
   --background-image-purplegradient: var(--purplegradient);
@@ -173,9 +176,8 @@
     --sidebar-primary: 240 5.9% 10%; /* #191B1D */
     --sidebar-primary-foreground: 0 0% 98%; /* #FAFAFA */
     --sidebar-accent: 240 4.8% 95.9%; /* #F2F2F5 */
-    --sidebar-accent: 0, 0%, 95%; /* #F2F2F5 */
-    --sidebar-accent-foreground: 240 5.9% 10%; /* #191B1D */
-    --sidebar-border: 220 13% 91%; /* #D6DAE5 */
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 246 78% 68%;
     --sidebar-text-hover: 240, 10%, 4%; /* #09090B */
 
@@ -189,6 +191,10 @@
     --chart-6: 252 100% 94%; /* #F0EEFF */
     --chart-7: 254 100% 96%; /* #F7F6FF */
     --chart-8: 256 100% 98%; /* #FDFBFF */
+
+    /* Analytics Bar Colors */
+    --analytics-bar: 246 100% 92%; /* Light purple-ish background for light theme */
+    --analytics-bar-hover: 246 100% 88%; /* Slightly darker on hover */
   }
 
   .dark {
@@ -224,6 +230,10 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 246 78% 68%;
+
+    /* Analytics Bar Colors for Dark Theme */
+    --analytics-bar: 246 50% 25%; /* Darker purple background for dark theme */
+    --analytics-bar-hover: 246 50% 30%; /* Slightly lighter on hover */
   }
 }
 

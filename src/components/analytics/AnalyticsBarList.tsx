@@ -42,7 +42,7 @@ export const SingleBar = ({
       className="h-[30px] relative w-full font-medium flex items-center justify-between group"
       variants={itemVariants}>
       <motion.div
-        className="h-[30px] w-full bg-[#D9D1FF] group-hover:bg-[#BBB3FF] absolute rounded-md transition-colors duration-300 ease-in-out"
+        className="h-[30px] w-full bg-[#D9D1FF] dark:bg-primary  group-hover:bg-[#BBB3FF]  dark:group-hover:bg-primary/70 absolute rounded-md transition-colors duration-300 ease-in-out"
         variants={barVariants}
         style={
           {
