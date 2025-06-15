@@ -1,13 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {createClient} from "@/utils/supabase/server";
-
-interface TransformedItem {
-  label: string;
-  count: number;
-  percentage: number; // of total views
-  relative: number; // 0-100, scaled to the max
-  fill?: string; // HSL color variable (optional)
-}
+import {transformCountsForAnalytics} from "@/functions/analytics/analyticsDataTransformation";
 
 export async function GET(req: NextRequest) {
   const {searchParams} = new URL(req.url);
@@ -27,29 +20,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({error: error?.message || "Data not found"}, {status: 500});
   }
 
-  const rawCounts = data[type as keyof typeof data];
+  const fieldData = data[type as keyof typeof data];
 
-  if (!rawCounts || Object.keys(rawCounts).length === 0) {
+  if (!fieldData || typeof fieldData !== "object" || Array.isArray(fieldData)) {
     return NextResponse.json([], {status: 200});
   }
 
-  const total = Object.values(rawCounts).reduce((sum, count) => sum + count, 0);
-  const maxCount = Math.max(...Object.values(rawCounts));
-
-  const chartColorTypes = ["age_distribution", "pronoun_counts"];
-
-  const transformed: TransformedItem[] = Object.entries(rawCounts)
-    .map(([key, count]) => ({
-      label: key,
-      count: count,
-      percentage: parseFloat(((count / total) * 100).toFixed(1)), // share of total
-      relative: parseFloat(((count / maxCount) * 100).toFixed(1)), // scaled to biggest bar
-    }))
-    .sort((a, b) => b.count - a.count)
-    .map((item, index) => ({
-      ...item,
-      fill: chartColorTypes.includes(type) ? `hsl(var(--chart-${index + 1}))` : undefined,
-    }));
-
+  const rawCounts = fieldData as Record<string, number>;
+  const transformed = transformCountsForAnalytics(rawCounts, type);
   return NextResponse.json(transformed);
 }

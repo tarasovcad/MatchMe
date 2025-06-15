@@ -41,7 +41,7 @@ export const SingleBar = ({
       className="h-[30px] relative w-full font-medium flex items-center justify-between group"
       variants={itemVariants}>
       <motion.div
-        className="h-[30px] w-full bg-primary/50 group-hover:bg-primary/70 absolute rounded-md transition-colors duration-300 ease-in-out"
+        className="h-[30px] w-full bg-[#D9D1FF] group-hover:bg-[#BBB3FF] absolute rounded-md transition-colors duration-300 ease-in-out"
         variants={barVariants}
         style={
           {
@@ -69,6 +69,7 @@ const AnalyticsBarList = ({
   data,
   isLoading,
   error,
+  button,
 }: {
   title: string;
   description: string;
@@ -81,27 +82,13 @@ const AnalyticsBarList = ({
   }[];
   isLoading: boolean;
   error: Error | null;
+  button: React.ReactNode;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container">
-      <AnalyticsSectionHeader
-        title={title}
-        description={description}
-        icon={icon}
-        button={
-          <Button
-            size="xs"
-            className="h-[34px] w-full rounded-[8px] text-sm @min-[370px]:max-w-[138px]">
-            See Viewers
-            <ChevronDown
-              size={16}
-              className="ml-1.5 transition-transform duration-300 ease-in-out"
-            />
-          </Button>
-        }
-      />
+      <AnalyticsSectionHeader title={title} description={description} icon={icon} button={button} />
       {!isLoading && !error && (
         <>
           <AnalyticsBarListDialog title={title} data={data} isOpen={isOpen} setIsOpen={setIsOpen} />

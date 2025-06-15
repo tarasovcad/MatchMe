@@ -68,6 +68,7 @@ export interface PostHogResultData {
   count: number;
   label: string;
   filter: Record<string, unknown>;
+  breakdown_value?: string;
   action: {
     days: string[];
     id: string;

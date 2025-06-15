@@ -30,6 +30,7 @@ const ProfileBarLists = ({user}: {user: User}) => {
   });
 
   if (skillsDataError || roleDataError) {
+    console.log(skillsDataError, roleDataError);
     toast.error("Error loading bar list data");
   }
 

@@ -496,3 +496,68 @@ export function transformPostHogDataWithComparison(
     return dataPoint;
   });
 }
+
+export interface TransformedItem {
+  label: string;
+  count: number;
+  percentage: number; // of total views
+  relative: number; // 0-100, scaled to the max
+}
+
+export function transformCountsForAnalytics(
+  rawCounts: Record<string, number>,
+  type: string,
+): TransformedItem[] {
+  const chartColorTypes = ["age_distribution", "pronoun_counts"];
+
+  if (!rawCounts || Object.keys(rawCounts).length === 0) return [];
+  const total = Object.values(rawCounts).reduce((sum, count) => sum + count, 0);
+  const maxCount = Math.max(...Object.values(rawCounts));
+  return Object.entries(rawCounts)
+    .map(([key, count]) => ({
+      label: key,
+      count: count,
+      percentage: parseFloat(((count / total) * 100).toFixed(1)),
+      relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .map((item, index) => ({
+      ...item,
+      fill: chartColorTypes.includes(type) ? `hsl(var(--chart-${index + 1}))` : undefined,
+    }));
+}
+
+export function transformPostHogDemographicsData(
+  postHogResponse: PostHogResponse,
+): TransformedItem[] {
+  if (!postHogResponse?.result || !Array.isArray(postHogResponse.result)) {
+    return [];
+  }
+
+  // Extract counts from each result item
+  const demographicCounts: Record<string, number> = {};
+
+  postHogResponse.result.forEach((item) => {
+    if (item.breakdown_value && typeof item.count === "number") {
+      demographicCounts[item.breakdown_value] = item.count;
+    }
+  });
+
+  // If no valid data found, return empty array
+  if (Object.keys(demographicCounts).length === 0) {
+    return [];
+  }
+
+  // Calculate totals and transform data
+  const total = Object.values(demographicCounts).reduce((sum, count) => sum + count, 0);
+  const maxCount = Math.max(...Object.values(demographicCounts));
+
+  return Object.entries(demographicCounts)
+    .map(([label, count]) => ({
+      label,
+      count,
+      percentage: parseFloat(((count / total) * 100).toFixed(1)),
+      relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.count - a.count);
+}
