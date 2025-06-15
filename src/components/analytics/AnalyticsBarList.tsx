@@ -6,7 +6,6 @@ import {Button} from "@/components/shadcn/button";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyticsVariants";
 import {cn} from "@/lib/utils";
-import {useCountryFlag} from "@/hooks/useCountryFlag";
 import Image from "next/image";
 
 export const SingleBarSkeleton = () => {
