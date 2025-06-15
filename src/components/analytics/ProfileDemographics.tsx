@@ -7,13 +7,14 @@ import {
 } from "@/hooks/query/dashboard/analytics-visits";
 import ProfileDemographicsPie from "./ProfileDemographicsPie";
 import ProfileDemographicsList from "./ProfileDemographicsList";
+import {useDashboardStore} from "@/store/useDashboardStore";
 
 const ProfileDemographics = ({user}: {user: User}) => {
   const userProfileId = user.id;
   const userUsername = user.user_metadata.username;
-
+  const {dateRange} = useDashboardStore();
   const [selectedDemographic, setSelectedDemographic] = useState<string>("age_distribution");
-  const [selectedDemographicList, setSelectedDemographicList] = useState<string>("country");
+  const [selectedDemographicList, setSelectedDemographicList] = useState<string>("Map");
 
   const {
     data: demographicData,
@@ -33,12 +34,10 @@ const ProfileDemographics = ({user}: {user: User}) => {
     id: userProfileId,
     type: selectedDemographicList,
     table: "profiles",
-    dateRange: "All Time",
+    dateRange: dateRange,
     username: userUsername,
   });
 
-  console.log(demographicsListData);
-  console.log(demographicData);
   return (
     <div className="flex @max-[890px]:gap-[12px] @max-[650px]:flex-col @max-[650px]:gap-[30px]  gap-[18px]">
       <ProfileDemographicsPie

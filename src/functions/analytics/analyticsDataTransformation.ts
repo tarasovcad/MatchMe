@@ -1,4 +1,5 @@
 import {PostHogResponse} from "@/types/analytics";
+import {formatLanguageLabel, isLanguageCode} from "@/utils/other/languageMapping";
 
 type ChartDataPoint = {
   month: string;
@@ -502,6 +503,7 @@ export interface TransformedItem {
   count: number;
   percentage: number; // of total views
   relative: number; // 0-100, scaled to the max
+  flag?: string; // Optional flag URL for countries
 }
 
 export function transformCountsForAnalytics(
@@ -529,6 +531,7 @@ export function transformCountsForAnalytics(
 
 export function transformPostHogDemographicsData(
   postHogResponse: PostHogResponse,
+  type?: string,
 ): TransformedItem[] {
   if (!postHogResponse?.result || !Array.isArray(postHogResponse.result)) {
     return [];
@@ -553,11 +556,101 @@ export function transformPostHogDemographicsData(
   const maxCount = Math.max(...Object.values(demographicCounts));
 
   return Object.entries(demographicCounts)
-    .map(([label, count]) => ({
-      label,
-      count,
-      percentage: parseFloat(((count / total) * 100).toFixed(1)),
-      relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
-    }))
+    .map(([label, count]) => {
+      // Format labels based on type
+      let displayLabel = label;
+      if (type === "Languages" && isLanguageCode(label)) {
+        displayLabel = formatLanguageLabel(label);
+      } else if (type === "Timezones") {
+        displayLabel = formatTimezoneWithOffset(label);
+      }
+
+      return {
+        label: displayLabel,
+        count,
+        percentage: parseFloat(((count / total) * 100).toFixed(1)),
+        relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
+      };
+    })
     .sort((a, b) => b.count - a.count);
+}
+
+// Server-side function to fetch country flag
+export async function fetchCountryFlag(countryName: string): Promise<string | null> {
+  if (!countryName) return null;
+
+  try {
+    const res = await fetch(
+      `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true`,
+    );
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch country flag for ${countryName}: ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (data && data.length > 0) {
+      return data[0].flags.svg;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching country flag for ${countryName}:`, error);
+    return null;
+  }
+}
+
+// Function to format timezone with UTC offset
+export function formatTimezoneWithOffset(timezone: string): string {
+  try {
+    const now = new Date();
+
+    const formatter = new Intl.DateTimeFormat("en", {
+      timeZone: timezone,
+      timeZoneName: "longOffset",
+    });
+
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find((part) => part.type === "timeZoneName");
+
+    if (offsetPart && offsetPart.value) {
+      // Convert from GMT+X format to UTC+X format
+      const offset = offsetPart.value.replace("GMT", "UTC");
+      return `${timezone} (${offset})`;
+    }
+
+    const utcDate = new Date(now.toLocaleString("en-US", {timeZone: "UTC"}));
+    const tzDate = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+    const offsetMinutes = (tzDate.getTime() - utcDate.getTime()) / (1000 * 60);
+    const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+    const offsetMins = Math.abs(offsetMinutes) % 60;
+
+    const sign = offsetMinutes >= 0 ? "+" : "-";
+    const formattedOffset =
+      offsetMins > 0
+        ? `UTC${sign}${offsetHours}:${offsetMins.toString().padStart(2, "0")}`
+        : `UTC${sign}${offsetHours}`;
+
+    return `${timezone} (${formattedOffset})`;
+  } catch (error) {
+    console.error(`Error formatting timezone ${timezone}:`, error);
+    return timezone;
+  }
+}
+
+export function extractCountryName(label: string, type: string): string | null {
+  switch (type) {
+    case "Counties":
+      return label;
+    case "Regions":
+    case "Cities": {
+      // Extract country from "Country - Region/City" format
+      const parts = label.split(" - ");
+      return parts.length > 1 ? parts[0] : null;
+    }
+    default:
+      return null;
+  }
 }

@@ -8,10 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
-import AnalyticsBarList, {SingleBar, SingleBarSkeleton} from "./AnalyticsBarList";
+import {SingleBar, SingleBarSkeleton} from "./AnalyticsBarList";
 import {motion} from "framer-motion";
 import {containerVariants} from "@/utils/other/analyticsVariants";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
+import {useCountryFlag} from "@/hooks/useCountryFlag";
+import {cn} from "@/lib/utils";
 const ProfileDemographicsList = ({
   selectedDemographicList,
   setSelectedDemographicList,
@@ -36,8 +38,15 @@ const ProfileDemographicsList = ({
     setSelectedDemographicList(demographic);
   };
 
+  const maxItems = 14;
+
+  console.log(data);
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] mb-[17px]  @container relative">
+    <div
+      className={cn(
+        "w-full border border-border rounded-[12px] p-[18px]  @container relative",
+        data?.length > maxItems && "mb-[17px]",
+      )}>
       <AnalyticsSectionHeader
         title="Global View Distribution"
         description="See the geographic locations of users viewing your profile"
@@ -78,7 +87,7 @@ const ProfileDemographicsList = ({
           </DropdownMenu>
         }
       />
-      {!isLoading && !error && (
+      {!isLoading && !error && data && data.length > maxItems && (
         <>
           <AnalyticsBarListDialog
             title="Global View Distribution"
@@ -98,12 +107,15 @@ const ProfileDemographicsList = ({
         </>
       )}
       <motion.div
-        className="w-full flex flex-col gap-1.5 mt-[18px] mb-[2px] relative"
+        className={cn(
+          "w-full flex flex-col gap-1.5 mt-[18px] relative",
+          data?.length > maxItems && "mb-[2px]",
+        )}
         variants={isLoading ? {hidden: {}, visible: {}} : containerVariants}
         initial="hidden"
         animate="visible"
         style={
-          !isLoading && !error
+          !isLoading && !error && data && data.length > maxItems
             ? {
                 maskImage:
                   "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
@@ -113,8 +125,10 @@ const ProfileDemographicsList = ({
             : undefined
         }>
         {isLoading || error
-          ? Array.from({length: 10}, (_, index) => <SingleBarSkeleton key={`skeleton-${index}`} />)
-          : data?.slice(0, 10).map((item) => {
+          ? Array.from({length: maxItems}, (_, index) => (
+              <SingleBarSkeleton key={`skeleton-${index}`} />
+            ))
+          : data?.slice(0, maxItems).map((item) => {
               return <SingleBar key={item.label + item.percentage} item={item} />;
             })}
       </motion.div>

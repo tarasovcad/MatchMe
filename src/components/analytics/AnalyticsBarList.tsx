@@ -6,7 +6,8 @@ import {Button} from "@/components/shadcn/button";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyticsVariants";
 import {cn} from "@/lib/utils";
-import {ChevronDown} from "lucide-react";
+import {useCountryFlag} from "@/hooks/useCountryFlag";
+import Image from "next/image";
 
 export const SingleBarSkeleton = () => {
   return (
@@ -32,7 +33,7 @@ export const SingleBar = ({
   item,
   labelClassName,
 }: {
-  item: {label: string; count: number; percentage: number; relative: number};
+  item: {label: string; count: number; percentage: number; relative: number; flag?: string};
   labelClassName?: string;
 }) => {
   return (
@@ -49,9 +50,18 @@ export const SingleBar = ({
           } as React.CSSProperties
         }
       />
-      <span className={cn("text-[13px] pl-1.5 z-10 text-foreground/90", labelClassName)}>
-        {item.label}
-      </span>
+      <div className="flex items-center gap-2 z-10 pl-1.5">
+        {item.flag && (
+          <Image
+            src={item.flag}
+            alt={item.label}
+            width={16}
+            height={12}
+            className="w-[16px] h-[12px]"
+          />
+        )}
+        <span className={cn("text-[13px]  text-foreground/90", labelClassName)}>{item.label}</span>
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-[13px] text-foreground/60 pr-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-x-2 group-hover:translate-x-0">
           {item.count}
@@ -70,6 +80,7 @@ const AnalyticsBarList = ({
   isLoading,
   error,
   button,
+  maxItems = 10,
 }: {
   title: string;
   description: string;
@@ -82,14 +93,15 @@ const AnalyticsBarList = ({
   }[];
   isLoading: boolean;
   error: Error | null;
-  button: React.ReactNode;
+  button?: React.ReactNode;
+  maxItems?: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container">
       <AnalyticsSectionHeader title={title} description={description} icon={icon} button={button} />
-      {!isLoading && !error && (
+      {!isLoading && !error && data && data.length > maxItems && (
         <>
           <AnalyticsBarListDialog title={title} data={data} isOpen={isOpen} setIsOpen={setIsOpen} />
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
@@ -109,7 +121,7 @@ const AnalyticsBarList = ({
         initial="hidden"
         animate="visible"
         style={
-          !isLoading && !error
+          !isLoading && !error && data && data.length > maxItems
             ? {
                 maskImage:
                   "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
@@ -119,8 +131,10 @@ const AnalyticsBarList = ({
             : undefined
         }>
         {isLoading || error
-          ? Array.from({length: 10}, (_, index) => <SingleBarSkeleton key={`skeleton-${index}`} />)
-          : data?.slice(0, 10).map((item) => {
+          ? Array.from({length: maxItems}, (_, index) => (
+              <SingleBarSkeleton key={`skeleton-${index}`} />
+            ))
+          : data?.slice(0, maxItems).map((item) => {
               return <SingleBar key={item.label + item.percentage} item={item} />;
             })}
       </motion.div>
