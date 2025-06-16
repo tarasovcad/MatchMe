@@ -7,6 +7,42 @@ import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyticsVariants";
 import {cn} from "@/lib/utils";
 import Image from "next/image";
+import {Globe} from "lucide-react";
+
+// Simplified image display component
+const ImageDisplay = ({image, flag, label}: {image?: string; flag?: string; label: string}) => {
+  // Priority: flag > image > nothing
+  if (flag) {
+    return (
+      <Image
+        src={flag}
+        alt={label}
+        width={16}
+        height={12}
+        className="w-[16px] h-[12px] object-cover"
+      />
+    );
+  }
+
+  if (image) {
+    // Special case for direct traffic
+    if (image === "direct-traffic-icon") {
+      return <Globe size={16} className="text-foreground/80" />;
+    }
+
+    return (
+      <Image
+        src={image}
+        alt={label}
+        width={16}
+        height={16}
+        className="w-[16px] h-[16px] object-contain"
+      />
+    );
+  }
+
+  return null;
+};
 
 export const SingleBarSkeleton = () => {
   return (
@@ -32,12 +68,19 @@ export const SingleBar = ({
   item,
   labelClassName,
 }: {
-  item: {label: string; count: number; percentage: number; relative: number; flag?: string};
+  item: {
+    label: string;
+    count: number;
+    percentage: number;
+    relative: number;
+    flag?: string;
+    image?: string;
+  };
   labelClassName?: string;
 }) => {
   return (
     <motion.div
-      key={item.label + item.percentage}
+      key={`${item.label}-${item.count}-${item.percentage}`}
       className="h-[30px] relative w-full font-medium flex items-center justify-between group"
       variants={itemVariants}>
       <motion.div
@@ -50,15 +93,7 @@ export const SingleBar = ({
         }
       />
       <div className="flex items-center gap-2 z-10 pl-1.5">
-        {item.flag && (
-          <Image
-            src={item.flag}
-            alt={item.label}
-            width={16}
-            height={12}
-            className="w-[16px] h-[12px]"
-          />
-        )}
+        <ImageDisplay image={item.image} flag={item.flag} label={item.label} />
         <span className={cn("text-[13px]  text-foreground/90", labelClassName)}>{item.label}</span>
       </div>
       <div className="flex items-center gap-2">
@@ -89,6 +124,8 @@ const AnalyticsBarList = ({
     count: number;
     percentage: number;
     relative: number;
+    flag?: string;
+    image?: string;
   }[];
   isLoading: boolean;
   error: Error | null;
@@ -133,8 +170,13 @@ const AnalyticsBarList = ({
           ? Array.from({length: maxItems}, (_, index) => (
               <SingleBarSkeleton key={`skeleton-${index}`} />
             ))
-          : data?.slice(0, maxItems).map((item) => {
-              return <SingleBar key={item.label + item.percentage} item={item} />;
+          : data?.slice(0, maxItems).map((item, index) => {
+              return (
+                <SingleBar
+                  key={`${item.label}-${item.count}-${item.percentage}-${index}`}
+                  item={item}
+                />
+              );
             })}
       </motion.div>
     </div>

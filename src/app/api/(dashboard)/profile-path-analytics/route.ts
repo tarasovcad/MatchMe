@@ -2,8 +2,7 @@ import {
   mapDateRangeToPostHog,
   getChartGranularity,
   transformPostHogDemographicsData,
-  fetchCountryFlag,
-  extractCountryName,
+  getFaviconUrl,
 } from "@/functions/analytics/analyticsDataTransformation";
 import {PostHogRequestBody, PostHogResponse} from "@/types/analytics";
 import {createClient} from "@/utils/supabase/server";
@@ -13,6 +12,9 @@ const PROFILE_PATH_CONFIG: Record<
   string,
   {property: string; eventFilter?: Record<string, unknown>}
 > = {
+  Referrers: {
+    property: "$referrer",
+  },
   "Entry path": {
     property: "$pathname",
     eventFilter: {
@@ -29,7 +31,7 @@ export async function GET(req: NextRequest) {
     const {searchParams} = new URL(req.url);
     const username = searchParams.get("username");
     const table = searchParams.get("table") || "profiles";
-    const type = searchParams.get("type") || "Entry path";
+    const type = searchParams.get("type") || "Referrers";
     const dateRange = searchParams.get("dateRange") ?? "Past 7 days";
     const breakdownType = searchParams.get("breakdownType") || "session";
 
@@ -94,7 +96,35 @@ export async function GET(req: NextRequest) {
         breakdown: breakdownType === "session" ? "$entry_pathname" : "$referrer",
         breakdown_type: breakdownType as "session" | "event",
       };
-    } else {
+    } else if (type === "Referrers") {
+      requestBody = {
+        events: [
+          {
+            id: "$pageview",
+            name: "$pageview",
+            type: "events",
+            math: "dau",
+            properties: [
+              {
+                key: "$pathname",
+                value: route,
+                type: "event",
+              },
+              {
+                key: "$host",
+                value: "matchme.me",
+                type: "event",
+              },
+            ],
+          },
+        ],
+        interval,
+        date_from,
+        date_to,
+        breakdown: "$referrer",
+        breakdown_type: "event",
+      };
+    } else if (type === "End path") {
       requestBody = {
         events: [
           {
@@ -122,6 +152,8 @@ export async function GET(req: NextRequest) {
         breakdown: breakdownType === "session" ? "$exit_pathname" : "$pathname",
         breakdown_type: breakdownType as "session" | "event",
       };
+    } else {
+      return NextResponse.json({error: "Invalid path type"}, {status: 400});
     }
 
     const response = await fetch(
@@ -145,7 +177,16 @@ export async function GET(req: NextRequest) {
 
     const transformedData = transformPostHogDemographicsData(data, type);
 
-    return NextResponse.json({data: transformedData});
+    // Add favicon images for referrers
+    const dataWithImages =
+      type === "Referrers"
+        ? transformedData.map((item) => ({
+            ...item,
+            image: item.image || getFaviconUrl(item.label),
+          }))
+        : transformedData;
+
+    return NextResponse.json({data: dataWithImages});
   } catch (error) {
     console.error("Error fetching profile path analytics from PostHog:", error);
     return NextResponse.json(

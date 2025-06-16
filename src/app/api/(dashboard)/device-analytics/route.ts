@@ -104,7 +104,6 @@ export async function GET(req: NextRequest) {
 
     const data = (await response.json()) as PostHogResponse;
 
-    // Transform the data into the standardized format
     const transformedData = transformPostHogDemographicsData(data, type);
 
     return NextResponse.json({data: transformedData});

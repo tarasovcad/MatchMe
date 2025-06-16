@@ -27,7 +27,7 @@ const ProfileBarLists = ({user}: {user: User}) => {
 
   const [dropdownOpenProfilePath, setDropdownOpenProfilePath] = useState(false);
   const [dropdownOpenDevice, setDropdownOpenDevice] = useState(false);
-  const [selectedProfilePath, setSelectedProfilePath] = useState("Entry path");
+  const [selectedProfilePath, setSelectedProfilePath] = useState("Referrers");
   const [selectedDeviceType, setSelectedDeviceType] = useState("Device type");
 
   const handleProfilePathChange = (path: string) => {
@@ -118,6 +118,11 @@ const ProfileBarLists = ({user}: {user: User}) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <motion.div initial="closed" animate="open" variants={menuVariants}>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleProfilePathChange("Referrers")}>
+                    Referrers
+                  </DropdownMenuItem>
+                </motion.div>
                 <motion.div variants={itemDropdownVariants}>
                   <DropdownMenuItem onClick={() => handleProfilePathChange("Entry path")}>
                     Entry path

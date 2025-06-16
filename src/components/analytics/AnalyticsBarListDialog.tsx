@@ -21,7 +21,14 @@ const AnalyticsBarListDialog = ({
   setIsOpen,
 }: {
   title: string;
-  data: {label: string; count: number; percentage: number; relative: number}[];
+  data: {
+    label: string;
+    count: number;
+    percentage: number;
+    relative: number;
+    flag?: string;
+    image?: string;
+  }[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) => {
@@ -46,10 +53,10 @@ const AnalyticsBarListDialog = ({
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible">
-                  {data?.map((item) => {
+                  {data?.map((item, index) => {
                     return (
                       <SingleBar
-                        key={item.label + item.percentage}
+                        key={`${item.label}-${item.count}-${item.percentage}-${index}`}
                         item={item}
                         labelClassName="text-[14px]"
                       />

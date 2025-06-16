@@ -31,6 +31,8 @@ const ProfileDemographicsList = ({
     count: number;
     percentage: number;
     relative: number;
+    flag?: string;
+    image?: string;
   }[];
   isLoading: boolean;
   error: Error | null;
@@ -164,8 +166,13 @@ const ProfileDemographicsList = ({
               ? Array.from({length: maxItems}, (_, index) => (
                   <SingleBarSkeleton key={`skeleton-${index}`} />
                 ))
-              : data?.slice(0, maxItems).map((item) => {
-                  return <SingleBar key={item.label + item.percentage} item={item} />;
+              : data?.slice(0, maxItems).map((item, index) => {
+                  return (
+                    <SingleBar
+                      key={`${item.label}-${item.count}-${item.percentage}-${index}`}
+                      item={item}
+                    />
+                  );
                 })}
           </motion.div>
         </div>
