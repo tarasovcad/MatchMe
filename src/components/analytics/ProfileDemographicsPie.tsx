@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import AnalyticsSectionHeader from "./AnalyticsSectionHeader";
 import {ChevronDown, Globe} from "lucide-react";
 import {Button} from "../shadcn/button";
@@ -9,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
+import {motion} from "framer-motion";
+import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 
 const ProfileDemographicsPie = ({
   selectedDemographic,
@@ -29,6 +31,13 @@ const ProfileDemographicsPie = ({
   isDemographicDataLoading: boolean;
   demographicDataError: Error | null;
 }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const chevronVariants = {
+    up: {rotate: 180, transition: {duration: 0.2}},
+    down: {rotate: 0, transition: {duration: 0.2}},
+  };
+
   const handleDemographicChange = (demographic: string) => {
     setSelectedDemographic(demographic);
   };
@@ -62,25 +71,33 @@ const ProfileDemographicsPie = ({
         icon={<Globe size={15} className="text-foreground" />}
         className="gap-3 items-start flex-col"
         button={
-          <DropdownMenu>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 size="xs"
                 className="h-[34px] w-full  rounded-[8px] text-sm @min-[370px]:max-w-[138px]">
                 {getDemographicDisplayName(selectedDemographic)}
-                <ChevronDown
-                  size={16}
-                  className="ml-1.5 transition-transform duration-300 ease-in-out"
-                />
+                <motion.div
+                  initial="down"
+                  animate={dropdownOpen ? "up" : "down"}
+                  variants={chevronVariants}>
+                  <ChevronDown size={16} className="ml-1.5" />
+                </motion.div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleDemographicChange("age_distribution")}>
-                Age Group
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("pronoun_counts")}>
-                Pronouns
-              </DropdownMenuItem>
+              <motion.div initial="closed" animate="open" variants={menuVariants}>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("age_distribution")}>
+                    Age Group
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("pronoun_counts")}>
+                    Pronouns
+                  </DropdownMenuItem>
+                </motion.div>
+              </motion.div>
             </DropdownMenuContent>
           </DropdownMenu>
         }

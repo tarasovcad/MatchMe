@@ -98,7 +98,7 @@ const AnalyticsBarList = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container">
+    <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container min-h-[456px]">
       <AnalyticsSectionHeader title={title} description={description} icon={icon} button={button} />
       {!isLoading && !error && data && data.length > maxItems && (
         <>

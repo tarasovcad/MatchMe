@@ -11,6 +11,7 @@ import {
 import {SingleBar, SingleBarSkeleton} from "./AnalyticsBarList";
 import {motion} from "framer-motion";
 import {containerVariants} from "@/utils/other/analyticsVariants";
+import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {cn} from "@/lib/utils";
 import WorldMap from "./WorldMap";
@@ -35,10 +36,17 @@ const ProfileDemographicsList = ({
   error: Error | null;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const chevronVariants = {
+    up: {rotate: 180, transition: {duration: 0.2}},
+    down: {rotate: 0, transition: {duration: 0.2}},
+  };
 
   const handleDemographicChange = (demographic: string) => {
     setSelectedDemographicList(demographic);
   };
+
   const maxItems = 14;
 
   return (
@@ -52,37 +60,53 @@ const ProfileDemographicsList = ({
         description="See the geographic locations of users viewing your profile"
         icon={<Globe size={15} className="text-foreground" />}
         button={
-          <DropdownMenu>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 size="xs"
                 className="h-[34px] w-full  rounded-[8px] text-sm @min-[370px]:max-w-[138px]">
                 {selectedDemographicList}
-                <ChevronDown
-                  size={16}
-                  className="ml-1.5 transition-transform duration-300 ease-in-out"
-                />
+                <motion.div
+                  initial="down"
+                  animate={dropdownOpen ? "up" : "down"}
+                  variants={chevronVariants}>
+                  <ChevronDown size={16} className="ml-1.5" />
+                </motion.div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Map")}>
-                Map
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Counties")}>
-                Counties
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Regions")}>
-                Regions
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Cities")}>
-                Cities
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Languages")}>
-                Languages
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleDemographicChange("Timezones")}>
-                Timezones
-              </DropdownMenuItem>
+              <motion.div initial="closed" animate="open" variants={menuVariants}>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Map")}>
+                    Map
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Counties")}>
+                    Counties
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Regions")}>
+                    Regions
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Cities")}>
+                    Cities
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Languages")}>
+                    Languages
+                  </DropdownMenuItem>
+                </motion.div>
+                <motion.div variants={itemDropdownVariants}>
+                  <DropdownMenuItem onClick={() => handleDemographicChange("Timezones")}>
+                    Timezones
+                  </DropdownMenuItem>
+                </motion.div>
+              </motion.div>
             </DropdownMenuContent>
           </DropdownMenu>
         }
@@ -98,7 +122,7 @@ const ProfileDemographicsList = ({
           )}
         </div>
       ) : (
-        <>
+        <div className="h-[577px]">
           {!isLoading && !error && data && data.length > maxItems && (
             <>
               <AnalyticsBarListDialog
@@ -144,7 +168,7 @@ const ProfileDemographicsList = ({
                   return <SingleBar key={item.label + item.percentage} item={item} />;
                 })}
           </motion.div>
-        </>
+        </div>
       )}
     </div>
   );
