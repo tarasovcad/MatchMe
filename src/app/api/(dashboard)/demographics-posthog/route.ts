@@ -3,6 +3,7 @@ import {
   getChartGranularity,
   transformPostHogDemographicsData,
   fetchCountryFlag,
+  fetchCountryFlagByLanguage,
   extractCountryName,
 } from "@/functions/analytics/analyticsDataTransformation";
 import {PostHogRequestBody, PostHogResponse} from "@/types/analytics";
@@ -113,12 +114,24 @@ export async function GET(req: NextRequest) {
     // Add flags for country-related demographics
     const dataWithFlags = await Promise.all(
       transformedData.map(async (item) => {
-        const countryName = extractCountryName(item.label, type);
-        if (countryName) {
-          const flag = await fetchCountryFlag(countryName);
-          return {...item, flag};
+        if (type === "Languages") {
+          // For languages, extract the language code from the label and get the flag
+          const languageCodeMatch = item.label.match(/\(([^)]+)\)$/);
+          if (languageCodeMatch) {
+            const languageCode = languageCodeMatch[1];
+            const flag = await fetchCountryFlagByLanguage(languageCode);
+            return {...item, flag};
+          }
+          return item;
+        } else {
+          // For other types, use the existing country extraction logic
+          const countryName = extractCountryName(item.label, type);
+          if (countryName) {
+            const flag = await fetchCountryFlag(countryName);
+            return {...item, flag};
+          }
+          return item;
         }
-        return item;
       }),
     );
 

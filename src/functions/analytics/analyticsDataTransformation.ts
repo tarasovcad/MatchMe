@@ -621,6 +621,138 @@ export async function fetchCountryFlag(countryName: string): Promise<string | nu
   }
 }
 
+export async function fetchCountryFlagByLanguage(languageCode: string): Promise<string | null> {
+  if (!languageCode) return null;
+
+  const languageToCountryMap: Record<string, string> = {
+    en: "United States",
+    "en-US": "United States",
+    "en-GB": "United Kingdom",
+    "en-CA": "Canada",
+    "en-AU": "Australia",
+    "en-NZ": "New Zealand",
+    "en-IE": "Ireland",
+    "en-ZA": "South Africa",
+    "en-IN": "India",
+
+    es: "Spain",
+    "es-ES": "Spain",
+    "es-MX": "Mexico",
+    "es-AR": "Argentina",
+    "es-CO": "Colombia",
+    "es-CL": "Chile",
+    "es-PE": "Peru",
+    "es-VE": "Venezuela",
+
+    fr: "France",
+    "fr-FR": "France",
+    "fr-CA": "Canada",
+    "fr-BE": "Belgium",
+    "fr-CH": "Switzerland",
+
+    de: "Germany",
+    "de-DE": "Germany",
+    "de-AT": "Austria",
+    "de-CH": "Switzerland",
+
+    ru: "Russia",
+    "ru-RU": "Russia",
+
+    pt: "Portugal",
+    "pt-BR": "Brazil",
+    "pt-PT": "Portugal",
+
+    it: "Italy",
+    "it-IT": "Italy",
+
+    nl: "Netherlands",
+    "nl-NL": "Netherlands",
+    "nl-BE": "Belgium",
+
+    zh: "China",
+    "zh-CN": "China",
+    "zh-TW": "Taiwan",
+    "zh-HK": "Hong Kong",
+    "zh-SG": "Singapore",
+
+    ja: "Japan",
+    "ja-JP": "Japan",
+
+    ko: "South Korea",
+    "ko-KR": "South Korea",
+
+    ar: "Saudi Arabia",
+    "ar-SA": "Saudi Arabia",
+    "ar-EG": "Egypt",
+    "ar-AE": "United Arab Emirates",
+
+    hi: "India",
+    "hi-IN": "India",
+
+    sv: "Sweden",
+    "sv-SE": "Sweden",
+    no: "Norway",
+    nb: "Norway",
+    da: "Denmark",
+    "da-DK": "Denmark",
+    fi: "Finland",
+    "fi-FI": "Finland",
+    pl: "Poland",
+    "pl-PL": "Poland",
+    tr: "Turkey",
+    "tr-TR": "Turkey",
+    he: "Israel",
+    "he-IL": "Israel",
+    th: "Thailand",
+    "th-TH": "Thailand",
+    vi: "Vietnam",
+    "vi-VN": "Vietnam",
+    uk: "Ukraine",
+    "uk-UA": "Ukraine",
+    cs: "Czech Republic",
+    "cs-CZ": "Czech Republic",
+    sk: "Slovakia",
+    "sk-SK": "Slovakia",
+    hu: "Hungary",
+    "hu-HU": "Hungary",
+    ro: "Romania",
+    "ro-RO": "Romania",
+    bg: "Bulgaria",
+    "bg-BG": "Bulgaria",
+    hr: "Croatia",
+    "hr-HR": "Croatia",
+    sr: "Serbia",
+    "sr-RS": "Serbia",
+    sl: "Slovenia",
+    "sl-SI": "Slovenia",
+    et: "Estonia",
+    "et-EE": "Estonia",
+    lv: "Latvia",
+    "lv-LV": "Latvia",
+    lt: "Lithuania",
+    "lt-LT": "Lithuania",
+    el: "Greece",
+    "el-GR": "Greece",
+    is: "Iceland",
+    "is-IS": "Iceland",
+    mt: "Malta",
+    "mt-MT": "Malta",
+  };
+
+  const countryName = languageToCountryMap[languageCode];
+  if (!countryName) {
+    // Try to get base language if specific variant not found
+    const baseLanguage = languageCode.split("-")[0];
+    const baseCountryName = languageToCountryMap[baseLanguage];
+    if (!baseCountryName) {
+      return null;
+    }
+    return fetchCountryFlag(baseCountryName);
+  }
+
+  return fetchCountryFlag(countryName);
+}
+
 // Function to format timezone with UTC offset
 export function formatTimezoneWithOffset(timezone: string): string {
   try {

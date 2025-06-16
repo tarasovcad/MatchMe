@@ -3,6 +3,8 @@ import {ComposableMap, Geographies, Geography, Marker, ZoomableGroup} from "reac
 import {motion} from "framer-motion";
 import {cn} from "@/lib/utils";
 import {createPortal} from "react-dom";
+import {useCountryFlag} from "@/hooks/useCountryFlag";
+import Image from "next/image";
 
 // Constants
 const GEO_URL = "https://unpkg.com/world-atlas@2/countries-110m.json";
@@ -112,6 +114,7 @@ const WorldMap: React.FC<WorldMapProps> = ({data, className = "", height = 400})
   });
 
   const [geoError, setGeoError] = useState<string | null>(null);
+  const {flag} = useCountryFlag(tooltip.country);
 
   const countryDataMap = useMemo(() => buildCountryDataMap(data), [data]);
   const maxCount = useMemo(() => Math.max(...data.map((item) => item.count), 1), [data]);
@@ -216,10 +219,20 @@ const WorldMap: React.FC<WorldMapProps> = ({data, className = "", height = 400})
         }}>
         <div className="border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
           <div className="flex w-full flex-wrap items-center gap-2">
-            <div
-              className="shrink-0 rounded-[2px] h-2.5 w-2.5"
-              style={{backgroundColor: getCountryColor(tooltip.country)}}
-            />
+            {flag ? (
+              <Image
+                src={flag}
+                alt={`${tooltip.country} flag`}
+                width={16}
+                height={12}
+                className="shrink-0 w-[16px] h-[12px] object-cover "
+              />
+            ) : (
+              <div
+                className="shrink-0 rounded-[2px] h-2.5 w-2.5"
+                style={{backgroundColor: getCountryColor(tooltip.country)}}
+              />
+            )}
             <div className="flex flex-1 items-center leading-none">
               <span className="text-muted-foreground">{tooltip.country}:</span>
               <span className="font-mono font-medium tabular-nums text-foreground ml-1">

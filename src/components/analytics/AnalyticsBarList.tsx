@@ -9,7 +9,6 @@ import {cn} from "@/lib/utils";
 import Image from "next/image";
 import {Globe} from "lucide-react";
 
-// Simplified image display component
 const ImageDisplay = ({image, flag, label}: {image?: string; flag?: string; label: string}) => {
   // Priority: flag > image > nothing
   if (flag) {
