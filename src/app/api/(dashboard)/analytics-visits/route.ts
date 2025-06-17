@@ -27,6 +27,33 @@ export async function GET(req: NextRequest) {
   }
 
   const rawCounts = fieldData as Record<string, number>;
-  const transformed = transformCountsForAnalytics(rawCounts, type);
+  let transformed = transformCountsForAnalytics(rawCounts, type);
+
+  if (type === "skill_counts") {
+    const skillNames = Object.keys(rawCounts);
+
+    if (skillNames.length > 0) {
+      const {data: skillsData, error: skillsError} = await supabase
+        .from("skills")
+        .select("name, image_url")
+        .in("name", skillNames);
+
+      if (!skillsError && skillsData) {
+        const skillImageMap = skillsData.reduce(
+          (acc, skill) => {
+            acc[skill.name] = skill.image_url;
+            return acc;
+          },
+          {} as Record<string, string>,
+        );
+
+        transformed = transformed.map((item) => ({
+          ...item,
+          image: skillImageMap[item.label] || undefined,
+        }));
+      }
+    }
+  }
+
   return NextResponse.json(transformed);
 }
