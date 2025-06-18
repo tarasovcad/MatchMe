@@ -26,11 +26,6 @@ export async function toggleUserFollow(followingId: string) {
       };
     }
 
-    const profileInteraction = await postProfileInteraction(followingId, followerId, "follow");
-    if (!profileInteraction.success) {
-      return {success: false, message: "Error posting profile interaction"};
-    }
-
     // Check if the user is already following
     const {data: existingFollow, error} = await supabase
       .from("follows")
@@ -46,6 +41,11 @@ export async function toggleUserFollow(followingId: string) {
     let result;
     if (existingFollow) {
       // Unfollow (delete entry)
+      const profileInteraction = await postProfileInteraction(followingId, followerId, "unfollow");
+      if (!profileInteraction.success) {
+        return {success: false, message: "Error posting profile interaction"};
+      }
+
       const {error: deleteError} = await supabase
         .from("follows")
         .delete()
@@ -58,6 +58,11 @@ export async function toggleUserFollow(followingId: string) {
       result = {success: true, message: "Unfollowed successfully"};
     } else {
       // Follow (insert new entry)
+      const profileInteraction = await postProfileInteraction(followingId, followerId, "follow");
+      if (!profileInteraction.success) {
+        return {success: false, message: "Error posting profile interaction"};
+      }
+
       const {error: insertError} = await supabase
         .from("follows")
         .insert([{follower_id: followerId, following_id: followingId}]);

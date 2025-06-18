@@ -6,6 +6,13 @@ interface StatsParams {
   table: string;
   dateRange?: string;
   username?: string;
+  compareDateRange?: string;
+}
+
+interface ProfileEventsBarParams {
+  username: string;
+  dateRange: string;
+  compareDateRange: string;
 }
 
 const fetchAnalyticsVisits = async ({id, type, table}: StatsParams) => {
@@ -116,5 +123,30 @@ export const useAnalyticsDevice = (params: StatsParams) => {
     queryFn: () => fetchAnalyticsDevice(params),
     enabled:
       !!params.id && !!params.type && !!params.table && !!params.dateRange && !!params.username,
+  });
+};
+
+const fetchProfileEventsBar = async ({
+  username,
+  dateRange,
+  compareDateRange,
+}: ProfileEventsBarParams) => {
+  const response = await fetch(
+    `/api/profile-events-bar?username=${username}&dateRange=${dateRange}&compareDateRange=${compareDateRange}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || errorData.error || "Failed to fetch profile events bar");
+  }
+
+  return response.json();
+};
+
+export const useProfileEventsBar = (params: ProfileEventsBarParams) => {
+  return useQuery({
+    queryKey: ["profile-events-bar", params.username, params.dateRange, params.compareDateRange],
+    queryFn: () => fetchProfileEventsBar(params),
+    enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
   });
 };

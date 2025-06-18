@@ -2,7 +2,7 @@ import StatsCardWithLineChart from "@/components/analytics/StatsCardWithLineChar
 import {ChartConfig} from "@/components/shadcn/chart";
 import {
   useFollowerStats,
-  useProfileInteractions,
+  useProfileEvents,
   useUniqueVisitors,
   useViewsStats,
 } from "@/hooks/query/dashboard/use-stats";
@@ -46,7 +46,7 @@ const ProfileStatsCard = ({user}: {user: User}) => {
     data: profileInteractionsData,
     isLoading: isProfileInteractionsLoading,
     error: profileInteractionsError,
-  } = useProfileInteractions(statsParams);
+  } = useProfileEvents(statsParams);
 
   if (viewsError) {
     toast.error(viewsError.message, {

@@ -16,6 +16,7 @@ import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
 import {toast} from "sonner";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {cn} from "@/lib/utils";
+import {postProfileInteraction} from "@/actions/profiles/profileInteractions";
 
 export default function ProfileOtherButton({
   userId,
@@ -118,7 +119,13 @@ export default function ProfileOtherButton({
               </DropdownMenuItem>
             </motion.div>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "share");
+                  }
+                }}>
                 <Share2 size={16} className="opacity-60" aria-hidden="true" />
                 Share Profile
               </DropdownMenuItem>
@@ -129,13 +136,25 @@ export default function ProfileOtherButton({
 
           <DropdownMenuGroup>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "report");
+                  }
+                }}>
                 <Flag size={16} className="opacity-60" aria-hidden="true" />
                 Report User
               </DropdownMenuItem>
             </motion.div>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "block");
+                  }
+                }}>
                 <Ban size={16} className="opacity-60" aria-hidden="true" />
                 Block User
               </DropdownMenuItem>

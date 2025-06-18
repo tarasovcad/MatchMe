@@ -1029,3 +1029,174 @@ export function getDeviceIcon(deviceType: string): string | null {
     return null;
   }
 }
+
+// Profile Events specific transformation
+type ProfileEventDataPoint = {
+  date: string;
+  message: number;
+  follow: number;
+  unfollow: number;
+  save_to_favourites: number;
+  report: number;
+  share: number;
+  block: number;
+  // Previous period data
+  prev_message: number;
+  prev_follow: number;
+  prev_unfollow: number;
+  prev_save_to_favourites: number;
+  prev_report: number;
+  prev_share: number;
+  prev_block: number;
+};
+
+export function transformProfileEventsForChart(
+  eventsData: Array<{id: string; created_at: string; type: string}>,
+  startDate: string,
+  endDate: string,
+  granularity: "hour" | "day" | "month",
+  comparisonEventsData?: Array<{id: string; created_at: string; type: string}>,
+  comparisonStartDate?: string,
+  comparisonEndDate?: string,
+): ProfileEventDataPoint[] {
+  const chartData: ProfileEventDataPoint[] = [];
+  const timePoints: Date[] = [];
+  let formattedDate: string = "";
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Generate time points using the same logic as transformSupabaseDataForChart
+  if (granularity === "hour") {
+    // Check if this is a "Last 24 hours" type range (spans across dates)
+    const isLast24Hours =
+      start.getUTCDate() !== end.getUTCDate() || start.getUTCMonth() !== end.getUTCMonth();
+
+    if (isLast24Hours) {
+      // Generate hourly points from start to end time
+      const currentTime = new Date(start);
+      currentTime.setUTCMinutes(0, 0, 0); // Round down to the hour
+
+      while (currentTime < end) {
+        timePoints.push(new Date(currentTime));
+        currentTime.setUTCHours(currentTime.getUTCHours() + 1);
+      }
+    } else {
+      // Generate 24 hour points for the start date (for Today/Yesterday)
+      for (let i = 0; i < 24; i++) {
+        const point = new Date(start);
+        point.setUTCHours(i, 0, 0, 0);
+        timePoints.push(point);
+      }
+    }
+  } else if (granularity === "day") {
+    // Generate daily points from start to end date
+    const currentDate = new Date(start);
+    while (currentDate < end) {
+      timePoints.push(new Date(currentDate));
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+    }
+  } else if (granularity === "month") {
+    // Generate monthly points from start to end date
+    const currentDate = new Date(start);
+    currentDate.setUTCDate(1); // Set to first day of the month
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    while (currentDate < end) {
+      timePoints.push(new Date(currentDate));
+      // Move to first day of next month
+      currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
+    }
+  }
+
+  // Define event types we're tracking
+  const eventTypes = [
+    "message",
+    "follow",
+    "unfollow",
+    "save_to_favourites",
+    "report",
+    "share",
+    "block",
+  ];
+
+  // Count events for each time point and event type
+  timePoints.forEach((timePoint, index) => {
+    const nextTimePoint = index < timePoints.length - 1 ? timePoints[index + 1] : end;
+
+    // Initialize counters for all event types
+    const eventCounts: Record<string, number> = {};
+    const comparisonEventCounts: Record<string, number> = {};
+
+    eventTypes.forEach((type) => {
+      eventCounts[type] = 0;
+      comparisonEventCounts[type] = 0;
+    });
+
+    // Count current period events by type
+    eventsData.forEach((event) => {
+      const eventDate = new Date(event.created_at);
+      if (eventDate >= timePoint && eventDate < nextTimePoint) {
+        if (eventTypes.includes(event.type)) {
+          eventCounts[event.type]++;
+        }
+      }
+    });
+
+    // Count comparison period events if comparison data is provided
+    if (comparisonEventsData && comparisonStartDate && comparisonEndDate) {
+      const comparisonStart = new Date(comparisonStartDate);
+      const comparisonEnd = new Date(comparisonEndDate);
+
+      // Calculate the equivalent time point in the comparison period
+      const timeDiff = timePoint.getTime() - start.getTime();
+      const comparisonTimePoint = new Date(comparisonStart.getTime() + timeDiff);
+      const comparisonNextTimePoint =
+        index < timePoints.length - 1
+          ? new Date(comparisonStart.getTime() + (nextTimePoint.getTime() - start.getTime()))
+          : comparisonEnd;
+
+      comparisonEventsData.forEach((event) => {
+        const eventDate = new Date(event.created_at);
+        if (eventDate >= comparisonTimePoint && eventDate < comparisonNextTimePoint) {
+          if (eventTypes.includes(event.type)) {
+            comparisonEventCounts[event.type]++;
+          }
+        }
+      });
+    }
+
+    // Format the date based on granularity
+    if (granularity === "hour") {
+      formattedDate = timePoint.toISOString().slice(0, 13) + ":00:00.000Z";
+    } else if (granularity === "day") {
+      formattedDate = timePoint.toISOString().slice(0, 10) + "T00:00:00.000Z";
+    } else if (granularity === "month") {
+      formattedDate = timePoint.toISOString().slice(0, 7) + "-01T00:00:00.000Z";
+    }
+
+    // Create data point with all event types
+    const dataPoint: ProfileEventDataPoint = {
+      date: formattedDate,
+      message: eventCounts.message,
+      follow: eventCounts.follow,
+      unfollow: eventCounts.unfollow,
+      save_to_favourites: eventCounts.save_to_favourites,
+      report: eventCounts.report,
+      share: eventCounts.share,
+      block: eventCounts.block,
+      // Previous period data
+      prev_message: comparisonEventCounts.message,
+      prev_follow: comparisonEventCounts.follow,
+      prev_unfollow: comparisonEventCounts.unfollow,
+      prev_save_to_favourites: comparisonEventCounts.save_to_favourites,
+      prev_report: comparisonEventCounts.report,
+      prev_share: comparisonEventCounts.share,
+      prev_block: comparisonEventCounts.block,
+    };
+
+    chartData.push(dataPoint);
+  });
+
+  return chartData;
+}

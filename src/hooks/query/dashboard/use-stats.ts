@@ -47,14 +47,14 @@ const fetchUniqueVisitors = async ({username, dateRange, compareDateRange}: Stat
   return response.json();
 };
 
-const fetchProfileInteractions = async ({username, dateRange, compareDateRange}: StatsParams) => {
+const fetchProfileEvents = async ({username, dateRange, compareDateRange}: StatsParams) => {
   const response = await fetch(
-    `/api/profile-interactions?username=${username}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
+    `/api/profile-events?username=${username}&dateRange=${encodeURIComponent(dateRange)}&compareDateRange=${encodeURIComponent(compareDateRange)}`,
   );
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.detail || errorData.error || "Failed to fetch profile interactions");
+    throw new Error(errorData.detail || errorData.error || "Failed to fetch profile events");
   }
 
   return response.json();
@@ -83,10 +83,10 @@ export const useUniqueVisitors = (params: StatsParams) => {
     enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
   });
 };
-export const useProfileInteractions = (params: StatsParams) => {
+export const useProfileEvents = (params: StatsParams) => {
   return useQuery({
-    queryKey: ["profile-interactions", params.username, params.dateRange, params.compareDateRange],
-    queryFn: () => fetchProfileInteractions(params),
+    queryKey: ["profile-events", params.username, params.dateRange, params.compareDateRange],
+    queryFn: () => fetchProfileEvents(params),
     enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
   });
 };

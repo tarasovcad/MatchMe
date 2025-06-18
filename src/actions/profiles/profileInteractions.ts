@@ -1,7 +1,15 @@
+"use server";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 
-type ProfileInteractionType = "follow" | "message" | "save_to_favourites" | "share";
+type ProfileInteractionType =
+  | "follow"
+  | "unfollow"
+  | "message"
+  | "save_to_favourites"
+  | "share"
+  | "report"
+  | "block";
 
 export async function postProfileInteraction(
   profileId: string,
@@ -9,7 +17,7 @@ export async function postProfileInteraction(
   type: ProfileInteractionType,
 ) {
   try {
-    const key = `profile_interactions:${type}:${profileId}_by_${interactedBy}`;
+    const key = `profile_events:${type}:${profileId}_by_${interactedBy}`;
 
     const cachedInteraction = await redis.get(key);
 
@@ -24,7 +32,7 @@ export async function postProfileInteraction(
     const supabase = await createClient();
 
     const {data, error} = await supabase
-      .from("profile_interactions")
+      .from("profile_events")
       .insert([
         {
           profile_id: profileId,
