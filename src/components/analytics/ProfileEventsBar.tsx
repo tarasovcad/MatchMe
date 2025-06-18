@@ -5,12 +5,7 @@ import React from "react";
 import AnalyticsSectionHeader from "./AnalyticsSectionHeader";
 import {Activity} from "lucide-react";
 import {Bar, BarChart, CartesianGrid, XAxis, YAxis} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartConfig,
-} from "@/components/shadcn/chart";
+import {ChartContainer, ChartTooltip, ChartConfig} from "@/components/shadcn/chart";
 import {useProfileEventsBar} from "@/hooks/query/dashboard/analytics-visits";
 import {useDashboardStore} from "@/store/useDashboardStore";
 import {useMemo} from "react";
@@ -18,6 +13,7 @@ import {toast} from "sonner";
 import {formatChartDate} from "@/functions/formatChartDate";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AnalyticsBadge from "./AnalyticsBadge";
+import {motion} from "motion/react";
 
 // Data structure for chart
 type ChartDataPoint = {
@@ -94,6 +90,22 @@ const colors = {
   block: "#4A42A3",
 };
 
+const eventKeys = Object.keys(chartConfig) as Array<keyof typeof chartConfig>;
+
+// Shared utilities
+const calculatePercentageChange = (current: number, previous: number) => {
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+  return Math.round(((current - previous) / previous) * 100);
+};
+
+const getChangeType = (change: number): "positive" | "negative" | "neutral" => {
+  if (change > 0) return "positive";
+  if (change < 0) return "negative";
+  return "neutral";
+};
+
 const ProfileEventsBar = ({user}: {user: User}) => {
   const userUsername = user.user_metadata.username;
   const {dateRange, compareDateRange} = useDashboardStore();
@@ -121,21 +133,21 @@ const ProfileEventsBar = ({user}: {user: User}) => {
 
   const chartData = profileEventsBarData?.chartData || fallbackData;
 
-  const legendData = Object.keys(chartConfig).map((key) => {
+  const legendData = eventKeys.map((key) => {
     const total = chartData.reduce(
       (sum: number, day: ChartDataPoint) => sum + (day[key as keyof ChartDataPoint] as number),
       0,
     );
     return {
       key,
-      label: chartConfig[key as keyof typeof chartConfig].label,
+      label: chartConfig[key as keyof typeof chartConfig]?.label || key,
       total,
       color: colors[key as keyof typeof colors],
     };
   });
 
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] @container relative">
+    <div className="w-full border border-border rounded-[12px] p-[18px] pb-[10px]  @container relative">
       <AnalyticsSectionHeader
         title="Profile Events"
         description="See the events that have happened on your profile"
@@ -193,186 +205,307 @@ const ProfileEventsBar = ({user}: {user: User}) => {
                   return (
                     <div className="border-border/50 bg-background grid min-w-[12rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
                       <div className="font-medium text-foreground">
-                        {formatChartDate(label, dateRange)}
+                        {formatChartDate(label, dateRange)} (UTC)
                       </div>
 
                       <div className="gap-1.5 grid">
-                        {itemsToShow.map((item, index) => (
-                          <div key={index} className="flex w-full flex-wrap items-center gap-2">
-                            <div className="flex flex-1 justify-between items-center gap-2 leading-none">
-                              <div className="flex items-center gap-1.5">
-                                <div
-                                  className="rounded-full w-2 h-2 shrink-0"
-                                  style={{
-                                    backgroundColor: item.color,
-                                  }}
-                                />
-                                <span className="text-muted-foreground">
-                                  {chartConfig[item.dataKey as keyof typeof chartConfig]?.label ||
-                                    item.dataKey}
+                        {itemsToShow.map((item, index) => {
+                          // Find corresponding previous period value
+                          const prevDataKey = `prev_${item.dataKey}`;
+                          const prevItem = payload.find((p) => p.dataKey === prevDataKey);
+                          const prevValue = prevItem?.value ? Number(prevItem.value) : 0;
+                          const currentValue = item.value ? Number(item.value) : 0;
+
+                          // Format value based on whether previous data exists
+                          const displayValue =
+                            prevValue > 0
+                              ? `${currentValue} / ${prevValue}`
+                              : currentValue.toString();
+
+                          return (
+                            <div key={index} className="flex w-full flex-wrap items-center gap-2">
+                              <div className="flex flex-1 justify-between items-center gap-2 leading-none">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className="size-2.5 shrink-0 rounded-sm"
+                                    style={{backgroundColor: item.color}}
+                                    aria-hidden={true}
+                                  />
+                                  <span className="text-muted-foreground">
+                                    {chartConfig[item.dataKey as keyof typeof chartConfig]?.label ||
+                                      item.dataKey}
+                                  </span>
+                                </div>
+                                <span className="font-mono font-medium tabular-nums text-foreground">
+                                  {displayValue}
                                 </span>
                               </div>
-                              <span className="font-mono font-medium tabular-nums text-foreground">
-                                {item.value || 0}
-                              </span>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
                 }}
               />
               {/* Previous period bars (outlined) */}
-              <Bar
-                dataKey="prev_message"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.message}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_follow"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.follow}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_unfollow"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.unfollow}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_save_to_favourites"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.save_to_favourites}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_report"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.report}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_share"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.share}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
-              <Bar
-                dataKey="prev_block"
-                stackId="b"
-                fill="transparent"
-                stroke={colors.block}
-                strokeWidth={2}
-                strokeDasharray="3 3"
-              />
+              {eventKeys.map((key) => (
+                <Bar
+                  key={`prev_${key}`}
+                  dataKey={`prev_${key}`}
+                  stackId="b"
+                  fill="transparent"
+                  stroke={colors[key as keyof typeof colors]}
+                  strokeWidth={2}
+                  strokeDasharray="3 3"
+                />
+              ))}
 
               {/* Current period bars (filled) */}
-              <Bar dataKey="message" stackId="a" fill={colors.message} />
-              <Bar dataKey="follow" stackId="a" fill={colors.follow} />
-              <Bar dataKey="unfollow" stackId="a" fill={colors.unfollow} />
-              <Bar dataKey="save_to_favourites" stackId="a" fill={colors.save_to_favourites} />
-              <Bar dataKey="report" stackId="a" fill={colors.report} />
-              <Bar dataKey="share" stackId="a" fill={colors.share} />
-              <Bar dataKey="block" stackId="a" fill={colors.block} />
+              {eventKeys.map((key) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  stackId="a"
+                  fill={colors[key as keyof typeof colors]}
+                />
+              ))}
             </BarChart>
           </ChartContainer>
         )}
 
         {/* Legend */}
-        <div className="mt-6">
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-            <span>Event Types</span>
-            <span>Current / Previous / Percentage</span>
-          </div>
-          <ul className="divide-y divide-border text-[14px] font-medium">
-            {legendData.map((item) => {
-              const prevTotal = chartData.reduce(
-                (sum: number, day: ChartDataPoint) =>
-                  sum + (day[`prev_${item.key}` as keyof ChartDataPoint] as number),
-                0,
-              );
+        {isLoading ? (
+          <ProfileEventsBarSkeleton compareDateRange={compareDateRange} />
+        ) : (
+          <motion.div
+            className="mt-6"
+            initial={{opacity: 0, y: 30}}
+            animate={{opacity: 1, y: 0}}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+              delay: 0.2,
+            }}>
+            <motion.div
+              className="flex items-center justify-between text-xs text-muted-foreground mb-2"
+              initial={{opacity: 0}}
+              animate={{opacity: 1}}
+              transition={{delay: 0.3, duration: 0.2}}>
+              <span>Event Types</span>
 
-              const calculatePercentageChange = (current: number, previous: number) => {
-                if (previous === 0) {
-                  return current > 0 ? 100 : 0;
-                }
-                return Math.round(((current - previous) / previous) * 100);
-              };
+              {compareDateRange !== "Disabled" ? (
+                <span>Current / Previous / Percentage</span>
+              ) : (
+                <span>Current / Previous</span>
+              )}
+            </motion.div>
+            <ul className="divide-y divide-border text-[14px] font-medium">
+              {legendData.map((item, index) => {
+                const prevTotal = chartData.reduce(
+                  (sum: number, day: ChartDataPoint) =>
+                    sum + (day[`prev_${item.key}` as keyof ChartDataPoint] as number),
+                  0,
+                );
 
-              const percentageChange = calculatePercentageChange(item.total, prevTotal);
-              const getChangeType = (change: number): "positive" | "negative" | "neutral" => {
-                if (change > 0) return "positive";
-                if (change < 0) return "negative";
-                return "neutral";
-              };
+                const percentageChange = calculatePercentageChange(item.total, prevTotal);
 
-              return (
-                <li key={item.key} className="relative flex items-center justify-between py-2">
-                  <div className="flex items-center space-x-2.5 truncate">
-                    <div className="flex items-center space-x-1">
-                      <span
-                        className="size-2.5 shrink-0 rounded-sm"
-                        style={{backgroundColor: item.color}}
-                        aria-hidden={true}
-                      />
-                      <span
-                        className="size-2.5 shrink-0 rounded-sm border-2 border-dashed"
-                        style={{borderColor: item.color}}
-                        aria-hidden={true}
-                      />
+                return (
+                  <motion.li
+                    key={item.key}
+                    className="relative flex items-center justify-between py-2"
+                    initial={{opacity: 0, x: -20}}
+                    animate={{opacity: 1, x: 0}}
+                    transition={{
+                      duration: 0.2,
+                      ease: "easeOut",
+                      delay: 0.3 + index * 0.05,
+                    }}>
+                    <div className="flex items-center space-x-2.5 truncate">
+                      <div className="flex items-center space-x-1">
+                        <motion.span
+                          className="size-2.5 shrink-0 rounded-sm"
+                          style={{backgroundColor: item.color}}
+                          aria-hidden={true}
+                          initial={{scale: 0}}
+                          animate={{scale: 1}}
+                          transition={{
+                            duration: 0.15,
+                            delay: 0.35 + index * 0.05,
+                            type: "spring",
+                            stiffness: 200,
+                          }}
+                        />
+                        {compareDateRange !== "Disabled" && (
+                          <motion.span
+                            className="size-2.5 shrink-0 rounded-sm border-2 border-dashed"
+                            style={{borderColor: item.color}}
+                            aria-hidden={true}
+                            initial={{scale: 0}}
+                            animate={{scale: 1}}
+                            transition={{
+                              duration: 0.15,
+                              delay: 0.375 + index * 0.05,
+                              type: "spring",
+                              stiffness: 200,
+                            }}
+                          />
+                        )}
+                      </div>
+                      <span className="truncate">{item.label}</span>
                     </div>
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium tabular-nums text-foreground">
-                      {item.total.toLocaleString()}
-                    </span>
-                    <span className="text-muted-foreground">/</span>
-                    <span className="font-medium tabular-nums text-muted-foreground">
-                      {prevTotal.toLocaleString()}
-                    </span>
-                    <AnalyticsBadge
-                      number={Math.abs(percentageChange)}
-                      type={getChangeType(percentageChange)}
-                      tooltipData={{
-                        metricName: String(item.label),
-                        currentValue: item.total,
-                        previousValue: prevTotal,
-                      }}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    <div className="flex items-center space-x-2">
+                      <motion.span
+                        className="font-medium tabular-nums text-foreground"
+                        initial={{opacity: 0, scale: 0.8}}
+                        animate={{opacity: 1, scale: 1}}
+                        transition={{
+                          duration: 0.15,
+                          delay: 0.4 + index * 0.05,
+                        }}>
+                        {item.total.toLocaleString()}
+                      </motion.span>
+                      <span className="text-muted-foreground">/</span>
+                      <motion.span
+                        className="font-medium tabular-nums text-muted-foreground"
+                        initial={{opacity: 0, scale: 0.8}}
+                        animate={{opacity: 1, scale: 1}}
+                        transition={{
+                          duration: 0.15,
+                          delay: 0.425 + index * 0.05,
+                        }}>
+                        {prevTotal.toLocaleString()}
+                      </motion.span>
+                      {compareDateRange !== "Disabled" && (
+                        <motion.div
+                          initial={{opacity: 0, scale: 0.8}}
+                          animate={{opacity: 1, scale: 1}}
+                          transition={{
+                            duration: 0.15,
+                            delay: 0.45 + index * 0.05,
+                          }}>
+                          <AnalyticsBadge
+                            number={Math.abs(percentageChange)}
+                            type={getChangeType(percentageChange)}
+                            tooltipData={{
+                              metricName: String(item.label),
+                              currentValue: item.total,
+                              previousValue: prevTotal,
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.li>
+                );
+              })}
+            </ul>
+            {compareDateRange !== "Disabled" && (
+              <motion.div
+                className="mt-3 flex items-center gap-4 text-xs text-muted-foreground"
+                initial={{opacity: 0, y: 10}}
+                animate={{opacity: 1, y: 0}}
+                transition={{
+                  duration: 0.2,
+                  delay: 0.4 + legendData.length * 0.05,
+                }}>
+                <motion.div
+                  className="flex items-center gap-1.5"
+                  initial={{opacity: 0, x: -10}}
+                  animate={{opacity: 1, x: 0}}
+                  transition={{
+                    duration: 0.15,
+                    delay: 0.45 + legendData.length * 0.05,
+                  }}>
+                  <motion.div
+                    className="size-2 rounded-sm bg-foreground"
+                    initial={{scale: 0}}
+                    animate={{scale: 1}}
+                    transition={{
+                      duration: 0.1,
+                      delay: 0.5 + legendData.length * 0.05,
+                      type: "spring",
+                      stiffness: 300,
+                    }}
+                  />
+                  <span>Current Period</span>
+                </motion.div>
+                <motion.div
+                  className="flex items-center gap-1.5"
+                  initial={{opacity: 0, x: -10}}
+                  animate={{opacity: 1, x: 0}}
+                  transition={{
+                    duration: 0.15,
+                    delay: 0.5 + legendData.length * 0.05,
+                  }}>
+                  <motion.div
+                    className="size-2 rounded-sm border border-dashed border-foreground"
+                    initial={{scale: 0}}
+                    animate={{scale: 1}}
+                    transition={{
+                      duration: 0.1,
+                      delay: 0.55 + legendData.length * 0.05,
+                      type: "spring",
+                      stiffness: 300,
+                    }}
+                  />
+                  <span>Previous Period</span>
+                </motion.div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-          <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <div className="size-2 rounded-sm bg-foreground" />
-              <span>Current Period</span>
+const ProfileEventsBarSkeleton = ({compareDateRange}: {compareDateRange: string}) => {
+  return (
+    <div className="mt-6">
+      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+        <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
+        {compareDateRange !== "Disabled" ? (
+          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-36" />
+        ) : (
+          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
+        )}
+      </div>
+      <ul className="divide-y divide-border text-[14px] font-medium">
+        {Array.from({length: 7}, (_, index) => (
+          <li key={`skeleton-${index}`} className="relative flex items-center justify-between py-2">
+            <div className="flex items-center space-x-2.5 truncate">
+              <div className="flex items-center space-x-1">
+                <div className="size-2.5 shrink-0 rounded-sm bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+                {compareDateRange !== "Disabled" && (
+                  <div className="size-2.5 shrink-0 rounded-sm border-2 border-dashed border-gray-100 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+                )}
+              </div>
+              <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16" />
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="size-2 rounded-sm border border-dashed border-foreground" />
-              <span>Previous Period</span>
+            <div className="flex items-center space-x-2">
+              <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
+              <div className="h-1 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-1" />
+              <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
+              {compareDateRange !== "Disabled" && (
+                <div className="h-5 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-10" />
+              )}
             </div>
+          </li>
+        ))}
+      </ul>
+      {compareDateRange !== "Disabled" && (
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <div className="size-2 rounded-sm bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+            <div className="h-3 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="size-2 rounded-sm border border-dashed border-gray-100 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+            <div className="h-3 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
