@@ -149,8 +149,8 @@ const ProfileEventsBar = ({user}: {user: User}) => {
   return (
     <div className="w-full border border-border rounded-[12px] p-[18px] pb-[10px]  @container relative">
       <AnalyticsSectionHeader
-        title="Profile Events"
-        description="See the events that have happened on your profile"
+        title="Profile Activity"
+        description="Track engagement and interactions on your profile"
         icon={<Activity size={15} className="text-foreground" />}
       />
 

@@ -1,18 +1,12 @@
 import {useQuery} from "@tanstack/react-query";
 
 interface StatsParams {
-  id: string;
-  type: string;
-  table: string;
+  id?: string;
+  type?: string;
+  table?: string;
   dateRange?: string;
   username?: string;
   compareDateRange?: string;
-}
-
-interface ProfileEventsBarParams {
-  username: string;
-  dateRange: string;
-  compareDateRange: string;
 }
 
 const fetchAnalyticsVisits = async ({id, type, table}: StatsParams) => {
@@ -126,11 +120,7 @@ export const useAnalyticsDevice = (params: StatsParams) => {
   });
 };
 
-const fetchProfileEventsBar = async ({
-  username,
-  dateRange,
-  compareDateRange,
-}: ProfileEventsBarParams) => {
+const fetchProfileEventsBar = async ({username, dateRange, compareDateRange}: StatsParams) => {
   const response = await fetch(
     `/api/profile-events-bar?username=${username}&dateRange=${dateRange}&compareDateRange=${compareDateRange}`,
   );
@@ -143,10 +133,30 @@ const fetchProfileEventsBar = async ({
   return response.json();
 };
 
-export const useProfileEventsBar = (params: ProfileEventsBarParams) => {
+export const useProfileEventsBar = (params: StatsParams) => {
   return useQuery({
     queryKey: ["profile-events-bar", params.username, params.dateRange, params.compareDateRange],
     queryFn: () => fetchProfileEventsBar(params),
     enabled: !!params.username && !!params.dateRange && !!params.compareDateRange,
+  });
+};
+
+// Profile Heatmap
+const fetchProfileHeatmap = async ({username, type, dateRange}: StatsParams) => {
+  const response = await fetch(
+    `/api/profile-heatmap?username=${username}&type=${type}&dateRange=${dateRange}`,
+  );
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || errorData.error || "Failed to fetch profile heatmap");
+  }
+  return response.json();
+};
+
+export const useProfileHeatmap = (params: StatsParams) => {
+  return useQuery({
+    queryKey: ["profile-heatmap", params.username, params.type, params.dateRange],
+    queryFn: () => fetchProfileHeatmap(params),
+    enabled: !!params.username && !!params.type && !!params.dateRange,
   });
 };
