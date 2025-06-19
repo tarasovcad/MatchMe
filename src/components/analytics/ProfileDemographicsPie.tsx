@@ -63,6 +63,70 @@ const ProfileDemographicsPie = ({
         return "Age Distribution";
     }
   };
+
+  const fallbackData =
+    getDemographicDisplayName(selectedDemographic) === "Age Group"
+      ? [
+          {
+            label: "25-34",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-1))",
+          },
+          {
+            label: "18-24",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-2))",
+          },
+          {
+            label: "35-44",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-3))",
+          },
+          {
+            label: "45-54",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-4))",
+          },
+          {
+            label: "55+",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-5))",
+          },
+        ]
+      : [
+          {
+            label: "She/Her",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-1))",
+          },
+          {
+            label: "He/Him",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-2))",
+          },
+          {
+            label: "They/Them",
+            count: 0,
+            percentage: 0,
+            relative: 0,
+            fill: "hsl(var(--chart-3))",
+          },
+        ];
+
   return (
     <div className="w-full border border-border rounded-[12px] p-[18px] relative max-w-[360px]">
       <AnalyticsSectionHeader
@@ -104,6 +168,7 @@ const ProfileDemographicsPie = ({
       />
       <AnalyticsPieChart
         data={demographicData}
+        fallbackData={fallbackData}
         isLoading={isDemographicDataLoading}
         error={demographicDataError}
         title={getDemographicDisplayName(selectedDemographic)}

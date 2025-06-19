@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {
   Dialog,
   DialogClose,
@@ -13,7 +13,7 @@ import {X} from "lucide-react";
 import {motion} from "framer-motion";
 import {containerVariants} from "@/utils/other/analyticsVariants";
 import {SingleBar} from "./AnalyticsBarList";
-
+import SimpleInput from "../ui/form/SimpleInput";
 const AnalyticsBarListDialog = ({
   title,
   data,
@@ -32,9 +32,14 @@ const AnalyticsBarListDialog = ({
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) => {
+  const displaySearch = data.length > 12;
+  const [search, setSearch] = useState("");
+  const filteredData = data.filter((item) =>
+    item.label.toLowerCase().includes(search.toLowerCase()),
+  );
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(800px,90vh)] sm:max-w-lg [&>button:last-child]:hidden">
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(800px,90vh)] sm:max-w-lg [&>button:last-child]:hidden min-h-[480px]">
         <DialogHeader className="contents space-y-0 text-left">
           <div className="flex items-center justify-between border-b px-6 py-4">
             <p className="font-medium text-[16px]">{title}</p>
@@ -48,12 +53,24 @@ const AnalyticsBarListDialog = ({
           <div className="overflow-y-auto">
             <DialogDescription asChild>
               <div className="px-4 py-4">
+                {displaySearch && (
+                  <div className="mb-4">
+                    <SimpleInput
+                      name="search"
+                      placeholder="Search"
+                      search
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                )}
+
                 <motion.div
                   className="w-full flex flex-col gap-1.5 relative"
                   variants={containerVariants}
                   initial="hidden"
                   animate="visible">
-                  {data?.map((item, index) => {
+                  {filteredData?.map((item, index) => {
                     return (
                       <SingleBar
                         key={`${item.label}-${item.count}-${item.percentage}-${index}`}

@@ -14,6 +14,7 @@ import {formatChartDate} from "@/functions/formatChartDate";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AnalyticsBadge from "./AnalyticsBadge";
 import {motion} from "motion/react";
+import EmptyState from "./EmptyState";
 
 // Data structure for chart
 type ChartDataPoint = {
@@ -34,27 +35,6 @@ type ChartDataPoint = {
   prev_share: number;
   prev_block: number;
 };
-
-// Fallback data when no real data is available
-const fallbackData = [
-  {
-    date: "No Data",
-    message: 0,
-    follow: 0,
-    unfollow: 0,
-    save_to_favourites: 0,
-    report: 0,
-    share: 0,
-    block: 0,
-    prev_message: 0,
-    prev_follow: 0,
-    prev_unfollow: 0,
-    prev_save_to_favourites: 0,
-    prev_report: 0,
-    prev_share: 0,
-    prev_block: 0,
-  },
-];
 
 const chartConfig: ChartConfig = {
   message: {
@@ -131,7 +111,15 @@ const ProfileEventsBar = ({user}: {user: User}) => {
     });
   }
 
-  const chartData = profileEventsBarData?.chartData || fallbackData;
+  const chartData = profileEventsBarData?.chartData || [];
+
+  const hasData =
+    chartData.length > 0 &&
+    chartData.some(
+      (dataPoint: ChartDataPoint) =>
+        dataPoint.date !== "No Data" &&
+        eventKeys.some((key) => (dataPoint[key as keyof ChartDataPoint] as number) > 0),
+    );
 
   const legendData = eventKeys.map((key) => {
     const total = chartData.reduce(
@@ -156,11 +144,11 @@ const ProfileEventsBar = ({user}: {user: User}) => {
 
       <div className="w-full mt-[18px]">
         {isLoading ? (
-          <div className="flex justify-center items-center h-[400px] text-foreground/50">
+          <div className="flex justify-center items-center h-[350px] text-foreground/50">
             <LoadingButtonCircle size={22} />
           </div>
-        ) : (
-          <ChartContainer config={chartConfig} className="h-[400px] w-full">
+        ) : hasData ? (
+          <ChartContainer config={chartConfig} className="h-[350px] w-full">
             <BarChart
               accessibilityLayer
               data={chartData}
@@ -272,6 +260,10 @@ const ProfileEventsBar = ({user}: {user: User}) => {
               ))}
             </BarChart>
           </ChartContainer>
+        ) : (
+          <div className="flex justify-center items-center h-[350px] text-foreground/50">
+            <EmptyState />
+          </div>
         )}
 
         {/* Legend */}

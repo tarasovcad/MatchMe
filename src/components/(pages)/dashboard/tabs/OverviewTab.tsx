@@ -14,7 +14,6 @@ const OverviewTab = ({user}: {user: User}) => {
         <ProfileConversionRateFunnel user={user} />
         <div className="flex @max-[890px]:gap-[12px] @max-[650px]:flex-col @max-[650px]:gap-[30px]  gap-[18px]">
           <ProfileWeeklyHeatmap user={user} />
-          123
         </div>
 
         <ProfileEventsBar user={user} />

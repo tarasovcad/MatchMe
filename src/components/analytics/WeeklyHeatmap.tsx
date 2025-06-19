@@ -56,6 +56,9 @@ interface WeeklyHeatmapProps {
 
 const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeatmapProps) => {
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  const CELL_WIDTH = 56;
+  const CELL_HEIGHT = 8;
+  const CELL_GAP = 2;
 
   const [tooltip, setTooltip] = useState<TooltipState>({
     show: false,
@@ -186,7 +189,9 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
 
   // Handle loading state
   if (isLoading) {
-    return <HeatmapSkeleton />;
+    return (
+      <HeatmapSkeleton CELL_WIDTH={CELL_WIDTH} CELL_HEIGHT={CELL_HEIGHT} CELL_GAP={CELL_GAP} />
+    );
   }
 
   // Handle error state
@@ -260,9 +265,9 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
               variants={timeLabelVariants}
               className="flex items-center justify-end text-xs text-muted-foreground"
               style={{
-                height: "9px",
-                paddingBottom: hour < 23 ? "3px" : "0",
-                lineHeight: "6px",
+                height: `${CELL_HEIGHT}px`,
+                marginBottom: hour < 23 ? `${CELL_GAP}px` : "0",
+                lineHeight: `${CELL_HEIGHT}px`,
               }}>
               {getTimeLabel(hour)}
             </motion.div>
@@ -273,13 +278,13 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         <div className="flex-1">
           {/* Day headers */}
           <div className="flex mb-2">
-            {days.map((day) => (
+            {days.map((day, dayIndex) => (
               <motion.div
                 key={day}
                 variants={dayHeaderVariants}
                 className="text-center text-xs text-muted-foreground"
                 style={{
-                  width: "59px",
+                  width: `${CELL_WIDTH + (dayIndex < days.length - 1 ? CELL_GAP : 0)}px`,
                 }}>
                 {day}
               </motion.div>
@@ -292,7 +297,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
               <motion.div
                 key={day}
                 className="flex flex-col"
-                style={{width: "59px"}}
+                style={{width: `${CELL_WIDTH + (dayIndex < days.length - 1 ? CELL_GAP : 0)}px`}}
                 variants={columnVariants}>
                 {Array.from({length: 24}, (_, hour) => {
                   const dataPoint = heatmapData.find(
@@ -306,10 +311,10 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
                       variants={cellVariants}
                       className="hover:opacity-80 transition-opacity"
                       style={{
-                        width: "59px",
-                        height: "9px",
-                        padding: "1.5px 1.5px 1.5px 0",
-                        paddingRight: dayIndex < days.length - 1 ? "1.5px" : "0",
+                        width: `${CELL_WIDTH}px`,
+                        height: `${CELL_HEIGHT}px`,
+                        marginBottom: hour < 23 ? `${CELL_GAP}px` : "0",
+                        marginRight: dayIndex < days.length - 1 ? `${CELL_GAP}px` : "0",
                       }}
                       onMouseEnter={(event) => showTooltip(event, day, hour, intensity)}
                       onMouseMove={updateTooltipPosition}
@@ -366,7 +371,15 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
   );
 };
 
-const HeatmapSkeleton = () => {
+const HeatmapSkeleton = ({
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  CELL_GAP,
+}: {
+  CELL_WIDTH: number;
+  CELL_HEIGHT: number;
+  CELL_GAP: number;
+}) => {
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
   return (
@@ -383,9 +396,9 @@ const HeatmapSkeleton = () => {
               key={hour}
               className="flex items-center justify-end text-xs text-muted-foreground"
               style={{
-                height: "9px",
-                paddingBottom: hour < 23 ? "3px" : "0",
-                lineHeight: "6px",
+                height: `${CELL_HEIGHT}px`,
+                marginBottom: hour < 23 ? `${CELL_GAP}px` : "0",
+                lineHeight: `${CELL_HEIGHT}px`,
               }}>
               {hour % 3 === 0 && (
                 <div className="h-3 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
@@ -403,7 +416,7 @@ const HeatmapSkeleton = () => {
                 key={day}
                 className="text-center text-xs text-muted-foreground"
                 style={{
-                  width: "59px",
+                  width: `${CELL_WIDTH + (dayIndex < days.length - 1 ? CELL_GAP : 0)}px`,
                 }}>
                 <div className="h-3 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-6 mx-auto" />
               </div>
@@ -413,15 +426,18 @@ const HeatmapSkeleton = () => {
           {/* Heatmap cells skeleton */}
           <div className="flex">
             {days.map((day, dayIndex) => (
-              <div key={day} className="flex flex-col" style={{width: "59px"}}>
+              <div
+                key={day}
+                className="flex flex-col"
+                style={{width: `${CELL_WIDTH + (dayIndex < days.length - 1 ? CELL_GAP : 0)}px`}}>
                 {Array.from({length: 24}, (_, hour) => (
                   <div
                     key={`${day}-${hour}`}
                     style={{
-                      width: "59px",
-                      height: "9px",
-                      padding: "1.5px 1.5px 1.5px 0",
-                      paddingRight: dayIndex < days.length - 1 ? "1.5px" : "0",
+                      width: `${CELL_WIDTH}px`,
+                      height: `${CELL_HEIGHT}px`,
+                      marginBottom: hour < 23 ? `${CELL_GAP}px` : "0",
+                      marginRight: dayIndex < days.length - 1 ? `${CELL_GAP}px` : "0",
                     }}>
                     <div className="rounded-sm w-full h-full bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
                   </div>

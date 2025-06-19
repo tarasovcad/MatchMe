@@ -3,54 +3,7 @@ import React from "react";
 import {Label, Pie, PieChart} from "recharts";
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/shadcn/chart";
 import {motion} from "motion/react";
-
-export const PieChartSkeleton = () => {
-  return (
-    <motion.div
-      className="w-full"
-      initial={{opacity: 0, scale: 0.9}}
-      animate={{opacity: 1, scale: 1}}
-      transition={{duration: 0.5, ease: "easeOut"}}>
-      {/* Chart skeleton */}
-      <div className="mx-auto aspect-square max-h-[250px] flex items-center justify-center">
-        <div className="relative">
-          {/* Outer ring skeleton */}
-          <div className="w-[200px] h-[200px] rounded-full border-8 border-gray-100 animate-pulse" />
-          {/* Inner circle skeleton */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150px] h-[150px] rounded-full bg-background border-8 border-gray-50 flex flex-col items-center justify-center">
-            {/* Center text skeleton */}
-            <div className="h-8 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16 mb-2" />
-            <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
-          </div>
-        </div>
-      </div>
-
-      {/* Legend skeleton */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16" />
-          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
-        </div>
-        <ul className="divide-y divide-border text-[14px] font-medium">
-          {Array.from({length: 5}, (_, index) => (
-            <li
-              key={`skeleton-${index}`}
-              className="relative flex items-center justify-between py-2">
-              <div className="flex items-center space-x-2.5 truncate">
-                <div className="size-2.5 shrink-0 rounded-sm bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-10" />
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.div>
-  );
-};
+import EmptyState from "./EmptyState";
 
 const AnalyticsPieChart = ({
   data,
@@ -58,12 +11,20 @@ const AnalyticsPieChart = ({
   error,
   title,
   chartTitle,
+  fallbackData,
 }: {
   data: {label: string; count: number; percentage: number; relative: number; fill: string}[];
   isLoading: boolean;
   error: Error | null;
   title: string;
   chartTitle: string;
+  fallbackData?: {
+    label: string;
+    count: number;
+    percentage: number;
+    relative: number;
+    fill: string;
+  }[];
 }) => {
   const totalCount = data?.reduce((acc, curr) => acc + curr.count, 0);
 
@@ -71,61 +32,68 @@ const AnalyticsPieChart = ({
     return <PieChartSkeleton />;
   }
 
+  const dataToUse = data.length === 0 && fallbackData ? fallbackData : data;
   return (
     <motion.div
       className="w-full"
-      initial={{opacity: 0, y: 20}}
+      initial={data.length === 0 ? {opacity: 1, y: 0} : {opacity: 0, y: 20}}
       animate={{opacity: 1, y: 0}}
-      transition={{duration: 0.6, ease: "easeOut"}}>
-      <motion.div
-        initial={{opacity: 0, scale: 0.8, rotateY: -15}}
-        animate={{opacity: 1, scale: 1, rotateY: 0}}
-        transition={{
-          duration: 0.8,
-          ease: "easeOut",
-          delay: 0.2,
-        }}>
-        <ChartContainer config={{}} className="mx-auto aspect-square max-h-[250px]">
-          <PieChart>
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-            <Pie
-              data={data}
-              dataKey="count"
-              nameKey="label"
-              innerRadius={75}
-              outerRadius={100}
-              stroke="hsl(var(--background))"
-              strokeWidth={data.length > 1 ? 2 : 0}>
-              <Label
-                content={({viewBox}) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle">
-                        <tspan
+      transition={data.length === 0 ? {duration: 0} : {duration: 0.6, ease: "easeOut"}}>
+      {data.length === 0 && fallbackData ? (
+        <div className="flex items-center justify-center h-[250px] mx-auto">
+          <EmptyState />
+        </div>
+      ) : (
+        <motion.div
+          initial={{opacity: 0, scale: 0.8, rotateY: -15}}
+          animate={{opacity: 1, scale: 1, rotateY: 0}}
+          transition={{
+            duration: 0.8,
+            ease: "easeOut",
+            delay: 0.2,
+          }}>
+          <ChartContainer config={{}} className="mx-auto aspect-square max-h-[250px]">
+            <PieChart>
+              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+              <Pie
+                data={data}
+                dataKey="count"
+                nameKey="label"
+                innerRadius={75}
+                outerRadius={100}
+                stroke="hsl(var(--background))"
+                strokeWidth={data.length > 1 ? 2 : 0}>
+                <Label
+                  content={({viewBox}) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold">
-                          {totalCount.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground">
-                          {chartTitle}
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </motion.div>
+                          textAnchor="middle"
+                          dominantBaseline="middle">
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold">
+                            {totalCount.toLocaleString()}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground">
+                            {chartTitle}
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        </motion.div>
+      )}
 
       <motion.div
         className="mt-6"
@@ -145,7 +113,7 @@ const AnalyticsPieChart = ({
           <span>Count / Percentage</span>
         </motion.p>
         <ul className="divide-y divide-border text-[14px] font-medium">
-          {data?.map((item, index) => (
+          {dataToUse?.map((item, index) => (
             <motion.li
               key={item.label}
               className="relative flex items-center justify-between py-2"
@@ -198,6 +166,54 @@ const AnalyticsPieChart = ({
           ))}
         </ul>
       </motion.div>
+    </motion.div>
+  );
+};
+
+export const PieChartSkeleton = () => {
+  return (
+    <motion.div
+      className="w-full"
+      initial={{opacity: 0, scale: 0.9}}
+      animate={{opacity: 1, scale: 1}}
+      transition={{duration: 0.5, ease: "easeOut"}}>
+      {/* Chart skeleton */}
+      <div className="mx-auto aspect-square max-h-[250px] flex items-center justify-center">
+        <div className="relative">
+          {/* Outer ring skeleton */}
+          <div className="w-[200px] h-[200px] rounded-full border-8 border-gray-100 animate-pulse" />
+          {/* Inner circle skeleton */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150px] h-[150px] rounded-full bg-background border-8 border-gray-50 flex flex-col items-center justify-center">
+            {/* Center text skeleton */}
+            <div className="h-8 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16 mb-2" />
+            <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
+          </div>
+        </div>
+      </div>
+
+      {/* Legend skeleton */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16" />
+          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
+        </div>
+        <ul className="divide-y divide-border text-[14px] font-medium">
+          {Array.from({length: 5}, (_, index) => (
+            <li
+              key={`skeleton-${index}`}
+              className="relative flex items-center justify-between py-2">
+              <div className="flex items-center space-x-2.5 truncate">
+                <div className="size-2.5 shrink-0 rounded-sm bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
+                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-10" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </motion.div>
   );
 };

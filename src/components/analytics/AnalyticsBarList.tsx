@@ -8,6 +8,7 @@ import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyt
 import {cn} from "@/lib/utils";
 import Image from "next/image";
 import {Globe} from "lucide-react";
+import EmptyState from "./EmptyState";
 
 const ImageDisplay = ({image, flag, label}: {image?: string; flag?: string; label: string}) => {
   // Priority: flag > image > nothing
@@ -132,6 +133,22 @@ const AnalyticsBarList = ({
   maxItems?: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  if (data && data.length === 0) {
+    return (
+      <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container min-h-[456px] flex flex-col">
+        <AnalyticsSectionHeader
+          title={title}
+          description={description}
+          icon={icon}
+          button={button}
+        />
+        <div className="flex items-center justify-center w-full flex-1">
+          <EmptyState />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container min-h-[456px]">

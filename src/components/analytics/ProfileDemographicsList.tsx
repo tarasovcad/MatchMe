@@ -16,6 +16,7 @@ import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {cn} from "@/lib/utils";
 import WorldMap from "./WorldMap";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
+import EmptyState from "./EmptyState";
 
 const ProfileDemographicsList = ({
   selectedDemographicList,
@@ -125,56 +126,64 @@ const ProfileDemographicsList = ({
         </div>
       ) : (
         <div className="h-[577px]">
-          {!isLoading && !error && data && data.length > maxItems && (
+          {data && data.length === 0 ? (
+            <div className="flex items-center justify-center w-full h-full">
+              <EmptyState />
+            </div>
+          ) : (
             <>
-              <AnalyticsBarListDialog
-                title="Global View Distribution"
-                data={data}
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
-              />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                <Button
-                  size="xs"
-                  className="h-[34px] w-[100px] rounded-[8px] "
-                  variant="outline"
-                  onClick={() => setIsOpen(true)}>
-                  View More
-                </Button>
-              </div>
+              {!isLoading && !error && data && data.length > maxItems && (
+                <>
+                  <AnalyticsBarListDialog
+                    title="Global View Distribution"
+                    data={data}
+                    isOpen={isOpen}
+                    setIsOpen={setIsOpen}
+                  />
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+                    <Button
+                      size="xs"
+                      className="h-[34px] w-[100px] rounded-[8px] "
+                      variant="outline"
+                      onClick={() => setIsOpen(true)}>
+                      View More
+                    </Button>
+                  </div>
+                </>
+              )}
+              <motion.div
+                className={cn(
+                  "w-full flex flex-col gap-1.5 mt-[18px] relative",
+                  data?.length > maxItems && "mb-[2px]",
+                )}
+                variants={isLoading ? {hidden: {}, visible: {}} : containerVariants}
+                initial="hidden"
+                animate="visible"
+                style={
+                  !isLoading && !error && data && data.length > maxItems
+                    ? {
+                        maskImage:
+                          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
+                        WebkitMaskImage:
+                          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
+                      }
+                    : undefined
+                }>
+                {isLoading || error
+                  ? Array.from({length: maxItems}, (_, index) => (
+                      <SingleBarSkeleton key={`skeleton-${index}`} />
+                    ))
+                  : data?.slice(0, maxItems).map((item, index) => {
+                      return (
+                        <SingleBar
+                          key={`${item.label}-${item.count}-${item.percentage}-${index}`}
+                          item={item}
+                        />
+                      );
+                    })}
+              </motion.div>
             </>
           )}
-          <motion.div
-            className={cn(
-              "w-full flex flex-col gap-1.5 mt-[18px] relative",
-              data?.length > maxItems && "mb-[2px]",
-            )}
-            variants={isLoading ? {hidden: {}, visible: {}} : containerVariants}
-            initial="hidden"
-            animate="visible"
-            style={
-              !isLoading && !error && data && data.length > maxItems
-                ? {
-                    maskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
-                    WebkitMaskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
-                  }
-                : undefined
-            }>
-            {isLoading || error
-              ? Array.from({length: maxItems}, (_, index) => (
-                  <SingleBarSkeleton key={`skeleton-${index}`} />
-                ))
-              : data?.slice(0, maxItems).map((item, index) => {
-                  return (
-                    <SingleBar
-                      key={`${item.label}-${item.count}-${item.percentage}-${index}`}
-                      item={item}
-                    />
-                  );
-                })}
-          </motion.div>
         </div>
       )}
     </div>

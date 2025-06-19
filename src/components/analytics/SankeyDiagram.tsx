@@ -23,10 +23,10 @@ const generateFakeData = () => {
     {id: "Collaboration", color: "#6B5FE8"},
 
     // Drop-off points
-    {id: "Initial Drop-off", color: "#CBD5E1"},
-    {id: "Follow Drop-off", color: "#94A3B8"},
-    {id: "Message Drop-off", color: "#94A3B8"},
-    {id: "Final Drop-off", color: "#64748B"},
+    {id: "Initial Drop-off", color: "#E5E5E5"},
+    {id: "Follow Drop-off", color: "#A8A8A8"},
+    {id: "Message Drop-off", color: "#A8A8A8"},
+    {id: "Final Drop-off", color: "#C0C0C0"},
   ];
 
   const links = [
@@ -34,27 +34,27 @@ const generateFakeData = () => {
     {source: "Profile Viewed", target: "Follow Clicked", value: 450},
     {source: "Profile Viewed", target: "Message Sent", value: 320},
     {source: "Profile Viewed", target: "Direct Invite", value: 180},
-    {source: "Profile Viewed", target: "Initial Drop-off", value: 50}, // Users who viewed but took no action
+    {source: "Profile Viewed", target: "Initial Drop-off", value: 50},
 
     // Multi-step paths
     {source: "Follow Clicked", target: "Follow → Invite", value: 220},
     {source: "Follow Clicked", target: "Follow → Message", value: 150},
-    {source: "Follow Clicked", target: "Follow Drop-off", value: 80}, // Users who followed but did nothing else
+    {source: "Follow Clicked", target: "Follow Drop-off", value: 80},
 
     {source: "Message Sent", target: "Message → Invite", value: 180},
-    {source: "Message Sent", target: "Message Drop-off", value: 140}, // Users who messaged but didn't convert
+    {source: "Message Sent", target: "Message Drop-off", value: 140},
 
     {source: "Direct Invite", target: "Collaboration", value: 120},
 
     // Final conversions to collaboration
     {source: "Follow → Invite", target: "Collaboration", value: 180},
-    {source: "Follow → Invite", target: "Final Drop-off", value: 40}, // Got invite after follow but didn't collaborate
+    {source: "Follow → Invite", target: "Final Drop-off", value: 40},
 
     {source: "Message → Invite", target: "Collaboration", value: 140},
-    {source: "Message → Invite", target: "Final Drop-off", value: 40}, // Got invite after message but didn't collaborate
+    {source: "Message → Invite", target: "Final Drop-off", value: 40},
 
     {source: "Follow → Message", target: "Collaboration", value: 90},
-    {source: "Follow → Message", target: "Final Drop-off", value: 60}, // Follow + message but no collaboration
+    {source: "Follow → Message", target: "Final Drop-off", value: 60},
   ];
 
   return {nodes, links};
@@ -62,7 +62,6 @@ const generateFakeData = () => {
 
 const SankeyDiagram = () => {
   const data = generateFakeData();
-  console.log(data);
   return (
     <motion.div
       className="w-full h-[500px] mt-2"
@@ -70,43 +69,35 @@ const SankeyDiagram = () => {
       animate={{opacity: 1, y: 0}}
       transition={{duration: 0.6, ease: "easeOut"}}>
       {/* Drop-off Analysis Summary */}
-      <div className="mb-4 p-3 bg-muted/20 rounded-lg border border-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-[14px] font-medium text-foreground">Conversion Analysis</h4>
-            <p className="text-xs text-muted-foreground">
-              1,000 initial views → 530 collaborations (53% conversion rate)
-            </p>
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded" style={{backgroundColor: "#6B5FE8"}} />
-              <span className="text-muted-foreground">Success</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded" style={{backgroundColor: "#94A3B8"}} />
-              <span className="text-muted-foreground">Drop-off</span>
-            </div>
-          </div>
+
+      <div className="flex items-center gap-4 text-xs w-full justify-end">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded" style={{backgroundColor: "#6B5FE8"}} />
+          <span className="text-muted-foreground">Success</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded" style={{backgroundColor: "#A8A8A8"}} />
+          <span className="text-muted-foreground">Drop-off</span>
         </div>
       </div>
 
       <ResponsiveSankey
         data={data}
-        margin={{top: 20, right: 100, bottom: 80, left: 100}}
+        margin={{top: 20, right: 100, bottom: 30, left: 100}}
         align="justify"
         colors={[
-          "#7e72ee", // Initial stage - deep purple
-          "#9F95FF", // First interactions - purple
-          "#BDB4FF", // Second interactions - light purple
-          "#D0C9FF", // Third stage - lighter purple
-          "#E2DDFF", // Fourth stage - very light purple
-          "#aba1ff", // Alternative purple
-          "#8A80FF", // Medium purple
-          "#6B5FE8", // Final success - strong purple
-          "#CBD5E1", // Initial drop-off - light gray
-          "#94A3B8", // Mid-stage drop-offs - medium gray
-          "#64748B", // Final drop-offs - darker gray
+          "#7e72ee", // Profile Viewed - deep purple
+          "#9F95FF", // Follow Clicked - purple
+          "#BDB4FF", // Message Sent - light purple
+          "#D0C9FF", // Direct Invite - lighter purple
+          "#E2DDFF", // Follow → Invite - very light purple
+          "#aba1ff", // Message → Invite - alternative purple
+          "#8A80FF", // Follow → Message - medium purple
+          "#6B5FE8", // Collaboration - final success strong purple
+          "#E5E5E5", // Initial Drop-off - light gray
+          "#A8A8A8", // Follow Drop-off - medium gray
+          "#A8A8A8", // Message Drop-off - medium gray
+          "#C0C0C0", // Final Drop-off - neutral gray
         ]}
         nodeOpacity={0.9}
         nodeHoverOpacity={1}
@@ -149,10 +140,12 @@ const SankeyDiagram = () => {
                   </div>
 
                   {(node.label || node.id).includes("Drop-off") && (
-                    <div className="text-red-500 font-medium">⚠️ Conversion lost at this stage</div>
+                    <div className="text-[#FF3C4E] font-medium">
+                      ⚠️ Conversion lost at this stage
+                    </div>
                   )}
                   {(node.label || node.id) === "Collaboration" && (
-                    <div className="text-green-500 font-medium">✅ Successful conversion</div>
+                    <div className="text-[#009E61] font-medium">✅ Successful conversion</div>
                   )}
                 </div>
               </div>
@@ -183,10 +176,10 @@ const SankeyDiagram = () => {
                   </div>
 
                   {(link.target.label || link.target.id).includes("Drop-off") && (
-                    <div className="text-red-500 text-xs">🔻 Users lost here</div>
+                    <div className="text-[#FF3C4E] text-xs">🔻 Users lost here</div>
                   )}
                   {(link.target.label || link.target.id) === "Collaboration" && (
-                    <div className="text-green-500 text-xs">📈 Conversion success</div>
+                    <div className="text-[#009E61] text-xs">📈 Conversion success</div>
                   )}
                 </div>
               </div>
