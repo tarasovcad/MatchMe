@@ -255,7 +255,7 @@ const WorldMap: React.FC<WorldMapProps> = ({data, className = "", height = 400})
         delay: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94],
       }}
-      className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm border border-border rounded-lg p-3">
+      className="absolute bottom-0 left-0 bg-background/90 backdrop-blur-sm border border-border rounded-lg p-3">
       <motion.p
         initial={{opacity: 0, x: -10}}
         animate={{opacity: 1, x: 0}}
@@ -320,7 +320,7 @@ const WorldMap: React.FC<WorldMapProps> = ({data, className = "", height = 400})
   };
 
   return (
-    <div className={cn("relative w-full", className)}>
+    <div className={cn("relative w-full min-h-[400px]", className)}>
       {renderErrorState()}
 
       <ComposableMap

@@ -128,7 +128,7 @@ const ProfileDemographicsPie = ({
         ];
 
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] relative max-w-[360px]">
+    <div className="w-full border border-border rounded-[12px] p-[18px] relative @min-[800px]:max-w-[360px] ">
       <AnalyticsSectionHeader
         title="Demographic Breakdown (All Time)"
         description="Break down user demographics for better insights"

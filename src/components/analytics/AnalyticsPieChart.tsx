@@ -3,7 +3,7 @@ import React from "react";
 import {Label, Pie, PieChart} from "recharts";
 import {ChartContainer, ChartTooltip, ChartTooltipContent} from "@/components/shadcn/chart";
 import {motion} from "motion/react";
-import EmptyState from "./EmptyState";
+import AnalyticsFallbackState from "./AnalyticsFallbackState";
 
 const AnalyticsPieChart = ({
   data,
@@ -28,8 +28,16 @@ const AnalyticsPieChart = ({
 }) => {
   const totalCount = data?.reduce((acc, curr) => acc + curr.count, 0);
 
-  if (isLoading || error) {
+  if (isLoading) {
     return <PieChartSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[250px] mx-auto">
+        <AnalyticsFallbackState error={error} />
+      </div>
+    );
   }
 
   const dataToUse = data.length === 0 && fallbackData ? fallbackData : data;
@@ -41,7 +49,7 @@ const AnalyticsPieChart = ({
       transition={data.length === 0 ? {duration: 0} : {duration: 0.6, ease: "easeOut"}}>
       {data.length === 0 && fallbackData ? (
         <div className="flex items-center justify-center h-[250px] mx-auto">
-          <EmptyState />
+          <AnalyticsFallbackState error={error} />
         </div>
       ) : (
         <motion.div
@@ -181,12 +189,12 @@ export const PieChartSkeleton = () => {
       <div className="mx-auto aspect-square max-h-[250px] flex items-center justify-center">
         <div className="relative">
           {/* Outer ring skeleton */}
-          <div className="w-[200px] h-[200px] rounded-full border-8 border-gray-100 animate-pulse" />
+          <div className="w-[200px] h-[200px] rounded-full border-8 border-muted animate-pulse" />
           {/* Inner circle skeleton */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150px] h-[150px] rounded-full bg-background border-8 border-gray-50 flex flex-col items-center justify-center">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[150px] h-[150px] rounded-full bg-background border-8 border-muted/50 flex flex-col items-center justify-center">
             {/* Center text skeleton */}
-            <div className="h-8 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16 mb-2" />
-            <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
+            <div className="h-8 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16 mb-2" />
+            <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
           </div>
         </div>
       </div>
@@ -194,8 +202,8 @@ export const PieChartSkeleton = () => {
       {/* Legend skeleton */}
       <div className="mt-6">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16" />
-          <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
+          <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-16" />
+          <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-24" />
         </div>
         <ul className="divide-y divide-border text-[14px] font-medium">
           {Array.from({length: 5}, (_, index) => (
@@ -203,12 +211,12 @@ export const PieChartSkeleton = () => {
               key={`skeleton-${index}`}
               className="relative flex items-center justify-between py-2">
               <div className="flex items-center space-x-2.5 truncate">
-                <div className="size-2.5 shrink-0 rounded-sm bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
+                <div className="size-2.5 shrink-0 rounded-sm bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite]" />
+                <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-20" />
               </div>
               <div className="flex items-center space-x-2">
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
-                <div className="h-4 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-10" />
+                <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-8" />
+                <div className="h-4 bg-gradient-to-r from-muted/50 via-muted to-muted/50 bg-[length:200%_100%] animate-[shimmer_2s_ease-in-out_infinite] rounded w-10" />
               </div>
             </li>
           ))}

@@ -1,5 +1,5 @@
 import {ChevronDown, Map, Monitor, Route, UserRound, Wrench} from "lucide-react";
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import AnalyticsBarList from "./AnalyticsBarList";
 import {User} from "@supabase/supabase-js";
 
@@ -87,10 +87,21 @@ const ProfileBarLists = ({user}: {user: User}) => {
     username: userUsername,
   });
 
-  if (skillsDataError || roleDataError || profilePathDataError) {
-    console.log(skillsDataError, roleDataError, profilePathDataError);
-    toast.error("Error loading bar list data");
-  }
+  useEffect(() => {
+    const errors = [
+      {error: roleDataError, name: "roleDataError"},
+      {error: skillsDataError, name: "skillsDataError"},
+      {error: profilePathDataError, name: "profilePathDataError"},
+      {error: deviceDataError, name: "deviceDataError"},
+    ];
+
+    errors.forEach(({error, name}) => {
+      if (error) {
+        console.log(error, name);
+        toast.error(error.message);
+      }
+    });
+  }, [roleDataError, skillsDataError, profilePathDataError, deviceDataError]);
 
   return (
     <div className="grid grid-cols-2 @max-[890px]:gap-[12px] @max-[650px]:grid-cols-1 gap-[18px]">

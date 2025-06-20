@@ -1,5 +1,5 @@
 import {User} from "@supabase/supabase-js";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 
 import {
   useAnalyticsDemographics,
@@ -8,6 +8,7 @@ import {
 import ProfileDemographicsPie from "./ProfileDemographicsPie";
 import ProfileDemographicsList from "./ProfileDemographicsList";
 import {useDashboardStore} from "@/store/useDashboardStore";
+import {toast} from "sonner";
 
 const ProfileDemographics = ({user}: {user: User}) => {
   const userProfileId = user.id;
@@ -38,8 +39,22 @@ const ProfileDemographics = ({user}: {user: User}) => {
     username: userUsername,
   });
 
+  useEffect(() => {
+    const errors = [
+      {error: demographicDataError, name: "demographicDataError"},
+      {error: demographicsListDataError, name: "demographicsListDataError"},
+    ];
+
+    errors.forEach(({error, name}) => {
+      if (error) {
+        console.log(error, name);
+        toast.error(error.message);
+      }
+    });
+  }, [demographicDataError, demographicsListDataError]);
+
   return (
-    <div className="flex @max-[890px]:gap-[12px] @max-[650px]:flex-col @max-[650px]:gap-[30px]  gap-[18px]">
+    <div className="flex @max-[890px]:gap-[12px] @max-[800px]:flex-col @max-[650px]:gap-[30px]  gap-[18px]">
       <ProfileDemographicsPie
         selectedDemographic={selectedDemographic}
         setSelectedDemographic={setSelectedDemographic}

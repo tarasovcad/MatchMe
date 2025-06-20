@@ -14,7 +14,7 @@ import {formatChartDate} from "@/functions/formatChartDate";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AnalyticsBadge from "./AnalyticsBadge";
 import {motion} from "motion/react";
-import EmptyState from "./EmptyState";
+import AnalyticsFallbackState from "./AnalyticsFallbackState";
 
 // Data structure for chart
 type ChartDataPoint = {
@@ -262,7 +262,7 @@ const ProfileEventsBar = ({user}: {user: User}) => {
           </ChartContainer>
         ) : (
           <div className="flex justify-center items-center h-[350px] text-foreground/50">
-            <EmptyState />
+            <AnalyticsFallbackState />
           </div>
         )}
 
