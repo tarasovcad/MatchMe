@@ -26,7 +26,8 @@ export const useCountries = (shouldFetch = false) => {
       setIsLoading(true);
 
       try {
-        const res = await fetch("https://restcountries.com/v3.1/all");
+        const res = await fetch("https://restcountries.com/v3.1/all?fields=name");
+
         const data = await res.json();
 
         const formattedCountries = data.map((country: Country) => ({

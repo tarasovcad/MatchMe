@@ -40,7 +40,6 @@ const SettingsClientPage = ({
   if (!isClient) {
     return <div></div>;
   }
-  console.log(isDisabled, "isDisabled");
 
   const usernameChangeStatus = profile?.username_changed_at
     ? canChangeUsername(profile.username_changed_at)
