@@ -1,12 +1,22 @@
 import React from "react";
 import {cn} from "@/lib/utils";
 import Header from "../(pages)/landing/Header";
+import {User} from "@supabase/supabase-js";
+import Footer from "../(pages)/landing/Footer";
 
-const NavbarProvider = ({children, className}: {children: React.ReactNode; className?: string}) => {
+const NavbarProvider = ({
+  children,
+  className,
+  user,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  user: User | null;
+}) => {
   return (
     <div className="min-h-svh flex flex-col">
-      <div className="pb-10 sm:pb-12 md:pb-14 lg:pb-[56px] xl:pb-[62px]">
-        <Header />
+      <div className="pb-[105px] sm:pb-[117px] md:pb-[119px] lg:pb-[121px] xl:pb-[127px]">
+        <Header user={user} />
       </div>
       <main
         className={cn(
@@ -15,6 +25,7 @@ const NavbarProvider = ({children, className}: {children: React.ReactNode; class
         )}>
         <div className="p-3 sm:p-4 md:p-6 ">{children}</div>
       </main>
+      <Footer />
     </div>
   );
 };

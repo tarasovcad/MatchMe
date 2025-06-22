@@ -10,8 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs shadow-black/5 hover:bg-primary/90 ",
+        default: "bg-primary text-primary-foreground shadow-xs shadow-sm hover:bg-primary/90 ",
         destructive:
           "bg-destructive text-destructive-foreground shadow-xs shadow-black/5 hover:bg-destructive/90",
         outline:
@@ -44,19 +43,7 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      asChild = false,
-      disabled,
-      isLoading,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
+  ({className, variant, size, asChild = false, disabled, isLoading, children, ...props}, ref) => {
     const Comp = asChild ? Slot : "button";
     const computedClassName = cn(
       buttonVariants({variant, size, className}),
@@ -64,11 +51,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     return (
-      <Comp
-        className={computedClassName}
-        ref={ref}
-        {...props}
-        disabled={disabled || isLoading}>
+      <Comp className={computedClassName} ref={ref} {...props} disabled={disabled || isLoading}>
         {isLoading ? <LoadingButtonCirlce /> : children}
       </Comp>
     );
