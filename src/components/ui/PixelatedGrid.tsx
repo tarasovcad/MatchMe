@@ -1,6 +1,7 @@
 "use client";
 import React, {useState, useRef, useEffect} from "react";
 import {useTheme} from "next-themes";
+import {motion} from "framer-motion";
 
 type ColorData = {
   main: string;
@@ -10,11 +11,35 @@ type ColorData = {
 };
 
 const PixelatedGrid = () => {
-  const {theme} = useTheme();
+  const {theme, resolvedTheme} = useTheme();
   const [hoveredCell, setHoveredCell] = useState<number | null>(null);
   const [delayedHoverCells, setDelayedHoverCells] = useState<Set<number>>(new Set());
   const [cellsWithSoundPlayed, setCellsWithSoundPlayed] = useState<Set<number>>(new Set());
-  const isDarkTheme = theme === "dark";
+  const [mounted, setMounted] = useState(false);
+  const [screenSize, setScreenSize] = useState<"sm" | "md" | "lg">("lg");
+
+  useEffect(() => {
+    setMounted(true);
+
+    // Handle screen size detection
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width < 640) {
+        setScreenSize("sm");
+      } else if (width < 768) {
+        setScreenSize("md");
+      } else {
+        setScreenSize("lg");
+      }
+    };
+
+    handleResize(); // Initial check
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const isDarkTheme = mounted && (theme === "dark" || resolvedTheme === "dark");
   const [cellColors, setCellColors] = useState<Map<number, ColorData>>(new Map());
   const timeoutRefs = useRef<Map<number, NodeJS.Timeout>>(new Map());
   const audioRefs = useRef<{click: HTMLAudioElement | null; click2: HTMLAudioElement | null}>({
@@ -22,7 +47,6 @@ const PixelatedGrid = () => {
     click2: null,
   });
 
-  const MAX_GRAY_CELLS = 15;
   const CLICK2_SOUND_PROBABILITY = 0.06; // 6% chance for click2.mp3, 94% for click.mp3
   const PURPLE_COLOR_PROBABILITY = 0.65; // 65% chance for purple color on pattern404 cells
 
@@ -50,38 +74,141 @@ const PixelatedGrid = () => {
     };
   }, []);
 
-  // Grid dimensions
-  const COLS = 17;
-  const ROWS = 11;
-  const CELL_SIZE = 32;
+  // Responsive grid dimensions and cell size
+  const getGridConfig = () => {
+    switch (screenSize) {
+      case "sm":
+        return {
+          COLS: 13,
+          ROWS: 9,
+          CELL_SIZE: 20,
+          GAP: 6,
+          PADDING: 12,
+        };
+      case "md":
+        return {
+          COLS: 15,
+          ROWS: 10,
+          CELL_SIZE: 26,
+          GAP: 8,
+          PADDING: 16,
+        };
+      default:
+        return {
+          COLS: 17,
+          ROWS: 11,
+          CELL_SIZE: 32,
+          GAP: 10,
+          PADDING: 16,
+        };
+    }
+  };
 
-  const pattern404 = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0],
-    [0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0],
-    [0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  ];
+  const {COLS, ROWS, CELL_SIZE, GAP, PADDING} = getGridConfig();
 
-  const darkpattern = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
-  ];
+  // Updated patterns for smaller grids
+  const getPattern404 = () => {
+    const fullPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+
+    const smallPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+      [0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0],
+      [0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0],
+      [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0],
+      [0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+
+    const mediumPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0],
+      [0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0],
+      [0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+
+    switch (screenSize) {
+      case "sm":
+        return smallPattern;
+      case "md":
+        return mediumPattern;
+      default:
+        return fullPattern;
+    }
+  };
+
+  const getDarkPattern = () => {
+    const fullPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
+    ];
+
+    const smallPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+
+    const mediumPattern = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ];
+
+    switch (screenSize) {
+      case "sm":
+        return smallPattern;
+      case "md":
+        return mediumPattern;
+      default:
+        return fullPattern;
+    }
+  };
+
+  const pattern404 = getPattern404();
+  const darkpattern = getDarkPattern();
 
   const isCellHighlighted = (row: number, col: number) => {
     return pattern404[row] && pattern404[row][col] === 1;
@@ -326,11 +453,16 @@ const PixelatedGrid = () => {
   };
 
   return (
-    <div
-      className="grid gap-[10px] p-4 rounded-[8px]"
+    <motion.div
+      initial={{opacity: 0, y: 20}}
+      animate={{opacity: 1, y: 0}}
+      transition={{duration: 0.3, delay: 0.3, ease: "easeOut"}}
+      className="grid rounded-[8px] dark:bg-black"
       style={{
         gridTemplateColumns: `repeat(${COLS}, ${CELL_SIZE}px)`,
         gridTemplateRows: `repeat(${ROWS}, ${CELL_SIZE}px)`,
+        gap: `${GAP}px`,
+        padding: `${PADDING}px`,
         boxShadow: isDarkTheme
           ? "inset 1px 1px 4px 0 rgba(77, 77, 77, 0.25), 1px 1px 4px 0 rgba(255, 255, 255, 0.05)"
           : "inset 1px 1px 4px 0 rgba(0, 0, 0, 0.1), 1px 1px 4px 0 rgba(0, 0, 0, 0.1)",
@@ -384,7 +516,7 @@ const PixelatedGrid = () => {
           </div>
         );
       })}
-    </div>
+    </motion.div>
   );
 };
 

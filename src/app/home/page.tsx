@@ -1,10 +1,9 @@
-import Header from "@/components/(pages)/landing/Header";
 import NavbarProvider from "@/components/providers/NavbarProvider";
 import React from "react";
 
 const Home = () => {
   return (
-    <NavbarProvider navbar={<Header />}>
+    <NavbarProvider>
       <div className="bg-red-500 w-full">
         Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci, eos consequuntur ipsum
         non eveniet provident excepturi, illo nemo reiciendis aliquid iste harum, obcaecati dolorem?
