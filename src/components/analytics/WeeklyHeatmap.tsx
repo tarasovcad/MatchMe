@@ -88,7 +88,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.3,
       },
     },
-  };
+  } as const;
 
   const dayHeaderVariants = {
     hidden: {opacity: 0, y: -10},
@@ -102,7 +102,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.3,
       },
     },
-  };
+  } as const;
 
   const timeLabelVariants = {
     hidden: {opacity: 0, x: -10},
@@ -116,7 +116,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.3,
       },
     },
-  };
+  } as const;
 
   const columnVariants = {
     hidden: {opacity: 0},
@@ -127,7 +127,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.2,
       },
     },
-  };
+  } as const;
 
   const cellVariants = {
     hidden: {
@@ -144,7 +144,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.2,
       },
     },
-  };
+  } as const;
 
   const legendVariants = {
     hidden: {opacity: 0, y: 10},
@@ -159,7 +159,7 @@ const WeeklyHeatmap = ({selectedHeatmapType, data, isLoading, error}: WeeklyHeat
         duration: 0.2,
       },
     },
-  };
+  } as const;
 
   // Tooltip handlers
   const showTooltip = (event: React.MouseEvent, day: string, hour: number, intensity: number) => {

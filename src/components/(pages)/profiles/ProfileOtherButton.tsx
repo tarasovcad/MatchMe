@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
-import {motion} from "framer-motion";
+import {motion, Variants} from "framer-motion";
 import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 import {useState, useTransition} from "react";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
@@ -48,14 +48,14 @@ export default function ProfileOtherButton({
     });
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: {scale: 1},
     favorite: {
       scale: [1, 1.3, 1],
       transition: {
         duration: 0.5,
         times: [0, 0.3, 1],
-        ease: "easeInOut",
+        ease: [0.25, 0.1, 0.25, 1],
       },
     },
     unfavorite: {
@@ -63,7 +63,7 @@ export default function ProfileOtherButton({
       transition: {
         duration: 0.4,
         times: [0, 0.2, 1],
-        ease: "easeIn",
+        ease: [0.42, 0, 1, 1],
       },
     },
     tap: {scale: 0.9},

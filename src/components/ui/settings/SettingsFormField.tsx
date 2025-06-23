@@ -75,7 +75,7 @@ const SettingsFormField = ({
         damping: 12,
       },
     },
-  };
+  } as const;
 
   return (
     <motion.div

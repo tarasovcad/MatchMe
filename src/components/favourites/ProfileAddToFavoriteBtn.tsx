@@ -2,7 +2,7 @@
 import {Bookmark} from "lucide-react";
 import React, {useState, useTransition} from "react";
 import {Button} from "../shadcn/button";
-import {motion, AnimatePresence} from "framer-motion";
+import {motion, AnimatePresence, Variants} from "framer-motion";
 import {toast} from "sonner";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
@@ -13,11 +13,7 @@ interface FavoriteButtonProps {
   isFavorite?: boolean;
 }
 
-const ProfileAddToFavoriteBtn = ({
-  userId,
-  favoriteUserId,
-  isFavorite,
-}: FavoriteButtonProps) => {
+const ProfileAddToFavoriteBtn = ({userId, favoriteUserId, isFavorite}: FavoriteButtonProps) => {
   const [isPending, startTransition] = useTransition();
   const [isFavorited, setIsFavorited] = useState(isFavorite);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -40,7 +36,7 @@ const ProfileAddToFavoriteBtn = ({
   };
 
   // Animation variants
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: {scale: 1},
     favorite: {
       scale: [1, 1.3, 1],
@@ -59,7 +55,7 @@ const ProfileAddToFavoriteBtn = ({
       },
     },
     tap: {scale: 0.9},
-  };
+  } as const;
 
   const fillVariants = {
     unfilled: {
@@ -70,18 +66,18 @@ const ProfileAddToFavoriteBtn = ({
       fill: "#d45858",
       transition: {duration: 0.3},
     },
-  };
+  } as const;
 
-  const burstVariants = {
+  const burstVariants: Variants = {
     initial: {scale: 0, opacity: 0},
     animate: {
       scale: [0, 1.5, 0],
       opacity: [0, 0.7, 0],
       transition: {duration: 0.6, ease: "easeOut"},
     },
-  };
+  } as const;
 
-  const particleVariants = (index: number) => {
+  const particleVariants = (index: number): Variants => {
     const angle = (index / 6) * (2 * Math.PI);
     const distance = 20 + Math.random() * 10;
     return {
@@ -114,13 +110,7 @@ const ProfileAddToFavoriteBtn = ({
           <motion.div
             className="relative"
             initial="initial"
-            animate={
-              hasInteracted
-                ? isFavorited
-                  ? "favorite"
-                  : "unfavorite"
-                : "initial"
-            }
+            animate={hasInteracted ? (isFavorited ? "favorite" : "unfavorite") : "initial"}
             whileTap="tap"
             variants={iconVariants}>
             <motion.div

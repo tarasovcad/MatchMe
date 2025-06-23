@@ -16,7 +16,7 @@ const containerVariants = {
       staggerChildren: 0.05,
     },
   },
-};
+} as const;
 
 const itemVariants = {
   hidden: {y: 20, opacity: 0},
@@ -30,7 +30,7 @@ const itemVariants = {
       duration: 0.2,
     },
   },
-};
+} as const;
 
 interface AuthOTPProps {
   setOtp: React.Dispatch<React.SetStateAction<string>>;
@@ -60,9 +60,7 @@ export default function AuthOTP({setOtp, size}: AuthOTPProps) {
               ))}
             </motion.div>
 
-            <motion.div
-              variants={itemVariants}
-              className="text-muted-foreground/80">
+            <motion.div variants={itemVariants} className="text-muted-foreground/80">
               <Minus size={16} strokeWidth={2} aria-hidden="true" />
             </motion.div>
 
@@ -78,23 +76,15 @@ export default function AuthOTP({setOtp, size}: AuthOTPProps) {
   );
 }
 
-function Slot({
-  char,
-  hasError,
-  size = 48,
-}: SlotProps & {hasError?: boolean; size?: number}) {
+function Slot({char, hasError, size = 48}: SlotProps & {hasError?: boolean; size?: number}) {
   return (
     <motion.div
       variants={itemVariants}
       style={{width: `${size}px`, height: `${size}px`}}
       className={cn(
         "flex items-center justify-center rounded-lg border bg-background font-medium text-foreground shadow-xs shadow-black/5 transition-shadow ",
-        hasError
-          ? "border-destructive ring-[3px] ring-ring/20"
-          : "border-input",
-        char !== null && !hasError
-          ? "border-primary ring-[3px] ring-ring/20"
-          : "",
+        hasError ? "border-destructive ring-[3px] ring-ring/20" : "border-input",
+        char !== null && !hasError ? "border-primary ring-[3px] ring-ring/20" : "",
       )}>
       {char !== null && <div>{char}</div>}
     </motion.div>

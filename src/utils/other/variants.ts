@@ -8,7 +8,7 @@ export const containerVariants = {
       staggerChildren: 0.05,
     },
   },
-};
+} as const;
 
 export const itemVariants = {
   hidden: {y: 20, opacity: 0},
@@ -22,7 +22,7 @@ export const itemVariants = {
       duration: 0.2,
     },
   },
-};
+} as const;
 
 export const bottomSectionButtonsVariants = {
   hidden: {y: 50, opacity: 0},
@@ -36,7 +36,7 @@ export const bottomSectionButtonsVariants = {
       duration: 0.3,
     },
   },
-};
+} as const;
 
 // DROPDOWN MENU
 
@@ -59,7 +59,7 @@ export const menuVariants = {
       delayChildren: 0.1,
     },
   },
-};
+} as const;
 
 export const itemDropdownVariants = {
   closed: {opacity: 0, scale: 0.3, filter: "blur(20px)"},
@@ -77,7 +77,7 @@ export const userInfoVariants = {
       bounce: 0,
     },
   },
-};
+} as const;
 
 export const pageContainerVariants = {
   hidden: {opacity: 0},
@@ -88,7 +88,7 @@ export const pageContainerVariants = {
       delayChildren: 0.3,
     },
   },
-};
+} as const;
 
 export const pageHeaderVariants = {
   hidden: {opacity: 0, y: -20},
@@ -100,7 +100,7 @@ export const pageHeaderVariants = {
       ease: "easeOut",
     },
   },
-};
+} as const;
 
 export const newPeopleVariants = {
   hidden: {scale: 0.8, opacity: 0},
@@ -112,7 +112,7 @@ export const newPeopleVariants = {
       ease: [0.22, 1, 0.36, 1],
     },
   },
-};
+} as const;
 
 export const controlsSectionVariants = {
   hidden: {opacity: 0, y: 20},
@@ -124,7 +124,7 @@ export const controlsSectionVariants = {
       ease: "easeOut",
     },
   },
-};
+} as const;
 
 export const cardVariants = {
   hidden: {
@@ -141,4 +141,4 @@ export const cardVariants = {
       ease: [0.22, 1, 0.36, 1],
     },
   },
-};
+} as const;

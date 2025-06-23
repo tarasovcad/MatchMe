@@ -7,7 +7,7 @@ export const containerVariants = {
       delayChildren: 0.2,
     },
   },
-};
+} as const;
 export const itemVariants = {
   hidden: {
     opacity: 0,
@@ -21,7 +21,7 @@ export const itemVariants = {
       ease: "easeOut",
     },
   },
-};
+} as const;
 export const barVariants = {
   hidden: {
     width: "0%",
@@ -38,4 +38,4 @@ export const barVariants = {
       delay: 0.05,
     },
   },
-};
+} as const;

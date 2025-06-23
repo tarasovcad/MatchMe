@@ -18,9 +18,9 @@ import {handleFormSubmitStep2} from "@/components/auth/handleFormSubmitStep2";
 import {handleProviderAuthAction} from "@/components/auth/handleProviderAuthAction";
 import {LoginFormData, signInSchema} from "@/validation/auth/loginValidation";
 import {motion} from "framer-motion";
-import {containerVariants, itemVariants} from "@/utils/other/variants";
 import {resendOTP} from "@/actions/(auth)/resendOTP";
 import {toast} from "sonner";
+import {containerVariants, itemVariants} from "@/utils/other/variants";
 
 const LoginPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -65,10 +65,7 @@ const LoginPage = () => {
     );
   };
 
-  const onSubmit = async (
-    data: LoginFormData,
-    page: "signup" | "login" = "login",
-  ) => {
+  const onSubmit = async (data: LoginFormData, page: "signup" | "login" = "login") => {
     if (currentStep === 1) {
       await handleFormSubmitStep1(
         page,
@@ -80,14 +77,7 @@ const LoginPage = () => {
         setTotalSteps,
       );
     } else if (currentStep === 2) {
-      await handleFormSubmitStep2(
-        page,
-        email,
-        otp,
-        isNewUser,
-        setLoading,
-        router,
-      );
+      await handleFormSubmitStep2(page, email, otp, isNewUser, setLoading, router);
     }
   };
 
@@ -132,9 +122,7 @@ const LoginPage = () => {
               className="flex flex-col justify-center gap-9 w-full">
               <AuthTopText maintext={title} secText={subtitle} />
               {currentStep === 1 && (
-                <motion.div
-                  variants={itemVariants}
-                  className="flex flex-col gap-4">
+                <motion.div variants={itemVariants} className="flex flex-col gap-4">
                   <AuthStep1Form page="login" />
                 </motion.div>
               )}
