@@ -1,4 +1,5 @@
 import {PostHogResponse} from "@/types/analytics";
+import {formatLanguageLabel, isLanguageCode} from "@/utils/other/languageMapping";
 
 type ChartDataPoint = {
   month: string;
@@ -495,4 +496,707 @@ export function transformPostHogDataWithComparison(
 
     return dataPoint;
   });
+}
+
+export interface TransformedItem {
+  label: string;
+  count: number;
+  percentage: number; // of total views
+  relative: number; // 0-100, scaled to the max
+  flag?: string; // Optional flag URL for countries
+  image?: string; // Optional image URL for favicons or other icons
+}
+
+export function transformCountsForAnalytics(
+  rawCounts: Record<string, number>,
+  type: string,
+): TransformedItem[] {
+  const chartColorTypes = ["age_distribution", "pronoun_counts"];
+
+  if (!rawCounts || Object.keys(rawCounts).length === 0) return [];
+  const total = Object.values(rawCounts).reduce((sum, count) => sum + count, 0);
+  const maxCount = Math.max(...Object.values(rawCounts));
+  return Object.entries(rawCounts)
+    .map(([key, count]) => ({
+      label: key,
+      count: count,
+      percentage: parseFloat(((count / total) * 100).toFixed(1)),
+      relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .map((item, index) => ({
+      ...item,
+      fill: chartColorTypes.includes(type) ? `hsl(var(--chart-${index + 1}))` : undefined,
+    }));
+}
+
+export function transformPostHogDemographicsData(
+  postHogResponse: PostHogResponse,
+  type?: string,
+): TransformedItem[] {
+  if (!postHogResponse?.result || !Array.isArray(postHogResponse.result)) {
+    return [];
+  }
+
+  // Extract counts from each result item
+  const demographicCounts: Record<string, number> = {};
+
+  postHogResponse.result.forEach((item) => {
+    if (item.breakdown_value && typeof item.count === "number") {
+      demographicCounts[item.breakdown_value] = item.count;
+    }
+  });
+
+  // If no valid data found, return empty array
+  if (Object.keys(demographicCounts).length === 0) {
+    return [];
+  }
+
+  // Calculate totals and transform data
+  const total = Object.values(demographicCounts).reduce((sum, count) => sum + count, 0);
+  const maxCount = Math.max(...Object.values(demographicCounts));
+
+  return Object.entries(demographicCounts)
+    .map(([label, count]) => {
+      // Format labels based on type
+      let displayLabel = label;
+      let image: string | null = null;
+
+      if (type === "Languages" && isLanguageCode(label)) {
+        displayLabel = formatLanguageLabel(label);
+      } else if (type === "Timezones") {
+        displayLabel = formatTimezoneWithOffset(label);
+      } else if (type === "Referrers") {
+        displayLabel = transformReferrerLabel(label);
+        image = getFaviconUrl(label);
+      } else if (type === "Browser") {
+        image = getBrowserIcon(label);
+      } else if (type === "OS") {
+        image = getOSIcon(label);
+      } else if (type === "Device type") {
+        image = getDeviceIcon(label);
+      }
+
+      const transformedItem: TransformedItem = {
+        label: displayLabel,
+        count,
+        percentage: parseFloat(((count / total) * 100).toFixed(1)),
+        relative: parseFloat(((count / maxCount) * 100).toFixed(1)),
+      };
+
+      // Add image if available
+      if (image) {
+        transformedItem.image = image;
+      }
+
+      return transformedItem;
+    })
+    .sort((a, b) => b.count - a.count);
+}
+
+// Server-side function to fetch country flag
+export async function fetchCountryFlag(countryName: string): Promise<string | null> {
+  if (!countryName) return null;
+
+  try {
+    const res = await fetch(
+      `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fullText=true`,
+    );
+
+    if (!res.ok) {
+      console.warn(`Failed to fetch country flag for ${countryName}: ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (data && data.length > 0) {
+      return data[0].flags.svg;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching country flag for ${countryName}:`, error);
+    return null;
+  }
+}
+
+export async function fetchCountryFlagByLanguage(languageCode: string): Promise<string | null> {
+  if (!languageCode) return null;
+
+  const languageToCountryMap: Record<string, string> = {
+    en: "United States",
+    "en-US": "United States",
+    "en-GB": "United Kingdom",
+    "en-CA": "Canada",
+    "en-AU": "Australia",
+    "en-NZ": "New Zealand",
+    "en-IE": "Ireland",
+    "en-ZA": "South Africa",
+    "en-IN": "India",
+
+    es: "Spain",
+    "es-ES": "Spain",
+    "es-MX": "Mexico",
+    "es-AR": "Argentina",
+    "es-CO": "Colombia",
+    "es-CL": "Chile",
+    "es-PE": "Peru",
+    "es-VE": "Venezuela",
+
+    fr: "France",
+    "fr-FR": "France",
+    "fr-CA": "Canada",
+    "fr-BE": "Belgium",
+    "fr-CH": "Switzerland",
+
+    de: "Germany",
+    "de-DE": "Germany",
+    "de-AT": "Austria",
+    "de-CH": "Switzerland",
+
+    ru: "Russia",
+    "ru-RU": "Russia",
+
+    pt: "Portugal",
+    "pt-BR": "Brazil",
+    "pt-PT": "Portugal",
+
+    it: "Italy",
+    "it-IT": "Italy",
+
+    nl: "Netherlands",
+    "nl-NL": "Netherlands",
+    "nl-BE": "Belgium",
+
+    zh: "China",
+    "zh-CN": "China",
+    "zh-TW": "Taiwan",
+    "zh-HK": "Hong Kong",
+    "zh-SG": "Singapore",
+
+    ja: "Japan",
+    "ja-JP": "Japan",
+
+    ko: "South Korea",
+    "ko-KR": "South Korea",
+
+    ar: "Saudi Arabia",
+    "ar-SA": "Saudi Arabia",
+    "ar-EG": "Egypt",
+    "ar-AE": "United Arab Emirates",
+
+    hi: "India",
+    "hi-IN": "India",
+
+    sv: "Sweden",
+    "sv-SE": "Sweden",
+    no: "Norway",
+    nb: "Norway",
+    da: "Denmark",
+    "da-DK": "Denmark",
+    fi: "Finland",
+    "fi-FI": "Finland",
+    pl: "Poland",
+    "pl-PL": "Poland",
+    tr: "Turkey",
+    "tr-TR": "Turkey",
+    he: "Israel",
+    "he-IL": "Israel",
+    th: "Thailand",
+    "th-TH": "Thailand",
+    vi: "Vietnam",
+    "vi-VN": "Vietnam",
+    uk: "Ukraine",
+    "uk-UA": "Ukraine",
+    cs: "Czech Republic",
+    "cs-CZ": "Czech Republic",
+    sk: "Slovakia",
+    "sk-SK": "Slovakia",
+    hu: "Hungary",
+    "hu-HU": "Hungary",
+    ro: "Romania",
+    "ro-RO": "Romania",
+    bg: "Bulgaria",
+    "bg-BG": "Bulgaria",
+    hr: "Croatia",
+    "hr-HR": "Croatia",
+    sr: "Serbia",
+    "sr-RS": "Serbia",
+    sl: "Slovenia",
+    "sl-SI": "Slovenia",
+    et: "Estonia",
+    "et-EE": "Estonia",
+    lv: "Latvia",
+    "lv-LV": "Latvia",
+    lt: "Lithuania",
+    "lt-LT": "Lithuania",
+    el: "Greece",
+    "el-GR": "Greece",
+    is: "Iceland",
+    "is-IS": "Iceland",
+    mt: "Malta",
+    "mt-MT": "Malta",
+  };
+
+  const countryName = languageToCountryMap[languageCode];
+  if (!countryName) {
+    // Try to get base language if specific variant not found
+    const baseLanguage = languageCode.split("-")[0];
+    const baseCountryName = languageToCountryMap[baseLanguage];
+    if (!baseCountryName) {
+      return null;
+    }
+    return fetchCountryFlag(baseCountryName);
+  }
+
+  return fetchCountryFlag(countryName);
+}
+
+// Function to format timezone with UTC offset
+export function formatTimezoneWithOffset(timezone: string): string {
+  try {
+    const now = new Date();
+
+    const formatter = new Intl.DateTimeFormat("en", {
+      timeZone: timezone,
+      timeZoneName: "longOffset",
+    });
+
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find((part) => part.type === "timeZoneName");
+
+    if (offsetPart && offsetPart.value) {
+      // Convert from GMT+X format to UTC+X format
+      const offset = offsetPart.value.replace("GMT", "UTC");
+      return `${timezone} (${offset})`;
+    }
+
+    const utcDate = new Date(now.toLocaleString("en-US", {timeZone: "UTC"}));
+    const tzDate = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+    const offsetMinutes = (tzDate.getTime() - utcDate.getTime()) / (1000 * 60);
+    const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+    const offsetMins = Math.abs(offsetMinutes) % 60;
+
+    const sign = offsetMinutes >= 0 ? "+" : "-";
+    const formattedOffset =
+      offsetMins > 0
+        ? `UTC${sign}${offsetHours}:${offsetMins.toString().padStart(2, "0")}`
+        : `UTC${sign}${offsetHours}`;
+
+    return `${timezone} (${formattedOffset})`;
+  } catch (error) {
+    console.error(`Error formatting timezone ${timezone}:`, error);
+    return timezone;
+  }
+}
+
+export function extractCountryName(label: string, type: string): string | null {
+  switch (type) {
+    case "Counties":
+      return label;
+    case "Regions":
+    case "Cities": {
+      // Extract country from "Country - Region/City" format
+      const parts = label.split(" - ");
+      return parts.length > 1 ? parts[0] : null;
+    }
+    default:
+      return null;
+  }
+}
+
+// Function to get favicon URL for a referrer domain
+export function getFaviconUrl(referrer: string): string | null {
+  if (!referrer) {
+    return null;
+  }
+
+  // Special case for direct traffic - return a special identifier
+  if (referrer === "$direct" || referrer === "Direct/unknown") {
+    return "direct-traffic-icon";
+  }
+
+  try {
+    // Handle cases where referrer might not have protocol
+    let url = referrer;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+  } catch (error) {
+    console.error(`Error getting favicon for referrer ${referrer}:`, error);
+    return null;
+  }
+}
+
+// Function to transform referrer labels
+export function transformReferrerLabel(referrer: string): string {
+  if (referrer === "$direct") {
+    return "Direct/unknown";
+  }
+
+  // For other referrers, try to extract domain name for cleaner display
+  if (referrer && referrer.startsWith("http")) {
+    try {
+      const url = new URL(referrer);
+      return url.hostname.replace("www.", "");
+    } catch (error) {
+      return referrer;
+    }
+  }
+
+  return referrer;
+}
+
+// Function to get browser icon based on browser name
+export function getBrowserIcon(browserName: string): string | null {
+  if (!browserName) return null;
+
+  const browserMap: Record<string, string> = {
+    // Chrome variants
+    Chrome: "/images/browser/chrome.png",
+    "Chrome Mobile": "/images/browser/chrome.png",
+    "Chrome Mobile iOS": "/images/browser/crios.png",
+    "Chrome Mobile WebView": "/images/browser/chromium-webview.png",
+    Chromium: "/images/browser/chrome.png",
+
+    // Firefox variants
+    Firefox: "/images/browser/firefox.png",
+    "Firefox Mobile": "/images/browser/firefox.png",
+    "Firefox iOS": "/images/browser/fxios.png",
+
+    // Safari variants
+    Safari: "/images/browser/safari.png",
+    "Mobile Safari": "/images/browser/safari.png",
+    "Safari Mobile": "/images/browser/safari.png",
+
+    // Edge variants
+    Edge: "/images/browser/edge.png",
+    "Edge Mobile": "/images/browser/edge.png",
+    "Edge Chromium": "/images/browser/edge-chromium.png",
+    "Edge iOS": "/images/browser/edge-ios.png",
+
+    // Opera variants
+    Opera: "/images/browser/opera.png",
+    "Opera Mini": "/images/browser/opera-mini.png",
+    "Opera Mobile": "/images/browser/opera.png",
+
+    // Samsung Internet
+    "Samsung Internet": "/images/browser/samsung.png",
+    "Samsung Browser": "/images/browser/samsung.png",
+
+    // Other browsers
+    "Internet Explorer": "/images/browser/ie.png",
+    IE: "/images/browser/ie.png",
+    Brave: "/images/browser/brave.png",
+    "Yandex Browser": "/images/browser/yandexbrowser.png",
+    Silk: "/images/browser/silk.png",
+    "MIUI Browser": "/images/browser/miui.png",
+    Facebook: "/images/browser/facebook.png",
+    Instagram: "/images/browser/instagram.png",
+    KakaoTalk: "/images/browser/kakaotalk.png",
+    AOL: "/images/browser/aol.png",
+    "Beaker Browser": "/images/browser/beaker.png",
+    BlackBerry: "/images/browser/blackberry.png",
+    cURL: "/images/browser/curl.png",
+    Searchbot: "/images/browser/searchbot.png",
+
+    // WebView variants
+    "Android WebView": "/images/browser/android-webview.png",
+    "iOS WebView": "/images/browser/ios-webview.png",
+    WebView: "/images/browser/android-webview.png",
+  };
+
+  // Try exact match first
+  if (browserMap[browserName]) {
+    return browserMap[browserName];
+  }
+
+  // Try partial matches for common browsers
+  const lowerBrowser = browserName.toLowerCase();
+  if (lowerBrowser.includes("chrome")) return "/images/browser/chrome.png";
+  if (lowerBrowser.includes("firefox")) return "/images/browser/firefox.png";
+  if (lowerBrowser.includes("safari")) return "/images/browser/safari.png";
+  if (lowerBrowser.includes("edge")) return "/images/browser/edge.png";
+  if (lowerBrowser.includes("opera")) return "/images/browser/opera.png";
+  if (lowerBrowser.includes("samsung")) return "/images/browser/samsung.png";
+  if (lowerBrowser.includes("brave")) return "/images/browser/brave.png";
+
+  return null;
+}
+
+// Function to get OS icon based on OS name
+export function getOSIcon(osName: string): string | null {
+  if (!osName) return null;
+
+  const osMap: Record<string, string> = {
+    // Windows variants
+    Windows: "/images/os/windows-10.png",
+    "Windows 11": "/images/os/windows-11.png",
+    "Windows 10": "/images/os/windows-10.png",
+    "Windows 8.1": "/images/os/windows-8-1.png",
+    "Windows 8": "/images/os/windows-8.png",
+    "Windows 7": "/images/os/windows-7.png",
+    "Windows Vista": "/images/os/windows-vista.png",
+    "Windows XP": "/images/os/windows-xp.png",
+    "Windows 2000": "/images/os/windows-2000.png",
+    "Windows 98": "/images/os/windows-98.png",
+    "Windows 95": "/images/os/windows-95.png",
+    "Windows 3.11": "/images/os/windows-3-11.png",
+    "Windows ME": "/images/os/windows-me.png",
+    "Windows Mobile": "/images/os/windows-mobile.png",
+    "Windows Server 2003": "/images/os/windows-server-2003.png",
+
+    // macOS variants
+    macOS: "/images/os/mac-os.png",
+    "Mac OS": "/images/os/mac-os.png",
+    "Mac OS X": "/images/os/mac-os.png",
+    "OS X": "/images/os/mac-os.png",
+
+    // iOS variants
+    iOS: "/images/os/ios.png",
+    "iPhone OS": "/images/os/ios.png",
+    iPadOS: "/images/os/ios.png",
+
+    // Android variants
+    Android: "/images/os/android-os.png",
+    "Android OS": "/images/os/android-os.png",
+
+    // Linux variants
+    Linux: "/images/os/linux.png",
+    Ubuntu: "/images/os/linux.png",
+    Debian: "/images/os/linux.png",
+    "Red Hat": "/images/os/linux.png",
+    CentOS: "/images/os/linux.png",
+    Fedora: "/images/os/linux.png",
+    SUSE: "/images/os/linux.png",
+
+    // Chrome OS
+    "Chrome OS": "/images/os/chrome-os.png",
+    ChromeOS: "/images/os/chrome-os.png",
+
+    // Other OS
+    "BlackBerry OS": "/images/os/blackberry-os.png",
+    BlackBerry: "/images/os/blackberry-os.png",
+    "Amazon OS": "/images/os/amazon-os.png",
+    "Fire OS": "/images/os/amazon-os.png",
+    BeOS: "/images/os/beos.png",
+    QNX: "/images/os/qnx.png",
+    SunOS: "/images/os/sun-os.png",
+    Solaris: "/images/os/sun-os.png",
+    OpenBSD: "/images/os/open-bsd.png",
+    "OS/2": "/images/os/os-2.png",
+  };
+
+  // Try exact match first
+  if (osMap[osName]) {
+    return osMap[osName];
+  }
+
+  // Try partial matches for common OS
+  const lowerOS = osName.toLowerCase();
+  if (lowerOS.includes("windows")) return "/images/os/windows-10.png";
+  if (lowerOS.includes("mac") || lowerOS.includes("osx")) return "/images/os/mac-os.png";
+  if (lowerOS.includes("ios") || lowerOS.includes("iphone") || lowerOS.includes("ipad"))
+    return "/images/os/ios.png";
+  if (lowerOS.includes("android")) return "/images/os/android-os.png";
+  if (lowerOS.includes("linux") || lowerOS.includes("ubuntu") || lowerOS.includes("debian"))
+    return "/images/os/linux.png";
+  if (lowerOS.includes("chrome")) return "/images/os/chrome-os.png";
+  if (lowerOS.includes("blackberry")) return "/images/os/blackberry-os.png";
+
+  return null;
+}
+
+// Function to get device icon based on device type
+export function getDeviceIcon(deviceType: string): string | null {
+  if (!deviceType) return null;
+
+  const deviceMap: Record<string, string> = {
+    Desktop: "/images/device/desktop.png",
+    Mobile: "/images/device/mobile.png",
+    Tablet: "/images/device/tablet.png",
+    Phone: "/images/device/mobile.png",
+    Laptop: "/images/device/desktop.png",
+  };
+
+  if (deviceMap[deviceType]) {
+    return deviceMap[deviceType];
+  } else {
+    return null;
+  }
+}
+
+// Profile Events specific transformation
+type ProfileEventDataPoint = {
+  date: string;
+  message: number;
+  follow: number;
+  unfollow: number;
+  save_to_favourites: number;
+  report: number;
+  share: number;
+  block: number;
+  // Previous period data
+  prev_message: number;
+  prev_follow: number;
+  prev_unfollow: number;
+  prev_save_to_favourites: number;
+  prev_report: number;
+  prev_share: number;
+  prev_block: number;
+};
+
+export function transformProfileEventsForChart(
+  eventsData: Array<{id: string; created_at: string; type: string}>,
+  startDate: string,
+  endDate: string,
+  granularity: "hour" | "day" | "month",
+  comparisonEventsData?: Array<{id: string; created_at: string; type: string}>,
+  comparisonStartDate?: string,
+  comparisonEndDate?: string,
+): ProfileEventDataPoint[] {
+  const chartData: ProfileEventDataPoint[] = [];
+  const timePoints: Date[] = [];
+  let formattedDate: string = "";
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Generate time points using the same logic as transformSupabaseDataForChart
+  if (granularity === "hour") {
+    // Check if this is a "Last 24 hours" type range (spans across dates)
+    const isLast24Hours =
+      start.getUTCDate() !== end.getUTCDate() || start.getUTCMonth() !== end.getUTCMonth();
+
+    if (isLast24Hours) {
+      // Generate hourly points from start to end time
+      const currentTime = new Date(start);
+      currentTime.setUTCMinutes(0, 0, 0); // Round down to the hour
+
+      while (currentTime < end) {
+        timePoints.push(new Date(currentTime));
+        currentTime.setUTCHours(currentTime.getUTCHours() + 1);
+      }
+    } else {
+      // Generate 24 hour points for the start date (for Today/Yesterday)
+      for (let i = 0; i < 24; i++) {
+        const point = new Date(start);
+        point.setUTCHours(i, 0, 0, 0);
+        timePoints.push(point);
+      }
+    }
+  } else if (granularity === "day") {
+    // Generate daily points from start to end date
+    const currentDate = new Date(start);
+    while (currentDate < end) {
+      timePoints.push(new Date(currentDate));
+      currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+    }
+  } else if (granularity === "month") {
+    // Generate monthly points from start to end date
+    const currentDate = new Date(start);
+    currentDate.setUTCDate(1); // Set to first day of the month
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    while (currentDate < end) {
+      timePoints.push(new Date(currentDate));
+      // Move to first day of next month
+      currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
+    }
+  }
+
+  // Define event types we're tracking
+  const eventTypes = [
+    "message",
+    "follow",
+    "unfollow",
+    "save_to_favourites",
+    "report",
+    "share",
+    "block",
+  ];
+
+  // Count events for each time point and event type
+  timePoints.forEach((timePoint, index) => {
+    const nextTimePoint = index < timePoints.length - 1 ? timePoints[index + 1] : end;
+
+    // Initialize counters for all event types
+    const eventCounts: Record<string, number> = {};
+    const comparisonEventCounts: Record<string, number> = {};
+
+    eventTypes.forEach((type) => {
+      eventCounts[type] = 0;
+      comparisonEventCounts[type] = 0;
+    });
+
+    // Count current period events by type
+    eventsData.forEach((event) => {
+      const eventDate = new Date(event.created_at);
+      if (eventDate >= timePoint && eventDate < nextTimePoint) {
+        if (eventTypes.includes(event.type)) {
+          eventCounts[event.type]++;
+        }
+      }
+    });
+
+    // Count comparison period events if comparison data is provided
+    if (comparisonEventsData && comparisonStartDate && comparisonEndDate) {
+      const comparisonStart = new Date(comparisonStartDate);
+      const comparisonEnd = new Date(comparisonEndDate);
+
+      // Calculate the equivalent time point in the comparison period
+      const timeDiff = timePoint.getTime() - start.getTime();
+      const comparisonTimePoint = new Date(comparisonStart.getTime() + timeDiff);
+      const comparisonNextTimePoint =
+        index < timePoints.length - 1
+          ? new Date(comparisonStart.getTime() + (nextTimePoint.getTime() - start.getTime()))
+          : comparisonEnd;
+
+      comparisonEventsData.forEach((event) => {
+        const eventDate = new Date(event.created_at);
+        if (eventDate >= comparisonTimePoint && eventDate < comparisonNextTimePoint) {
+          if (eventTypes.includes(event.type)) {
+            comparisonEventCounts[event.type]++;
+          }
+        }
+      });
+    }
+
+    // Format the date based on granularity
+    if (granularity === "hour") {
+      formattedDate = timePoint.toISOString().slice(0, 13) + ":00:00.000Z";
+    } else if (granularity === "day") {
+      formattedDate = timePoint.toISOString().slice(0, 10) + "T00:00:00.000Z";
+    } else if (granularity === "month") {
+      formattedDate = timePoint.toISOString().slice(0, 7) + "-01T00:00:00.000Z";
+    }
+
+    // Create data point with all event types
+    const dataPoint: ProfileEventDataPoint = {
+      date: formattedDate,
+      message: eventCounts.message,
+      follow: eventCounts.follow,
+      unfollow: eventCounts.unfollow,
+      save_to_favourites: eventCounts.save_to_favourites,
+      report: eventCounts.report,
+      share: eventCounts.share,
+      block: eventCounts.block,
+      // Previous period data
+      prev_message: comparisonEventCounts.message,
+      prev_follow: comparisonEventCounts.follow,
+      prev_unfollow: comparisonEventCounts.unfollow,
+      prev_save_to_favourites: comparisonEventCounts.save_to_favourites,
+      prev_report: comparisonEventCounts.report,
+      prev_share: comparisonEventCounts.share,
+      prev_block: comparisonEventCounts.block,
+    };
+
+    chartData.push(dataPoint);
+  });
+
+  return chartData;
 }

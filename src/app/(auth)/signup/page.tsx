@@ -95,14 +95,7 @@ const SignUpPage = () => {
         setTotalSteps,
       );
     } else if (currentStep === 2) {
-      await handleFormSubmitStep2(
-        page,
-        email,
-        otp,
-        isNewUser,
-        setLoading,
-        router,
-      );
+      await handleFormSubmitStep2(page, email, otp, isNewUser, setLoading, router);
     }
   };
 
@@ -147,9 +140,7 @@ const SignUpPage = () => {
               className="flex flex-col justify-center gap-9 w-full">
               <AuthTopText maintext={title} secText={subtitle} />
               {currentStep === 1 && (
-                <motion.div
-                  variants={itemVariants}
-                  className="flex flex-col gap-4">
+                <motion.div variants={itemVariants} className="flex flex-col gap-4">
                   <AuthStep1Form page="signup" />
                 </motion.div>
               )}

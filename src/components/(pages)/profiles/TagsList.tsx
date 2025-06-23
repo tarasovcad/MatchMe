@@ -14,9 +14,7 @@ const TagsList = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [maxSkills, setMaxSkills] = useState(10);
-  const [skillsToShow, setSkillsToShow] = useState(
-    user.skills?.slice(0, maxSkills),
-  );
+  const [skillsToShow, setSkillsToShow] = useState(user.skills?.slice(0, maxSkills));
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -48,15 +46,11 @@ const TagsList = ({
   }, []);
 
   useEffect(() => {
-    setSkillsToShow(
-      expanded ? user.skills || [] : user.skills?.slice(0, maxSkills),
-    );
+    setSkillsToShow(expanded ? user.skills || [] : user.skills?.slice(0, maxSkills));
   }, [maxSkills, expanded, user.skills]);
 
   return (
-    <motion.div
-      className="flex flex-wrap items-center gap-[18px] w-full"
-      layout>
+    <motion.div className="flex flex-wrap items-center gap-[18px] w-full" layout>
       <AnimatePresence initial={false}>
         {skillsToShow?.map((tag: string) => {
           const skill = skills.find((skill) => skill.name === tag);
@@ -72,11 +66,7 @@ const TagsList = ({
               transition={{duration: 0.2}}>
               {skillImage && (
                 <div className="flex justify-center items-center border border-border rounded-radius w-7 h-7">
-                  {skillImage ? (
-                    <Image src={skillImage} alt={tag} width={17} height={17} />
-                  ) : (
-                    ""
-                  )}
+                  {skillImage ? <Image src={skillImage} alt={tag} width={17} height={17} /> : ""}
                 </div>
               )}
               <MainGradient as="span" className="font-medium text-[14px]">

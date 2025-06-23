@@ -6,6 +6,43 @@ import {Button} from "@/components/shadcn/button";
 import AnalyticsBarListDialog from "./AnalyticsBarListDialog";
 import {containerVariants, itemVariants, barVariants} from "@/utils/other/analyticsVariants";
 import {cn} from "@/lib/utils";
+import Image from "next/image";
+import {Globe} from "lucide-react";
+import AnalyticsFallbackState from "./AnalyticsFallbackState";
+
+const ImageDisplay = ({image, flag, label}: {image?: string; flag?: string; label: string}) => {
+  // Priority: flag > image > nothing
+  if (flag) {
+    return (
+      <Image
+        src={flag}
+        alt={label}
+        width={16}
+        height={12}
+        className="w-[16px] h-[12px] object-cover"
+      />
+    );
+  }
+
+  if (image) {
+    // Special case for direct traffic
+    if (image === "direct-traffic-icon") {
+      return <Globe size={16} className="text-foreground/80" />;
+    }
+
+    return (
+      <Image
+        src={image}
+        alt={label}
+        width={16}
+        height={16}
+        className="w-[16px] h-[16px] object-contain"
+      />
+    );
+  }
+
+  return null;
+};
 
 export const SingleBarSkeleton = () => {
   return (
@@ -31,16 +68,23 @@ export const SingleBar = ({
   item,
   labelClassName,
 }: {
-  item: {label: string; count: number; percentage: number; relative: number};
+  item: {
+    label: string;
+    count: number;
+    percentage: number;
+    relative: number;
+    flag?: string;
+    image?: string;
+  };
   labelClassName?: string;
 }) => {
   return (
     <motion.div
-      key={item.label + item.percentage}
+      key={`${item.label}-${item.count}-${item.percentage}`}
       className="h-[30px] relative w-full font-medium flex items-center justify-between group"
       variants={itemVariants}>
       <motion.div
-        className="h-[30px] w-full bg-primary/50 group-hover:bg-primary/70 absolute rounded-md transition-colors duration-300 ease-in-out"
+        className="h-[30px] w-full bg-[#D9D1FF] dark:bg-primary  group-hover:bg-[#BBB3FF]  dark:group-hover:bg-primary/70 absolute rounded-md transition-colors duration-300 ease-in-out"
         variants={barVariants}
         style={
           {
@@ -48,9 +92,10 @@ export const SingleBar = ({
           } as React.CSSProperties
         }
       />
-      <span className={cn("text-[13px] pl-1.5 z-10 text-foreground/90", labelClassName)}>
-        {item.label}
-      </span>
+      <div className="flex items-center gap-2 z-10 pl-1.5">
+        <ImageDisplay image={item.image} flag={item.flag} label={item.label} />
+        <span className={cn("text-[13px]  text-foreground/90", labelClassName)}>{item.label}</span>
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-[13px] text-foreground/60 pr-1.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out transform translate-x-2 group-hover:translate-x-0">
           {item.count}
@@ -68,6 +113,8 @@ const AnalyticsBarList = ({
   data,
   isLoading,
   error,
+  button,
+  maxItems = 10,
 }: {
   title: string;
   description: string;
@@ -77,16 +124,36 @@ const AnalyticsBarList = ({
     count: number;
     percentage: number;
     relative: number;
+    flag?: string;
+    image?: string;
   }[];
   isLoading: boolean;
   error: Error | null;
+  button?: React.ReactNode;
+  maxItems?: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  if ((data && data.length === 0) || error) {
+    return (
+      <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container min-h-[456px] flex flex-col">
+        <AnalyticsSectionHeader
+          title={title}
+          description={description}
+          icon={icon}
+          button={button}
+        />
+        <div className="flex items-center justify-center w-full flex-1">
+          <AnalyticsFallbackState error={error} />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full border border-border rounded-[12px] p-[18px] relative">
-      <AnalyticsSectionHeader title={title} description={description} icon={icon} />
-      {!isLoading && !error && (
+    <div className="w-full border border-border rounded-[12px] p-[18px] relative mb-[17px] @container min-h-[456px]">
+      <AnalyticsSectionHeader title={title} description={description} icon={icon} button={button} />
+      {!isLoading && !error && data && data.length > maxItems && (
         <>
           <AnalyticsBarListDialog title={title} data={data} isOpen={isOpen} setIsOpen={setIsOpen} />
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
@@ -106,7 +173,7 @@ const AnalyticsBarList = ({
         initial="hidden"
         animate="visible"
         style={
-          !isLoading && !error
+          !isLoading && !error && data && data.length > maxItems
             ? {
                 maskImage:
                   "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 75%, rgba(0,0,0,0.3) 90%, rgba(0,0,0,0.05) 100%)",
@@ -116,9 +183,16 @@ const AnalyticsBarList = ({
             : undefined
         }>
         {isLoading || error
-          ? Array.from({length: 10}, (_, index) => <SingleBarSkeleton key={`skeleton-${index}`} />)
-          : data?.slice(0, 10).map((item) => {
-              return <SingleBar key={item.label + item.percentage} item={item} />;
+          ? Array.from({length: maxItems}, (_, index) => (
+              <SingleBarSkeleton key={`skeleton-${index}`} />
+            ))
+          : data?.slice(0, maxItems).map((item, index) => {
+              return (
+                <SingleBar
+                  key={`${item.label}-${item.count}-${item.percentage}-${index}`}
+                  item={item}
+                />
+              );
             })}
       </motion.div>
     </div>

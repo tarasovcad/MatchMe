@@ -9,13 +9,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
-import {motion} from "framer-motion";
+import {motion, Variants} from "framer-motion";
 import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
 import {useState, useTransition} from "react";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
 import {toast} from "sonner";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {cn} from "@/lib/utils";
+import {postProfileInteraction} from "@/actions/profiles/profileInteractions";
 
 export default function ProfileOtherButton({
   userId,
@@ -47,14 +48,14 @@ export default function ProfileOtherButton({
     });
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: {scale: 1},
     favorite: {
       scale: [1, 1.3, 1],
       transition: {
         duration: 0.5,
         times: [0, 0.3, 1],
-        ease: "easeInOut",
+        ease: [0.25, 0.1, 0.25, 1],
       },
     },
     unfavorite: {
@@ -62,7 +63,7 @@ export default function ProfileOtherButton({
       transition: {
         duration: 0.4,
         times: [0, 0.2, 1],
-        ease: "easeIn",
+        ease: [0.42, 0, 1, 1],
       },
     },
     tap: {scale: 0.9},
@@ -118,7 +119,13 @@ export default function ProfileOtherButton({
               </DropdownMenuItem>
             </motion.div>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "share");
+                  }
+                }}>
                 <Share2 size={16} className="opacity-60" aria-hidden="true" />
                 Share Profile
               </DropdownMenuItem>
@@ -129,13 +136,25 @@ export default function ProfileOtherButton({
 
           <DropdownMenuGroup>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "report");
+                  }
+                }}>
                 <Flag size={16} className="opacity-60" aria-hidden="true" />
                 Report User
               </DropdownMenuItem>
             </motion.div>
             <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => {
+                  if (userId) {
+                    postProfileInteraction(profileId, userId, "block");
+                  }
+                }}>
                 <Ban size={16} className="opacity-60" aria-hidden="true" />
                 Block User
               </DropdownMenuItem>

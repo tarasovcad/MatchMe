@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     // Get current period data
     const {data: interactionsData, error: interactionsError} = await supabase
-      .from("profile_interactions")
+      .from("profile_events")
       .select("id, created_at, type")
       .eq("profile_id", profileId)
       .gte("created_at", start)
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       comparisonEnd = comparisonRange.end;
 
       const {data: comparisonData, error: comparisonError} = await supabase
-        .from("profile_interactions")
+        .from("profile_events")
         .select("id, created_at, type")
         .eq("profile_id", profileId)
         .gte("created_at", comparisonStart)

@@ -36,24 +36,20 @@ export async function POST(req: Request) {
     };
 
     //  function to increment count for a field
-    const incrementCount = (
-      countsObj: Record<string, number>,
-      value: string | number,
-      preserveCase = false,
-    ) => {
+    const incrementCount = (countsObj: Record<string, number>, value: string | number) => {
       if (value && value !== "" && value !== null && value !== undefined) {
-        const key = preserveCase ? String(value) : String(value).toLowerCase();
+        const key = String(value);
         countsObj[key] = (countsObj[key] || 0) + 1;
       }
     };
 
     if (metadata.public_current_role) {
-      incrementCount(currentCounts.current_role_counts, metadata.public_current_role, true);
+      incrementCount(currentCounts.current_role_counts, metadata.public_current_role);
     }
 
     if (metadata.skills && Array.isArray(metadata.skills)) {
       metadata.skills.forEach((skill: string) => {
-        incrementCount(currentCounts.skill_counts, skill, true);
+        incrementCount(currentCounts.skill_counts, skill);
       });
     }
 
@@ -65,8 +61,7 @@ export async function POST(req: Request) {
       // Group ages into ranges
       const age = parseInt(metadata.age);
       let ageRange = "";
-      if (age < 18) ageRange = "under-18";
-      else if (age <= 24) ageRange = "18-24";
+      if (age <= 24) ageRange = "18-24";
       else if (age <= 34) ageRange = "25-34";
       else if (age <= 44) ageRange = "35-44";
       else if (age <= 54) ageRange = "45-54";
@@ -89,7 +84,7 @@ export async function POST(req: Request) {
 
     if (metadata.languages && Array.isArray(metadata.languages)) {
       metadata.languages.forEach((language: string) => {
-        incrementCount(currentCounts.language_counts, language, true);
+        incrementCount(currentCounts.language_counts, language);
       });
     }
 

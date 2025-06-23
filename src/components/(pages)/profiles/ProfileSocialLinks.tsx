@@ -43,10 +43,7 @@ const ProfileSocialLinks = ({user}: {user: MatchMeUser}) => {
           return (
             <Tooltip key={title}>
               <TooltipTrigger asChild>
-                <Link
-                  href={socialLink}
-                  target="_blank"
-                  rel="noopener noreferrer">
+                <Link href={socialLink} target="_blank" rel="noopener noreferrer">
                   <Button size={"icon"} className="p-[5px]" asChild>
                     <Image
                       src={image ?? ""}

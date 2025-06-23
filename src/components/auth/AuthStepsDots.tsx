@@ -1,7 +1,7 @@
 "use client";
-import {motion} from "framer-motion";
+import {motion, Variants} from "framer-motion";
 
-const dotVariants = {
+const dotVariants: Variants = {
   active: {
     width: 20,
     height: 10,
@@ -26,15 +26,9 @@ const dotVariants = {
       damping: 30,
     },
   },
-};
+} as const;
 
-const AuthStepsDots = ({
-  totalSteps,
-  currentStep,
-}: {
-  totalSteps: number;
-  currentStep: number;
-}) => {
+const AuthStepsDots = ({totalSteps, currentStep}: {totalSteps: number; currentStep: number}) => {
   return (
     <div className="text-center">
       <div className="flex gap-2.5 items-center justify-center">
