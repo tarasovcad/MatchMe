@@ -1,30 +1,38 @@
-import {ProfileFormFieldProps} from "@/types/profileFieldTypes";
+import {ProjectFormFieldProps} from "@/data/forms/projects/projectFormFields";
 import React from "react";
-import ExpendedDescription from "./ExpandedDescription";
-import TagsList from "./TagsList";
-import {MatchMeUser} from "@/types/user/matchMeUser";
-import ProfileDetails from "./ProfileDetails";
+import ExpandedDescription from "../profiles/ExpandedDescription";
+import TagsList from "../profiles/TagsList";
+import ProjectDetails from "./ProjectDetails";
+import {Project} from "@/types/projects/projects";
 
-const fieldComponents = {
-  description: ExpendedDescription,
-  tags: TagsList,
-  details: ProfileDetails,
+const TextComponent = ({project, id}: {project: Project; id: string}) => {
+  const content = project[id as keyof Project] as string;
+  return <p className="text-muted-foreground text-sm">{content}</p>;
 };
 
-const ProfileFormField = ({
+const fieldComponents = {
+  description: ExpandedDescription,
+  text: TextComponent,
+  skills: TagsList,
+  details: ProjectDetails,
+};
+
+const ProjectFormField = ({
   formField,
-  user,
+  project,
   skills,
 }: {
-  formField: ProfileFormFieldProps;
-  user: MatchMeUser;
+  formField: ProjectFormFieldProps;
+  project: Project;
   skills: {
     name: string;
     image_url: string;
   }[];
 }) => {
   const {fieldTitle, fieldDescription, fieldType} = formField;
+
   const InputComponent = fieldComponents[fieldType as keyof typeof fieldComponents];
+
   return (
     <div className="flex max-[990px]:flex-col justify-between items-start gap-8 max-[990px]:gap-3">
       <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
@@ -35,7 +43,7 @@ const ProfileFormField = ({
       </div>
       <div className="w-full min-[990px]:max-w-[652px]">
         <InputComponent
-          user={user}
+          project={project}
           id={formField.fieldInputProps?.[0]?.id ?? ""}
           maxNmberOfLines={formField.fieldInputProps?.[0]?.maxNmberOfLines ?? 0}
           skills={skills}
@@ -45,4 +53,4 @@ const ProfileFormField = ({
   );
 };
 
-export default ProfileFormField;
+export default ProjectFormField;

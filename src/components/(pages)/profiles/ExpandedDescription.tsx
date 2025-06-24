@@ -4,13 +4,16 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import {ArrowUp} from "lucide-react";
 import React, {useRef, useState, useEffect} from "react";
 import {motion} from "framer-motion";
+import {Project} from "@/types/projects/projects";
 
 const ExpendedDescription = ({
   user,
+  project,
   maxNmberOfLines,
   id,
 }: {
-  user: MatchMeUser;
+  user?: MatchMeUser;
+  project: Project;
   maxNmberOfLines: number;
   id: string;
 }) => {
@@ -19,14 +22,17 @@ const ExpendedDescription = ({
   const paragraphRef = useRef<HTMLParagraphElement>(null);
   const [isLongText, setIsLongText] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const content = user[id as keyof MatchMeUser];
+  let content = "";
+  if (user) {
+    content = user[id as keyof MatchMeUser] as string;
+  } else if (project) {
+    content = project[id as keyof Project] as string;
+  }
 
   const calculateLines = () => {
     if (paragraphRef.current) {
       const element = paragraphRef.current;
-      const lineHeight = parseFloat(
-        window.getComputedStyle(element).lineHeight,
-      );
+      const lineHeight = parseFloat(window.getComputedStyle(element).lineHeight);
       const lines = element.clientHeight / lineHeight;
       setIsLongText(lines > MAX_LINES);
     }
@@ -45,11 +51,7 @@ const ExpendedDescription = ({
       <motion.div
         className="relative overflow-hidden"
         animate={{
-          height: expanded
-            ? "auto"
-            : isLongText
-              ? `${MAX_LINES * LINE_HEIGHT}px`
-              : "auto",
+          height: expanded ? "auto" : isLongText ? `${MAX_LINES * LINE_HEIGHT}px` : "auto",
         }}
         initial={{
           height: isLongText ? `${MAX_LINES * LINE_HEIGHT}px` : "auto",
@@ -59,10 +61,7 @@ const ExpendedDescription = ({
           ref={paragraphRef}
           className="text-muted-foreground text-sm"
           dangerouslySetInnerHTML={{
-            __html:
-              typeof content === "string"
-                ? content.replace(/\n/g, "<br />")
-                : content,
+            __html: typeof content === "string" ? content.replace(/\n/g, "<br />") : content,
           }}
         />
         {!expanded && isLongText && (
@@ -83,14 +82,8 @@ const ExpendedDescription = ({
             expanded ? "mt-2" : "",
           )}>
           {expanded ? "Read Less" : "Read More"}
-          <motion.div
-            animate={{rotate: expanded ? 180 : 0}}
-            transition={{duration: 0.3}}>
-            <ArrowUp
-              size={14}
-              strokeWidth={2}
-              className="transition duration-300 ease-in-out"
-            />
+          <motion.div animate={{rotate: expanded ? 180 : 0}} transition={{duration: 0.3}}>
+            <ArrowUp size={14} strokeWidth={2} className="transition duration-300 ease-in-out" />
           </motion.div>
         </button>
       )}

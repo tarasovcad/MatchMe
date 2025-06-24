@@ -49,12 +49,12 @@ export function AppSidebar({
         icon: PanelsTopLeft,
         isActive: isActive("/dashboard"),
       },
-      {
-        title: "Feed",
-        url: "/feed",
-        icon: Globe,
-        isActive: isActive("/feed"),
-      },
+      // {
+      //   title: "Feed",
+      //   url: "/feed",
+      //   icon: Globe,
+      //   isActive: isActive("/feed"),
+      // },
       {
         title: "Projects",
         url: "/projects",

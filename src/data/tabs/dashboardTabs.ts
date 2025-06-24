@@ -1,6 +1,7 @@
 export const dashboardTabsData = [
   {query: "overview", title: "Overview"},
   {query: "posts", title: "Posts Management"},
+  {query: "achievements", title: "Achievements"},
   {query: "projects", title: "Projects"},
   {query: "requests", title: "Requests"},
   {query: "follows", title: "Followers & Following"},

@@ -4,24 +4,20 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import Image from "next/image";
 import React, {useEffect, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
+import {Project} from "@/types/projects/projects";
 
-const TagsList = ({
-  user,
-  skills,
-}: {
-  user: MatchMeUser;
-  skills: {name: string; image_url: string}[];
-}) => {
+const TagsList = ({skills}: {skills: {name: string; image_url: string}[]}) => {
   const [expanded, setExpanded] = useState(false);
   const [maxSkills, setMaxSkills] = useState(10);
-  const [skillsToShow, setSkillsToShow] = useState(user.skills?.slice(0, maxSkills));
+
+  const [skillsToShow, setSkillsToShow] = useState(skills?.slice(0, maxSkills));
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
     if (expanded) {
-      setSkillsToShow(user.skills?.slice(0, maxSkills));
+      setSkillsToShow(skills?.slice(0, maxSkills));
     } else {
-      setSkillsToShow(user.skills || []);
+      setSkillsToShow(skills || []);
     }
   };
 
@@ -46,18 +42,17 @@ const TagsList = ({
   }, []);
 
   useEffect(() => {
-    setSkillsToShow(expanded ? user.skills || [] : user.skills?.slice(0, maxSkills));
-  }, [maxSkills, expanded, user.skills]);
+    setSkillsToShow(expanded ? skills || [] : skills?.slice(0, maxSkills));
+  }, [maxSkills, expanded, skills]);
 
   return (
     <motion.div className="flex flex-wrap items-center gap-[18px] w-full" layout>
       <AnimatePresence initial={false}>
-        {skillsToShow?.map((tag: string) => {
-          const skill = skills.find((skill) => skill.name === tag);
+        {skillsToShow?.map((skill) => {
           const skillImage = skill?.image_url;
           return (
             <motion.div
-              key={tag}
+              key={skill.name}
               className="flex items-center gap-2"
               layout
               initial={{opacity: 0, scale: 0.8}}
@@ -66,23 +61,27 @@ const TagsList = ({
               transition={{duration: 0.2}}>
               {skillImage && (
                 <div className="flex justify-center items-center border border-border rounded-radius w-7 h-7">
-                  {skillImage ? <Image src={skillImage} alt={tag} width={17} height={17} /> : ""}
+                  {skillImage ? (
+                    <Image src={skillImage} alt={skill.name} width={17} height={17} />
+                  ) : (
+                    ""
+                  )}
                 </div>
               )}
               <MainGradient as="span" className="font-medium text-[14px]">
-                {tag}
+                {skill.name}
               </MainGradient>
             </motion.div>
           );
         })}
       </AnimatePresence>
 
-      {user.skills && user.skills.length > maxSkills && (
+      {skills && skills.length > maxSkills && (
         <motion.button
           layout
           onClick={toggleExpanded}
           className="flex items-center gap-1 font-medium text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out cursor-pointer">
-          {expanded ? "Read Less" : `+ ${user.skills.length - maxSkills} more`}
+          {expanded ? "Read Less" : `+ ${skills.length - maxSkills} more`}
         </motion.button>
       )}
     </motion.div>
