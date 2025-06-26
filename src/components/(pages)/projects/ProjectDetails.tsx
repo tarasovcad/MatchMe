@@ -18,6 +18,7 @@ const displayProjectValue = (
 
   switch (key) {
     case "skills":
+    case "language_proficiency":
     case "communication_tools":
       return (
         <p className="text-[14px] text-foreground">

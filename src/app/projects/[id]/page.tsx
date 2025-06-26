@@ -121,7 +121,7 @@ const ProjectSinglePage = async ({params}: {params: Promise<{id: string}>}) => {
   ];
 
   return (
-    <SidebarProvider removePadding>
+    <SidebarProvider removePadding bottomPadding>
       <ProjectClient project={project} skills={skills} />
     </SidebarProvider>
   );

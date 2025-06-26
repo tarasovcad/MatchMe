@@ -1,5 +1,16 @@
 export const projectFormFields = [
   {
+    fieldTitle: "About Us",
+    fieldDescription: "",
+    fieldType: "text",
+    layout: "column",
+    fieldInputProps: [
+      {
+        id: "description",
+      },
+    ],
+  },
+  {
     fieldTitle: "Why join?",
     fieldDescription: "What makes this project unique and what contributors will gain",
     fieldType: "text",
@@ -49,6 +60,12 @@ export const projectFormFields = [
       },
     ],
   },
+  // {
+  //   fieldTitle: "Open Positions",
+  //   fieldDescription: "Current open positions in the project",
+  //   fieldType: "open_positions",
+  //   layout: "column",
+  // },
 ] as ProjectFormFieldProps[];
 
 export const projectDetailsSections = [
@@ -85,6 +102,7 @@ export interface ProjectFormFieldProps {
   fieldTitle: string;
   fieldDescription: string;
   fieldType: "text" | "details" | "description" | "skills";
+  layout?: "row" | "column";
   fieldInputProps: [
     {
       id: string;

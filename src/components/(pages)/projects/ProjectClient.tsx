@@ -24,6 +24,7 @@ import PageFormField from "../profiles/ProfileFormField";
 import {projectFormFields} from "@/data/forms/projects/projectFormFields";
 import ProjectFormField from "./ProjectFormField";
 import ProjectImageSlider from "./ProjectImageSlider";
+import ProjectTabs from "./ProjectTabs";
 
 const options = [
   {
@@ -139,12 +140,12 @@ const ProjectClient = ({
         <div>
           <div className="flex flex-col gap-8 max-[990px]:gap-10">
             <ProjectImageSlider demo={project.demo} />
-            <p className="text-muted-foreground text-sm">{project.description}</p>
             {projectFormFields.map((formField) => (
               <div key={formField.fieldTitle}>
                 <ProjectFormField formField={formField} project={project} skills={skills} />
               </div>
             ))}
+            <ProjectTabs />
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import React, {useEffect, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {Project} from "@/types/projects/projects";
 
-const TagsList = ({skills}: {skills: {name: string; image_url: string}[]}) => {
+const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
   const [expanded, setExpanded] = useState(false);
   const [maxSkills, setMaxSkills] = useState(10);
 

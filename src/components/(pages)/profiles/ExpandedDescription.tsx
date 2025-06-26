@@ -9,24 +9,30 @@ import {Project} from "@/types/projects/projects";
 const ExpendedDescription = ({
   user,
   project,
-  maxNmberOfLines,
+  text,
+  maxNmberOfLines = 9,
   id,
 }: {
   user?: MatchMeUser;
-  project: Project;
-  maxNmberOfLines: number;
+  project?: Project;
+  text?: string;
+  maxNmberOfLines?: number;
   id: string;
 }) => {
-  const MAX_LINES = maxNmberOfLines || 9;
+  const MAX_LINES = maxNmberOfLines;
   const LINE_HEIGHT = 16;
   const paragraphRef = useRef<HTMLParagraphElement>(null);
   const [isLongText, setIsLongText] = useState(false);
   const [expanded, setExpanded] = useState(false);
   let content = "";
-  if (user) {
+  if (text) {
+    content = text;
+  } else if (user) {
     content = user[id as keyof MatchMeUser] as string;
   } else if (project) {
     content = project[id as keyof Project] as string;
+  } else {
+    content = "";
   }
 
   const calculateLines = () => {
@@ -78,7 +84,7 @@ const ExpendedDescription = ({
         <button
           onClick={() => setExpanded(!expanded)}
           className={cn(
-            "font-medium text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out flex items-center gap-1",
+            "font-medium cursor-pointer  text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out flex items-center gap-1",
             expanded ? "mt-2" : "",
           )}>
           {expanded ? "Read Less" : "Read More"}

@@ -4,6 +4,7 @@ import ExpandedDescription from "../profiles/ExpandedDescription";
 import TagsList from "../profiles/TagsList";
 import ProjectDetails from "./ProjectDetails";
 import {Project} from "@/types/projects/projects";
+import ProjectOpenPositions from "./ProjectOpenPositions";
 
 const TextComponent = ({project, id}: {project: Project; id: string}) => {
   const content = project[id as keyof Project] as string;
@@ -15,6 +16,7 @@ const fieldComponents = {
   text: TextComponent,
   skills: TagsList,
   details: ProjectDetails,
+  open_positions: ProjectOpenPositions,
 };
 
 const ProjectFormField = ({
@@ -29,19 +31,22 @@ const ProjectFormField = ({
     image_url: string;
   }[];
 }) => {
-  const {fieldTitle, fieldDescription, fieldType} = formField;
+  const {fieldTitle, fieldDescription, fieldType, layout = "row"} = formField;
 
   const InputComponent = fieldComponents[fieldType as keyof typeof fieldComponents];
 
+  const isColumnLayout = layout === "column";
+
   return (
-    <div className="flex max-[990px]:flex-col justify-between items-start gap-8 max-[990px]:gap-3">
-      <div className="flex flex-col gap-[1px] w-full max-w-[285px]">
+    <div
+      className={`flex ${isColumnLayout ? "flex-col" : "max-[990px]:flex-col"} justify-between items-start ${isColumnLayout ? "gap-3" : "gap-8 max-[990px]:gap-3"}`}>
+      <div className={`flex flex-col gap-[1px] w-full ${isColumnLayout ? "" : "max-w-[285px]"}`}>
         <p className="font-medium text-foreground text-sm">{fieldTitle}</p>
         {fieldDescription && (
           <p className="text-muted-foreground text-xs break-words">{fieldDescription}</p>
         )}
       </div>
-      <div className="w-full min-[990px]:max-w-[652px]">
+      <div className={`w-full ${isColumnLayout ? "" : "min-[990px]:max-w-[652px]"}`}>
         <InputComponent
           project={project}
           id={formField.fieldInputProps?.[0]?.id ?? ""}
