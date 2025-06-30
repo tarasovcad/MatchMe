@@ -4,7 +4,94 @@ import {projectStages} from "./projectStages";
 
 export const projectCreationFormFields = [
   {
+    formTitle: "Let’s bring your project to life!",
+    formDescription:
+      "Tell us a bit about what you're building, how others can join, and what makes your project exciting.",
+    formData: [
+      {
+        fieldTitle: "Name",
+        fieldType: "text",
+        fieldRequired: true,
+        fieldInputProps: [
+          {
+            id: "name",
+            placeholder: "AI-Powered Language Tutor",
+            type: "text",
+            name: "name",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Slug",
+        fieldType: "slug",
+        fieldRequired: true,
+        fieldDescription: "Used to identify the project in the URL",
+        fieldInputProps: [
+          {
+            id: "slug",
+            placeholder: "ai-language-tutor",
+            type: "text",
+            name: "slug",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Tagline",
+        fieldType: "text",
+        fieldRequired: true,
+        fieldDescription: "A short tagline that describes the project",
+        fieldInputProps: [
+          {
+            id: "tagline",
+            placeholder: "A platform for learning and growing together",
+            type: "text",
+            name: "tagline",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Image",
+        fieldType: "image",
+        fieldRequired: false,
+        fieldDescription: "This image will represent your project to others.",
+        fieldInputProps: [
+          {
+            id: "project_image",
+            name: "project_image",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "Project Details",
+    formDescription: "Provide more details about your project vision and goals.",
+    formData: [
+      {
+        fieldTitle: "Description",
+        fieldType: "textarea",
+        fieldRequired: true,
+        fieldDescription: "Explain the vision, goals, and scope of the project",
+        fieldInputProps: [
+          {
+            id: "description",
+            placeholder: "Write a description for your project",
+            type: "text",
+            name: "description",
+          },
+        ],
+      },
+    ],
+  },
+  // Additional steps can be added here
+] as FormProps[];
+
+// Keep the full form fields for reference or future use
+export const allProjectCreationFormFields = [
+  {
     formTitle: "Project Basics",
+    formDescription:
+      "Tell us a bit about what you're building, how others can join, and what makes your project exciting.",
     formData: [
       {
         fieldTitle: "Name",
@@ -147,132 +234,4 @@ export const projectCreationFormFields = [
       },
     ],
   },
-  // {
-  //   formTitle: "Collaboration & Roles",
-  //   formData: [
-  //     {
-  //       fieldTitle: "Collaboration Model",
-  //       fieldType: "select",
-  //       fieldRequired: true,
-  //       fieldDescription: "Choose the collaboration model that best fits your project",
-  //       fieldInputProps: [
-  //         {
-  //           id: "collaborationModel",
-  //           type: "text",
-  //           placeholder: "Select a collaboration model",
-  //           name: "collaborationModel",
-  //           options: [
-  //             {title: "Collaboration"},
-  //             {title: "Partnership"},
-  //             {title: "Internship Collaboration"},
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       fieldTitle: "Engagement Model",
-  //       fieldType: "dropdown",
-  //       fieldRequired: true,
-  //       fieldDescription: "Choose the engagement model that best fits your project",
-  //       fieldInputProps: [
-  //         {
-  //           id: "engagementModel",
-  //           type: "text",
-  //           placeholder: "Select an engagement model",
-  //           name: "engagementModel",
-  //           options: [{title: "Part-time"}, {title: "Full-time"}, {title: "Contract-based"}],
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       fieldTitle: "Working Hours",
-  //       fieldType: "slider",
-  //       fieldRequired: true,
-  //       fieldDescription: "How many hours do you expect to work per week?",
-  //       fieldInputProps: [
-  //         {
-  //           id: "workingHours",
-  //           name: "workingHours",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       fieldTitle: "Availability",
-  //       fieldType: "select",
-  //       fieldRequired: true,
-  //       fieldDescription: "Choose the availability that best fits your project",
-  //       fieldInputProps: [
-  //         {
-  //           id: "availability",
-  //           type: "text",
-  //           placeholder: "Select an availability",
-  //           name: "availability",
-  //           options: [
-  //             {title: "Open for applications"},
-  //             {title: "Limited spots"},
-  //             {title: "Closed"},
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   formTitle: "Funding & Compensation",
-  //   formData: [
-  //     {
-  //       fieldTitle: "Revenue Expectations",
-  //       fieldType: "text",
-  //       fieldRequired: true,
-  //       fieldDescription: "What is your project's revenue expectation?",
-  //       fieldInputProps: [
-  //         {
-  //           id: "revenueExpectations",
-  //           type: "text",
-  //           placeholder: "Expected earnings/revenue goals",
-  //           name: "revenueExpectations",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       fieldTitle: "Funding Model",
-  //       fieldType: "select",
-  //       fieldRequired: true,
-  //       fieldDescription: "Choose the funding model that best fits your project",
-  //       fieldInputProps: [
-  //         {
-  //           id: "fundingModel",
-  //           type: "text",
-  //           placeholder: "Select a funding model",
-  //           name: "fundingModel",
-  //           options: [
-  //             {title: "Self-funded"},
-  //             {title: "Bootstrapped"},
-  //             {title: "Looking for Investors"},
-  //           ],
-  //         },
-  //       ],
-  //     },
-
-  //     {
-  //       fieldTitle: "Compensation Model",
-  //       fieldType: "select",
-  //       fieldRequired: true,
-  //       fieldDescription: "Choose the compensation model that best fits your project",
-  //       fieldInputProps: [
-  //         {
-  //           id: "compensationModel",
-  //           type: "text",
-  //           placeholder: "Select a compensation model",
-  //           name: "compensationModel",
-  //           options: [
-  //             {title: "Equity-based"},
-  //             {title: "Profit-share"},
-  //             {title: "Fixed salary after funding"},
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
 ] as FormProps[];

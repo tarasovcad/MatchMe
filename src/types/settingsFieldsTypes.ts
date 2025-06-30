@@ -40,6 +40,7 @@ export interface FormFieldProps {
 
 export interface FormProps {
   formTitle: string;
+  formDescription: string;
   formData: FormFieldProps[];
 }
 

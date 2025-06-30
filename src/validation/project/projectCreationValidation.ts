@@ -1,11 +1,13 @@
 import {languages} from "@/data/forms/(settings)/languages";
 import {projectCategories} from "@/data/forms/create-project/projectCategories";
 import {projectStages} from "@/data/forms/create-project/projectStages";
+import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
 
 const allowedStages = new Set(projectStages.map((value) => value.title));
 const allowedCategories = new Set(projectCategories.map((cat) => cat.title));
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
+
 export const projectCreationValidationSchema = z.object({
   name: z
     .string()
@@ -21,6 +23,9 @@ export const projectCreationValidationSchema = z.object({
     .max(40, {message: "Slug must not exceed 40 characters"})
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
       message: "Slug must be lowercase and can include hyphens (e.g., my-project-name)",
+    })
+    .refine((slug) => !RESERVED_PROJECT_SLUGS.includes(slug.toLowerCase()), {
+      message: "This slug is reserved and cannot be used",
     }),
   tagline: z
     .string()
@@ -86,6 +91,8 @@ export const projectCreationValidationSchema = z.object({
     )
     .min(1, {message: "At least one skill is required"})
     .max(15, {message: "Skills must be at most 15 tags"}),
+  // Hidden field to track slug loading state
+  _slugLoading: z.boolean().optional(),
 });
 
 export type ProjectCreationFormData = z.infer<typeof projectCreationValidationSchema>;

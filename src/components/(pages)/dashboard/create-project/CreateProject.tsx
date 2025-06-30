@@ -15,13 +15,24 @@ import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {toast} from "sonner";
 import {createProject} from "@/actions/dashboard/create-project/createProject";
 import Alert from "@/components/ui/Alert";
+import CreateProjectFormButtons from "./CreateProjectFormButtons";
+import {useSidebar} from "@/components/shadcn/sidebar";
+import {AnimatePresence, motion} from "framer-motion";
 
 const MAX_PROJECTS = 3;
 
+const stepRequiredFields = {
+  1: ["name", "slug", "tagline"],
+  2: ["description"],
+};
+
 const CreateProject = ({projectCount}: {projectCount: number}) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = projectCreationFormFields.length;
   const hasReachedLimit = projectCount >= MAX_PROJECTS;
-  const router = useRouter();
+  const {state: sidebarState, isMobile} = useSidebar();
+
   const methods = useForm<ProjectCreationFormData>({
     resolver: zodResolver(projectCreationValidationSchema),
     mode: "onChange",
@@ -39,47 +50,73 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       why_join: "",
       language_proficiency: [],
       technology_stack: [],
+      _slugLoading: false,
     },
   });
 
-  const onSubmit = async (data: ProjectCreationFormData) => {
-    if (hasReachedLimit) {
-      toast.error(`You cannot create more than ${MAX_PROJECTS} projects`);
-      console.log(`You cannot create more than ${MAX_PROJECTS} projects`);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const response = await createProject(data);
-      if (response.error) {
-        console.log("Error creating project:", response.error);
-        toast.error(response.message);
-        setIsLoading(false);
-        return;
-      }
-      toast.success(response.message);
+  const {
+    formState: {errors},
+    watch,
+    trigger,
+  } = methods;
 
-      if (response.error === false) {
-        router.push("/dashboard?tab=projects");
-      }
-    } catch (error) {
-      console.log("error", error);
-    }
-    setIsLoading(false);
+  // Watch all form values to check if required fields are filled
+  const watchedValues = watch();
+
+  // Check if current step is valid
+  const isCurrentStepValid = async () => {
+    const fieldsToValidate = stepRequiredFields[currentStep as keyof typeof stepRequiredFields];
+    if (!fieldsToValidate) return true;
+
+    // Trigger validation for current step fields
+    const result = await trigger(fieldsToValidate as (keyof ProjectCreationFormData)[]);
+    return result;
   };
 
-  const handleSave = () => {
-    if (hasReachedLimit) {
-      toast.error(`You cannot create more than ${MAX_PROJECTS} projects`);
-      console.log(`You cannot create more than ${MAX_PROJECTS} projects`);
-      return;
-    }
-    methods.handleSubmit(onSubmit)();
+  // Check if there are any errors for current step
+  const hasCurrentStepErrors = () => {
+    const fieldsToCheck = stepRequiredFields[currentStep as keyof typeof stepRequiredFields];
+    if (!fieldsToCheck) return false;
+
+    return fieldsToCheck.some((fieldName) => {
+      return errors[fieldName as keyof typeof errors];
+    });
   };
 
-  const handleCancel = () => {
-    methods.reset();
+  // Check if all required fields for current step are filled and valid
+  const canContinueToNextStep = () => {
+    const fieldsToCheck = stepRequiredFields[currentStep as keyof typeof stepRequiredFields];
+    if (!fieldsToCheck) return true;
+
+    // Check if slug is currently loading (disable button during validation)
+    const isSlugLoading = watchedValues._slugLoading === true;
+    if (isSlugLoading) return false;
+
+    // Check if all required fields have values
+    const allFieldsFilled = fieldsToCheck.every((fieldName) => {
+      const value = watchedValues[fieldName as keyof ProjectCreationFormData];
+      return value && value.toString().trim() !== "";
+    });
+
+    // Check if there are no errors for current step (including custom slug errors)
+    const noErrors = !hasCurrentStepErrors();
+
+    return allFieldsFilled && noErrors;
   };
+
+  const handleNext = async () => {
+    const isValid = await isCurrentStepValid();
+    if (isValid && !hasCurrentStepErrors()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  // Get current step data
+  const currentStepData = projectCreationFormFields[currentStep - 1];
 
   return (
     <div>
@@ -91,37 +128,81 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
             type="warning"
           />
         )}
-        <PageTitle
-          title="Create Project"
-          hasArrow
-          subtitle="Track your followers, posts, and projects all in one place"
-          onClick={() => redirect("/dashboard?tab=projects")}
-        />
+
         <FormProvider {...methods}>
-          {projectCreationFormFields.map((formFields, index) => (
-            <div
-              key={formFields.formTitle}
-              className={`flex flex-col gap-9 max-[990px]:gap-8 ${
-                index !== 0 && "border-t border-border pt-6"
-              }`}>
-              <h4 className="font-semibold text-foreground text-xl">{formFields.formTitle}</h4>
-              <div className="flex flex-col gap-6">
-                {formFields.formData.map((formField) => (
-                  <div key={formField.fieldTitle}>
-                    <CreateProjectFormField formField={formField} />
-                  </div>
-                ))}
+          {/* Display only current step */}
+          <div className="flex flex-col gap-9 max-[990px]:gap-8">
+            <div className="flex flex-col items-start gap-[22px]">
+              <div className="border border-border rounded-[18px] py-1.5 px-2 flex items-center gap-1 font-medium text-sm">
+                {Array.from({length: totalSteps}).map((_, index) => {
+                  const stepNumber = index + 1;
+                  const isActive = currentStep === stepNumber;
+
+                  return (
+                    <div key={index} className="relative">
+                      <AnimatePresence>
+                        {isActive && (
+                          <motion.div
+                            layoutId="step-background"
+                            className="absolute inset-0 bg-primary rounded-full"
+                            initial={false}
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 30,
+                              duration: 0.3,
+                            }}
+                          />
+                        )}
+                      </AnimatePresence>
+
+                      <motion.div
+                        className={`relative z-10 flex items-center justify-center rounded-full font-medium transition-colors duration-200 ${
+                          isActive
+                            ? "text-white text-[15px] px-[9px] py-[2.5px]"
+                            : "size-[23px] text-foreground/80"
+                        }`}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 25,
+                          duration: 0.2,
+                        }}>
+                        {isActive ? `Step ${stepNumber}` : stepNumber}
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <h4 className="font-semibold text-foreground/90 text-[22px]">
+                  {currentStepData.formTitle}
+                </h4>
+                <p className="text-muted-foreground text-[15px]">
+                  {currentStepData.formDescription}
+                </p>
               </div>
             </div>
-          ))}
+
+            <div className="flex flex-col gap-6">
+              {currentStepData.formData.map((formField) => (
+                <div key={formField.fieldTitle}>
+                  <CreateProjectFormField formField={formField} />
+                </div>
+              ))}
+            </div>
+          </div>
         </FormProvider>
       </form>
-      <div className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
-        <FormMainButtons
+      <div
+        className={`right-0 bottom-0 ${!isMobile && sidebarState === "expanded" ? "pl-[calc(256px+24px)]" : !isMobile && sidebarState === "collapsed" ? "pl-[calc(48px+24px)]" : ""} left-0 z-[5] fixed flex justify-between items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border`}>
+        <CreateProjectFormButtons
           isLoading={isLoading}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          isDisabled={hasReachedLimit}
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          handleNext={handleNext}
+          handleBack={handleBack}
+          canContinue={canContinueToNextStep()}
         />
       </div>
     </div>
