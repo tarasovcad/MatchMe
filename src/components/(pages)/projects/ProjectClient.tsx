@@ -25,6 +25,9 @@ import {projectFormFields} from "@/data/forms/projects/projectFormFields";
 import ProjectFormField from "./ProjectFormField";
 import ProjectImageSlider from "./ProjectImageSlider";
 import ProjectTabs from "./ProjectTabs";
+import ProjectTagsSection from "./ProjectTagsSection";
+import ProjectShareSection from "./ProjectShareSection";
+import ProjectSimilarSection from "./ProjectSimilarSection";
 
 const options = [
   {
@@ -96,17 +99,6 @@ const ProjectClient = ({
                     Revolutionizing cancer diagnosis with AI-powered precision
                   </p>
                 </div>
-                {/* social links */}
-                {/* <ProfileSocialLinks
-                  user={{
-                    social_links_1_platform: "github.com/",
-                    social_links_1: "example",
-                    social_links_2_platform: "linkedin.com/",
-                    social_links_2: "in/example",
-                    social_links_3_platform: "x.com/",
-                    social_links_3: "example",
-                  }}
-                /> */}
               </div>
             </div>
             <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
@@ -146,6 +138,9 @@ const ProjectClient = ({
               </div>
             ))}
             <ProjectTabs />
+            <ProjectTagsSection />
+            <ProjectShareSection />
+            <ProjectSimilarSection />
           </div>
         </div>
       </div>

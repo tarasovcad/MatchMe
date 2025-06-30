@@ -35,20 +35,14 @@ import ExpandedDescription from "../profiles/ExpandedDescription";
 type Job = {
   id: number;
   title: string;
-  department: string;
-  location: string;
-  type: string;
-  deadline: string;
   shortDescription: string;
   fullDescription: string;
   requirements: string[];
   requiredSkills: string[];
-  benefits: string;
   applicantCount: number;
   compensation: string;
   collaborationType: string;
   timeCommitment: string;
-  schedule: string;
   postedBy: {
     username: string;
     avatar: string;
@@ -60,10 +54,6 @@ const jobs: Job[] = [
   {
     id: 1,
     title: "Software Engineer",
-    department: "Engineering and Technology",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    deadline: "20 days from now",
     shortDescription:
       "Join our tech team as a Software Engineer, where you will develop, test, and maintain high-quality software applications. You should have experience with modern programming languages and frameworks.",
     fullDescription:
@@ -72,13 +62,10 @@ const jobs: Job[] = [
       "3+ years of software development experience\nProficiency in React, Node.js, and TypeScript\nExperience with database design and optimization\nKnowledge of cloud platforms (AWS, GCP, or Azure)\nUnderstanding of software architecture patterns\nExperience with agile development methodologies",
     ],
     requiredSkills: ["React", "Node.js", "TypeScript", "AWS", "GCP", "Azure"],
-    benefits:
-      "Competitive salary and stock options\nTop-tier health benefits\nFlexible working arrangements\nLearning and development budget\nLatest technology and equipment\nCollaborative and innovative work environment",
     applicantCount: 42,
     compensation: "Voluntary",
     collaborationType: "Full-time",
     timeCommitment: "8 hour shift • Friday to Monday • Weekends",
-    schedule: "Hiring multiple candidates",
     postedBy: {
       username: "techleader",
       avatar:
@@ -91,40 +78,6 @@ const jobs: Job[] = [
 const ProjectOpenPositions = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [hoveredJobId, setHoveredJobId] = useState<number | null>(null);
-
-  const skills = [
-    {
-      name: "React",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/react.svg",
-    },
-    {
-      name: "Nextjs",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/nextjs.svg",
-    },
-    {
-      name: "Java",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/java.svg",
-    },
-    {
-      name: "JavaScript",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/javascript.svg",
-    },
-    {
-      name: "C++",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/c-plusplus.svg",
-    },
-    {
-      name: "C",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/c.svg",
-    },
-    {
-      name: "Ruby",
-      image_url: "https://d32crm5i3cn4pm.cloudfront.net/skills-image/ruby.svg",
-    },
-    {
-      name: "S3 Buckets",
-    },
-  ];
 
   return (
     <div className="@container w-full">
@@ -281,8 +234,7 @@ const ProjectOpenPositions = () => {
                             <DialogDescription asChild>
                               <div className="p-6 space-y-6">
                                 {/* Job details section */}
-
-                                {/* <div className="space-y-2">
+                                <div className="space-y-2">
                                   <div className="border border-border/80 rounded-lg">
                                     <div className="flex items-center gap-3 text-sm">
                                       <div className="flex items-center gap-2 border-r border-border/80 pr-4 py-1.5 px-2 text-secondary min-w-[165px]">
@@ -309,7 +261,20 @@ const ProjectOpenPositions = () => {
                                       </span>
                                     </div>
                                   </div>
-                                </div> */}
+                                  <div className="border border-border/80 rounded-lg">
+                                    <div className="flex items-center gap-3 text-sm">
+                                      <div className="flex items-center gap-2 border-r border-border/80 pr-4 py-1.5 px-2 text-secondary min-w-[165px]">
+                                        <Clock size={16} className="text-foreground/60" />
+                                        <span className="text-sm whitespace-nowrap">
+                                          Experience Level
+                                        </span>
+                                      </div>
+                                      <span className="text-foreground whitespace-nowrap">
+                                        Intermediate
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
                                 {/* Full description */}
                                 <div className="space-y-2">
                                   <h3 className="font-medium text-[15px] text-foreground">
@@ -322,25 +287,25 @@ const ProjectOpenPositions = () => {
 
                                 {/* Requirements */}
                                 <div className="space-y-2">
-                                  <h3 className="font-semibold text-foreground">Requirements</h3>
+                                  <h3 className="font-medium text-[15px] text-foreground">
+                                    Requirements
+                                  </h3>
                                   <p className="text-secondary text-sm leading-relaxed whitespace-pre-line">
                                     {job.requirements}
                                   </p>
                                 </div>
 
                                 <div className="space-y-2">
-                                  <h3 className="font-semibold text-foreground">Required skills</h3>
+                                  <h3 className="font-medium text-[15px] text-foreground">
+                                    Required skills
+                                  </h3>
                                   <div className="pt-1">
-                                    <TagsList skills={skills} />
+                                    <TagsList
+                                      skills={job.requiredSkills.map((skill) => ({
+                                        name: skill,
+                                      }))}
+                                    />
                                   </div>
-                                </div>
-
-                                {/* Benefits */}
-                                <div className="space-y-2">
-                                  <h3 className="font-medium text-foreground">What we offer</h3>
-                                  <p className="text-secondary text-sm leading-relaxed whitespace-pre-line ">
-                                    {job.benefits}
-                                  </p>
                                 </div>
                               </div>
                             </DialogDescription>

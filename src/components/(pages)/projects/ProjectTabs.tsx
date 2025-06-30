@@ -1,12 +1,13 @@
-import {motion} from "framer-motion";
+import {motion, AnimatePresence} from "framer-motion";
 import {useState} from "react";
 import ProjectOpenPositions from "./ProjectOpenPositions";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import {Button} from "@/components/shadcn/button";
 import {Filter} from "lucide-react";
+import ProjectTeamMembers from "./ProjectTeamMembers";
 
 export default function ProjectTabs() {
-  const [activeTab, setActiveTab] = useState("open-positions");
+  const [activeTab, setActiveTab] = useState("team-members");
 
   const tabs = [
     {value: "open-positions", label: "Open Positions"},
@@ -23,9 +24,12 @@ export default function ProjectTabs() {
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                className={`relative rounded-none border-b border-border py-3 transition-colors duration-200 cursor-pointer hover:bg-muted/50 flex items-center ${
+                disabled={tab.value === "posts"}
+                className={`relative rounded-none border-b border-border py-3 transition-colors duration-200 cursor-pointer hover:bg-muted/50 flex items-center disabled:pointer-events-none disabled:opacity-50 ${
                   index === 0 ? "px-0 pr-2" : "px-4.5"
-                } ${activeTab === tab.value ? "bg-transparent shadow-none" : ""}`}>
+                } ${activeTab === tab.value ? "bg-transparent shadow-none" : ""}
+
+                `}>
                 <motion.span
                   className="relative z-10 text-[15px] flex items-center font-medium"
                   initial={{opacity: 0.7}}
@@ -79,23 +83,41 @@ export default function ProjectTabs() {
       </div>
 
       <div className="w-full">
-        {activeTab === "open-positions" && (
-          <div className="w-full pt-2">
-            <ProjectOpenPositions />
-          </div>
-        )}
-        {activeTab === "team-members" && (
-          <div className="w-full">
-            <p className="text-muted-foreground p-4 text-center text-xs">
-              Content for Team Members
-            </p>
-          </div>
-        )}
-        {activeTab === "posts" && (
-          <div className="w-full">
-            <p className="text-muted-foreground p-4 text-center text-xs">Content for Posts</p>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {activeTab === "open-positions" && (
+            <motion.div
+              key="open-positions"
+              initial={{opacity: 0, y: 20}}
+              animate={{opacity: 1, y: 0}}
+              exit={{opacity: 0, y: -20}}
+              transition={{duration: 0.15, ease: "easeInOut"}}
+              className="w-full pt-2">
+              <ProjectOpenPositions />
+            </motion.div>
+          )}
+          {activeTab === "team-members" && (
+            <motion.div
+              key="team-members"
+              initial={{opacity: 0, y: 20}}
+              animate={{opacity: 1, y: 0}}
+              exit={{opacity: 0, y: -20}}
+              transition={{duration: 0.15, ease: "easeInOut"}}
+              className="w-full">
+              <ProjectTeamMembers />
+            </motion.div>
+          )}
+          {activeTab === "posts" && (
+            <motion.div
+              key="posts"
+              initial={{opacity: 0, y: 20}}
+              animate={{opacity: 1, y: 0}}
+              exit={{opacity: 0, y: -20}}
+              transition={{duration: 0.15, ease: "easeInOut"}}
+              className="w-full">
+              <p className="text-muted-foreground p-4 text-center text-xs">Content for Posts</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
