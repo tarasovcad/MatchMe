@@ -28,8 +28,9 @@ const stepRequiredFields = {
 
 const CreateProject = ({projectCount}: {projectCount: number}) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = projectCreationFormFields.length;
+  const [currentStep, setCurrentStep] = useState(2);
+  // const totalSteps = projectCreationFormFields.length;
+  const totalSteps = 5;
   const hasReachedLimit = projectCount >= MAX_PROJECTS;
   const {state: sidebarState, isMobile} = useSidebar();
 
@@ -37,19 +38,22 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
     resolver: zodResolver(projectCreationValidationSchema),
     mode: "onChange",
     defaultValues: {
+      // 1 step
       name: "",
       slug: "",
       tagline: "",
-      description: "",
       project_image: "",
       project_image_metadata: null,
       background_image: "",
       background_image_metadata: null,
-      current_stage: "",
-      category: "",
+      // 2 step
+      description: "",
       why_join: "",
-      language_proficiency: [],
-      technology_stack: [],
+      project_website: "",
+      category: "",
+      current_stage: "",
+      target_audience: "",
+      demo: [],
       _slugLoading: false,
     },
   });

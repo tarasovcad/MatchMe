@@ -9,6 +9,7 @@ const allowedCategories = new Set(projectCategories.map((cat) => cat.title));
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
 
 export const projectCreationValidationSchema = z.object({
+  // 1 step
   name: z
     .string()
     .min(3, {message: "Project name must be at least 3 characters long"})
@@ -31,10 +32,6 @@ export const projectCreationValidationSchema = z.object({
     .string()
     .min(5, "Tagline must be at least 5 characters")
     .max(70, "Tagline must not exceed 70 characters"),
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters")
-    .max(1500, "Description must not exceed 1500 characters"),
   project_image: z.string().optional(),
   project_image_metadata: z
     .object({
@@ -53,7 +50,32 @@ export const projectCreationValidationSchema = z.object({
     })
     .nullable()
     .optional(),
-
+  // 2 step
+  description: z
+    .string()
+    .min(20, "Description must be at least 20 characters")
+    .max(1500, "Description must not exceed 1500 characters"),
+  why_join: z.string().max(1000, "Why join must not exceed 1000 characters"),
+  project_website: z
+    .string()
+    .trim()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        try {
+          const url = new URL(val);
+          return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(url.hostname);
+        } catch {
+          return false;
+        }
+      },
+      {message: "Please enter a valid website URL with a proper domain"},
+    )
+    .refine((val) => !/[A-Z]/.test(val), {
+      message: "The URL should not contain uppercase letters",
+    })
+    .optional()
+    .or(z.literal("")),
   category: z
     .string()
     .min(1, {message: "Category is required"})
@@ -63,7 +85,19 @@ export const projectCreationValidationSchema = z.object({
   current_stage: z.string().refine((val) => allowedStages.has(val), {
     message: "Please select a valid project stage",
   }),
-  why_join: z.string().max(1000, "Why join must not exceed 1000 characters"),
+  target_audience: z.string(),
+  demo: z.array(z.string()),
+  demo_metadata: z
+    .array(
+      z.object({
+        id: z.string(),
+        url: z.string(),
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+      }),
+    )
+    .optional(),
   language_proficiency: z
     .array(
       z

@@ -29,6 +29,13 @@ const FILE_CONFIG = {
   MAX_NAME_LENGTH: 50,
 };
 
+interface ImageData {
+  url: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
 export interface ImageUploadProps {
   name: string; // Form field name
   type?: "avatar" | "background";
@@ -37,6 +44,7 @@ export interface ImageUploadProps {
   circularCrop?: boolean; // Whether to use circular crop (default: true for avatar)
   initialCropWidth?: number; // Initial crop width in percent (default: 90%)
   cropInstructions?: string; // Custom instructions for crop dialog
+  maxUploads?: number; // Maximum number of uploads (default: 1, max: 5)
 }
 
 const SettingsProfilePhoto = ({
@@ -47,11 +55,11 @@ const SettingsProfilePhoto = ({
   circularCrop = type === "avatar",
   initialCropWidth = 90,
   cropInstructions = "Adjust the size of the grid to crop your image.",
+  maxUploads = 1,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,27 +71,21 @@ const SettingsProfilePhoto = ({
   const imgRef = useRef<HTMLImageElement>(null);
 
   const {setValue, watch} = useFormContext();
-  const selectedValue = watch(name);
+  const selectedValues = watch(name) as ImageData[] | undefined;
 
-  const metadataName = name + "_metadata";
-
-  const imageMetadata = watch(metadataName) as {
-    fileName: string | undefined;
-    fileSize: number | undefined;
-    uploadedAt: string | undefined;
-  };
+  // Ensure maxUploads is between 1 and 5
+  const validMaxUploads = Math.min(Math.max(maxUploads, 1), 5);
 
   useEffect(() => {
-    if (selectedValue === "") {
+    if (!selectedValues || selectedValues.length === 0) {
       setFile(null);
       setFileName(null);
       setFileSize(null);
       setImageSrc("");
-      setPreviewUrl(null);
       setCrop(undefined);
       setCompletedCrop(undefined);
     }
-  }, [selectedValue]);
+  }, [selectedValues]);
 
   const handleDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -146,16 +148,14 @@ const SettingsProfilePhoto = ({
     setFileSize(selectedFile.size);
   }, []);
 
-  const handleDeleteFile = () => {
-    setFile(null);
-    setFileName(null);
-    setFileSize(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-    setValue(name, "", {shouldDirty: true});
-    setValue(metadataName, null, {shouldDirty: true});
+  const handleDeleteFile = (index: number) => {
+    const currentImages = selectedValues || [];
+    const updatedImages = currentImages.filter((_, i) => i !== index);
+    setValue(name, updatedImages, {shouldDirty: true});
+  };
+
+  const handleDeleteAllFiles = () => {
+    setValue(name, [], {shouldDirty: true});
   };
 
   const handleDrop = useCallback(
@@ -182,16 +182,9 @@ const SettingsProfilePhoto = ({
     if (files && files.length) {
       handleFiles(files);
     }
+    // Clear the input value to allow re-uploading the same file
+    e.target.value = "";
   };
-
-  // Clean up the object URL when component unmounts or when file changes
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   const handleClose = () => setIsOpen(false);
 
@@ -232,17 +225,35 @@ const SettingsProfilePhoto = ({
   const handleApply = async () => {
     if (imgRef.current && completedCrop?.width && completedCrop.height) {
       const croppedImageUrl = getCroppedImg(imgRef.current, completedCrop);
-      setPreviewUrl(croppedImageUrl);
-      setValue(name, croppedImageUrl, {shouldDirty: true});
-      setValue(
-        metadataName,
-        {
-          fileName: fileName,
-          fileSize: fileSize,
-          uploadedAt: new Date().toISOString(),
-        },
-        {shouldDirty: true},
+
+      const newImageData: ImageData = {
+        url: croppedImageUrl,
+        fileName: fileName || "",
+        fileSize: fileSize || 0,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      const currentImages = selectedValues || [];
+      let updatedImages: ImageData[];
+
+      // Check if a file with the same name already exists
+      const existingImageIndex = currentImages.findIndex(
+        (img) => img.fileName === newImageData.fileName,
       );
+
+      if (existingImageIndex !== -1) {
+        // Replace the existing image with the same filename
+        updatedImages = [...currentImages];
+        updatedImages[existingImageIndex] = newImageData;
+      } else if (currentImages.length >= validMaxUploads) {
+        // Replace the last image if we've reached the max and no duplicate found
+        updatedImages = [...currentImages.slice(0, -1), newImageData];
+      } else {
+        // Add the new image
+        updatedImages = [...currentImages, newImageData];
+      }
+
+      setValue(name, updatedImages, {shouldDirty: true});
       setIsOpen(false);
     }
   };
@@ -295,14 +306,14 @@ const SettingsProfilePhoto = ({
     return canvas.toDataURL("image/jpeg", 1);
   }
 
-  const renderPreview = () => {
-    if ((previewUrl || selectedValue) && type === "avatar") {
+  const renderPreview = (imageData: ImageData, index: number) => {
+    if (type === "avatar") {
       // Avatar with image
       return (
-        <div className="ring-border rounded-full ring size-10">
+        <div key={index} className="ring-border rounded-full ring size-10 shrink-0">
           <Image
-            src={previewUrl || selectedValue}
-            alt={"avatar"}
+            src={imageData.url}
+            alt={`avatar ${index + 1}`}
             width={40}
             height={40}
             unoptimized
@@ -310,24 +321,24 @@ const SettingsProfilePhoto = ({
           />
         </div>
       );
-    } else if ((previewUrl || selectedValue) && type === "background") {
+    } else if (type === "background") {
       // Background with image
       return (
-        <>
-          <div className="ring-border rounded-[4px]">
-            <Image
-              src={previewUrl || selectedValue}
-              alt={"background"}
-              width={114}
-              height={40}
-              unoptimized
-              className="rounded-[4px] w-[114px] h-[40px] object-cover"
-            />
-          </div>
-        </>
+        <div key={index} className="ring-border rounded-[4px] shrink-0">
+          <Image
+            src={imageData.url}
+            alt={`background ${index + 1}`}
+            width={114}
+            height={40}
+            unoptimized
+            className="rounded-[4px] w-[114px] h-[40px] object-cover"
+          />
+        </div>
       );
     }
   };
+
+  const currentImages = selectedValues || [];
 
   return (
     <>
@@ -366,31 +377,47 @@ const SettingsProfilePhoto = ({
             </p>
             <p className="text-[12px] text-secondary text-xs">
               SVG, PNG and JPG formats, up to 5MB
+              {validMaxUploads > 1 && ` (${currentImages.length}/${validMaxUploads} uploaded)`}
             </p>
           </div>
         </div>
-        {(previewUrl || selectedValue) && (
-          <div className="flex justify-between items-center gap-2 bg-background p-2 pe-3 border rounded-lg">
-            <div className="relative flex items-center gap-3 overflow-hidden">
-              {renderPreview()}
-              <div className="flex flex-col gap-0.5">
-                <p className="font-medium text-[13px] truncate">
-                  {fileName || imageMetadata.fileName}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {formatFileSize(fileSize || imageMetadata.fileSize || 0)}
-                </p>
-              </div>
-            </div>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              className="hover:bg-transparent -me-2 size-8 text-muted-foreground/80 hover:text-foreground"
-              onClick={handleDeleteFile}
-              aria-label="Remove file">
-              <XIcon aria-hidden="true" size={16} />
-            </Button>
+        {currentImages.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {currentImages.map((imageData, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center gap-2 bg-background p-2 pe-3 border rounded-lg">
+                <div className="relative flex items-center gap-3 overflow-hidden">
+                  {renderPreview(imageData, index)}
+                  <div className="flex flex-col gap-0.5">
+                    <p className="font-medium text-[13px] truncate">{imageData.fileName}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {formatFileSize(imageData.fileSize)}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="hover:bg-transparent -me-2 size-8 text-muted-foreground/80 hover:text-foreground"
+                  onClick={() => handleDeleteFile(index)}
+                  aria-label={`Remove file ${index + 1}`}>
+                  <XIcon aria-hidden="true" size={16} />
+                </Button>
+              </div>
+            ))}
+
+            {validMaxUploads > 1 && currentImages.length > 1 && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={handleDeleteAllFiles}
+                className="self-start">
+                Remove all
+              </Button>
+            )}
           </div>
         )}
       </div>
