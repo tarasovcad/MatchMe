@@ -50,10 +50,8 @@ const AccountTab = ({
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
-    profile_image: profile.profile_image ?? "",
-    profile_image_metadata: profile.profile_image_metadata ?? undefined,
-    background_image: profile.background_image ?? "",
-    background_image_metadata: profile.background_image_metadata ?? undefined,
+    profile_image: profile.profile_image ?? [],
+    background_image: profile.background_image ?? [],
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
@@ -90,7 +88,7 @@ const AccountTab = ({
 
   // Get the form state to check for errors
   const {formState} = methods;
-
+  console.log(formValues);
   useEffect(() => {
     // Filter initialValues to only include properties that are defined, so no empty values are included
     const cleanInitialValues = pickBy(initialValues, (value) => value !== undefined);
@@ -102,7 +100,16 @@ const AccountTab = ({
     // Compare cleaned values to determine if form has changed
     const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
 
-    setIsDisabled(!hasChanged || !formState.isValid);
+    // Special check for image arrays - if they go from empty to having content, that's a change
+    const imageArraysChanged =
+      ((!initialValues.profile_image || initialValues.profile_image.length === 0) &&
+        formValues.profile_image &&
+        formValues.profile_image.length > 0) ||
+      ((!initialValues.background_image || initialValues.background_image.length === 0) &&
+        formValues.background_image &&
+        formValues.background_image.length > 0);
+
+    setIsDisabled(!(hasChanged || imageArraysChanged) || !formState.isValid);
   }, [formValues, initialValues, formState.isValid, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {

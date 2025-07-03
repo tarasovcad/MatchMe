@@ -1,11 +1,9 @@
-import {CloudAdd} from "iconsax-react";
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
 import {cn} from "@/lib/utils";
 import {useFormContext} from "react-hook-form";
-import {Tooltip, TooltipContent, TooltipTrigger} from "../../shadcn/tooltip";
 import {Button} from "../../shadcn/button";
-import {ImageIcon, TrashIcon, XIcon} from "lucide-react";
+import {ImageIcon, XIcon} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,14 +16,11 @@ import Image from "next/image";
 import {Separator} from "../../shadcn/separator";
 import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import {getNameInitials} from "@/functions/getNameInitials";
-import Avatar from "boring-avatars";
 import {formatFileSize} from "@/functions/formatFileSize";
 
 const FILE_CONFIG = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB in bytes
-  ALLOWED_FILE_TYPES: ["image/jpeg", "image/png", "image/svg+xml", "image/heif", "image/heic"],
-  ALLOWED_FILE_EXTENSIONS: [".jpeg", ".jpg", ".png", ".svg", ".heif", ".heic"],
+  ALLOWED_FILE_TYPES: ["image/jpeg", "image/png", "image/svg+xml", "image/webp"],
   MAX_NAME_LENGTH: 50,
 };
 
@@ -38,16 +33,76 @@ interface ImageData {
 
 export interface ImageUploadProps {
   name: string; // Form field name
-  type?: "avatar" | "background";
+  type?: "avatar" | "background" | "demo";
   aspectRatio?: number; // Crop aspect ratio (default: 1 for square)
   containerClassName?: string; // Additional container classes
   circularCrop?: boolean; // Whether to use circular crop (default: true for avatar)
   initialCropWidth?: number; // Initial crop width in percent (default: 90%)
   cropInstructions?: string; // Custom instructions for crop dialog
   maxUploads?: number; // Maximum number of uploads (default: 1, max: 5)
+  allowedFileTypes?: string[]; // Allowed file types
 }
 
-const SettingsProfilePhoto = ({
+const getReadableFormatNames = (mimeTypes: string[]): string => {
+  const formatMap: Record<string, string> = {
+    "image/jpeg": "JPG",
+    "image/png": "PNG",
+    "image/svg+xml": "SVG",
+    "image/webp": "WEBP",
+  };
+
+  const formats = mimeTypes.map(
+    (type) => formatMap[type] || type.replace("image/", "").toUpperCase(),
+  );
+
+  if (formats.length <= 2) {
+    return formats.join(" and ");
+  } else {
+    return formats.slice(0, -1).join(", ") + " and " + formats[formats.length - 1];
+  }
+};
+
+// Helper function to convert MIME types to file extensions for the accept attribute
+const getFileExtensionsFromMimeTypes = (mimeTypes: string[]): string => {
+  const mimeToExtensionMap: Record<string, string[]> = {
+    "image/jpeg": [".jpeg", ".jpg"],
+    "image/png": [".png"],
+    "image/svg+xml": [".svg"],
+    "image/webp": [".webp"],
+  };
+
+  const extensions: string[] = [];
+  mimeTypes.forEach((mimeType) => {
+    const exts = mimeToExtensionMap[mimeType];
+    if (exts) {
+      extensions.push(...exts);
+    }
+  });
+
+  return extensions.join(",");
+};
+
+// Helper function to get file extensions array from MIME types for validation
+const getExtensionsArrayFromMimeTypes = (mimeTypes: string[]): string[] => {
+  const mimeToExtensionMap: Record<string, string[]> = {
+    "image/jpeg": [".jpeg", ".jpg"],
+    "image/png": [".png"],
+    "image/svg+xml": [".svg"],
+    "image/webp": [".webp"],
+  };
+
+  const extensions: string[] = [];
+  mimeTypes.forEach((mimeType) => {
+    const exts = mimeToExtensionMap[mimeType];
+    if (exts) {
+      extensions.push(...exts);
+    }
+  });
+
+  return extensions;
+};
+
+const ImageUpload = ({
   name,
   type = "avatar",
   aspectRatio = 1,
@@ -55,6 +110,7 @@ const SettingsProfilePhoto = ({
   circularCrop = type === "avatar",
   initialCropWidth = 90,
   cropInstructions = "Adjust the size of the grid to crop your image.",
+  allowedFileTypes = FILE_CONFIG.ALLOWED_FILE_TYPES,
   maxUploads = 1,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
@@ -115,10 +171,9 @@ const SettingsProfilePhoto = ({
     const fileExtension = "." + selectedFile.name.split(".").pop()?.toLowerCase();
     const numberOfSymbols = selectedFile.name.split(".")[0].length;
 
-    if (
-      !FILE_CONFIG.ALLOWED_FILE_TYPES.includes(fileType) &&
-      !FILE_CONFIG.ALLOWED_FILE_EXTENSIONS.includes(fileExtension)
-    ) {
+    const allowedExtensions = getExtensionsArrayFromMimeTypes(allowedFileTypes);
+
+    if (!allowedFileTypes.includes(fileType) && !allowedExtensions.includes(fileExtension)) {
       return {valid: false, error: "You cannot upload this file. File type is not supported"};
     }
 
@@ -263,9 +318,17 @@ const SettingsProfilePhoto = ({
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    // Set the canvas to the desired output size (1184 × 156 for background)
-    canvas.width = type === "background" ? 1184 : crop.width;
-    canvas.height = type === "background" ? 156 : crop.height;
+    // Set the canvas to the desired output size
+    if (type === "background") {
+      canvas.width = 1184;
+      canvas.height = 156;
+    } else if (type === "demo") {
+      canvas.width = 94;
+      canvas.height = 50;
+    } else {
+      canvas.width = crop.width;
+      canvas.height = crop.height;
+    }
 
     const ctx = canvas.getContext("2d");
 
@@ -316,6 +379,7 @@ const SettingsProfilePhoto = ({
             alt={`avatar ${index + 1}`}
             width={40}
             height={40}
+            quality={100}
             unoptimized
             className="rounded-full"
           />
@@ -331,7 +395,22 @@ const SettingsProfilePhoto = ({
             width={114}
             height={40}
             unoptimized
+            quality={100}
             className="rounded-[4px] w-[114px] h-[40px] object-cover"
+          />
+        </div>
+      );
+    } else if (type === "demo") {
+      return (
+        <div key={index} className="ring-border rounded-[4px] shrink-0">
+          <Image
+            src={imageData.url}
+            alt={`demo ${index + 1}`}
+            width={94}
+            height={40}
+            unoptimized
+            quality={100}
+            className="rounded-[4px] w-[94px] h-[40px] object-cover"
           />
         </div>
       );
@@ -361,7 +440,7 @@ const SettingsProfilePhoto = ({
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
-            accept={FILE_CONFIG.ALLOWED_FILE_EXTENSIONS.join(",")}
+            accept={getFileExtensionsFromMimeTypes(allowedFileTypes)}
           />
           <div
             className="flex justify-center items-center bg-background border rounded-full size-11 shrink-0"
@@ -376,7 +455,7 @@ const SettingsProfilePhoto = ({
               <span className="text-foreground/80">or drag and drop</span>
             </p>
             <p className="text-[12px] text-secondary text-xs">
-              SVG, PNG and JPG formats, up to 5MB
+              {getReadableFormatNames(allowedFileTypes)} formats, up to 5MB
               {validMaxUploads > 1 && ` (${currentImages.length}/${validMaxUploads} uploaded)`}
             </p>
           </div>
@@ -469,4 +548,4 @@ const SettingsProfilePhoto = ({
   );
 };
 
-export default SettingsProfilePhoto;
+export default ImageUpload;

@@ -64,6 +64,8 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
     trigger,
   } = methods;
 
+  console.log(methods.getValues());
+
   // Watch all form values to check if required fields are filled
   const watchedValues = watch();
 

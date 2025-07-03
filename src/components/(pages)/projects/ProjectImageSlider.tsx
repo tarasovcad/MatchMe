@@ -48,7 +48,7 @@ const ProjectImageSlider = ({demo}: {demo: string[]}) => {
           className="rounded-[6px] overflow-hidden border border-border"
           style={{
             width: "100%",
-            height: "clamp(400px, 20vw, 156px)",
+            height: "clamp(200px, 25vw, 500px)",
           }}>
           {demo.map((image, index) => (
             <SwiperSlide key={index}>

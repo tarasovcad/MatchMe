@@ -24,9 +24,9 @@ const ProfilesSinlgeCard = ({
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
-            {profile.profile_image ? (
+            {profile.profile_image && profile.profile_image.length > 0 ? (
               <Image
-                src={profile.profile_image}
+                src={profile.profile_image[0].url}
                 alt={`${profile.name} profile picture`}
                 width={42}
                 height={42}

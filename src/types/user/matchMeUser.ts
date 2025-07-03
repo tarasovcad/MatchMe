@@ -5,18 +5,22 @@ export interface MatchMeUser {
   email: string;
   pronouns: string | null;
   age: number | null;
-  profile_image: string | null;
-  background_image: string | null;
-  profile_image_metadata: {
-    fileName: string | undefined;
-    fileSize: number | undefined;
-    uploadedAt: string | undefined;
-  } | null;
-  background_image_metadata: {
-    fileName: string | undefined;
-    fileSize: number | undefined;
-    uploadedAt: string | undefined;
-  } | null;
+  profile_image:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
+  background_image:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
   looking_for: string | null;
   goal: string | null;
   tagline: string | null;

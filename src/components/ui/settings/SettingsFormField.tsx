@@ -102,7 +102,7 @@ const SettingsFormField = ({
           readOnly={fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
-          register={register(fieldName)}
+          register={fieldType === "image" ? undefined : register(fieldName)}
           error={errors[fieldName]}
           user={user!}
           mail={fieldInputProps[0].name === "email"}

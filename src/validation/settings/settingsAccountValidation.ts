@@ -176,23 +176,27 @@ export const settingsAccountValidationSchema = z.object({
         })
         .optional(),
     ),
-  profile_image: z.string().optional(),
-  profile_image_metadata: z
-    .object({
-      fileName: z.string().optional(),
-      fileSize: z.number().optional(),
-      uploadedAt: z.string().optional(),
-    })
-    .nullable()
+  profile_image: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+        url: z.string(),
+      }),
+    )
+    .max(1)
     .optional(),
-  background_image: z.string().optional(),
-  background_image_metadata: z
-    .object({
-      fileName: z.string().optional(),
-      fileSize: z.number().optional(),
-      uploadedAt: z.string().optional(),
-    })
-    .nullable()
+  background_image: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+        url: z.string(),
+      }),
+    )
+    .max(1)
     .optional(),
 });
 
