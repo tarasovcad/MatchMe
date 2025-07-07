@@ -6,6 +6,7 @@ const CreateProjectFormButtons = ({
   isLoading,
   handleNext,
   handleBack,
+  handleSubmit,
   currentStep,
   totalSteps,
   canContinue,
@@ -13,10 +14,13 @@ const CreateProjectFormButtons = ({
   isLoading: boolean;
   handleNext: () => void;
   handleBack: () => void;
+  handleSubmit: () => void;
   currentStep: number;
   totalSteps: number;
   canContinue: boolean;
 }) => {
+  const isLastStep = currentStep === totalSteps;
+
   return (
     <>
       <Button
@@ -32,10 +36,10 @@ const CreateProjectFormButtons = ({
       <Button
         variant={"secondary"}
         className="px-[25px] w-full max-w-[165.5px] transition-colors duration-300 ease-in-out"
-        disabled={isLoading || currentStep === totalSteps || !canContinue}
+        disabled={isLoading || !canContinue}
         isLoading={isLoading}
-        onClick={handleNext}>
-        Save and Continue
+        onClick={isLastStep ? handleSubmit : handleNext}>
+        {isLastStep ? "Submit" : "Save and Continue"}
       </Button>
     </>
   );

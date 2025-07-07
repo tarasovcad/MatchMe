@@ -69,7 +69,7 @@ export default function SelectInputWithSearch({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
+              "bg-background hover:bg-background border-input max-h-[36px]  w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               className,
@@ -88,10 +88,10 @@ export default function SelectInputWithSearch({
           className="p-0 border-input w-full min-w-[var(--radix-popper-anchor-width)]"
           align="start">
           <Command>
-            <CommandInput placeholder="Search options..." />
+            <CommandInput placeholder="Search options..." className="" />
             <CommandList>
               <CommandEmpty>No option found</CommandEmpty>
-              <CommandGroup>
+              <CommandGroup className="p-1">
                 {options.map((option, index) => (
                   <CommandItem
                     key={index}

@@ -1,17 +1,18 @@
 import {Link, Dice1, Dice2, Dice3, Dice4, Dice5, Dice6} from "lucide-react";
 import React, {useState, useEffect} from "react";
-import {FiFacebook, FiLinkedin} from "react-icons/fi";
-import {FaWhatsapp} from "react-icons/fa";
-import {TbBrandReddit} from "react-icons/tb";
-import {FaDev} from "react-icons/fa";
-import {DiHackernews} from "react-icons/di";
-import {FaXTwitter} from "react-icons/fa6";
+import ShareIcons from "@/components/other/ShareIcons";
 import {
   TooltipProvider,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+
+interface ProjectShareSectionProps {
+  projectUrl: string;
+  projectName: string;
+  projectTagline: string;
+}
 
 const AnimatedDice = ({size = 16, isRolling = false}: {size?: number; isRolling?: boolean}) => {
   const [currentDice, setCurrentDice] = useState(1);
@@ -57,7 +58,7 @@ const RandomDiceButton = ({tooltipText}: {tooltipText: string}) => {
     <Tooltip>
       <TooltipTrigger asChild>
         <div
-          className="cursor-pointer hover:-translate-y-1 transition-transform duration-200 text-foregroud/60 hover:text-foreground/90"
+          className="cursor-pointer hover:-translate-y-1 transition-transform duration-200 text-foreground/60 hover:text-foreground/90"
           onClick={handleClick}>
           <AnimatedDice size={16} isRolling={isRolling} />
         </div>
@@ -71,7 +72,11 @@ const RandomDiceButton = ({tooltipText}: {tooltipText: string}) => {
   );
 };
 
-const ProjectShareSection = () => {
+const ProjectShareSection = ({
+  projectUrl,
+  projectName,
+  projectTagline,
+}: ProjectShareSectionProps) => {
   return (
     <div className={`flex flex-col justify-between items-start gap-3`}>
       <div className={`flex flex-col gap-[1px] w-full`}>
@@ -86,7 +91,7 @@ const ProjectShareSection = () => {
                   <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200 ">
                     <Link
                       size={16}
-                      className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200"
+                      className="text-foreground/60 hover:text-foreground/90 transition-colors duration-200"
                     />
                   </div>
                 </TooltipTrigger>
@@ -104,78 +109,12 @@ const ProjectShareSection = () => {
             </div>
             <div className="flex items-center">
               <span className="text-sm font-medium text-secondary pr-[12px]">Share:</span>
-              <div className="flex shrink-0 items-center gap-3 ">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <FaXTwitter className="text-foregroud/60 hover:text-foreground/70 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on X (Twitter)</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <FiFacebook className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on Facebook</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <FaWhatsapp className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on WhatsApp</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <FiLinkedin className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on LinkedIn</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <TbBrandReddit className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on Reddit</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <DiHackernews className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4.5" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on Hacker News</span>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-                      <FaDev className="text-foregroud/60 hover:text-foreground/90 transition-colors duration-200 shrink-0 size-4" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-2 py-1">
-                    <span>Share on Dev.to</span>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <ShareIcons
+                size={16}
+                projectUrl={projectUrl}
+                projectName={projectName}
+                projectTagline={projectTagline}
+              />
             </div>
           </div>
         </div>

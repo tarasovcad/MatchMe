@@ -6,19 +6,19 @@ export type Project = {
   slug: string;
   tagline: string;
   description: string;
-  project_image: string;
-  project_image_metadata: {
+  project_image: {
     fileName: string;
     fileSize: number;
     uploadedAt: string;
-  };
+    url: string;
+  }[];
   demo: string[];
-  background_image: string;
-  background_image_metadata: {
+  background_image: {
     fileName: string;
     fileSize: number;
     uploadedAt: string;
-  };
+    url: string;
+  }[];
 
   category: string;
   current_stage: string;

@@ -1,12 +1,26 @@
 import {languages} from "@/data/forms/(settings)/languages";
 import {projectCategories} from "@/data/forms/create-project/projectCategories";
 import {projectStages} from "@/data/forms/create-project/projectStages";
+import {collaborationModels} from "@/data/forms/create-project/collaborationModels";
+import {engagementModels} from "@/data/forms/create-project/engagementModels";
+import {availabilityOptions} from "@/data/forms/create-project/availabilityOptions";
+import {revenueExpectations} from "@/data/forms/create-project/revenueExpectations";
+import {fundingInvestment} from "@/data/forms/create-project/fundingInvestment";
+import {compensationModels} from "@/data/forms/create-project/compensationModels";
 import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
 
 const allowedStages = new Set(projectStages.map((value) => value.title));
 const allowedCategories = new Set(projectCategories.map((cat) => cat.title));
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
+const allowedCollaborationModels = new Set(collaborationModels.map((model) => model.title));
+const allowedEngagementModels = new Set(engagementModels.map((model) => model.title));
+const allowedAvailabilityOptions = new Set(availabilityOptions.map((option) => option.title));
+const allowedRevenueExpectations = new Set(
+  revenueExpectations.map((expectation) => expectation.title),
+);
+const allowedFundingInvestment = new Set(fundingInvestment.map((funding) => funding.title));
+const allowedCompensationModels = new Set(compensationModels.map((model) => model.title));
 
 export const projectCreationValidationSchema = z.object({
   // 1 step
@@ -87,17 +101,6 @@ export const projectCreationValidationSchema = z.object({
   }),
   target_audience: z.string(),
   demo: z.array(z.string()),
-  demo_metadata: z
-    .array(
-      z.object({
-        id: z.string(),
-        url: z.string(),
-        fileName: z.string(),
-        fileSize: z.number(),
-        uploadedAt: z.string(),
-      }),
-    )
-    .optional(),
   language_proficiency: z
     .array(
       z
@@ -125,6 +128,58 @@ export const projectCreationValidationSchema = z.object({
     )
     .min(1, {message: "At least one skill is required"})
     .max(15, {message: "Skills must be at most 15 tags"}),
+  // 4 step
+  collaboration_model: z
+    .string()
+    .min(1, {message: "Collaboration model is required"})
+    .refine((val) => allowedCollaborationModels.has(val), {
+      message: "Please select a valid collaboration model",
+    }),
+  engagement_model: z
+    .string()
+    .min(1, {message: "Engagement model is required"})
+    .refine((val) => allowedEngagementModels.has(val), {
+      message: "Please select a valid engagement model",
+    }),
+  working_hours: z
+    .string()
+    .max(25, {message: "Working hours description must not exceed 25 characters"})
+    .optional()
+    .or(z.literal("")),
+  availability: z
+    .string()
+    .min(1, {message: "Availability is required"})
+    .refine((val) => allowedAvailabilityOptions.has(val), {
+      message: "Please select a valid availability option",
+    }),
+  community_platforms: z
+    .array(
+      z
+        .string()
+        .min(1, {message: "Each platform must be at least 1 character"})
+        .max(30, {message: "Each platform must be at most 30 characters"}),
+    )
+    .max(10, {message: "Communication tools must be at most 10 items"})
+    .optional(),
+  // 5 step
+  revenue_expectations: z
+    .string()
+    .min(1, {message: "Revenue expectations is required"})
+    .refine((val) => allowedRevenueExpectations.has(val), {
+      message: "Please select a valid revenue expectation",
+    }),
+  funding_investment: z
+    .string()
+    .min(1, {message: "Funding & investment status is required"})
+    .refine((val) => allowedFundingInvestment.has(val), {
+      message: "Please select a valid funding status",
+    }),
+  compensation_model: z
+    .string()
+    .min(1, {message: "Compensation model is required"})
+    .refine((val) => allowedCompensationModels.has(val), {
+      message: "Please select a valid compensation model",
+    }),
   // Hidden field to track slug loading state
   _slugLoading: z.boolean().optional(),
 });

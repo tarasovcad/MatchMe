@@ -2,10 +2,16 @@ import {FormProps} from "@/types/settingsFieldsTypes";
 import {projectCategories} from "./projectCategories";
 import {projectStages} from "./projectStages";
 import {projectTargetAudiences} from "@/data/projects/projectTargetAudiences";
+import {collaborationModels} from "./collaborationModels";
+import {engagementModels} from "./engagementModels";
+import {availabilityOptions} from "./availabilityOptions";
+import {revenueExpectations} from "./revenueExpectations";
+import {fundingInvestment} from "./fundingInvestment";
+import {compensationModels} from "./compensationModels";
 
 export const projectCreationFormFields = [
   {
-    formTitle: "Let’s bring your project to life!",
+    formTitle: "Let's bring your project to life!",
     formDescription:
       "Tell us a bit about what you're building, how others can join, and what makes your project exciting.",
     formData: [
@@ -66,7 +72,7 @@ export const projectCreationFormFields = [
   },
   {
     formTitle: "Tell Your Story & Define Your Space",
-    formDescription: "Share what your project is all about, why it matters, and who it’s for",
+    formDescription: "Share what your project is all about, why it matters, and who it's for",
     formData: [
       {
         fieldTitle: "Description",
@@ -163,6 +169,170 @@ export const projectCreationFormFields = [
           {
             id: "demo",
             name: "demo",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "What Skills Power Your Project?",
+    formDescription: "Choose the technologies and languages your project is built with",
+    formData: [
+      {
+        fieldTitle: "Language Proficiency",
+        fieldType: "tags",
+        fieldRequired: true,
+        fieldDescription: "What languages should teammates be proficient in?",
+        fieldInputProps: [
+          {
+            id: "language_proficiency",
+            type: "text",
+            placeholder: "Add a language",
+            name: "language_proficiency",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Technology Stack",
+        fieldType: "tags",
+        fieldRequired: true,
+        fieldDescription: "Technologies being used in the project",
+        fieldInputProps: [
+          {
+            id: "technology_stack",
+            type: "text",
+            placeholder: "Add a technology",
+            name: "technology_stack",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "How Will Your Team Work Together?",
+    formDescription: "Define your team's structure, commitment, and communication preferences",
+    formData: [
+      {
+        fieldTitle: "Collaboration Model",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "How will team members collaborate on this project?",
+        fieldInputProps: [
+          {
+            id: "collaboration_model",
+            type: "text",
+            placeholder: "Select collaboration model",
+            name: "collaboration_model",
+            options: collaborationModels,
+          },
+        ],
+      },
+      {
+        fieldTitle: "Engagement Model",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "How do you envision team members engaging with the project?",
+        fieldInputProps: [
+          {
+            id: "engagement_model",
+            type: "text",
+            placeholder: "Select engagement model",
+            name: "engagement_model",
+            options: engagementModels,
+          },
+        ],
+      },
+      {
+        fieldTitle: "Time Commitment",
+        fieldType: "text",
+        fieldRequired: false,
+        fieldDescription: "Specify the expected weekly time commitment for team members",
+        fieldInputProps: [
+          {
+            id: "working_hours",
+            type: "text",
+            placeholder: "2 days per week",
+            name: "working_hours",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Availability",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "Current availability status for new team members",
+        fieldInputProps: [
+          {
+            id: "availability",
+            type: "text",
+            placeholder: "Select availability",
+            name: "availability",
+            options: availabilityOptions,
+          },
+        ],
+      },
+      {
+        fieldTitle: "Communication Tools",
+        fieldType: "tags",
+        fieldRequired: false,
+        fieldDescription: "Tools your team uses for communication (Slack, Discord, etc.)",
+        fieldInputProps: [
+          {
+            id: "community_platforms",
+            type: "text",
+            placeholder: "Add a communication tool",
+            name: "community_platforms",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "Compensation & Funding",
+    formDescription: "Define the financial aspects and compensation structure for your project",
+    formData: [
+      {
+        fieldTitle: "Revenue Expectations",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "What are your revenue expectations for this project?",
+        fieldInputProps: [
+          {
+            id: "revenue_expectations",
+            type: "text",
+            placeholder: "Select revenue expectation",
+            name: "revenue_expectations",
+            options: revenueExpectations,
+          },
+        ],
+      },
+      {
+        fieldTitle: "Funding & Investment",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "What's your current funding situation?",
+        fieldInputProps: [
+          {
+            id: "funding_investment",
+            type: "text",
+            placeholder: "Select funding status",
+            name: "funding_investment",
+            options: fundingInvestment,
+          },
+        ],
+      },
+      {
+        fieldTitle: "Compensation Model",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "How will team members be compensated?",
+        fieldInputProps: [
+          {
+            id: "compensation_model",
+            type: "text",
+            placeholder: "Select compensation model",
+            name: "compensation_model",
+            options: compensationModels,
           },
         ],
       },
