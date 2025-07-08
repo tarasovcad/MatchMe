@@ -342,50 +342,86 @@ const ImageUpload = ({
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    // Set the canvas to the desired output size
+    // Calculate the actual crop dimensions in the original image
+    const cropWidth = crop.width * scaleX;
+    const cropHeight = crop.height * scaleY;
+
+    // Set canvas to high-quality dimensions based on type, but maintain aspect ratio
+    let canvasWidth: number;
+    let canvasHeight: number;
+
     if (type === "background") {
-      canvas.width = 1184;
-      canvas.height = 156;
+      // High quality background: maintain aspect ratio but ensure good resolution
+      const targetAspectRatio = 1184 / 156;
+      const cropAspectRatio = cropWidth / cropHeight;
+
+      if (cropAspectRatio > targetAspectRatio) {
+        canvasWidth = Math.min(cropWidth, 2368); // 2x the target for high quality
+        canvasHeight = canvasWidth / targetAspectRatio;
+      } else {
+        canvasHeight = Math.min(cropHeight, 312); // 2x the target for high quality
+        canvasWidth = canvasHeight * targetAspectRatio;
+      }
     } else if (type === "demo") {
-      canvas.width = 94;
-      canvas.height = 50;
+      // High quality demo: maintain aspect ratio but ensure good resolution
+      const targetAspectRatio = 94 / 50;
+      const cropAspectRatio = cropWidth / cropHeight;
+
+      if (cropAspectRatio > targetAspectRatio) {
+        canvasWidth = Math.min(cropWidth, 376); // 4x the target for high quality
+        canvasHeight = canvasWidth / targetAspectRatio;
+      } else {
+        canvasHeight = Math.min(cropHeight, 200); // 4x the target for high quality
+        canvasWidth = canvasHeight * targetAspectRatio;
+      }
     } else if (type === "project") {
-      canvas.width = 64;
-      canvas.height = 64;
+      // High quality project: square aspect ratio
+      const maxDimension = Math.min(Math.max(cropWidth, cropHeight), 256); // 4x the target for high quality
+      canvasWidth = maxDimension;
+      canvasHeight = maxDimension;
     } else {
-      canvas.width = crop.width;
-      canvas.height = crop.height;
+      // For avatar and other types, use the full crop dimensions for maximum quality
+      canvasWidth = cropWidth;
+      canvasHeight = cropHeight;
     }
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
-      const aspectRatio = crop.width / crop.height;
-      const targetAspectRatio = canvas.width / canvas.height;
+      // Enable high-quality image rendering
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // Calculate scaling to fit the crop into the canvas while maintaining aspect ratio
+      const cropAspectRatio = cropWidth / cropHeight;
+      const canvasAspectRatio = canvasWidth / canvasHeight;
 
       let drawWidth,
         drawHeight,
         offsetX = 0,
         offsetY = 0;
 
-      if (aspectRatio > targetAspectRatio) {
-        // Crop is wider than target, scale to match height
-        drawHeight = canvas.height;
-        drawWidth = crop.width * scaleX * (drawHeight / (crop.height * scaleY));
-        offsetX = (canvas.width - drawWidth) / 2;
+      if (cropAspectRatio > canvasAspectRatio) {
+        // Crop is wider than canvas, scale to match width
+        drawWidth = canvasWidth;
+        drawHeight = canvasWidth / cropAspectRatio;
+        offsetY = (canvasHeight - drawHeight) / 2;
       } else {
-        // Crop is taller than target, scale to match width
-        drawWidth = canvas.width;
-        drawHeight = crop.height * scaleY * (drawWidth / (crop.width * scaleX));
-        offsetY = (canvas.height - drawHeight) / 2;
+        // Crop is taller than canvas, scale to match height
+        drawHeight = canvasHeight;
+        drawWidth = canvasHeight * cropAspectRatio;
+        offsetX = (canvasWidth - drawWidth) / 2;
       }
 
       ctx.drawImage(
         image,
         crop.x * scaleX,
         crop.y * scaleY,
-        crop.width * scaleX,
-        crop.height * scaleY,
+        cropWidth,
+        cropHeight,
         offsetX,
         offsetY,
         drawWidth,

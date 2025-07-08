@@ -85,7 +85,7 @@ const AccountTab = ({
   });
   // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
-
+  console.log(methods.formState.errors);
   // Get the form state to check for errors
   const {formState} = methods;
   console.log(formValues);
@@ -113,6 +113,7 @@ const AccountTab = ({
   }, [formValues, initialValues, formState.isValid, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
+    console.log("submitting");
     setIsLoading(true);
     try {
       const socialLinkFields = [
@@ -142,6 +143,17 @@ const AccountTab = ({
         return result;
       }, {} as Partial<SettingsAccountFormData>);
 
+      // Special handling for image fields: if one image field changes, include both to prevent nullification
+      const imageFieldsChanged =
+        changedValues.profile_image !== undefined || changedValues.background_image !== undefined;
+
+      if (imageFieldsChanged) {
+        // Always include both image fields if either one has changed
+        changedValues.profile_image = data.profile_image;
+        changedValues.background_image = data.background_image;
+      }
+
+      console.log(changedValues);
       // Only make an API call if there are actual changes to submit
       if (Object.keys(changedValues).length > 0) {
         const response = await submitAccountForm(changedValues);

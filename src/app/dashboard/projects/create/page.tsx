@@ -11,7 +11,7 @@ const page = async () => {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <div>userSession not logged in</div>;
+    return <div>User is not logged in</div>;
   }
 
   const {count: projectCount, error} = await supabase

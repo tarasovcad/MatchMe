@@ -5,7 +5,9 @@ import {
   isUserFavorite,
 } from "@/actions/profiles/singleUserProfile";
 import {trackProfileVisit} from "@/actions/profiles/trackProfileVisit";
+import BackgroundImageViewer from "@/components/(pages)/profiles/BackgroundImageViewer";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
+import ProfileImageViewer from "@/components/(pages)/profiles/ProfileImageViewer";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
 import FollowUserButton from "@/components/follows/FollowUserButton";
@@ -14,11 +16,9 @@ import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {profileFormFields} from "@/data/forms/profile/profileFormFields";
 import {formatNumber} from "@/functions/formatNumber";
-import {getNameInitials} from "@/functions/getNameInitials";
 import {cn} from "@/lib/utils";
 import SidebarProvider from "@/providers/SidebarProvider";
 import {createClient} from "@/utils/supabase/server";
-import Avatar from "boring-avatars";
 import {Messages2} from "iconsax-react";
 import Image from "next/image";
 import React from "react";
@@ -57,28 +57,15 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
 
     return (
       <SidebarProvider removePadding>
-        {user.background_image && user.background_image.length > 0 ? (
-          <Image
-            src={user.background_image[0].url}
-            unoptimized
-            alt={user.name}
-            width={0}
-            height={0}
-            sizes="100vw"
-            className="rounded-[6px] rounded-t-none w-full object-cover"
-            style={{
-              width: "100%",
-              height: "clamp(130px, 20vw, 156px)",
-            }}
-          />
-        ) : (
-          <div
-            className="bg-gray-200 rounded-[6px] rounded-t-none w-full"
-            style={{
-              width: "100%",
-              height: "clamp(130px, 20vw, 156px)",
-            }}></div>
-        )}
+        <BackgroundImageViewer
+          backgroundImage={user.background_image}
+          name={user.name}
+          className="bg-gray-200 rounded-[6px] rounded-t-none w-full object-cover"
+          style={{
+            width: "100%",
+            height: "clamp(130px, 20vw, 156px)",
+          }}
+        />
 
         <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
           <div className="flex flex-col gap-6">
@@ -93,33 +80,17 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                 isFavorite={isFavorite}
               />
               <div className="flex max-[1130px]:flex-col gap-3">
-                {user.profile_image && user.profile_image.length > 0 ? (
-                  <Image
-                    src={user.profile_image[0].url}
-                    alt={user.name}
-                    width={125}
-                    height={125}
-                    className="-mt-9 border-4 border-background rounded-full shrink-0"
-                    loading="eager"
-                    style={{
-                      width: "clamp(100px, 10vw, 125px)",
-                      height: "clamp(100px, 10vw, 125px)",
-                    }}
-                    unoptimized
-                  />
-                ) : (
-                  <Avatar
-                    name={getNameInitials(user.name)}
-                    width={125}
-                    height={125}
-                    className="-mt-9 border-4 border-background rounded-full shrink-0"
-                    style={{
-                      width: "clamp(100px, 10vw, 125px)",
-                      height: "clamp(100px, 10vw, 125px)",
-                    }}
-                    variant="beam"
-                  />
-                )}
+                <ProfileImageViewer
+                  profileImage={user.profile_image}
+                  name={user.name}
+                  width={125}
+                  height={125}
+                  className="-mt-9 border-4 border-background rounded-full shrink-0"
+                  style={{
+                    width: "clamp(100px, 10vw, 125px)",
+                    height: "clamp(100px, 10vw, 125px)",
+                  }}
+                />
                 <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
                   {/* name and verified */}
                   <div className="flex flex-col gap-[6px]">
