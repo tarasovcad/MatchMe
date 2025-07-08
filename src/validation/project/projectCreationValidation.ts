@@ -10,6 +10,31 @@ import {compensationModels} from "@/data/forms/create-project/compensationModels
 import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
 
+// Common spam patterns to prevent
+const SPAM_PATTERNS = [
+  /^(.)\1{4,}$/, // 5+ repeated characters (aaaaa, 11111)
+  /^(..)\1{2,}$/, // 3+ repeated pairs (abababab)
+  /^(123+|abc+|qwerty+|asdf+|test+|demo+|sample+)$/i,
+  /^\d+$/, // Only numbers
+  /^[!@#$%^&*()]+$/, // Only special characters
+];
+
+// Validation helpers
+const hasRepeatedChars = (str: string): boolean => {
+  return /(.)\1{3,}/.test(str); // 4+ consecutive identical chars
+};
+
+const hasVariety = (str: string): boolean => {
+  const cleanStr = str.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+  const uniqueChars = new Set(cleanStr).size;
+  return uniqueChars >= Math.min(3, Math.ceil(cleanStr.length / 3));
+};
+
+const isSpamPattern = (str: string): boolean => {
+  const cleanStr = str.toLowerCase().trim();
+  return SPAM_PATTERNS.some((pattern) => pattern.test(cleanStr));
+};
+
 const allowedStages = new Set(projectStages.map((value) => value.title));
 const allowedCategories = new Set(projectCategories.map((cat) => cat.title));
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
@@ -23,15 +48,24 @@ const allowedFundingInvestment = new Set(fundingInvestment.map((funding) => fund
 const allowedCompensationModels = new Set(compensationModels.map((model) => model.title));
 
 export const projectCreationValidationSchema = z.object({
-  // 1 step
+  // 1 step - Enhanced validations
   name: z
     .string()
+    .trim()
     .min(3, {message: "Project name must be at least 3 characters long"})
     .max(40, {message: "Project name must not exceed 40 characters"})
     .regex(/^[a-zA-Z0-9\s\-_]+$/, {
       message: "Only letters, numbers, spaces, dashes, and underscores are allowed",
     })
-    .trim(),
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Project name cannot have more than 3 consecutive identical characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Project name must contain at least 3 different characters",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please choose a more meaningful project name",
+    }),
   slug: z
     .string()
     .min(3, {message: "Slug must be at least 3 characters long"})
@@ -39,21 +73,102 @@ export const projectCreationValidationSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
       message: "Slug must be lowercase and can include hyphens (e.g., my-project-name)",
     })
+    .refine((val) => !hasRepeatedChars(val.replace(/-/g, "")), {
+      message: "Slug cannot have repetitive patterns",
+    })
+    .refine((val) => hasVariety(val.replace(/-/g, "")), {
+      message: "Slug must be more unique and varied",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please choose a more meaningful slug",
+    })
     .refine((slug) => !RESERVED_PROJECT_SLUGS.includes(slug.toLowerCase()), {
       message: "This slug is reserved and cannot be used",
     }),
   tagline: z
     .string()
-    .min(5, "Tagline must be at least 5 characters")
-    .max(70, "Tagline must not exceed 70 characters"),
-  project_image: z.string(),
-  background_image: z.string(),
-  // 2 step
+    .min(10, "Tagline must be at least 10 characters")
+    .max(70, "Tagline must not exceed 70 characters")
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Tagline cannot have repetitive characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Tagline must be descriptive with varied content",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please write a meaningful tagline describing your project",
+    })
+    .refine((val) => val.split(" ").length >= 2, {
+      message: "Tagline should contain at least 2 words",
+    })
+    .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Tagline cannot be all uppercase",
+    }),
+  project_image: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+        url: z.string(),
+      }),
+    )
+    .max(1)
+    .optional(),
+  background_image: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+        url: z.string(),
+      }),
+    )
+    .max(1)
+    .optional(),
+  // 2 step - Enhanced validations
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters")
-    .max(1500, "Description must not exceed 1500 characters"),
-  why_join: z.string().max(1000, "Why join must not exceed 1000 characters"),
+    .trim()
+    .min(50, "Description must be at least 50 characters")
+    .max(1500, "Description must not exceed 1500 characters")
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Description cannot have repetitive characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Description must contain diverse and meaningful content",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please write a genuine description of your project",
+    })
+    .refine((val) => val.split(" ").length >= 8, {
+      message: "Description should be more detailed (at least 8 words)",
+    })
+    .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Description cannot be all uppercase",
+    }),
+  why_join: z
+    .string()
+    .trim()
+    .min(20, "Why join must be at least 20 characters")
+    .max(1000, "Why join must not exceed 1000 characters")
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Why join cannot have repetitive characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Why join must contain meaningful and varied content",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please explain genuine reasons to join your project",
+    })
+    .refine((val) => val.split(" ").length >= 5, {
+      message: "Why join should be more descriptive (at least 5 words)",
+    })
+    .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Why join cannot be all uppercase",
+    })
+    .optional()
+    .or(z.literal("")),
   project_website: z
     .string()
     .trim()
@@ -85,10 +200,12 @@ export const projectCreationValidationSchema = z.object({
   }),
   target_audience: z.string(),
   demo: z.array(z.string()),
+  // 3 step
   language_proficiency: z
     .array(
       z
         .string()
+        .trim()
         .min(2, {message: "Each language must be at least 2 characters"})
         .max(30, {message: "Each language must be at most 30 characters"})
         .regex(/^[A-Za-z]+$/, {
@@ -98,16 +215,29 @@ export const projectCreationValidationSchema = z.object({
           message: "Language must be one of the supported languages",
         }),
     )
-    .max(15, {message: "Languages must be at most 15 tags"})
-    .optional(),
+    .min(1, {message: "At least one language is required"})
+    .max(15, {message: "Languages must be at most 15 tags"}),
   technology_stack: z
     .array(
       z
         .string()
-        .min(1, {message: "Each skill must be at least 1 character"})
-        .max(30, {message: "Each skill must be at most 30 characters"})
-        .regex(/^[A-Za-z0-9#+\-*/ ]+$/, {
-          message: "Skills can only contain letters, numbers, hyphens, #, +, and / symbols",
+        .trim()
+        .min(1, {message: "Each technology must be at least 1 character"})
+        .max(30, {message: "Each technology must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9#+.\-*/ ]+$/, {
+          message: "Technologies can contain letters, numbers, and common symbols (# + . - * /)",
+        })
+        .refine((val) => !hasRepeatedChars(val), {
+          message: "Technology names cannot have repetitive characters",
+        })
+        .refine((val) => !isSpamPattern(val), {
+          message: "Please enter valid technology names only",
+        })
+        .refine((val) => !/^[0-9]+$/.test(val), {
+          message: "Technology names cannot be only numbers",
+        })
+        .refine((val) => hasVariety(val), {
+          message: "Technology names must be meaningful and varied",
         }),
     )
     .min(1, {message: "At least one skill is required"})
@@ -127,7 +257,20 @@ export const projectCreationValidationSchema = z.object({
     }),
   working_hours: z
     .string()
-    .max(25, {message: "Working hours description must not exceed 25 characters"})
+    .trim()
+    .max(50, {message: "Working hours description must not exceed 50 characters"})
+    .refine((val) => !val || !hasRepeatedChars(val), {
+      message: "Working hours cannot have repetitive characters",
+    })
+    .refine((val) => !val || hasVariety(val), {
+      message: "Working hours description must be meaningful",
+    })
+    .refine((val) => !val || !isSpamPattern(val), {
+      message: "Please provide a genuine time commitment description",
+    })
+    .refine((val) => !val || !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Working hours cannot be all uppercase",
+    })
     .optional()
     .or(z.literal("")),
   availability: z
@@ -140,8 +283,24 @@ export const projectCreationValidationSchema = z.object({
     .array(
       z
         .string()
+        .trim()
         .min(1, {message: "Each platform must be at least 1 character"})
-        .max(30, {message: "Each platform must be at most 30 characters"}),
+        .max(30, {message: "Each platform must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9\s\-_+.]+$/, {
+          message: "Platform names can only contain letters, numbers, spaces, and common symbols",
+        })
+        .refine((val) => !hasRepeatedChars(val), {
+          message: "Platform names cannot have repetitive characters",
+        })
+        .refine((val) => hasVariety(val), {
+          message: "Platform names must be meaningful and varied",
+        })
+        .refine((val) => !isSpamPattern(val), {
+          message: "Please enter valid communication platform names",
+        })
+        .refine((val) => !/^[0-9]+$/.test(val), {
+          message: "Platform names cannot be only numbers",
+        }),
     )
     .max(10, {message: "Communication tools must be at most 10 items"})
     .optional(),

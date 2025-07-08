@@ -15,6 +15,8 @@ import CreateProjectFormButtons from "./CreateProjectFormButtons";
 import {useSidebar} from "@/components/shadcn/sidebar";
 import {AnimatePresence, motion} from "framer-motion";
 import ProjectSuccessStep from "./ProjectSuccessStep";
+import {toast} from "sonner";
+import {createProject} from "@/actions/dashboard/create-project/createProject";
 
 const MAX_PROJECTS = 3;
 
@@ -23,6 +25,28 @@ const stepRequiredFields = {
   2: ["description", "category", "current_stage"],
   3: ["language_proficiency", "technology_stack"],
   4: ["collaboration_model", "engagement_model", "availability"],
+  5: ["revenue_expectations", "funding_investment", "compensation_model"],
+};
+
+const stepAllFields = {
+  1: ["name", "slug", "tagline", "project_image", "background_image"],
+  2: [
+    "description",
+    "why_join",
+    "project_website",
+    "category",
+    "current_stage",
+    "target_audience",
+    "demo",
+  ],
+  3: ["language_proficiency", "technology_stack"],
+  4: [
+    "collaboration_model",
+    "engagement_model",
+    "working_hours",
+    "availability",
+    "community_platforms",
+  ],
   5: ["revenue_expectations", "funding_investment", "compensation_model"],
 };
 
@@ -42,8 +66,8 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       name: "",
       slug: "",
       tagline: "",
-      project_image: "",
-      background_image: "",
+      project_image: [],
+      background_image: [],
       // 2 step
       description: "",
       why_join: "",
@@ -65,7 +89,7 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       revenue_expectations: "",
       funding_investment: "",
       compensation_model: "",
-
+      // Internal fields
       _slugLoading: false,
     },
   });
@@ -101,23 +125,27 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
 
   // Check if all required fields for current step are filled and valid
   const canContinueToNextStep = () => {
-    const fieldsToCheck = stepRequiredFields[currentStep as keyof typeof stepRequiredFields];
-    if (!fieldsToCheck) return true;
+    const requiredFields = stepRequiredFields[currentStep as keyof typeof stepRequiredFields];
+    const allStepFields = stepAllFields[currentStep as keyof typeof stepAllFields];
+
+    if (!requiredFields || !allStepFields) return true;
 
     // Check if slug is currently loading (disable button during validation)
     const isSlugLoading = watchedValues._slugLoading === true;
     if (isSlugLoading) return false;
 
     // Check if all required fields have values
-    const allFieldsFilled = fieldsToCheck.every((fieldName) => {
+    const allRequiredFieldsFilled = requiredFields.every((fieldName) => {
       const value = watchedValues[fieldName as keyof ProjectCreationFormData];
       return value && value.toString().trim() !== "";
     });
 
-    // Check if there are no errors for current step (including custom slug errors)
-    const noErrors = !hasCurrentStepErrors();
+    // Check if there are no errors in ANY field for the current step (including optional fields)
+    const noCurrentStepErrors = allStepFields.every((fieldName) => {
+      return !errors[fieldName as keyof typeof errors];
+    });
 
-    return allFieldsFilled && noErrors;
+    return allRequiredFieldsFilled && noCurrentStepErrors;
   };
 
   const handleNext = async () => {
@@ -133,17 +161,20 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
 
   // Handle form submission
   const handleSubmit = async () => {
-    console.log("Form submitted with data:", methods.getValues());
-
+    const toastId = toast.loading("Creating project...");
     setIsLoading(true);
-
-    // Simulate API call with 3 seconds loading
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
+    const response = await createProject(methods.getValues());
+    if (response.error) {
+      toast.error(response.message, {id: toastId});
+      setIsLoading(false);
+      return;
+    } else {
+      toast.success(response.message, {id: toastId});
+    }
     setIsLoading(false);
 
-    // Wait 1 second before showing success step
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Wait 500ms before showing success step
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     setIsSubmitted(true);
     setCurrentStep(6); // Move to success step
@@ -249,7 +280,7 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
             handleNext={handleNext}
             handleBack={handleBack}
             handleSubmit={handleSubmit}
-            canContinue={canContinueToNextStep()}
+            canContinue={canContinueToNextStep() && !hasReachedLimit}
           />
         </div>
       )}

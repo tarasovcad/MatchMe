@@ -91,6 +91,13 @@ export class CdkStack extends cdk.Stack {
         resources: [`${matchmeBucket.bucketArn}/project-backgrounds/*`],
       }),
 
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.ArnPrincipal("arn:aws:iam::975050145455:user/s3-image-admin")],
+        resources: [`${matchmeBucket.bucketArn}/project-demo-images/*`],
+      }),
+
       // Allow public read access to `user-avatars/` folder
       new iam.PolicyStatement({
         actions: ["s3:GetObject"],
@@ -129,6 +136,14 @@ export class CdkStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         principals: [new iam.AnyPrincipal()],
         resources: [`${matchmeBucket.bucketArn}/skills-image/*`],
+      }),
+
+      // Allow public read access to `demo-images/` folder
+      new iam.PolicyStatement({
+        actions: ["s3:GetObject"],
+        effect: iam.Effect.ALLOW,
+        principals: [new iam.AnyPrincipal()],
+        resources: [`${matchmeBucket.bucketArn}/project-demo-images/*`],
       }),
     );
 

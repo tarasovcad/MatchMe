@@ -22,7 +22,7 @@ export const projectCreationFormFields = [
         fieldInputProps: [
           {
             id: "name",
-            placeholder: "AI-Powered Language Tutor",
+            placeholder: "Smart Recipe Assistant",
             type: "text",
             name: "name",
           },
@@ -36,7 +36,7 @@ export const projectCreationFormFields = [
         fieldInputProps: [
           {
             id: "slug",
-            placeholder: "ai-language-tutor",
+            placeholder: "smart-recipe-assistant",
             type: "text",
             name: "slug",
           },
@@ -46,11 +46,11 @@ export const projectCreationFormFields = [
         fieldTitle: "Tagline",
         fieldType: "text",
         fieldRequired: true,
-        fieldDescription: "A short tagline that describes the project",
+        fieldDescription: "Write a compelling description that explains what your project does",
         fieldInputProps: [
           {
             id: "tagline",
-            placeholder: "A platform for learning and growing together",
+            placeholder: "AI-powered cooking companion for healthy meals",
             type: "text",
             name: "tagline",
           },
@@ -60,7 +60,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Image",
         fieldType: "image",
         fieldRequired: false,
-        fieldDescription: "This image will represent your project to others.",
+        fieldDescription: "This image will represent your project to others",
         fieldInputProps: [
           {
             id: "project_image",
@@ -92,7 +92,8 @@ export const projectCreationFormFields = [
         fieldTitle: "Why join?",
         fieldType: "textarea",
         fieldRequired: false,
-        fieldDescription: "Tell others what makes this project exciting to join",
+        fieldDescription:
+          "Explain what makes your project exciting and why others should collaborate with you",
         fieldInputProps: [
           {
             id: "why_join",
@@ -196,7 +197,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Technology Stack",
         fieldType: "tags",
         fieldRequired: true,
-        fieldDescription: "Technologies being used in the project",
+        fieldDescription: "Technologies, frameworks, and tools used in your project",
         fieldInputProps: [
           {
             id: "technology_stack",
@@ -251,7 +252,7 @@ export const projectCreationFormFields = [
           {
             id: "working_hours",
             type: "text",
-            placeholder: "2 days per week",
+            placeholder: "10-15 hours per week",
             name: "working_hours",
           },
         ],

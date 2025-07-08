@@ -9,10 +9,10 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
-export async function getUploadUrl(userId: string, folder: string) {
+export async function getUploadUrl(id: string, folder: string, filename: string = "image.webp") {
   const command = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `${folder}/${userId}/image.webp`,
+    Key: `${folder}/${id}/${filename}`,
     ContentType: "image/webp",
   });
 

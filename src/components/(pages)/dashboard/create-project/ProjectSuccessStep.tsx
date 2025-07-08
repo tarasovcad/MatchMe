@@ -48,67 +48,6 @@ interface ProjectSuccessStepProps {
   projectData: ProjectCreationFormData;
 }
 
-const fakeProjectData: Project = {
-  id: "123e4567-e89b-12d3-a456-426614174000",
-  user_id: "987fcdeb-51a2-43d1-9f12-123456789abc",
-  name: "AI Cancer Detection",
-  slug: "ai-cancer-detection",
-  tagline: "AI Cancer Detection",
-  description:
-    "We are building an AI-powered cancer detection system that uses machine learning to analyze medical images and provide accurate diagnoses.",
-  project_image: [
-    {
-      fileName: "project-image.jpg",
-      fileSize: 1024000,
-      uploadedAt: "2024-01-01T00:00:00Z",
-      url: "/test3.png",
-    },
-  ],
-  demo: ["https://demo.example.com"],
-  background_image: [
-    {
-      fileName: "background.jpg",
-      fileSize: 2048000,
-      uploadedAt: "2024-01-01T00:00:00Z",
-      url: "https://example.com/background.jpg",
-    },
-  ],
-  category: "Technology",
-  current_stage: "MVP Development",
-  why_join: "Join us to be part of something revolutionary and make a real impact.",
-  language_proficiency: ["English", "Spanish"],
-  skills: ["React", "Node.js", "TypeScript"],
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
-  target_audience: "Tech enthusiasts and early adopters",
-  revenue_expectations: "High growth potential",
-  collaboration_model: "Remote-first",
-  funding_investment: "Seeking seed funding",
-  compensation_model: "Equity + Salary",
-  open_positions: [
-    {
-      title: "Frontend Developer",
-      description: "Looking for a skilled React developer",
-      slots: 2,
-      required_skills: ["React", "TypeScript"],
-      engagement: "Full-time",
-    },
-  ],
-  required_skills: ["React", "Node.js", "TypeScript"],
-  engagement_model: "Full-time",
-  availability: "Immediate",
-  working_hours: "9 AM - 5 PM EST",
-  community_platforms: "Discord, Slack",
-  our_team: [
-    {
-      user_id: "456e7890-e12b-34c5-d678-901234567def",
-      name: "John Doe",
-      role: "Founder & CEO",
-      profile_url: "https://example.com/john-doe",
-    },
-  ],
-};
-
 const ProjectSuccessStep = ({projectData}: ProjectSuccessStepProps) => {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const router = useRouter();
@@ -211,7 +150,7 @@ const ProjectSuccessStep = ({projectData}: ProjectSuccessStepProps) => {
   ];
 
   // Generate project URL from slug
-  const projectUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/projects/${fakeProjectData.slug}`;
+  const projectUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/projects/${projectData.slug}`;
 
   const copyToClipboard = async (text: string) => {
     try {
