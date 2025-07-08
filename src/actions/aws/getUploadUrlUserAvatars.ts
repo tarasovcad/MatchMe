@@ -12,8 +12,8 @@ const s3 = new S3Client({
 export async function getUploadUrl(userId: string, folder: string) {
   const command = new PutObjectCommand({
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `${folder}/${userId}/image.jpg`,
-    ContentType: "image/jpeg",
+    Key: `${folder}/${userId}/image.webp`,
+    ContentType: "image/webp",
   });
 
   const signedUrl = await getSignedUrl(s3, command, {expiresIn: 300});

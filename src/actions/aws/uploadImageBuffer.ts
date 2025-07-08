@@ -18,7 +18,7 @@ export async function uploadImageBuffer(signedUrl: string, image: string) {
       method: "PUT",
       body: imageBuffer,
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": "image/webp",
       },
     });
     if (!response.ok) {

@@ -105,12 +105,12 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
             fileName: profileImageData.fileName,
             fileSize: profileImageData.fileSize,
             uploadedAt: profileImageData.uploadedAt,
-            url: `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`,
+            url: `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.webp`,
           },
         ];
 
         // Invalidate the CloudFront cache
-        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.webp`);
       }
       // If it's an existing URL, keep the array as is
     } else {
@@ -149,11 +149,11 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
             fileName: backgroundImageData.fileName,
             fileSize: backgroundImageData.fileSize,
             uploadedAt: backgroundImageData.uploadedAt,
-            url: `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`,
+            url: `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.webp`,
           },
         ];
 
-        await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.jpg`);
+        await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.webp`);
       }
       // If it's an existing URL, keep the array as is
     } else {

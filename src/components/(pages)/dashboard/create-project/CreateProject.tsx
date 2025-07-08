@@ -43,9 +43,7 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       slug: "",
       tagline: "",
       project_image: "",
-      project_image_metadata: null,
       background_image: "",
-      background_image_metadata: null,
       // 2 step
       description: "",
       why_join: "",
@@ -77,8 +75,6 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
     watch,
     trigger,
   } = methods;
-
-  console.log(methods.getValues());
 
   // Watch all form values to check if required fields are filled
   const watchedValues = watch();

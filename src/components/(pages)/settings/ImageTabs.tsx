@@ -30,7 +30,7 @@ const ImageTabs = ({id}: {id: string}) => {
         />
       );
     } else if (selectedTab === "Project Image") {
-      return <ImageUpload name="project_image" type="avatar" />;
+      return <ImageUpload name="project_image" type="project" />;
     }
     return null;
   };

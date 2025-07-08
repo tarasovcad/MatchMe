@@ -101,10 +101,10 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
         return {error: profileImage.error, message: profileImage.message};
       }
 
-      cleanedData.project_image = `${process.env.CLOUDFRONT_URL}/project-avatars/${projectId}/image.jpg`;
+      cleanedData.project_image = `${process.env.CLOUDFRONT_URL}/project-avatars/${projectId}/image.webp`;
 
       // Invalidate the CloudFront cache
-      await invalidateCloudFrontCache(`project-avatars/${projectId}/image.jpg`);
+      await invalidateCloudFrontCache(`project-avatars/${projectId}/image.webp`);
     }
 
     if (cleanedData.background_image) {
@@ -119,9 +119,9 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
         return {error: backgroundImage.error, message: backgroundImage.message};
       }
 
-      cleanedData.background_image = `${process.env.CLOUDFRONT_URL}/project-backgrounds/${projectId}/image.jpg`;
+      cleanedData.background_image = `${process.env.CLOUDFRONT_URL}/project-backgrounds/${projectId}/image.webp`;
 
-      await invalidateCloudFrontCache(`project-backgrounds/${projectId}/image.jpg`);
+      await invalidateCloudFrontCache(`project-backgrounds/${projectId}/image.webp`);
     }
   } catch (error) {
     console.error("Error updating profile:", error);

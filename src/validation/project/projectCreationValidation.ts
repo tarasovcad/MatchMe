@@ -46,24 +46,8 @@ export const projectCreationValidationSchema = z.object({
     .string()
     .min(5, "Tagline must be at least 5 characters")
     .max(70, "Tagline must not exceed 70 characters"),
-  project_image: z.string().optional(),
-  project_image_metadata: z
-    .object({
-      fileName: z.string().optional(),
-      fileSize: z.number().optional(),
-      uploadedAt: z.string().optional(),
-    })
-    .nullable()
-    .optional(),
-  background_image: z.string().optional(),
-  background_image_metadata: z
-    .object({
-      fileName: z.string().optional(),
-      fileSize: z.number().optional(),
-      uploadedAt: z.string().optional(),
-    })
-    .nullable()
-    .optional(),
+  project_image: z.string(),
+  background_image: z.string(),
   // 2 step
   description: z
     .string()

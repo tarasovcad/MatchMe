@@ -9,7 +9,7 @@ import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupaba
 const PROFILES_CACHE_KEY = "public_profiles";
 const FAVORITES_CACHE_KEY = (userId: string) => `favorites_${userId}`;
 const CACHE_TTL = 300; // 5 minutes
-const TABLE_NAME = "mock_profiles";
+const TABLE_NAME = "profiles";
 
 export async function getAllProfiles(
   page = 1,

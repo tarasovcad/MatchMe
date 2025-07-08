@@ -20,8 +20,10 @@ import {formatFileSize} from "@/functions/formatFileSize";
 
 const FILE_CONFIG = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB in bytes
-  ALLOWED_FILE_TYPES: ["image/jpeg", "image/png", "image/svg+xml", "image/webp"],
+  ALLOWED_FILE_TYPES: ["image/jpeg", "image/png", "image/webp", "image/avif"], // Added AVIF support
   MAX_NAME_LENGTH: 50,
+  // Security: Common malicious extensions to block
+  BLOCKED_EXTENSIONS: [".php", ".exe", ".js", ".html", ".svg", ".bat", ".cmd", ".scr"],
 };
 
 interface ImageData {
@@ -33,7 +35,7 @@ interface ImageData {
 
 export interface ImageUploadProps {
   name: string; // Form field name
-  type?: "avatar" | "background" | "demo";
+  type?: "avatar" | "background" | "demo" | "project";
   aspectRatio?: number; // Crop aspect ratio (default: 1 for square)
   containerClassName?: string; // Additional container classes
   circularCrop?: boolean; // Whether to use circular crop (default: true for avatar)
@@ -49,6 +51,7 @@ const getReadableFormatNames = (mimeTypes: string[]): string => {
     "image/png": "PNG",
     "image/svg+xml": "SVG",
     "image/webp": "WEBP",
+    "image/avif": "AVIF",
   };
 
   const formats = mimeTypes.map(
@@ -65,10 +68,11 @@ const getReadableFormatNames = (mimeTypes: string[]): string => {
 // Helper function to convert MIME types to file extensions for the accept attribute
 const getFileExtensionsFromMimeTypes = (mimeTypes: string[]): string => {
   const mimeToExtensionMap: Record<string, string[]> = {
-    "image/jpeg": [".jpeg", ".jpg"],
+    "image/jpeg": [".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"],
     "image/png": [".png"],
     "image/svg+xml": [".svg"],
     "image/webp": [".webp"],
+    "image/avif": [".avif"],
   };
 
   const extensions: string[] = [];
@@ -85,10 +89,11 @@ const getFileExtensionsFromMimeTypes = (mimeTypes: string[]): string => {
 // Helper function to get file extensions array from MIME types for validation
 const getExtensionsArrayFromMimeTypes = (mimeTypes: string[]): string[] => {
   const mimeToExtensionMap: Record<string, string[]> = {
-    "image/jpeg": [".jpeg", ".jpg"],
+    "image/jpeg": [".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"],
     "image/png": [".png"],
     "image/svg+xml": [".svg"],
     "image/webp": [".webp"],
+    "image/avif": [".avif"],
   };
 
   const extensions: string[] = [];
@@ -168,21 +173,40 @@ const ImageUpload = ({
 
   const validateFile = (selectedFile: File): {valid: boolean; error?: string} => {
     const fileType = selectedFile.type;
-    const fileExtension = "." + selectedFile.name.split(".").pop()?.toLowerCase();
+    const fileName = selectedFile.name.toLowerCase();
+    const fileExtension = "." + fileName.split(".").pop();
     const numberOfSymbols = selectedFile.name.split(".")[0].length;
 
-    const allowedExtensions = getExtensionsArrayFromMimeTypes(allowedFileTypes);
+    // Security: Check for double extensions (e.g., image.jpg.php)
+    const extensionCount = (fileName.match(/\./g) || []).length;
+    if (extensionCount > 1) {
+      return {valid: false, error: "Multiple file extensions are not allowed for security reasons"};
+    }
 
+    // Security: Block dangerous extensions
+    if (FILE_CONFIG.BLOCKED_EXTENSIONS.some((ext) => fileName.includes(ext))) {
+      return {valid: false, error: "File type not allowed for security reasons"};
+    }
+
+    // Security: Validate MIME type against actual file content
+    const allowedExtensions = getExtensionsArrayFromMimeTypes(allowedFileTypes);
     if (!allowedFileTypes.includes(fileType) && !allowedExtensions.includes(fileExtension)) {
       return {valid: false, error: "You cannot upload this file. File type is not supported"};
     }
 
+    // Security: Check file size
     if (selectedFile.size > FILE_CONFIG.MAX_FILE_SIZE) {
       return {valid: false, error: "You cannot upload this file. File size exceeds 5MB limit"};
     }
 
+    // Security: Check filename length
     if (numberOfSymbols > FILE_CONFIG.MAX_NAME_LENGTH) {
       return {valid: false, error: "You cannot upload this file. File name exceeds 50 characters"};
+    }
+
+    // Security: Check for null bytes and path traversal
+    if (fileName.includes("\0") || fileName.includes("../") || fileName.includes("..\\")) {
+      return {valid: false, error: "Invalid file name for security reasons"};
     }
 
     return {valid: true};
@@ -325,6 +349,9 @@ const ImageUpload = ({
     } else if (type === "demo") {
       canvas.width = 94;
       canvas.height = 50;
+    } else if (type === "project") {
+      canvas.width = 64;
+      canvas.height = 64;
     } else {
       canvas.width = crop.width;
       canvas.height = crop.height;
@@ -366,7 +393,7 @@ const ImageUpload = ({
       );
     }
 
-    return canvas.toDataURL("image/jpeg", 1);
+    return canvas.toDataURL("image/webp", 1);
   }
 
   const renderPreview = (imageData: ImageData, index: number) => {
@@ -382,6 +409,20 @@ const ImageUpload = ({
             quality={100}
             unoptimized
             className="rounded-full"
+          />
+        </div>
+      );
+    } else if (type === "project") {
+      return (
+        <div key={index} className="ring-border rounded-lg ring size-10 shrink-0">
+          <Image
+            src={imageData.url}
+            alt={`project avatar ${index + 1}`}
+            width={40}
+            height={40}
+            quality={100}
+            unoptimized
+            className="rounded-lg"
           />
         </div>
       );
