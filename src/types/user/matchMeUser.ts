@@ -26,6 +26,7 @@ export interface MatchMeUser {
   tagline: string | null;
   skills: string[] | null;
   work_availability: number | null;
+  years_of_experience: number | null;
   location: string | null;
   languages: string | null;
   about_you: string | null;
@@ -34,6 +35,7 @@ export interface MatchMeUser {
   is_profile_verified: boolean;
   created_at: string;
   public_current_role: string | null;
+  seniority_level: string | null;
   social_links_1_platform: string | null;
   social_links_1: string | null;
   social_links_2_platform: string | null;

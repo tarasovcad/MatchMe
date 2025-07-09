@@ -1,6 +1,7 @@
 import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
 import {languages} from "./languages";
 import {socialLinks} from "./socialLinks";
+import {seniorityLevels} from "./seniorityLevels";
 
 export const accountSettingsFormFields = [
   {
@@ -11,6 +12,7 @@ export const accountSettingsFormFields = [
         fieldDescription: "Your display name",
         fieldType: "text",
         fieldRequired: true,
+        fieldRequiredCreateProject: true,
         fieldInputProps: [
           {
             id: "firstName",
@@ -89,6 +91,7 @@ export const accountSettingsFormFields = [
         fieldTitle: "Current Role",
         fieldDescription: "Your primary focus or expertise",
         fieldType: "text",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "public_current_role",
@@ -99,9 +102,37 @@ export const accountSettingsFormFields = [
         ],
       },
       {
+        fieldTitle: "Years of Experience",
+        fieldDescription: "How many years of professional experience do you have?",
+        fieldType: "number",
+        fieldInputProps: [
+          {
+            id: "years_of_experience",
+            placeholder: "5",
+            type: "number",
+            name: "years_of_experience",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Seniority Level",
+        fieldDescription: "Your current career level",
+        fieldType: "dropdown",
+        fieldInputProps: [
+          {
+            id: "seniority_level",
+            placeholder: "Select your level",
+            type: "text",
+            name: "seniority_level",
+            options: seniorityLevels,
+          },
+        ],
+      },
+      {
         fieldTitle: "Looing for",
         fieldDescription: "Let others know what you’re looking for",
         fieldType: "select",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "looking_for",
@@ -143,6 +174,7 @@ export const accountSettingsFormFields = [
         fieldTitle: "Tagline",
         fieldDescription: "A short tagline that describes you",
         fieldType: "text",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "tagline",
@@ -156,6 +188,7 @@ export const accountSettingsFormFields = [
         fieldTitle: "Skills",
         fieldDescription: "Your main skills (up  to 15)",
         fieldType: "tags",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "skills",
@@ -198,6 +231,7 @@ export const accountSettingsFormFields = [
         fieldTitle: "Languages Spoken",
         fieldDescription: "List the languages you speak",
         fieldType: "tags",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "languages",
@@ -212,6 +246,7 @@ export const accountSettingsFormFields = [
         fieldTitle: "About you",
         fieldDescription: "Write a description for your profile",
         fieldType: "textarea",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "about_you",

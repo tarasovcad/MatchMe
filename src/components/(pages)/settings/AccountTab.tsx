@@ -31,6 +31,18 @@ const AccountTab = ({
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  // Helper function to normalize values for comparison
+  const normalizeValue = (value: unknown, fieldName: string) => {
+    // For number fields, treat empty string and undefined as equivalent
+    const numberFields = ["age", "years_of_experience", "work_availability"];
+    if (numberFields.includes(fieldName)) {
+      if (value === "" || value === undefined || value === null) {
+        return undefined;
+      }
+    }
+    return value;
+  };
+
   const determineDefaultPlatform = (existingPlatforms: string | null, defaultValue: string) => {
     // If the platform is already specified, use it
     if (existingPlatforms) return existingPlatforms;
@@ -55,6 +67,8 @@ const AccountTab = ({
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
+    seniority_level: profile.seniority_level ?? "",
+    years_of_experience: profile.years_of_experience ?? undefined,
     looking_for: profile.looking_for ?? "",
     goal: profile.goal ?? "",
     tagline: profile.tagline ?? "",
@@ -85,20 +99,20 @@ const AccountTab = ({
   });
   // Watch for changes in form values in real-time
   const formValues = useWatch({control: methods.control});
-  console.log(methods.formState.errors);
+
   // Get the form state to check for errors
   const {formState} = methods;
-  console.log(formValues);
   useEffect(() => {
-    // Filter initialValues to only include properties that are defined, so no empty values are included
-    const cleanInitialValues = pickBy(initialValues, (value) => value !== undefined);
-
-    // Filter formValues to only include keys that exist in initialValues
-    // This ensures we only compare fields that were originally provided
-    const cleanFormValues = pickBy(formValues, (_, key) => key in cleanInitialValues);
-
-    // Compare cleaned values to determine if form has changed
-    const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
+    // Compare each field individually to detect changes
+    const hasFieldChanged = Object.keys(formValues).some((key) => {
+      const formKey = key as keyof SettingsAccountFormData;
+      const currentValue = normalizeValue(formValues[formKey], key);
+      const initialValue = normalizeValue(initialValues[formKey], key);
+      console.log(formValues["social_links_1"], "currentValue");
+      console.log(initialValues["social_links_1"], "initialValue");
+      // Check if the values are different
+      return !isEqual(currentValue, initialValue);
+    });
 
     // Special check for image arrays - if they go from empty to having content, that's a change
     const imageArraysChanged =
@@ -109,11 +123,10 @@ const AccountTab = ({
         formValues.background_image &&
         formValues.background_image.length > 0);
 
-    setIsDisabled(!(hasChanged || imageArraysChanged) || !formState.isValid);
+    setIsDisabled(!(hasFieldChanged || imageArraysChanged) || !formState.isValid);
   }, [formValues, initialValues, formState.isValid, setIsDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
-    console.log("submitting");
     setIsLoading(true);
     try {
       const socialLinkFields = [
@@ -126,8 +139,8 @@ const AccountTab = ({
       const changedValues = Object.keys(data).reduce((result, key) => {
         const formKey = key as keyof SettingsAccountFormData;
 
-        const currentValue = data[formKey] === undefined ? "" : data[formKey];
-        const initialValue = initialValues[formKey] === undefined ? "" : initialValues[formKey];
+        const currentValue = normalizeValue(data[formKey], key);
+        const initialValue = normalizeValue(initialValues[formKey], key);
 
         // Compare each field with its initial value
         if (
@@ -153,7 +166,6 @@ const AccountTab = ({
         changedValues.background_image = data.background_image;
       }
 
-      console.log(changedValues);
       // Only make an API call if there are actual changes to submit
       if (Object.keys(changedValues).length > 0) {
         const response = await submitAccountForm(changedValues);
@@ -169,8 +181,6 @@ const AccountTab = ({
           setIsLoading(false);
           toast.success(response.message);
         }
-      } else {
-        console.log("No changes to submit");
       }
       setIsLoading(false);
     } catch (error) {

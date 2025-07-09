@@ -22,6 +22,7 @@ export interface FormFieldProps {
     | "deleteAccount"
     | "connectedAccounts";
   fieldRequired?: boolean;
+  fieldRequiredCreateProject?: boolean;
   fieldInputProps: [
     {
       id: string;

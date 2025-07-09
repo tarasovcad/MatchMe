@@ -50,8 +50,7 @@ export default function SocialLinksInput({
         // Get available options by filtering out selected platforms
         const availableOptions = options?.filter((option) => {
           const isCurrentlySelected = platformValues[index] === option.title;
-          const isSelectedElsewhere =
-            platformValues.includes(option.title) && !isCurrentlySelected;
+          const isSelectedElsewhere = platformValues.includes(option.title) && !isCurrentlySelected;
           return !isSelectedElsewhere;
         });
 
@@ -90,13 +89,9 @@ export default function SocialLinksInput({
                 control={control}
                 defaultValue=""
                 render={({field}) => {
-                  const handleChange = (
-                    e: React.ChangeEvent<HTMLInputElement>,
-                  ) => {
+                  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     const value =
-                      e.target.value === undefined || e.target.value === null
-                        ? ""
-                        : e.target.value;
+                      e.target.value === undefined || e.target.value === null ? "" : e.target.value;
                     field.onChange(value);
                   };
 

@@ -1,10 +1,13 @@
 import {languages} from "@/data/forms/(settings)/languages";
 import {socialLinks} from "@/data/forms/(settings)/socialLinks";
+import {seniorityLevels} from "@/data/forms/(settings)/seniorityLevels";
 import {z} from "zod";
 import {nameSchema} from "../auth/nameValidation";
 
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
 const allowedSocialLinks = new Set(socialLinks.map((link) => link.title));
+const allowedSeniorityLevels = new Set(seniorityLevels.map((level) => level.title));
+
 export const settingsAccountValidationSchema = z.object({
   is_profile_public: z.boolean(),
   is_profile_verified: z.boolean(),
@@ -39,6 +42,27 @@ export const settingsAccountValidationSchema = z.object({
         "Current role can only contain English letters, spaces, hyphens, and forward slashes",
     })
     .optional(),
+  years_of_experience: z
+    .union([z.string(), z.number()])
+    .transform((val) => {
+      if (val === "" || val === null || val === undefined) return undefined;
+      return typeof val === "string" ? parseInt(val, 10) : val;
+    })
+    .pipe(
+      z
+        .number()
+        .int()
+        .min(0, "Years of experience cannot be negative")
+        .max(100, "Years of experience cannot exceed 100 years")
+        .optional(),
+    )
+    .optional(),
+  seniority_level: z
+    .string()
+    .optional()
+    .refine((val) => !val || val === "" || allowedSeniorityLevels.has(val), {
+      message: "Invalid seniority level. Please select a valid option.",
+    }),
   looking_for: z
     .string()
     .optional()
@@ -112,69 +136,107 @@ export const settingsAccountValidationSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
-
   social_links_1_platform: z
     .string()
-    .refine((val) => allowedSocialLinks.has(val), {
-      message: "Language must be one of the supported languages",
+    .refine((val) => val === "" || allowedSocialLinks.has(val), {
+      message: "Platform must be one of the supported platforms",
     })
     .optional(),
   social_links_1: z
     .string()
-    .transform((val) => (val.trim() === "" ? undefined : val))
-    .pipe(
-      z
-        .string()
-        .max(50, {message: "Username must be at most 50 characters"})
-        .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
-        })
-        .refine((val) => !val.includes(".."), {
-          message: "Username cannot contain consecutive dots",
-        })
-        .optional(),
+    .optional()
+    .transform((val) => {
+      if (!val) return "";
+      return val.trim();
+    })
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return val.length <= 50;
+      },
+      {message: "Username must be at most 50 characters"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return /^[a-zA-Z0-9_.-]+$/.test(val);
+      },
+      {message: "Username can only contain letters, numbers, underscores, dots, and hyphens"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return !val.includes("..");
+      },
+      {message: "Username cannot contain consecutive dots"},
     ),
   social_links_2_platform: z
     .string()
-    .refine((val) => allowedSocialLinks.has(val), {
-      message: "Language must be one of the supported languages",
+    .refine((val) => val === "" || allowedSocialLinks.has(val), {
+      message: "Platform must be one of the supported platforms",
     })
     .optional(),
   social_links_2: z
     .string()
-    .transform((val) => (val.trim() === "" ? undefined : val))
-    .pipe(
-      z
-        .string()
-        .max(50, {message: "Username must be at most 50 characters"})
-        .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
-        })
-        .refine((val) => !val.includes(".."), {
-          message: "Username cannot contain consecutive dots",
-        })
-        .optional(),
+    .optional()
+    .transform((val) => {
+      if (!val) return "";
+      return val.trim();
+    })
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return val.length <= 50;
+      },
+      {message: "Username must be at most 50 characters"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return /^[a-zA-Z0-9_.-]+$/.test(val);
+      },
+      {message: "Username can only contain letters, numbers, underscores, dots, and hyphens"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return !val.includes("..");
+      },
+      {message: "Username cannot contain consecutive dots"},
     ),
   social_links_3_platform: z
     .string()
-    .refine((val) => allowedSocialLinks.has(val), {
-      message: "Language must be one of the supported languages",
+    .refine((val) => val === "" || allowedSocialLinks.has(val), {
+      message: "Platform must be one of the supported platforms",
     })
     .optional(),
   social_links_3: z
     .string()
-    .transform((val) => (val.trim() === "" ? undefined : val))
-    .pipe(
-      z
-        .string()
-        .max(50, {message: "Username must be at most 50 characters"})
-        .regex(/^[a-zA-Z0-9_.-]+$/, {
-          message: "Username can only contain letters, numbers, underscores, dots, and hyphens",
-        })
-        .refine((val) => !val.includes(".."), {
-          message: "Username cannot contain consecutive dots",
-        })
-        .optional(),
+    .optional()
+    .transform((val) => {
+      if (!val) return "";
+      return val.trim();
+    })
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return val.length <= 50;
+      },
+      {message: "Username must be at most 50 characters"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return /^[a-zA-Z0-9_.-]+$/.test(val);
+      },
+      {message: "Username can only contain letters, numbers, underscores, dots, and hyphens"},
+    )
+    .refine(
+      (val) => {
+        if (!val || val === "") return true; // Allow empty values
+        return !val.includes("..");
+      },
+      {message: "Username cannot contain consecutive dots"},
     ),
   profile_image: z
     .array(

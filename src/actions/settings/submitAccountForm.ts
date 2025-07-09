@@ -8,6 +8,8 @@ import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
 import {Ratelimit} from "@upstash/ratelimit";
 import {redis} from "@/utils/redis/redis";
 import {getClientIp} from "@/utils/network/getClientIp";
+import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
+import {MatchMeUser} from "@/types/user/matchMeUser";
 
 export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
@@ -163,6 +165,34 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   } catch (error) {
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
+  }
+
+  // Backend validation: ensure profile can't be made public if incomplete
+  if (transformedData.is_profile_public === true) {
+    // Get current profile data to merge with updates
+    const {data: currentProfile} = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (currentProfile) {
+      // Merge current profile with the updates to get the complete picture
+      const updatedProfileState = {
+        ...currentProfile,
+        ...transformedData,
+      } as MatchMeUser;
+
+      const {canMakeProfilePublic} = canUserMakeProfilePublic(updatedProfileState);
+
+      if (!canMakeProfilePublic) {
+        // Force set to false if profile is incomplete
+        transformedData.is_profile_public = false;
+        console.warn(
+          `User ${user.id} attempted to make incomplete profile public - forced to false`,
+        );
+      }
+    }
   }
 
   // Update the profile

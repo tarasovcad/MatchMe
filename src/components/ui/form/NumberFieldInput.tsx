@@ -3,6 +3,8 @@ import {ChevronDown, ChevronUp} from "lucide-react";
 import {Button, Group, Input, NumberField} from "react-aria-components";
 import {Controller, useFormContext} from "react-hook-form";
 import FormErrorLabel from "../FormErrorLabel";
+import {cn} from "@/lib/utils";
+
 export default function NumberFieldInput({
   id,
   name,
@@ -38,9 +40,17 @@ export default function NumberFieldInput({
             aria-label="Number input"
             name={name}>
             <div className="space-y-2 w-full">
-              <Group className="inline-flex relative items-center data-disabled:opacity-50 shadow-black/5 shadow-xs m-0 border border-input data-focus-within:border-ring rounded-lg data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20 w-full h-9 overflow-hidden text-sm whitespace-nowrap transition-shadow">
+              <Group
+                className={cn(
+                  "inline-flex relative items-center data-disabled:opacity-50 shadow-black/5 shadow-xs m-0 border border-input data-focus-within:border-ring rounded-lg data-focus-within:outline-hidden data-focus-within:ring-[3px] data-focus-within:ring-ring/20 w-full h-9 overflow-hidden text-sm whitespace-nowrap transition-shadow",
+                  error &&
+                    "border-destructive/80 data-focus-within:border-destructive/80 data-focus-within:ring-destructive/20",
+                )}>
                 <Input
-                  className="flex-1 bg-background px-3 py-2 focus:outline-hidden tabular-nums text-foreground"
+                  className={cn(
+                    "flex-1 bg-background px-3 py-2 focus:outline-hidden tabular-nums text-foreground",
+                    error && "text-destructive",
+                  )}
                   placeholder="23"
                   inputMode="numeric"
                   pattern="\d*"
