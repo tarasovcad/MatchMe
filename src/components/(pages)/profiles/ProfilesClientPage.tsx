@@ -38,7 +38,7 @@ const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
           like-minded creators and turn bold ideas into success stories."
       pageTitle="Find Your Perfect Match"
       type="profiles"
-      itemsPerPage={10}
+      itemsPerPage={15}
     />
   );
 };

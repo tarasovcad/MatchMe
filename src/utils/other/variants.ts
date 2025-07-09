@@ -3,9 +3,9 @@ export const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      duration: 0.1,
+      duration: 0.05,
       when: "beforeChildren",
-      staggerChildren: 0.05,
+      staggerChildren: 0.02,
     },
   },
 } as const;
@@ -17,9 +17,9 @@ export const itemVariants = {
     opacity: 1,
     transition: {
       type: "spring",
-      stiffness: 200,
-      damping: 12,
-      duration: 0.2,
+      stiffness: 300,
+      damping: 15,
+      duration: 0.1,
     },
   },
 } as const;
@@ -31,9 +31,9 @@ export const bottomSectionButtonsVariants = {
     opacity: 1,
     transition: {
       type: "spring",
-      stiffness: 150,
-      damping: 15,
-      duration: 0.3,
+      stiffness: 200,
+      damping: 18,
+      duration: 0.15,
     },
   },
 } as const;
@@ -46,7 +46,7 @@ export const menuVariants = {
     transition: {
       type: "spring",
       bounce: 0,
-      duration: 0.3,
+      duration: 0.15,
     },
   },
   open: {
@@ -54,9 +54,9 @@ export const menuVariants = {
     transition: {
       type: "spring",
       bounce: 0,
-      duration: 0.3,
-      staggerChildren: 0.05,
-      delayChildren: 0.1,
+      duration: 0.15,
+      staggerChildren: 0.02,
+      delayChildren: 0.05,
     },
   },
 } as const;
@@ -72,7 +72,7 @@ export const userInfoVariants = {
     opacity: 1,
     filter: "blur(0px)",
     transition: {
-      duration: 0.3,
+      duration: 0.15,
       type: "spring",
       bounce: 0,
     },
@@ -84,8 +84,8 @@ export const pageContainerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.3,
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
     },
   },
 } as const;
@@ -96,7 +96,7 @@ export const pageHeaderVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.25,
       ease: "easeOut",
     },
   },
@@ -108,7 +108,7 @@ export const newPeopleVariants = {
     scale: 1,
     opacity: 1,
     transition: {
-      duration: 0.5,
+      duration: 0.2,
       ease: [0.22, 1, 0.36, 1],
     },
   },
@@ -120,7 +120,7 @@ export const controlsSectionVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.5,
+      duration: 0.2,
       ease: "easeOut",
     },
   },
@@ -137,7 +137,7 @@ export const cardVariants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.5,
+      duration: 0.2,
       ease: [0.22, 1, 0.36, 1],
     },
   },

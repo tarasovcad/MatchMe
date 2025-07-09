@@ -2,21 +2,27 @@
 import React from "react";
 
 import {dashboardTabsData} from "@/data/tabs/dashboardTabs";
-import OverviewTab from "./tabs/OverviewTab";
+import AnalyticsTab from "./tabs/AnalyticsTab";
 import ProjectsTab from "./tabs/ProjectsTab";
 import TabNavigation from "@/components/ui/form/TabNavigation";
 import DashboardHeader from "./header/DashboardHeader";
 import {User} from "@supabase/supabase-js";
+import OverviewTab from "./tabs/OverviewTab";
+import UserFollowsTab from "./tabs/UserFollowsTab";
 
 const DashboardClientPage = ({tab, user}: {tab: string | string[]; user: User}) => {
   const renderSelectedComponent = () => {
     switch (tab) {
       case "overview":
         return <OverviewTab user={user} />;
+      case "analytics":
+        return <AnalyticsTab user={user} />;
       case "projects":
         return <ProjectsTab />;
+      case "follows":
+        return <UserFollowsTab user={user} />;
       default:
-        return <OverviewTab user={user} />;
+        return <AnalyticsTab user={user} />;
     }
   };
 

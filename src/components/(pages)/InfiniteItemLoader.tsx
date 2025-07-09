@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from "react";
+import React, {useCallback} from "react";
 import {motion} from "framer-motion";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
@@ -14,6 +14,7 @@ import FilterButton from "../ui/FilterButton";
 import {Filter, SerializableFilter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";
 import SearchInputPage from "../ui/form/SearchInputPage";
+import {useInfiniteItems} from "@/hooks/useInfiniteItems";
 
 export type InfiniteListProps<T> = {
   userSession: User | null;
@@ -39,127 +40,63 @@ const InfiniteItemLoader = <T extends {id: string}>({
   fetchUserFavorites,
   renderItem,
   renderSkeleton,
-  itemsPerPage = 10,
+  itemsPerPage = 15,
   type = "profiles",
   filtersData,
   pageTitle,
   pageDescription,
 }: InfiniteListProps<T>) => {
-  const [items, setItems] = useState<(T & {isFavorite?: boolean})[]>([]);
-  const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState({initial: true, more: false});
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [showNextPageSkeletons, setShowNextPageSkeletons] = useState(false);
+  const userId = userSession?.id || "";
 
-  const observer = useRef<IntersectionObserver | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const {getFiltersForPage, getSerializableFilters} = useFilterStore();
-  const currentFilters = getFiltersForPage(type);
+  const {getSerializableFilters} = useFilterStore();
   const serializableFilters = getSerializableFilters(type);
 
+  // Use the custom hook for data fetching
+  const {items, isLoadingInitial, isLoadingMore, hasMore, loadMore, isError, error} =
+    useInfiniteItems({
+      type,
+      userId,
+      itemsPerPage,
+      serializableFilters,
+      fetchItems,
+      fetchUserFavorites,
+    });
+
+  // Intersection observer for infinite loading
   const lastItemRef = useCallback(
     (node: HTMLDivElement) => {
-      // Don't observe when there's no more data or when loading
-      if (loading.initial || loading.more || !hasMore) return;
+      if (isLoadingInitial || isLoadingMore || !hasMore) return;
 
-      if (observer.current) observer.current.disconnect();
-
-      observer.current = new IntersectionObserver(
+      const observer = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting && hasMore) {
-            timeoutRef.current = setTimeout(() => {
-              setShowNextPageSkeletons(true);
-              setPage((prev) => prev + 1);
-            }, 300);
+            loadMore();
           }
         },
         {
-          rootMargin: "0px 0px 500px 0px", // Start Fetcing when element is 500px away from viewport
+          rootMargin: "0px 0px 1500px 0px", // Start fetching when element is 1500px away from viewport
           threshold: 0.1, // Trigger when 10% of the element is visible
         },
       );
 
-      if (node) observer.current.observe(node);
+      if (node) observer.observe(node);
+
+      // Cleanup
+      return () => observer.disconnect();
     },
-    [loading.initial, loading.more, hasMore],
+    [isLoadingInitial, isLoadingMore, hasMore, loadMore],
   );
-
-  useEffect(() => {
-    if (!hasMore && observer.current) {
-      observer.current.disconnect();
-    }
-  }, [hasMore]);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    setPage(1);
-    setItems([]);
-    setHasMore(true);
-  }, [currentFilters]);
-
-  useEffect(() => {
-    fetchData();
-  }, [page, currentFilters]);
-
-  const fetchData = async () => {
-    if (page === 1) {
-      setLoading((prev) => ({...prev, initial: true}));
-    } else {
-      setLoading((prev) => ({...prev, more: true}));
-    }
-
-    const currentUserId = userSession?.id || "";
-    if (page === 1) setUserId(currentUserId);
-
-    try {
-      const allItems = await fetchItems(page, itemsPerPage, serializableFilters);
-
-      if (allItems.length === 0) {
-        setHasMore(false);
-        return;
-      }
-
-      const filteredItems = allItems.filter((item) => item.id !== currentUserId);
-
-      const favorites = currentUserId ? await fetchUserFavorites!(currentUserId) : [];
-      const favoritesSet = new Set(favorites);
-
-      const profilesWithFavorites = filteredItems.map((profile) => ({
-        ...profile,
-        isFavorite: favoritesSet.has(profile.id),
-      }));
-
-      // Update items with new data
-      setItems((prev) =>
-        page === 1 ? profilesWithFavorites : [...prev, ...profilesWithFavorites],
-      );
-    } catch (error) {
-      console.error("Error fetching profiles:", error);
-    } finally {
-      setShowNextPageSkeletons(false);
-      setLoading({initial: false, more: false});
-    }
-  };
 
   const renderSkeletonCards = () => {
     return Array(itemsPerPage)
       .fill(null)
-      .map((_, index) => (
-        <motion.div
-          key={`skeleton-${index}`}
-          variants={cardVariants}
-          ref={index === 0 ? lastItemRef : undefined}>
-          {renderSkeleton()}
-        </motion.div>
-      ));
+      .map((_, index) => <div key={`skeleton-${index}`}>{renderSkeleton()}</div>);
   };
+
+  // Handle errors
+  if (isError) {
+    console.error("Error fetching items:", error);
+  }
 
   return (
     <motion.div initial="hidden" animate="visible" variants={pageContainerVariants}>
@@ -192,7 +129,10 @@ const InfiniteItemLoader = <T extends {id: string}>({
         <motion.div
           className="flex justify-between items-center gap-3"
           variants={controlsSectionVariants}>
-          <SearchInputPage pageKey={type} loading={loading} />
+          <SearchInputPage
+            pageKey={type}
+            loading={{initial: isLoadingInitial, more: isLoadingMore}}
+          />
           <FilterButton pageKey={type} data={filtersData} />
         </motion.div>
 
@@ -205,17 +145,18 @@ const InfiniteItemLoader = <T extends {id: string}>({
               return renderItem(item, isLast, isLast ? lastItemRef : null, userId);
             })}
 
-            {(loading.initial || showNextPageSkeletons) && renderSkeletonCards()}
+            {isLoadingInitial && renderSkeletonCards()}
           </div>
 
-          {loading.more && (
+          {isLoadingMore && (
             <div className="flex justify-center col-span-3 py-4">
               <LoadingButtonCircle size={22} />
             </div>
           )}
         </div>
-        {!loading.initial &&
-          !loading.more &&
+
+        {!isLoadingInitial &&
+          !isLoadingMore &&
           !hasMore &&
           items.length > 0 &&
           items.length > itemsPerPage && (
@@ -223,17 +164,28 @@ const InfiniteItemLoader = <T extends {id: string}>({
               className="py-4 text-foreground/70 text-center"
               initial={{opacity: 0}}
               animate={{opacity: 1}}
-              transition={{duration: 0.5}}>
+              transition={{duration: 0.2}}>
               No more items to load
             </motion.div>
           )}
-        {!loading.initial && items.length === 0 && (
+
+        {!isLoadingInitial && items.length === 0 && (
           <motion.div
             className="py-14 text-[18px] text-foreground/70 text-center"
             initial={{opacity: 0}}
             animate={{opacity: 1}}
-            transition={{duration: 0.5}}>
+            transition={{duration: 0.2}}>
             No results found. Try adjusting your filters.
+          </motion.div>
+        )}
+
+        {isError && (
+          <motion.div
+            className="py-14 text-[18px] text-red-500 text-center"
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            transition={{duration: 0.2}}>
+            Error loading items. Please try again.
           </motion.div>
         )}
       </motion.div>
