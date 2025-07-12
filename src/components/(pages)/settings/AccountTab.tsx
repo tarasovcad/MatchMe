@@ -13,7 +13,7 @@ import {
 } from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
-import {isEqual, pickBy} from "lodash";
+import {isEqual} from "lodash";
 import {toast} from "sonner";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
@@ -108,8 +108,7 @@ const AccountTab = ({
       const formKey = key as keyof SettingsAccountFormData;
       const currentValue = normalizeValue(formValues[formKey], key);
       const initialValue = normalizeValue(initialValues[formKey], key);
-      console.log(formValues["social_links_1"], "currentValue");
-      console.log(initialValues["social_links_1"], "initialValue");
+
       // Check if the values are different
       return !isEqual(currentValue, initialValue);
     });
@@ -175,7 +174,14 @@ const AccountTab = ({
           setIsLoading(false);
           return;
         } else {
-          const newInitialValues = {...initialValues, ...data};
+          // Check if profile was automatically set to private
+          let finalData = data;
+          if (response.profileSetToPrivate) {
+            finalData = {...data, is_profile_public: false};
+            toast.warning("Your profile was set to private because required fields are missing.");
+          }
+
+          const newInitialValues = {...initialValues, ...finalData};
           setInitialValues(newInitialValues);
           methods.reset(newInitialValues);
           setIsLoading(false);

@@ -168,30 +168,40 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   }
 
   // Backend validation: ensure profile can't be made public if incomplete
-  if (transformedData.is_profile_public === true) {
-    // Get current profile data to merge with updates
-    const {data: currentProfile} = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+  // Get current profile data to merge with updates for validation
+  const {data: currentProfile} = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
-    if (currentProfile) {
-      // Merge current profile with the updates to get the complete picture
-      const updatedProfileState = {
-        ...currentProfile,
-        ...transformedData,
-      } as MatchMeUser;
+  let wasAutomaticallySetToPrivate = false;
 
-      const {canMakeProfilePublic} = canUserMakeProfilePublic(updatedProfileState);
+  if (currentProfile) {
+    // Merge current profile with the updates to get the complete picture
+    const updatedProfileState = {
+      ...currentProfile,
+      ...transformedData,
+    } as MatchMeUser;
 
-      if (!canMakeProfilePublic) {
-        // Force set to false if profile is incomplete
-        transformedData.is_profile_public = false;
-        console.warn(
-          `User ${user.id} attempted to make incomplete profile public - forced to false`,
-        );
-      }
+    const {canMakeProfilePublic} = canUserMakeProfilePublic(updatedProfileState);
+
+    // Check if user is trying to set profile public when it's incomplete
+    if (transformedData.is_profile_public === true && !canMakeProfilePublic) {
+      transformedData.is_profile_public = false;
+      wasAutomaticallySetToPrivate = true;
+    }
+    // Check if profile is currently public but will become incomplete after updates
+    else if (
+      currentProfile.is_profile_public === true &&
+      !canMakeProfilePublic &&
+      transformedData.is_profile_public !== false // User didn't explicitly set it to false
+    ) {
+      transformedData.is_profile_public = false;
+      wasAutomaticallySetToPrivate = true;
+      console.warn(
+        `User ${user.id} profile was public but became incomplete after updates - forced to false`,
+      );
     }
   }
 
@@ -242,5 +252,6 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   return {
     error: null,
     message: "Profile updated successfully",
+    profileSetToPrivate: wasAutomaticallySetToPrivate,
   };
 };
