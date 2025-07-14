@@ -177,13 +177,6 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
   getFiltersForPage: (pageKey: string) => {
     const filters = get().appliedFilters[pageKey];
     if (!filters) {
-      // Initialize empty array for this page if it doesn't exist
-      set((state) => ({
-        appliedFilters: {
-          ...state.appliedFilters,
-          [pageKey]: [],
-        },
-      }));
       return [];
     }
 

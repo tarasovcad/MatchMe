@@ -18,11 +18,14 @@ interface FilterableTabsProps {
   searchPlaceholder?: string;
   onSearch?: (value: string) => void;
   onFilter?: () => void;
+  onTabChange?: (activeTab: string) => void;
+  displayFilterButton?: boolean;
   disableSearch?: boolean | ((activeTab: string) => boolean);
   disableFilter?: boolean | ((activeTab: string) => boolean);
   children: (activeTab: string) => ReactNode;
   className?: string;
   topPadding?: boolean;
+  customSearchInput?: ReactNode;
 }
 
 export default function FilterableTabs({
@@ -31,11 +34,14 @@ export default function FilterableTabs({
   searchPlaceholder = "Search",
   onSearch,
   onFilter,
+  displayFilterButton = false,
   disableSearch = false,
   disableFilter = false,
   children,
+  customSearchInput,
   topPadding = true,
   className = "",
+  onTabChange,
 }: FilterableTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value || "");
 
@@ -64,9 +70,12 @@ export default function FilterableTabs({
             {tabs.map((tab, index) => (
               <button
                 key={tab.value}
-                onClick={() => setActiveTab(tab.value)}
+                onClick={() => {
+                  setActiveTab(tab.value);
+                  onTabChange?.(tab.value);
+                }}
                 disabled={tab.disabled}
-                className={`relative rounded-none border-b border-border py-3 transition-colors duration-200 cursor-pointer hover:bg-muted/50 flex items-center disabled:pointer-events-none disabled:opacity-50 ${
+                className={`relative rounded-none border-b border-border py-3 transition-colors duration-200 cursor-pointer flex items-center disabled:pointer-events-none disabled:opacity-50 ${
                   index === 0 ? "px-0 pr-2" : "px-4.5"
                 } ${activeTab === tab.value ? "bg-transparent shadow-none" : ""}
                 `}>
@@ -103,39 +112,47 @@ export default function FilterableTabs({
           </div>
         </div>
 
-        <div className="flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2">
-          <SimpleInput
-            placeholder={searchPlaceholder}
-            className=""
-            search
-            disabled={isSearchDisabled}
-            onChange={handleSearchChange}
-          />
-          <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
-            <Button
-              size={"xs"}
-              className="max-[480px]:w-full"
-              disabled={isFilterDisabled}
-              onClick={handleFilterClick}>
-              <Filter size={16} strokeWidth={2} className="text-foreground/90" />
-              Filter
-            </Button>
-          </div>
+        <div
+          className={cn(
+            "flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2",
+            !displayFilterButton && "max-w-[344px] w-full",
+          )}>
+          {customSearchInput ? (
+            customSearchInput
+          ) : (
+            <SimpleInput
+              placeholder={searchPlaceholder}
+              className={cn(!displayFilterButton && "w-full")}
+              search
+              disabled={isSearchDisabled}
+              onChange={handleSearchChange}
+            />
+          )}
+          {displayFilterButton && (
+            <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
+              <Button
+                size={"xs"}
+                className="max-[480px]:w-full"
+                disabled={isFilterDisabled}
+                onClick={handleFilterClick}>
+                <Filter size={16} strokeWidth={2} className="text-foreground/90" />
+                Filter
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="w-full">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{opacity: 0, y: 20}}
-            animate={{opacity: 1, y: 0}}
-            exit={{opacity: 0, y: -20}}
-            transition={{duration: 0.15, ease: "easeInOut"}}
-            className="w-full pt-2">
-            {children(activeTab)}
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={activeTab}
+          initial={{opacity: 0, y: 20}}
+          animate={{opacity: 1, y: 0}}
+          exit={{opacity: 0, y: -20}}
+          transition={{duration: 0.15, ease: "easeInOut"}}
+          className="w-full pt-2">
+          {children(activeTab)}
+        </motion.div>
       </div>
     </div>
   );

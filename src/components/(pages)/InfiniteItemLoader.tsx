@@ -22,7 +22,11 @@ export type InfiniteListProps<T> = {
   renderSkeleton: () => React.ReactNode;
   itemsPerPage?: number;
   type: "profiles" | "projects";
-  filtersData: Filter[];
+  filtersData?: Filter[];
+  displayFilterButton?: boolean;
+  displaySearch?: boolean;
+  cacheKey?: string;
+  pageKey?: string; // Custom page key for filter store
 };
 
 const InfiniteItemLoader = <T extends {id: string}>({
@@ -34,16 +38,22 @@ const InfiniteItemLoader = <T extends {id: string}>({
   itemsPerPage = 15,
   type = "profiles",
   filtersData,
+  displayFilterButton = true,
+  displaySearch = true,
+  cacheKey,
+  pageKey, // Custom page key for filter store
 }: InfiniteListProps<T>) => {
   const userId = userSession?.id || "";
 
   const {getSerializableFilters} = useFilterStore();
-  const serializableFilters = getSerializableFilters(type);
+  // Use custom pageKey if provided, otherwise use type
+  const filterStoreKey = pageKey || type;
+  const serializableFilters = getSerializableFilters(filterStoreKey);
 
   // Use the custom hook for data fetching
   const {items, isLoadingInitial, isLoadingMore, hasMore, loadMore, isError, error} =
     useInfiniteItems({
-      type,
+      type: cacheKey ? (`${type}-${cacheKey}` as "profiles" | "projects") : type,
       userId,
       itemsPerPage,
       serializableFilters,
@@ -89,17 +99,23 @@ const InfiniteItemLoader = <T extends {id: string}>({
 
   return (
     <motion.div className="flex flex-col gap-4" variants={controlsSectionVariants}>
-      <motion.div
-        className="flex justify-between items-center gap-3"
-        variants={controlsSectionVariants}>
-        <SearchInputPage
-          pageKey={type}
-          loading={{initial: isLoadingInitial, more: isLoadingMore}}
-        />
-        <FilterButton pageKey={type} data={filtersData} />
-      </motion.div>
+      {displaySearch && (
+        <motion.div
+          className="flex justify-between items-center gap-3"
+          variants={controlsSectionVariants}>
+          {displaySearch && (
+            <SearchInputPage
+              pageKey={filterStoreKey}
+              loading={{initial: isLoadingInitial, more: isLoadingMore}}
+            />
+          )}
+          {displayFilterButton && filtersData && (
+            <FilterButton pageKey={filterStoreKey} data={filtersData} />
+          )}
+        </motion.div>
+      )}
 
-      <FilterPanel pageKey={type} />
+      {displayFilterButton && <FilterPanel pageKey={filterStoreKey} />}
 
       <div className="container-query-parent">
         <div className="gap-6 container-grid grid grid-cols-3">
