@@ -5,7 +5,7 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import {SerializableFilter} from "@/store/filterStore";
 import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupabaseQuery";
 
-const TABLE_NAME = "mock_profiles";
+const TABLE_NAME = "profiles";
 
 export async function getAllProfiles(
   page = 1,

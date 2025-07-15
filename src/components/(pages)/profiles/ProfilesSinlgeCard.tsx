@@ -14,10 +14,12 @@ const ProfilesSinlgeCard = ({
   profile,
   userId,
   isFavorite,
+  customButton,
 }: {
   profile: MatchMeUser;
   userId: string | undefined | null;
   isFavorite: boolean;
+  customButton?: React.ReactNode;
 }) => {
   return (
     <div className="p-4 border border-border rounded-[12px]">
@@ -84,11 +86,16 @@ const ProfilesSinlgeCard = ({
           </div>
         </div>
         <div className="flex items-center gap-[10px] pt-3">
-          <Link href={`/profiles/${profile.username}`} className="w-full">
-            <Button variant={"secondary"} className="w-full">
-              View Profile
-            </Button>
-          </Link>
+          {customButton ? (
+            customButton
+          ) : (
+            <Link href={`/profiles/${profile.username}`} className="w-full">
+              <Button variant={"secondary"} className="w-full">
+                View Profile
+              </Button>
+            </Link>
+          )}
+
           <AuthGate userSessionId={userId}>
             <ProfileAddToFavoriteBtn
               userId={userId}

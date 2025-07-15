@@ -5,13 +5,15 @@ export const useFollowCounts = (userId: string) => {
   return useQuery({
     queryKey: ["follow-counts", userId],
     queryFn: async () => {
-      const [followers, following] = await Promise.all([
+      const [followers, following, mutual] = await Promise.all([
         getUserFollowsCount(userId, "followers"),
         getUserFollowsCount(userId, "following"),
+        getUserFollowsCount(userId, "mutual"),
       ]);
       return {
         followers,
         following,
+        mutual,
       };
     },
     enabled: !!userId,
