@@ -6,6 +6,7 @@ import {motion, AnimatePresence, Variants} from "framer-motion";
 import {toast} from "sonner";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
+import {useQueryClient} from "@tanstack/react-query";
 
 interface FavoriteButtonProps {
   userId: string | undefined | null;
@@ -18,6 +19,9 @@ const ProfileAddToFavoriteBtn = ({userId, favoriteUserId, isFavorite}: FavoriteB
   const [isFavorited, setIsFavorited] = useState(isFavorite);
   const [hasInteracted, setHasInteracted] = useState(false);
 
+  // React Query client for cache invalidation
+  const queryClient = useQueryClient();
+
   const handleFavoriteToggle = async () => {
     if (!userId) {
       // if not authenticated, dont execute the function
@@ -29,6 +33,9 @@ const ProfileAddToFavoriteBtn = ({userId, favoriteUserId, isFavorite}: FavoriteB
       if (result?.success) {
         setIsFavorited(!isFavorited);
         toast.success(result.message);
+
+        // Invalidate relevant queries to propagate favorite status changes
+        queryClient.invalidateQueries();
       } else {
         toast.error("An error occurred. Please try again.");
       }

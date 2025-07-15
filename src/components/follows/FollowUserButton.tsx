@@ -8,6 +8,7 @@ import {motion, AnimatePresence} from "framer-motion";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AlertComponent from "../ui/dialog/AlertComponent";
 import {cn} from "@/lib/utils";
+import {useQueryClient} from "@tanstack/react-query";
 
 interface FollowButtonProps {
   followingId: string;
@@ -48,6 +49,9 @@ const FollowUserButton = ({
   const [following, setFollowing] = useState(isFollowing);
   const [showUnfollow, setShowUnfollow] = useState(false);
 
+  // React Query client for cache invalidation
+  const queryClient = useQueryClient();
+
   // Determine current follow state
   const getFollowState = (): FollowState => {
     // User is NOT following this profile yet
@@ -76,6 +80,9 @@ const FollowUserButton = ({
       if (result?.success) {
         toast.success(result.message);
         setFollowing(true);
+
+        // Invalidate queries that might contain outdated follow data
+        queryClient.invalidateQueries();
       }
     });
   };
@@ -87,6 +94,9 @@ const FollowUserButton = ({
         toast.success(result.message);
         setFollowing(false);
         setShowUnfollow(false);
+
+        // Invalidate queries to refresh any cached data
+        queryClient.invalidateQueries();
       }
     });
   };
