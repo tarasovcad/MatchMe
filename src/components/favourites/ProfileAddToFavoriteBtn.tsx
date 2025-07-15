@@ -34,8 +34,43 @@ const ProfileAddToFavoriteBtn = ({userId, favoriteUserId, isFavorite}: FavoriteB
         setIsFavorited(!isFavorited);
         toast.success(result.message);
 
-        // Invalidate relevant queries to propagate favorite status changes
-        queryClient.invalidateQueries();
+        //  Update specific queries to refresh the list
+        const newFavoriteStatus = !isFavorited;
+
+        // Update favorites list immediately
+        queryClient.setQueryData(
+          ["profiles-favorites", userId],
+          (oldData: string[] | undefined) => {
+            if (!oldData) return [];
+            if (newFavoriteStatus) {
+              return [...oldData, favoriteUserId];
+            } else {
+              return oldData.filter((id) => id !== favoriteUserId);
+            }
+          },
+        );
+
+        // Update saved counts immediately
+        queryClient.setQueryData(
+          ["saved-counts", userId],
+          (oldData: {profiles: number} | undefined) => {
+            if (!oldData) return {profiles: newFavoriteStatus ? 1 : 0};
+            return {
+              profiles: newFavoriteStatus
+                ? oldData.profiles + 1
+                : Math.max(0, oldData.profiles - 1),
+            };
+          },
+        );
+
+        // Invalidate only specific saved profiles infinite queries to refetch the list
+        queryClient.invalidateQueries({
+          queryKey: ["profiles-infinite"],
+          predicate: (query) => {
+            const queryKey = query.queryKey as string[];
+            return queryKey.includes("saved-profiles") || queryKey.includes("profiles-saved");
+          },
+        });
       } else {
         toast.error("An error occurred. Please try again.");
       }

@@ -9,6 +9,7 @@ import DashboardHeader from "./header/DashboardHeader";
 import {User} from "@supabase/supabase-js";
 import OverviewTab from "./tabs/OverviewTab";
 import UserFollowsTab from "./tabs/UserFollowsTab";
+import SavedTab from "./tabs/SavedTab";
 
 const DashboardClientPage = ({tab, user}: {tab: string | string[]; user: User}) => {
   const renderSelectedComponent = () => {
@@ -21,6 +22,8 @@ const DashboardClientPage = ({tab, user}: {tab: string | string[]; user: User}) 
         return <ProjectsTab />;
       case "follows":
         return <UserFollowsTab user={user} />;
+      case "saved":
+        return <SavedTab user={user} />;
       default:
         return <AnalyticsTab user={user} />;
     }
