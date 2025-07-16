@@ -1,12 +1,9 @@
 import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
 import {User} from "@supabase/supabase-js";
-import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
 import {motion} from "framer-motion";
 import {cardVariants} from "@/utils/other/variants";
 import InfiniteItemLoader from "../../InfiniteItemLoader";
-import ProfilesSingleCardSkeleton from "../../profiles/ProfilesSingleCardSkeleton";
 import {getUserFollows, UserWithFollowStatus} from "@/actions/(follows)/getUserFollows";
-import {getUserFavoritesProfiles} from "@/actions/profiles/profiles";
 import {useFollowCounts} from "@/hooks/query/dashboard/use-follows";
 import {useState, useMemo} from "react";
 import {useFilterStore} from "@/store/filterStore";
@@ -15,10 +12,11 @@ import SearchInputPage from "@/components/ui/form/SearchInputPage";
 import FollowUserButton from "@/components/follows/FollowUserButton";
 import {useInfiniteItems} from "@/hooks/useInfiniteItems";
 import AuthGate from "@/components/other/AuthGate";
+import ProfileMiniCard from "../../profiles/ProfileMiniCard";
+import ProfileMiniCardSkeleton from "../../profiles/ProfileMiniCardSkeleton";
 
 const UserFollowsTab = ({user}: {user: User}) => {
   const {data: followCounts} = useFollowCounts(user.id);
-
   const [activeTab, setActiveTab] = useState("followers");
   const {getSerializableFilters} = useFilterStore();
 
@@ -46,101 +44,41 @@ const UserFollowsTab = ({user}: {user: User}) => {
     return getSerializableFilters(pageKey);
   }, [activeTab, getSerializableFilters]);
 
-  // Create fetchItems functions for each tab with search support
-  const fetchFollowers = async (
-    page: number,
-    itemsPerPage: number,
-    filters?: SerializableFilter[],
-  ) => {
-    return await getUserFollows(user.id, "followers", page, itemsPerPage, filters);
+  // Create fetch function for the active tab
+  const fetchItems = async (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => {
+    return await getUserFollows(
+      user.id,
+      activeTab as "followers" | "following" | "mutual",
+      page,
+      itemsPerPage,
+      filters,
+    );
   };
 
-  const fetchFollowing = async (
-    page: number,
-    itemsPerPage: number,
-    filters?: SerializableFilter[],
-  ) => {
-    return await getUserFollows(user.id, "following", page, itemsPerPage, filters);
-  };
-
-  const fetchMutual = async (
-    page: number,
-    itemsPerPage: number,
-    filters?: SerializableFilter[],
-  ) => {
-    return await getUserFollows(user.id, "mutual", page, itemsPerPage, filters);
-  };
-
-  // Use the infinite items hook to get loading states
-  const followersQuery = useInfiniteItems({
+  // Use the infinite items hook for loading states
+  const query = useInfiniteItems({
     type: "profiles",
     userId: user.id,
     itemsPerPage: 15,
-    serializableFilters: activeTab === "followers" ? currentFilters : [],
-    fetchItems: fetchFollowers,
-    fetchUserFavorites: getUserFavoritesProfiles,
+    serializableFilters: currentFilters,
+    fetchItems,
+    cacheKey: `follows-${activeTab}`,
   });
-
-  const followingQuery = useInfiniteItems({
-    type: "profiles",
-    userId: user.id,
-    itemsPerPage: 15,
-    serializableFilters: activeTab === "following" ? currentFilters : [],
-    fetchItems: fetchFollowing,
-    fetchUserFavorites: getUserFavoritesProfiles,
-  });
-
-  const mutualQuery = useInfiniteItems({
-    type: "profiles",
-    userId: user.id,
-    itemsPerPage: 15,
-    serializableFilters: activeTab === "mutual" ? currentFilters : [],
-    fetchItems: fetchMutual,
-    fetchUserFavorites: getUserFavoritesProfiles,
-  });
-
-  // Get current loading states based on active tab
-  const currentLoadingStates = useMemo(() => {
-    let query;
-    if (activeTab === "followers") {
-      query = followersQuery;
-    } else if (activeTab === "following") {
-      query = followingQuery;
-    } else {
-      query = mutualQuery;
-    }
-    return {
-      initial: query.isLoadingInitial,
-      more: query.isLoadingMore,
-    };
-  }, [
-    activeTab,
-    followersQuery.isLoadingInitial,
-    followersQuery.isLoadingMore,
-    followingQuery.isLoadingInitial,
-    followingQuery.isLoadingMore,
-    mutualQuery.isLoadingInitial,
-    mutualQuery.isLoadingMore,
-  ]);
 
   // Render function for each profile item
   const renderFollowItem = (
-    profile: UserWithFollowStatus & {isFavorite?: boolean},
+    profile: UserWithFollowStatus,
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
-    userId: string,
   ) => {
-    // Determine follow states based on updated follow status flags
-    const isFollowing = profile.isFollowedBy ?? false; // Does the current user follow this profile?
-    const isFollowingBack = profile.isFollowingBack ?? false; // Does the profile follow the current user?
+    const isFollowing = profile.isFollowedBy ?? false;
+    const isFollowingBack = profile.isFollowingBack ?? false;
 
     return (
       <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
-        <ProfilesSinlgeCard
+        <ProfileMiniCard
           profile={profile}
-          userId={userId}
-          isFavorite={profile.isFavorite || false}
-          customButton={
+          customFollowButton={
             <AuthGate userSessionId={user.id}>
               <FollowUserButton
                 followingId={profile.id}
@@ -152,7 +90,8 @@ const UserFollowsTab = ({user}: {user: User}) => {
                 hideIcons={true}
                 followVariant={"secondary"}
                 unfollowVariant={"outline"}
-                buttonClassName="@max-[620px]:w-full"
+                size="xs"
+                buttonClassName="flex-1 max-w-[126px]"
               />
             </AuthGate>
           }
@@ -161,9 +100,15 @@ const UserFollowsTab = ({user}: {user: User}) => {
     );
   };
 
-  // Custom search input that uses the actual loading states
+  // Custom search input
   const customSearchInput = (
-    <SearchInputPage pageKey={`follows-${activeTab}`} loading={currentLoadingStates} />
+    <SearchInputPage
+      pageKey={`follows-${activeTab}`}
+      loading={{
+        initial: query.isLoadingInitial || (query.isFetching && !query.isLoadingMore),
+        more: query.isLoadingMore,
+      }}
+    />
   );
 
   return (
@@ -175,60 +120,21 @@ const UserFollowsTab = ({user}: {user: User}) => {
       customSearchInput={customSearchInput}
       topPadding={false}
       onTabChange={setActiveTab}>
-      {(currentActiveTab) => {
-        return (
-          <>
-            {currentActiveTab === "followers" && (
-              <InfiniteItemLoader
-                key={`followers-${JSON.stringify(currentFilters)}`}
-                userSession={user}
-                fetchItems={fetchFollowers}
-                fetchUserFavorites={getUserFavoritesProfiles}
-                renderItem={renderFollowItem}
-                renderSkeleton={() => <ProfilesSingleCardSkeleton />}
-                type="profiles"
-                itemsPerPage={15}
-                displayFilterButton={false}
-                displaySearch={false}
-                pageKey={`follows-${currentActiveTab}`}
-                cacheKey={`followers-${JSON.stringify(currentFilters)}`}
-              />
-            )}
-            {currentActiveTab === "following" && (
-              <InfiniteItemLoader
-                key={`following-${JSON.stringify(currentFilters)}`}
-                userSession={user}
-                fetchItems={fetchFollowing}
-                fetchUserFavorites={getUserFavoritesProfiles}
-                renderItem={renderFollowItem}
-                renderSkeleton={() => <ProfilesSingleCardSkeleton />}
-                type="profiles"
-                itemsPerPage={15}
-                displayFilterButton={false}
-                displaySearch={false}
-                pageKey={`follows-${currentActiveTab}`}
-                cacheKey={`following-${JSON.stringify(currentFilters)}`}
-              />
-            )}
-            {currentActiveTab === "mutual" && (
-              <InfiniteItemLoader
-                key={`mutual-${JSON.stringify(currentFilters)}`}
-                userSession={user}
-                fetchItems={fetchMutual}
-                fetchUserFavorites={getUserFavoritesProfiles}
-                renderItem={renderFollowItem}
-                renderSkeleton={() => <ProfilesSingleCardSkeleton />}
-                type="profiles"
-                itemsPerPage={15}
-                displayFilterButton={false}
-                displaySearch={false}
-                pageKey={`follows-${currentActiveTab}`}
-                cacheKey={`mutual-${JSON.stringify(currentFilters)}`}
-              />
-            )}
-          </>
-        );
-      }}
+      {(currentActiveTab) => (
+        <InfiniteItemLoader
+          key={`${currentActiveTab}-${JSON.stringify(currentFilters)}`}
+          userSession={user}
+          fetchItems={fetchItems}
+          renderItem={renderFollowItem}
+          renderSkeleton={() => <ProfileMiniCardSkeleton />}
+          type="profiles"
+          itemsPerPage={15}
+          displayFilterButton={false}
+          displaySearch={false}
+          pageKey={`follows-${currentActiveTab}`}
+          cacheKey={`follows-${currentActiveTab}`}
+        />
+      )}
     </FilterableTabs>
   );
 };

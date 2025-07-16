@@ -12,9 +12,8 @@ import {useInfiniteItems} from "@/hooks/useInfiniteItems";
 export type InfiniteListProps<T> = {
   userSession: User | null;
   fetchItems: (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => Promise<T[]>;
-  fetchUserFavorites?: (userId: string) => Promise<string[]>;
   renderItem: (
-    item: T & {isFavorite?: boolean},
+    item: T,
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
     userId: string,
@@ -32,7 +31,6 @@ export type InfiniteListProps<T> = {
 const InfiniteItemLoader = <T extends {id: string}>({
   userSession,
   fetchItems,
-  fetchUserFavorites,
   renderItem,
   renderSkeleton,
   itemsPerPage = 15,
@@ -53,12 +51,12 @@ const InfiniteItemLoader = <T extends {id: string}>({
   // Use the custom hook for data fetching
   const {items, isLoadingInitial, isLoadingMore, hasMore, loadMore, isError, error} =
     useInfiniteItems({
-      type: cacheKey ? (`${type}-${cacheKey}` as "profiles" | "projects") : type,
+      type,
       userId,
       itemsPerPage,
       serializableFilters,
       fetchItems,
-      fetchUserFavorites,
+      cacheKey,
     });
 
   // Intersection observer for infinite loading

@@ -1,6 +1,6 @@
 "use client";
 
-import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
+import {useInfiniteQuery} from "@tanstack/react-query";
 import {SerializableFilter} from "@/store/filterStore";
 
 interface UseInfiniteItemsProps<T> {
@@ -9,7 +9,7 @@ interface UseInfiniteItemsProps<T> {
   itemsPerPage: number;
   serializableFilters: SerializableFilter[];
   fetchItems: (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => Promise<T[]>;
-  fetchUserFavorites?: (userId: string) => Promise<string[]>;
+  cacheKey?: string;
 }
 
 export function useInfiniteItems<T extends {id: string}>({
@@ -18,25 +18,12 @@ export function useInfiniteItems<T extends {id: string}>({
   itemsPerPage,
   serializableFilters,
   fetchItems,
-  fetchUserFavorites,
+  cacheKey,
 }: UseInfiniteItemsProps<T>) {
-  // Fetch user favorites
-
-  const {data: favorites = []} = useQuery({
-    queryKey: [`${type}-favorites`, userId],
-    queryFn: () => fetchUserFavorites!(userId),
-    enabled: !!userId && !!fetchUserFavorites,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2, // Retry failed requests 2 times
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-  });
-
-  // Create favorites set for quick lookup
-  const favoritesSet = new Set(favorites);
-
   // Infinite query for items
+  const infiniteKey = cacheKey ? `${type}-${cacheKey}-infinite` : `${type}-infinite`;
   const infiniteQuery = useInfiniteQuery({
-    queryKey: [`${type}-infinite`, serializableFilters],
+    queryKey: [infiniteKey, serializableFilters],
     queryFn: async ({pageParam}) => {
       const start = Date.now();
       const items = await fetchItems(pageParam, itemsPerPage, serializableFilters);
@@ -53,20 +40,15 @@ export function useInfiniteItems<T extends {id: string}>({
     retry: 2, // Retry failed requests 2 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: false, // Don't refetch when component mounts if data exists
+    refetchOnMount: true, // Refetch when component mounts if the data is stale
   });
 
-  // Flatten all items from pages and add favorite status
+  // Flatten items and filter out current user
   const allItems = infiniteQuery.data?.pages.flatMap((page) => page.items) || [];
-  const itemsWithFavorites = allItems
-    .filter((item) => item.id !== userId) // Filter out current user
-    .map((item) => ({
-      ...item,
-      isFavorite: favoritesSet.has(item.id),
-    }));
+  const filteredItems = allItems.filter((item) => item.id !== userId);
 
   return {
-    items: itemsWithFavorites,
+    items: filteredItems,
     ...infiniteQuery,
     // Provide cleaner API
     isLoadingInitial: infiniteQuery.isLoading,
@@ -76,6 +58,6 @@ export function useInfiniteItems<T extends {id: string}>({
     // Expose refetch functionality
     refetch: infiniteQuery.refetch,
     // Total count across all pages
-    totalItems: itemsWithFavorites.length,
+    totalItems: filteredItems.length,
   };
 }

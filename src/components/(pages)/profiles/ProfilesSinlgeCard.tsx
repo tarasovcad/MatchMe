@@ -2,8 +2,8 @@ import ProfileAddToFavoriteBtn from "@/components/favourites/ProfileAddToFavorit
 import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {getNameInitials} from "@/functions/getNameInitials";
-import {MatchMeUser} from "@/types/user/matchMeUser";
-import {BellRing, Languages, Search, Wrench} from "lucide-react";
+import {CardMatchMeUser} from "@/types/user/matchMeUser";
+import {BellRing, MessageCircle, Search, Star, Wrench} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -13,12 +13,10 @@ import AuthGate from "@/components/other/AuthGate";
 const ProfilesSinlgeCard = ({
   profile,
   userId,
-  isFavorite,
   customButton,
 }: {
-  profile: MatchMeUser;
+  profile: CardMatchMeUser;
   userId: string | undefined | null;
-  isFavorite: boolean;
   customButton?: React.ReactNode;
 }) => {
   return (
@@ -77,12 +75,8 @@ const ProfilesSinlgeCard = ({
             <span>{profile.looking_for}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Languages size={16} strokeWidth={2} className="shrink-0" />
-            <span className="line-clamp-1">
-              {Array.isArray(profile?.languages)
-                ? profile?.languages.join(", ")
-                : profile?.languages}
-            </span>
+            <Star size={16} strokeWidth={2} className="shrink-0" />
+            <span className="line-clamp-1">{profile.seniority_level}</span>
           </div>
         </div>
         <div className="flex items-center gap-[10px] pt-3">
@@ -97,11 +91,9 @@ const ProfilesSinlgeCard = ({
           )}
 
           <AuthGate userSessionId={userId}>
-            <ProfileAddToFavoriteBtn
-              userId={userId}
-              favoriteUserId={profile.id}
-              isFavorite={isFavorite}
-            />
+            <Button variant="outline" size="icon" className="h-[38px] w-[38px] shrink-0">
+              <MessageCircle size="16" color="currentColor" strokeWidth={1.8} />
+            </Button>
           </AuthGate>
         </div>
       </div>

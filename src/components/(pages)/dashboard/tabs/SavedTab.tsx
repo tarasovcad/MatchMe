@@ -1,20 +1,19 @@
 import {User} from "@supabase/supabase-js";
 import React from "react";
 import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
-import ProfilesSinlgeCard from "@/components/(pages)/profiles/ProfilesSinlgeCard";
 import {motion} from "framer-motion";
 import {cardVariants} from "@/utils/other/variants";
 import InfiniteItemLoader from "../../InfiniteItemLoader";
 import ProfilesSingleCardSkeleton from "../../profiles/ProfilesSingleCardSkeleton";
 import {getUserSavedProfiles} from "@/actions/(favorites)/getUserSavedProfiles";
-import {getUserFavoritesProfiles} from "@/actions/profiles/profiles";
 import {useState, useMemo} from "react";
 import {useFilterStore} from "@/store/filterStore";
 import {SerializableFilter} from "@/store/filterStore";
 import SearchInputPage from "@/components/ui/form/SearchInputPage";
 import {useInfiniteItems} from "@/hooks/useInfiniteItems";
-import {MatchMeUser} from "@/types/user/matchMeUser";
+import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
 import {useSavedCounts} from "@/hooks/query/dashboard/use-saved";
+import ProfileMiniCard from "../../profiles/ProfileMiniCard";
 
 const SavedTab = ({user}: {user: User}) => {
   // Only profiles favourites implemented for now
@@ -58,13 +57,12 @@ const SavedTab = ({user}: {user: User}) => {
   };
 
   // Use the infinite items hook to get loading states
-  const savedProfilesQuery = useInfiniteItems<MatchMeUser>({
+  const savedProfilesQuery = useInfiniteItems<MiniCardMatchMeUser>({
     type: "profiles",
     userId: user.id,
     itemsPerPage: 15,
     serializableFilters: activeTab === "profiles" ? currentFilters : [],
     fetchItems: fetchSavedProfiles,
-    fetchUserFavorites: getUserFavoritesProfiles,
   });
 
   // Get loading states for search bar
@@ -77,22 +75,12 @@ const SavedTab = ({user}: {user: User}) => {
 
   // Render function for profile item
   const renderSavedProfileItem = (
-    profile: MatchMeUser & {isFavorite?: boolean},
+    profile: MiniCardMatchMeUser & {isFavorite?: boolean},
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
-    userId: string,
   ) => (
-    <motion.div
-      ref={isLast ? ref : null}
-      key={profile.id}
-      variants={cardVariants}
-      // className={profile.isFavorite === false ? "opacity-50" : ""}
-    >
-      <ProfilesSinlgeCard
-        profile={profile}
-        userId={userId}
-        isFavorite={profile.isFavorite !== false}
-      />
+    <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
+      <ProfileMiniCard profile={profile} />
     </motion.div>
   );
 
@@ -117,7 +105,6 @@ const SavedTab = ({user}: {user: User}) => {
               key={`saved-profiles-${JSON.stringify(currentFilters)}`}
               userSession={user}
               fetchItems={fetchSavedProfiles}
-              fetchUserFavorites={getUserFavoritesProfiles}
               renderItem={renderSavedProfileItem}
               renderSkeleton={() => <ProfilesSingleCardSkeleton />}
               type="profiles"

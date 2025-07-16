@@ -5,7 +5,7 @@ import {MatchMeUser} from "@/types/user/matchMeUser";
 import {SerializableFilter} from "@/store/filterStore";
 import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupabaseQuery";
 
-const TABLE_NAME = "profiles";
+const TABLE_NAME = "mock_profiles";
 
 export async function getAllProfiles(
   page = 1,
@@ -18,8 +18,24 @@ export async function getAllProfiles(
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
 
-  // Build base query
-  let query = supabase.from(TABLE_NAME).select("*").eq("is_profile_public", true);
+  // Query with only required columns for CardMatchMeUser
+  let query = supabase
+    .from(TABLE_NAME)
+    .select(
+      `
+     id,
+     name,
+     username,
+     profile_image,
+     looking_for,
+     tagline,
+     skills,
+     created_at,
+     public_current_role,
+     seniority_level
+   `,
+    )
+    .eq("is_profile_public", true);
 
   // Apply filters if provided
   if (pageFilters && pageFilters.length > 0) {

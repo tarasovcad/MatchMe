@@ -44,3 +44,37 @@ export interface MatchMeUser {
   social_links_3: string | null;
   username_changed_at: Date | null;
 }
+
+export interface CardMatchMeUser {
+  id: string;
+  name: string;
+  username: string;
+  profile_image:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
+  looking_for: string | null;
+  tagline: string | null;
+  skills: string[] | null;
+  created_at: string;
+  public_current_role: string | null;
+  seniority_level: string | null;
+}
+
+export interface MiniCardMatchMeUser {
+  id: string;
+  name: string;
+  username: string;
+  profile_image:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
+}

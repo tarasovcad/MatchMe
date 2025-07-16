@@ -1,5 +1,6 @@
 "use client";
-import React, {useTransition, useState} from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, {useState} from "react";
 import {Button} from "../shadcn/button";
 import {UserRoundMinus, UserRoundPlus, Users} from "lucide-react";
 import {toggleUserFollow} from "@/actions/(follows)/toggleUserFollow";
@@ -8,7 +9,7 @@ import {motion, AnimatePresence} from "framer-motion";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import AlertComponent from "../ui/dialog/AlertComponent";
 import {cn} from "@/lib/utils";
-import {useQueryClient} from "@tanstack/react-query";
+import {useQueryClient, useMutation, Query} from "@tanstack/react-query";
 
 interface FollowButtonProps {
   followingId: string;
@@ -21,6 +22,7 @@ interface FollowButtonProps {
   followVariant?: "default" | "outline" | "secondary";
   unfollowVariant?: "default" | "outline" | "secondary";
   hideIcons?: boolean;
+  size?: "default" | "xs";
 }
 
 type FollowState = "follow" | "following" | "friends" | "unfollow";
@@ -44,28 +46,81 @@ const FollowUserButton = ({
   followVariant = "default",
   unfollowVariant = "secondary",
   hideIcons = false,
+  size = "default",
 }: FollowButtonProps) => {
-  const [isPending, startTransition] = useTransition();
   const [following, setFollowing] = useState(isFollowing);
   const [showUnfollow, setShowUnfollow] = useState(false);
-
-  // React Query client for cache invalidation
   const queryClient = useQueryClient();
+
+  const followMutation = useMutation({
+    mutationFn: () => toggleUserFollow(followingId),
+
+    // 1. Flip local state and patch cached lists immediately
+    onMutate: () => {
+      const newFollowing = !following;
+
+      // Update button state instantly
+      setFollowing(newFollowing);
+
+      // Patch cached lists
+      queryClient.setQueriesData(
+        {
+          predicate: (q: Query) =>
+            typeof q.queryKey[0] === "string" && (q.queryKey[0] as string).endsWith("-infinite"),
+        },
+        (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: any) => ({
+              ...page,
+              items: page.items.map((it: any) =>
+                it.id === followingId ? {...it, isFollowedBy: newFollowing} : it,
+              ),
+            })),
+          };
+        },
+      );
+    },
+
+    // 2. Show toast & refetch minimal queries after server confirms
+    onSuccess: (res) => {
+      if (res?.success) toast.success(res.message);
+
+      // Background refetch lists & counts for eventual consistency (no spinners shown)
+      queryClient.invalidateQueries({
+        predicate: (q: Query) =>
+          typeof q.queryKey[0] === "string" && (q.queryKey[0] as string).endsWith("-infinite"),
+        refetchType: "inactive",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["follow-counts", userSessionId],
+        refetchType: "inactive",
+      });
+    },
+
+    // 3. If server fails, just refetch – simplest rollback
+    onError: () => {
+      queryClient.invalidateQueries({
+        predicate: (q: Query) =>
+          typeof q.queryKey[0] === "string" && (q.queryKey[0] as string).endsWith("-infinite"),
+      });
+      queryClient.invalidateQueries({queryKey: ["follow-counts", userSessionId]});
+    },
+  });
 
   // Determine current follow state
   const getFollowState = (): FollowState => {
     // User is NOT following this profile yet
     if (!following) {
-      // Show "Follow" or "Follow Back" depending on whether the profile already follows the user
       return "follow";
     }
 
-    // User *is* following this profile
-    // If the profile ALSO follows the user, they're friends – unless the user has hovered/clicked to unfollow.
+    // User IS following this profile
     if (showUnfollow) {
       return "unfollow";
     }
-
+    // User is following this profile and is following back
     if (isFollowingBack) {
       return "friends";
     }
@@ -74,31 +129,11 @@ const FollowUserButton = ({
     return "unfollow";
   };
 
-  const handleFollow = () => {
-    startTransition(async () => {
-      const result = await toggleUserFollow(followingId);
-      if (result?.success) {
-        toast.success(result.message);
-        setFollowing(true);
-
-        // Invalidate queries that might contain outdated follow data
-        queryClient.invalidateQueries();
-      }
-    });
-  };
+  const handleFollow = () => followMutation.mutate();
 
   const handleUnfollow = () => {
-    startTransition(async () => {
-      const result = await toggleUserFollow(followingId);
-      if (result?.success) {
-        toast.success(result.message);
-        setFollowing(false);
-        setShowUnfollow(false);
-
-        // Invalidate queries to refresh any cached data
-        queryClient.invalidateQueries();
-      }
-    });
+    followMutation.mutate();
+    setShowUnfollow(false);
   };
 
   const currentState = getFollowState();
@@ -150,26 +185,26 @@ const FollowUserButton = ({
 
   const button = (
     <MotionButton
-      size="default"
+      size={size}
       variant={config.variant}
       className={cn(
         simpleStyle ? "w-full" : "w-[164px]",
         "transition-all duration-300",
         buttonClassName,
       )}
-      disabled={isPending || !userSessionId}
+      disabled={followMutation.isPending || !userSessionId}
       onClick={userSessionId && !config.needsConfirmation ? config.action : undefined}
       onMouseLeave={() => setShowUnfollow(false)}
       {...animationProps}>
       {simpleStyle ? (
-        isPending ? (
+        followMutation.isPending ? (
           <LoadingButtonCircle />
         ) : (
           buttonContent
         )
       ) : (
         <AnimatePresence mode="wait">
-          {isPending ? (
+          {followMutation.isPending ? (
             <motion.div
               key="loading"
               initial={{opacity: 0, scale: 0.5}}

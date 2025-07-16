@@ -1,7 +1,7 @@
 "use server";
 
 import {createClient} from "@/utils/supabase/server";
-import {MatchMeUser} from "@/types/user/matchMeUser";
+import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
 import {SerializableFilter} from "@/store/filterStore";
 import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupabaseQuery";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -9,7 +9,15 @@ import {SupabaseClient} from "@supabase/supabase-js";
 const TABLE_NAME = "follows";
 const PROFILES_TABLE_NAME = "profiles";
 
-export interface UserWithFollowStatus extends MatchMeUser {
+// Define the columns needed for MiniCardMatchMeUser
+const MINI_CARD_COLUMNS = `
+  id,
+  name,
+  username,
+  profile_image
+`;
+
+export interface UserWithFollowStatus extends MiniCardMatchMeUser {
   isFollowingBack?: boolean; // Does this profile follow the current user back?
   isFollowedBy?: boolean; // Does the current user follow this profile?
 }
@@ -18,7 +26,7 @@ export interface UserWithFollowStatus extends MatchMeUser {
 async function fetchFollowers(supabase: SupabaseClient, userId: string, from: number, to: number) {
   return await supabase
     .from(TABLE_NAME)
-    .select(`follower_id, profiles!follows_follower_id_fkey(*)`)
+    .select(`follower_id, profiles!follows_follower_id_fkey(${MINI_CARD_COLUMNS})`)
     .eq("following_id", userId)
     .range(from, to);
 }
@@ -27,7 +35,7 @@ async function fetchFollowers(supabase: SupabaseClient, userId: string, from: nu
 async function fetchFollowing(supabase: SupabaseClient, userId: string, from: number, to: number) {
   return await supabase
     .from(TABLE_NAME)
-    .select(`following_id, profiles!follows_following_id_fkey(*)`)
+    .select(`following_id, profiles!follows_following_id_fkey(${MINI_CARD_COLUMNS})`)
     .eq("follower_id", userId)
     .range(from, to);
 }
@@ -51,29 +59,32 @@ async function fetchMutual(supabase: SupabaseClient, userId: string, from: numbe
 
   if (mutualIds.length === 0) return {data: [], error: null};
 
-  // Get paginated profiles
+  // Get paginated profiles with only required columns
   const paginatedMutualIds = mutualIds.slice(from, to + 1);
-  return await supabase.from(PROFILES_TABLE_NAME).select("*").in("id", paginatedMutualIds);
+  return await supabase
+    .from(PROFILES_TABLE_NAME)
+    .select(MINI_CARD_COLUMNS)
+    .in("id", paginatedMutualIds);
 }
 
 // Helper function to extract profiles from query results
 function extractProfiles(
   data: unknown[],
   type: "followers" | "following" | "mutual",
-): MatchMeUser[] {
+): MiniCardMatchMeUser[] {
   if (type === "mutual") {
-    return data.filter(Boolean) as MatchMeUser[];
+    return data.filter(Boolean) as MiniCardMatchMeUser[];
   }
 
   return data
     .map((item) => (item as Record<string, unknown>).profiles)
-    .filter(Boolean) as MatchMeUser[];
+    .filter(Boolean) as MiniCardMatchMeUser[];
 }
 
 // Helper function to calculate follow status
 async function calculateFollowStatus(
   supabase: SupabaseClient,
-  profiles: MatchMeUser[],
+  profiles: MiniCardMatchMeUser[],
   userId: string,
   type: "followers" | "following" | "mutual",
 ): Promise<UserWithFollowStatus[]> {
@@ -121,13 +132,13 @@ async function calculateFollowStatus(
 // Helper function to apply filters to profiles
 async function applyFiltersToProfiles(
   supabase: SupabaseClient,
-  profiles: MatchMeUser[],
+  profiles: MiniCardMatchMeUser[],
   filters: SerializableFilter[],
-): Promise<MatchMeUser[]> {
+): Promise<MiniCardMatchMeUser[]> {
   if (!filters || filters.length === 0) return profiles;
 
   const profileIds = profiles.map((p) => p.id);
-  let query = supabase.from(PROFILES_TABLE_NAME).select("*").in("id", profileIds);
+  let query = supabase.from(PROFILES_TABLE_NAME).select(MINI_CARD_COLUMNS).in("id", profileIds);
   query = applyFiltersToSupabaseQuery(query, filters);
 
   const {data: filteredData} = await query;

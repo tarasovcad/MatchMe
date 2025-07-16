@@ -1,5 +1,5 @@
 "use client";
-import {getAllProfiles, getUserFavoritesProfiles} from "@/actions/profiles/profiles";
+import {getAllProfiles} from "@/actions/profiles/profiles";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {cardVariants, pageHeaderVariants, pageContainerVariants} from "@/utils/other/variants";
 import {motion} from "framer-motion";
@@ -11,20 +11,17 @@ import {User} from "@supabase/supabase-js";
 import {profileFiltersData} from "@/data/filter/profileFiltersData";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import NewItemsCounter from "@/components/ui/NewItemsCounter";
+import {CardMatchMeUser} from "@/types/user/matchMeUser";
 
 const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
   const renderProfileItem = (
-    profile: MatchMeUser & {isFavorite?: boolean},
+    profile: CardMatchMeUser,
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
     userId: string,
   ) => (
     <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
-      <ProfilesSinlgeCard
-        profile={profile}
-        userId={userId}
-        isFavorite={profile.isFavorite || false}
-      />
+      <ProfilesSinlgeCard profile={profile} userId={userId} />
     </motion.div>
   );
 
@@ -58,7 +55,6 @@ const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
       <InfiniteItemLoader
         userSession={userSession}
         fetchItems={getAllProfiles}
-        fetchUserFavorites={getUserFavoritesProfiles}
         renderItem={renderProfileItem}
         renderSkeleton={() => <ProfilesSingleCardSkeleton />}
         filtersData={profileFiltersData}
