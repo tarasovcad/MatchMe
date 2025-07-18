@@ -17,11 +17,20 @@ const PageTitle = ({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1">
-        {hasArrow && (
-          <Button size={"icon"} className="border-none" onClick={onClick}>
-            <ChevronLeft size={22} strokeWidth={2} className="text-foreground/90" />
-          </Button>
-        )}
+        <div className="group">
+          {hasArrow && (
+            <Button
+              size={"icon"}
+              className="border-none shadow-none hover:bg-transparent"
+              onClick={onClick}>
+              <ChevronLeft
+                size={22}
+                strokeWidth={2}
+                className="text-foreground/90 group-hover:text-foreground transition-all duration-300 group-hover:-translate-x-1"
+              />
+            </Button>
+          )}
+        </div>
 
         <MainGradient as="h3" className="font-semibold text-2xl">
           {title}

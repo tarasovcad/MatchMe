@@ -238,7 +238,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
     return {error: error, message: "Error updating profile"};
   }
 
-  const {error} = await supabase
+  const {data: projectData, error: projectError} = await supabase
     .from("projects")
     .insert({
       id: projectId,
@@ -248,11 +248,32 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
     .select("*")
     .single();
 
-  if (error) {
-    console.error("Detailed error:", error);
+  if (projectError) {
+    console.error("Detailed project creation error:", projectError);
     return {
       error: true,
       message: "Something went wrong creating your project. Please try again.",
+    };
+  }
+
+  // Add the project creator as a team member with 'Founder' role and 'owner' permission
+  const {error: teamMemberError} = await supabase.from("project_team_members").insert({
+    project_id: projectId,
+    user_id: user.id,
+    role: "Founder",
+    permission: "owner",
+    is_active: true,
+  });
+
+  if (teamMemberError) {
+    console.error("Error adding project creator to team members:", teamMemberError);
+
+    // Rollback: Delete the created project since team member insertion failed
+    await supabase.from("projects").delete().eq("id", projectId);
+
+    return {
+      error: true,
+      message: "Something went wrong setting up your project team. Please try again.",
     };
   }
 

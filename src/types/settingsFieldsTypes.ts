@@ -2,7 +2,7 @@ import {Option} from "@/components/shadcn/multiselect";
 
 export interface FormFieldProps {
   fieldTitle: string;
-  fieldDescription: string;
+  fieldDescription?: string;
   fieldType:
     | "text"
     | "slug"
@@ -41,7 +41,7 @@ export interface FormFieldProps {
 
 export interface FormProps {
   formTitle: string;
-  formDescription: string;
+  formDescription?: string;
   formData: FormFieldProps[];
 }
 

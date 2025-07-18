@@ -18,7 +18,7 @@ import ProjectSuccessStep from "./ProjectSuccessStep";
 import {toast} from "sonner";
 import {createProject} from "@/actions/dashboard/create-project/createProject";
 
-const MAX_PROJECTS = 3;
+const MAX_PROJECTS = 31;
 
 const stepRequiredFields = {
   1: ["name", "slug", "tagline"],

@@ -67,9 +67,8 @@ CREATE TABLE project_team_members (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
     -- Team member details
-    name TEXT NOT NULL,
     role TEXT NOT NULL,
-    joined_date DATE DEFAULT CURRENT_DATE,
+    joined_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
     -- Member status
     permission team_permission NOT NULL DEFAULT 'member',
@@ -214,8 +213,36 @@ CREATE POLICY "Users can delete their own projects" ON projects
 CREATE POLICY "Team members are viewable by everyone" ON project_team_members
     FOR SELECT USING (true);
 
-CREATE POLICY "Project owners and admins can manage team members" ON project_team_members
-    FOR ALL USING (
+-- Project owners can add team members (for initial project creation and management)
+CREATE POLICY "Project owners can add team members" ON project_team_members
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM projects
+            WHERE projects.id = project_team_members.project_id
+            AND projects.user_id = auth.uid()
+        )
+    );
+
+-- Project owners and existing admins can update/delete team members
+CREATE POLICY "Project owners and admins can update team members" ON project_team_members
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM projects
+            WHERE projects.id = project_team_members.project_id
+            AND projects.user_id = auth.uid()
+        )
+        OR
+        EXISTS (
+            SELECT 1 FROM project_team_members tm
+            WHERE tm.project_id = project_team_members.project_id
+            AND tm.user_id = auth.uid()
+            AND tm.permission IN ('owner', 'co_owner', 'admin')
+            AND tm.is_active = true
+        )
+    );
+
+CREATE POLICY "Project owners and admins can delete team members" ON project_team_members
+    FOR DELETE USING (
         EXISTS (
             SELECT 1 FROM projects
             WHERE projects.id = project_team_members.project_id

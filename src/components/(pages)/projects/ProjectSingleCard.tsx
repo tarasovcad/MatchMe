@@ -14,11 +14,9 @@ import {Project} from "@/types/projects/projects";
 const ProjectSingleCard = ({
   project,
   userId,
-  isFavorite,
 }: {
   project: Project;
   userId: string | undefined | null;
-  isFavorite: boolean;
 }) => {
   return (
     <div className="p-4 border border-border rounded-[12px]">

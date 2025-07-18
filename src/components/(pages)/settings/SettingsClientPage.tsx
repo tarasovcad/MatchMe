@@ -31,7 +31,8 @@ const SettingsClientPage = ({
   const [isClient, setIsClient] = useState(false);
   const [handleSave, setHandleSave] = useState<() => void>(() => {});
   const [handleCancel, setHandleCancel] = useState<() => void>(() => {});
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [isSaveDisabled, setIsSaveDisabled] = useState(true);
+  const [isClearDisabled, setIsClearDisabled] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
@@ -53,14 +54,24 @@ const SettingsClientPage = ({
       setIsLoading,
       setHandleSave,
       setHandleCancel,
-      setIsDisabled,
+      setIsDisabled: setIsSaveDisabled,
+      setClearDisabled: setIsClearDisabled,
     };
 
     switch (tab) {
       case "account":
         return <AccountTab {...commonProps} />;
       case "security":
-        return <SecurityTab {...commonProps} user={user} />;
+        return (
+          <SecurityTab
+            profile={profile}
+            setIsLoading={setIsLoading}
+            setHandleSave={setHandleSave}
+            setHandleCancel={setHandleCancel}
+            setIsDisabled={setIsSaveDisabled}
+            user={user}
+          />
+        );
       default:
         return <AccountTab {...commonProps} />;
     }
@@ -115,7 +126,8 @@ const SettingsClientPage = ({
           isLoading={isLoading}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          isDisabled={isDisabled}
+          isSaveDisabled={isSaveDisabled}
+          isClearDisabled={isClearDisabled}
         />
       </motion.div>
     </motion.form>

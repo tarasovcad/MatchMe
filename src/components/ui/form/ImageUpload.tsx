@@ -450,7 +450,7 @@ const ImageUpload = ({
       );
     } else if (type === "project") {
       return (
-        <div key={index} className="ring-border rounded-lg ring size-10 shrink-0">
+        <div key={index} className=" rounded-lg size-10 shrink-0">
           <Image
             src={imageData.url}
             alt={`project avatar ${index + 1}`}

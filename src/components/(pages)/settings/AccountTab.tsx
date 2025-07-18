@@ -24,12 +24,14 @@ const AccountTab = ({
   setHandleSave,
   setHandleCancel,
   setIsDisabled,
+  setClearDisabled,
 }: {
   profile: MatchMeUser;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setHandleSave: React.Dispatch<React.SetStateAction<() => void>>;
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setClearDisabled?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   // Helper function to normalize values for comparison
   const normalizeValue = (value: unknown, fieldName: string) => {
@@ -122,8 +124,16 @@ const AccountTab = ({
         formValues.background_image &&
         formValues.background_image.length > 0);
 
-    setIsDisabled(!(hasFieldChanged || imageArraysChanged) || !formState.isValid);
-  }, [formValues, initialValues, formState.isValid, setIsDisabled]);
+    const hasChanges = hasFieldChanged || imageArraysChanged;
+
+    // Disable save when there are no changes or validation errors
+    setIsDisabled(!hasChanges || !formState.isValid);
+
+    // Disable clear button only when there are no changes
+    if (setClearDisabled) {
+      setClearDisabled(!hasChanges);
+    }
+  }, [formValues, initialValues, formState.isValid, setIsDisabled, setClearDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
@@ -155,13 +165,12 @@ const AccountTab = ({
         return result;
       }, {} as Partial<SettingsAccountFormData>);
 
-      // Special handling for image fields: if one image field changes, include both to prevent nullification
-      const imageFieldsChanged =
-        changedValues.profile_image !== undefined || changedValues.background_image !== undefined;
-
-      if (imageFieldsChanged) {
-        // Always include both image fields if either one has changed
+      // ALWAYS include image fields if they currently have values to prevent nullification
+      if (data.profile_image && data.profile_image.length > 0) {
         changedValues.profile_image = data.profile_image;
+      }
+
+      if (data.background_image && data.background_image.length > 0) {
         changedValues.background_image = data.background_image;
       }
 

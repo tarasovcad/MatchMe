@@ -2,9 +2,8 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
-import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
-import {uploadImageBuffer} from "../aws/uploadImageBuffer";
-import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
+// image handling is now delegated to processSingleImageField
+import {processSingleImageField} from "../utils/processImageField";
 import {Ratelimit} from "@upstash/ratelimit";
 import {redis} from "@/utils/redis/redis";
 import {getClientIp} from "@/utils/network/getClientIp";
@@ -21,6 +20,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   if (!user) {
     throw new Error("User not authenticated");
   }
+
   const ip = await getClientIp();
 
   const settingsAccountLimit = new Ratelimit({
@@ -44,17 +44,10 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     settingsAccountIpLimit.limit(ip),
   ]);
 
-  if (!userLimit.success) {
+  if (!userLimit.success || !ipLimit.success) {
     return {
       error: true,
       message: "Too many security settings update attempts. Please try again later.",
-    };
-  }
-
-  if (!ipLimit.success) {
-    return {
-      error: true,
-      message: "Too many security settings update attempts from this IP. Please try again later.",
     };
   }
 
@@ -79,88 +72,34 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   );
 
   try {
-    if (
-      transformedData.profile_image &&
-      Array.isArray(transformedData.profile_image) &&
-      transformedData.profile_image.length > 0
-    ) {
-      const profileImageData = transformedData.profile_image[0] as {
-        fileName: string;
-        fileSize: number;
-        uploadedAt: string;
-        url: string;
-      };
+    //  if (
+    //   transformedData.profile_image &&
+    //   Array.isArray(transformedData.profile_image) &&
+    //   transformedData.profile_image.length > 0
+    // ) {
+    // Reuse helper for profile image
 
-      if (profileImageData.url.startsWith("data:image/")) {
-        // It's a new base64 image that needs to be uploaded
-        const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");
+    const profileRes = await processSingleImageField(
+      transformedData,
+      "profile_image",
+      user.id,
+      "user-avatars",
+    );
 
-        const profileImage = await uploadImageBuffer(signedProfileImageUrl, profileImageData.url);
-
-        if (profileImage.error) {
-          return {error: profileImage.error, message: profileImage.message};
-        }
-
-        // Update the array with the new CloudFront URL
-        transformedData.profile_image = [
-          {
-            fileName: profileImageData.fileName,
-            fileSize: profileImageData.fileSize,
-            uploadedAt: profileImageData.uploadedAt,
-            url: `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.webp`,
-          },
-        ];
-
-        // Invalidate the CloudFront cache
-        await invalidateCloudFrontCache(`user-avatars/${user.id}/image.webp`);
-      }
-      // If it's an existing URL, keep the array as is
-    } else {
-      // No profile image or empty array
-      transformedData.profile_image = null;
+    if (profileRes.error) {
+      return {error: true, message: profileRes.message};
     }
 
-    if (
-      transformedData.background_image &&
-      Array.isArray(transformedData.background_image) &&
-      transformedData.background_image.length > 0
-    ) {
-      const backgroundImageData = transformedData.background_image[0] as {
-        fileName: string;
-        fileSize: number;
-        uploadedAt: string;
-        url: string;
-      };
+    // Reuse helper for background image
+    const bgRes = await processSingleImageField(
+      transformedData,
+      "background_image",
+      user.id,
+      "user-backgrounds",
+    );
 
-      if (backgroundImageData.url.startsWith("data:image/")) {
-        // It's a new base64 image that needs to be uploaded
-        const signedBackgroundImageUrl = await getUploadUrl(user.id, "user-backgrounds");
-
-        const backgroundImage = await uploadImageBuffer(
-          signedBackgroundImageUrl,
-          backgroundImageData.url,
-        );
-
-        if (backgroundImage.error) {
-          return {error: backgroundImage.error, message: backgroundImage.message};
-        }
-
-        // Update the array with the new CloudFront URL
-        transformedData.background_image = [
-          {
-            fileName: backgroundImageData.fileName,
-            fileSize: backgroundImageData.fileSize,
-            uploadedAt: backgroundImageData.uploadedAt,
-            url: `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.webp`,
-          },
-        ];
-
-        await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.webp`);
-      }
-      // If it's an existing URL, keep the array as is
-    } else {
-      // No background image or empty array
-      transformedData.background_image = null;
+    if (bgRes.error) {
+      return {error: true, message: bgRes.message};
     }
   } catch (error) {
     console.error("Error updating profile:", error);

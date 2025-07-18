@@ -4,23 +4,26 @@ import {cardVariants, pageHeaderVariants, pageContainerVariants} from "@/utils/o
 import {motion} from "framer-motion";
 import React from "react";
 import InfiniteItemLoader from "../InfiniteItemLoader";
-import ProfilesSingleCardSkeleton from "./ProfilesSingleCardSkeleton";
-import ProfilesSinlgeCard from "./ProfilesSinlgeCard";
+
 import {User} from "@supabase/supabase-js";
 import {profileFiltersData} from "@/data/filter/profileFiltersData";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import NewItemsCounter from "@/components/ui/NewItemsCounter";
 import {CardMatchMeUser} from "@/types/user/matchMeUser";
+import ProfilesSingleCardSkeleton from "../profiles/ProfilesSingleCardSkeleton";
+import {getAllProjects} from "@/actions/projects/projects";
+import ProjectSingleCard from "./ProjectSingleCard";
+import {Project} from "@/types/projects/projects";
 
-const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
-  const renderProfileItem = (
-    profile: CardMatchMeUser,
+const ProjectsClientPage = ({userSession}: {userSession: User | null}) => {
+  const renderProjectItem = (
+    project: Project,
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
     userId: string,
   ) => (
-    <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
-      <ProfilesSinlgeCard profile={profile} userId={userId} />
+    <motion.div ref={isLast ? ref : null} key={project.id} variants={cardVariants}>
+      <ProjectSingleCard project={project} userId={userId} />
     </motion.div>
   );
 
@@ -31,37 +34,37 @@ const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
         className="flex flex-col justify-center items-center gap-2.5 py-14"
         variants={pageHeaderVariants}>
         <NewItemsCounter
-          table="profiles"
+          table="projects"
           itemType={{
-            singular: "person",
-            plural: "people",
+            singular: "project",
+            plural: "projects",
           }}
         />
         <MainGradient
           as="h1"
           className="font-semibold text-3xl sm:text-4xl lg:text-5xl text-center">
-          Find Your Perfect Match
+          Discover Your Next Big Opportunity
         </MainGradient>
         <SecGradient
           as="h2"
           className="px-3 max-w-[742px] text-[15px] sm:text-[16px] lg:text-[18px] text-center">
-          Explore profiles of skilled individuals who share your vision. Join forces with
-          like-minded creators and turn bold ideas into success stories.
+          Discover projects that need your unique talents. Connect with ambitious teams and build
+          the portfolio that takes your career to the next level.
         </SecGradient>
       </motion.div>
 
       {/* Infinite Item Loader */}
       <InfiniteItemLoader
         userSession={userSession}
-        fetchItems={getAllProfiles}
-        renderItem={renderProfileItem}
+        fetchItems={getAllProjects}
+        renderItem={renderProjectItem}
         renderSkeleton={() => <ProfilesSingleCardSkeleton />}
         filtersData={profileFiltersData}
-        type="profiles"
+        type="projects"
         itemsPerPage={15}
       />
     </motion.div>
   );
 };
 
-export default ProfilesClientPage;
+export default ProjectsClientPage;

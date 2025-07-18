@@ -19,7 +19,7 @@ const DashboardClientPage = ({tab, user}: {tab: string | string[]; user: User}) 
       case "analytics":
         return <AnalyticsTab user={user} />;
       case "projects":
-        return <ProjectsTab />;
+        return <ProjectsTab user={user} />;
       case "follows":
         return <UserFollowsTab user={user} />;
       case "saved":
@@ -32,7 +32,11 @@ const DashboardClientPage = ({tab, user}: {tab: string | string[]; user: User}) 
   return (
     <div className="@container flex flex-col gap-8 pb-24">
       <div className="flex flex-col gap-6">
-        <DashboardHeader />
+        <DashboardHeader
+          title="Dashboard Overview"
+          subtitle="Track your followers, posts, and projects all in one place"
+          currentTab={tab as string}
+        />
         <TabNavigation tabsData={dashboardTabsData} activeTab={tab} />
       </div>
 
