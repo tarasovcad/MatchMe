@@ -8,7 +8,7 @@ import DashboardHeader from "../header/DashboardHeader";
 import DashboardOverviewTab from "./DashboardOverviewTab";
 import {dashboardProjectTabsData} from "@/data/tabs/dashboardProjectTabs";
 import {useRouter} from "next/navigation";
-import DashboardDetailsTab from "./DashboardDetailsTab";
+import ProjectManagementDetailsTab from "./ProjectManagementDetailsTab";
 
 const ProjectManagementClientPage = ({
   tab,
@@ -26,9 +26,9 @@ const ProjectManagementClientPage = ({
   const renderSelectedComponent = () => {
     switch (tab) {
       case "overview":
-        return <DashboardDetailsTab user={user} project={project} />;
+        return <ProjectManagementDetailsTab user={user} project={project} />;
       case "details":
-        return <DashboardDetailsTab user={user} project={project} />;
+        return <ProjectManagementDetailsTab user={user} project={project} />;
       case "analytics":
         return <div>Analytics</div>;
       case "team-members":

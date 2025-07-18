@@ -1,13 +1,13 @@
 import {FormProps} from "@/types/settingsFieldsTypes";
-import {projectCategories} from "./projectCategories";
-import {projectStages} from "./projectStages";
+import {projectCategories} from "../../projects/projectCategories";
+import {projectStages} from "../../projects/projectStages";
 import {projectTargetAudiences} from "@/data/projects/projectTargetAudiences";
-import {collaborationModels} from "./collaborationModels";
-import {engagementModels} from "./engagementModels";
-import {availabilityOptions} from "./availabilityOptions";
-import {revenueExpectations} from "./revenueExpectations";
-import {fundingInvestment} from "./fundingInvestment";
-import {compensationModels} from "./compensationModels";
+import {collaborationModels} from "../../projects/collaborationModels";
+import {engagementModels} from "../../projects/engagementModels";
+import {availabilityOptions} from "../../projects/availabilityOptions";
+import {revenueExpectations} from "../../projects/revenueExpectations";
+import {fundingInvestment} from "../../projects/fundingInvestment";
+import {compensationModels} from "../../projects/compensationModels";
 
 export const projectCreationFormFields = [
   {
@@ -46,7 +46,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Tagline",
         fieldType: "text",
         fieldRequired: true,
-        fieldDescription: "Write a compelling description that explains what your project does",
+        fieldDescription: "Short one-sentence summary to spark interest",
         fieldInputProps: [
           {
             id: "tagline",
@@ -60,7 +60,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Image",
         fieldType: "image",
         fieldRequired: false,
-        fieldDescription: "This image will represent your project to others",
+        fieldDescription: "Primary image that represents your project",
         fieldInputProps: [
           {
             id: "project_image",
@@ -92,8 +92,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Why join?",
         fieldType: "textarea",
         fieldRequired: false,
-        fieldDescription:
-          "Explain what makes your project exciting and why others should collaborate with you",
+        fieldDescription: "Highlight what makes this project exciting for collaborators",
         fieldInputProps: [
           {
             id: "why_join",
@@ -147,10 +146,9 @@ export const projectCreationFormFields = [
         ],
       },
       {
-        fieldTitle: "Targer Audience",
+        fieldTitle: "Target Audience",
         fieldType: "selectWithSearch",
-
-        fieldDescription: "Who is your project for?",
+        fieldDescription: "Specify who will benefit from or use your project",
         fieldInputProps: [
           {
             id: "target_audience",
@@ -261,7 +259,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Availability",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "Current availability status for new team members",
+        fieldDescription: "Approximate weekly hours required for contributors",
         fieldInputProps: [
           {
             id: "availability",
@@ -276,7 +274,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Communication Tools",
         fieldType: "tags",
         fieldRequired: false,
-        fieldDescription: "Tools your team uses for communication (Slack, Discord, etc.)",
+        fieldDescription: "Where your team collaborates (Discord, Slack etc.)",
         fieldInputProps: [
           {
             id: "community_platforms",
@@ -296,7 +294,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Revenue Expectations",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "What are your revenue expectations for this project?",
+        fieldDescription: "Projected earnings or monetisation outlook",
         fieldInputProps: [
           {
             id: "revenue_expectations",
@@ -311,7 +309,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Funding & Investment",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "What's your current funding situation?",
+        fieldDescription: "Current funding status or investment goals",
         fieldInputProps: [
           {
             id: "funding_investment",
@@ -326,7 +324,7 @@ export const projectCreationFormFields = [
         fieldTitle: "Compensation Model",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "How will team members be compensated?",
+        fieldDescription: "How contributors will be rewarded",
         fieldInputProps: [
           {
             id: "compensation_model",
@@ -340,114 +338,4 @@ export const projectCreationFormFields = [
     ],
   },
   // Additional steps can be added here
-] as FormProps[];
-
-// Keep the full form fields for reference or future use
-export const allProjectCreationFormFields = [
-  {
-    formTitle: "Project Basics",
-    formDescription:
-      "Tell us a bit about what you're building, how others can join, and what makes your project exciting.",
-    formData: [
-      {
-        fieldTitle: "Name",
-        fieldType: "text",
-        fieldRequired: true,
-        fieldInputProps: [
-          {
-            id: "name",
-            placeholder: "AI-Powered Language Tutor",
-            type: "text",
-            name: "name",
-          },
-        ],
-      },
-
-      {
-        fieldTitle: "Description",
-        fieldType: "textarea",
-        fieldRequired: true,
-        fieldDescription: "Explain the vision, goals, and scope of the project",
-        fieldInputProps: [
-          {
-            id: "description",
-            placeholder: "Write a description for your project",
-            type: "text",
-            name: "description",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Category",
-        fieldType: "selectWithSearch",
-        fieldRequired: true,
-        fieldDescription: "Choose the category that best fits your project",
-        fieldInputProps: [
-          {
-            id: "category",
-            placeholder: "Select a category",
-            type: "text",
-            name: "category",
-            options: projectCategories,
-          },
-        ],
-      },
-      {
-        fieldTitle: "Current Stage",
-        fieldType: "dropdown",
-        fieldRequired: true,
-        fieldDescription: "What stage is your project currently in?",
-        fieldInputProps: [
-          {
-            id: "current_stage",
-            type: "text",
-            placeholder: "Select a stage",
-            name: "current_stage",
-            options: projectStages,
-          },
-        ],
-      },
-      {
-        fieldTitle: "Why join?",
-        fieldType: "textarea",
-        fieldRequired: false,
-        fieldDescription: "Tell others what makes this project exciting to join",
-        fieldInputProps: [
-          {
-            id: "why_join",
-            type: "text",
-            placeholder: "Share your vision and why people should join",
-            name: "why_join",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Language Proficiency",
-        fieldType: "tags",
-        fieldDescription: "What languages should teammates be proficient in?",
-        fieldInputProps: [
-          {
-            id: "language_proficiency",
-            type: "text",
-            placeholder: "Add a language",
-            name: "language_proficiency",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Technology Stack",
-        fieldType: "tags",
-        fieldRequired: true,
-        fieldDescription: "Technologies being used in the project",
-        fieldInputProps: [
-          {
-            id: "technology_stack",
-            type: "text",
-            placeholder: "Add a technology",
-            name: "technology_stack",
-          },
-        ],
-      },
-    ],
-  },
 ] as FormProps[];

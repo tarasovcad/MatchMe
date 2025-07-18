@@ -20,7 +20,7 @@ import {
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
 
-const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) => {
+const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Project}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
   const [isClearDisabled, setIsClearDisabled] = useState(true);
@@ -31,35 +31,35 @@ const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) =>
     tagline: project.tagline ?? "",
     project_image: project.project_image ?? [],
     background_image: project.background_image ?? [],
-    // // Step 2
-    // description: project.description ?? "",
-    // why_join: project.why_join ?? "",
-    // project_website: project.project_website ?? "",
-    // category: project.category ?? "",
-    // current_stage: project.current_stage ?? "",
-    // target_audience: project.target_audience ?? "",
-    // demo: project.demo ?? [],
-    // // Step 3
-    // language_proficiency: Array.isArray(project.language_proficiency)
-    //   ? project.language_proficiency
-    //   : [],
-    // technology_stack: Array.isArray(project.technology_stack) ? project.technology_stack : [],
-    // // Step 4
-    // collaboration_model: project.collaboration_model ?? "",
-    // engagement_model: project.engagement_model ?? "",
-    // working_hours: project.working_hours ?? "",
-    // availability: project.availability ?? "",
-    // community_platforms: project.community_platforms
-    //   ? Array.isArray(project.community_platforms)
-    //     ? project.community_platforms
-    //     : project.community_platforms.split(",").map((v) => v.trim())
-    //   : [],
-    // // Step 5
-    // revenue_expectations: project.revenue_expectations ?? "",
-    // funding_investment: project.funding_investment ?? "",
-    // compensation_model: project.compensation_model ?? "",
-    // // Internal
-    // _slugLoading: false,
+    // Step 2
+    description: project.description ?? "",
+    why_join: project.why_join ?? "",
+    project_website: project.project_website ?? "",
+    category: project.category ?? "",
+    current_stage: project.current_stage ?? "",
+    target_audience: project.target_audience ?? "",
+    demo: project.demo ?? [],
+    // Step 3
+    language_proficiency: Array.isArray(project.language_proficiency)
+      ? project.language_proficiency
+      : [],
+    technology_stack: Array.isArray(project.technology_stack) ? project.technology_stack : [],
+    // Step 4
+    collaboration_model: project.collaboration_model ?? "",
+    engagement_model: project.engagement_model ?? "",
+    working_hours: project.working_hours ?? "",
+    availability: project.availability ?? "",
+    community_platforms: project.community_platforms
+      ? Array.isArray(project.community_platforms)
+        ? project.community_platforms
+        : project.community_platforms.split(",").map((v) => v.trim())
+      : [],
+    // Step 5
+    revenue_expectations: project.revenue_expectations ?? "",
+    funding_investment: project.funding_investment ?? "",
+    compensation_model: project.compensation_model ?? "",
+    // Internal
+    _slugLoading: false,
   }));
 
   // Helper to ignore internal fields and normalise values (currently only handles undefined/empty strings for simple consistency)
@@ -77,6 +77,7 @@ const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) =>
   // Watch form values to detect changes & validation state
   const watchedValues = useWatch({control: methods.control});
   const {formState} = methods;
+  console.log(formState.errors);
   useEffect(() => {
     // Detect any meaningful changes excluding internal helper fields (those that start with "_")
     const changedKeys: string[] = [];
@@ -100,16 +101,10 @@ const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) =>
         watchedValues.background_image &&
         watchedValues.background_image.length > 0);
 
-    console.log(hasFieldChanged, "hasFieldChanged");
-    console.log(formState.isValid, "formState.isValid");
-    console.log(formState.errors, "formState.errors");
-    console.log(formState.errors.project_image, "formState.errors.project_image");
-    console.log(formState.errors.background_image, "formState.errors.background_image");
-
     const hasChanges = hasFieldChanged || imageArraysChanged;
 
-    // setIsSaveDisabled(false);
     setIsSaveDisabled(!hasChanges || !formState.isValid);
+    // setIsSaveDisabled(false);
 
     setIsClearDisabled(!hasChanges);
   }, [watchedValues, initialValues, formState.isValid]);
@@ -170,7 +165,7 @@ const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) =>
       animate="visible"
       variants={containerVariants}
       onSubmit={(e) => e.preventDefault()}>
-      <div className="flex flex-col gap-9 max-[990px]:gap-8 pb-24">
+      <div className="flex flex-col gap-9 max-[990px]:gap-8">
         <FormProvider {...methods}>
           {projectDetailsFormFields.map((section, index) => (
             <motion.div
@@ -208,4 +203,4 @@ const DashboardDetailsTab = ({user, project}: {user: User; project: Project}) =>
   );
 };
 
-export default DashboardDetailsTab;
+export default ProjectManagementDetailsTab;

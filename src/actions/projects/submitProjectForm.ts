@@ -2,6 +2,7 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {processSingleImageField} from "../utils/processImageField";
+import {processMultipleImageField} from "../utils/processImageField";
 
 export const submitProjectForm = async (projectId: string, formData: Record<string, unknown>) => {
   const supabase = await createClient();
@@ -42,6 +43,18 @@ export const submitProjectForm = async (projectId: string, formData: Record<stri
 
     if (bgImgRes.error) {
       return {error: true, message: bgImgRes.message};
+    }
+
+    // Handle demo images (up to 5)
+    const demoRes = await processMultipleImageField(
+      transformedData,
+      "demo",
+      projectId,
+      "project-demo-images",
+    );
+
+    if (demoRes.error) {
+      return {error: true, message: demoRes.message};
     }
   } catch (err) {
     console.error("Error processing project images:", err);

@@ -20,14 +20,15 @@ export interface FormFieldProps {
     | "accountVerification"
     | "makeProfilePublic"
     | "deleteAccount"
-    | "connectedAccounts";
+    | "connectedAccounts"
+    | "demo";
   fieldRequired?: boolean;
   fieldRequiredCreateProject?: boolean;
   fieldInputProps: [
     {
       id: string;
-      placeholder: string;
-      type: string;
+      placeholder?: string;
+      type?: string;
       name: string;
       readOnly?: boolean;
       className?: string;

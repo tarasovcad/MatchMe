@@ -12,7 +12,12 @@ export type Project = {
     uploadedAt: string;
     url: string;
   }[];
-  demo: string[];
+  demo: {
+    fileName: string;
+    fileSize: number;
+    uploadedAt: string;
+    url: string;
+  }[];
   background_image: {
     fileName: string;
     fileSize: number;

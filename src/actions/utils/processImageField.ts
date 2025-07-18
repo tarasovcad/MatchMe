@@ -69,3 +69,63 @@ export async function processSingleImageField(
 
   return {error: false};
 }
+
+export async function processMultipleImageField(
+  data: Record<string, unknown>,
+  fieldName: string,
+  ownerId: string,
+  folder: string,
+): Promise<{error: boolean; message?: string}> {
+  // Exit early if field absent
+  if (!(fieldName in data)) return {error: false};
+
+  const fieldValue = data[fieldName];
+
+  if (fieldValue && Array.isArray(fieldValue) && fieldValue.length > 0) {
+    const images = fieldValue as {
+      fileName: string;
+      fileSize: number;
+      uploadedAt: string;
+      url: string;
+    }[];
+
+    const processed: typeof images = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+
+      // Only upload if new base64 data
+      if (img.url.startsWith("data:image/")) {
+        try {
+          const filename = `image_${i + 1}.webp`;
+          const signedUrl = await getUploadUrl(ownerId, folder, filename);
+          const uploadRes = await uploadImageBuffer(signedUrl, img.url);
+
+          if (uploadRes.error) {
+            return {error: true, message: uploadRes.message};
+          }
+
+          processed.push({
+            ...img,
+            url: `${process.env.CLOUDFRONT_URL}/${folder}/${ownerId}/${filename}`,
+          });
+
+          await invalidateCloudFrontCache(`${folder}/${ownerId}/${filename}`);
+        } catch (err) {
+          console.error(`Error processing ${fieldName} image ${i}:`, err);
+          return {error: true, message: "Error processing image"};
+        }
+      } else {
+        // Existing hosted image
+        processed.push(img);
+      }
+    }
+
+    data[fieldName] = processed;
+  } else {
+    // Ensure null if empty or not array
+    data[fieldName] = null;
+  }
+
+  return {error: false};
+}

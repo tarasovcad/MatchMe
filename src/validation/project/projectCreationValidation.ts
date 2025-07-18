@@ -1,12 +1,12 @@
 import {languages} from "@/data/forms/(settings)/languages";
-import {projectCategories} from "@/data/forms/create-project/projectCategories";
-import {projectStages} from "@/data/forms/create-project/projectStages";
-import {collaborationModels} from "@/data/forms/create-project/collaborationModels";
-import {engagementModels} from "@/data/forms/create-project/engagementModels";
-import {availabilityOptions} from "@/data/forms/create-project/availabilityOptions";
-import {revenueExpectations} from "@/data/forms/create-project/revenueExpectations";
-import {fundingInvestment} from "@/data/forms/create-project/fundingInvestment";
-import {compensationModels} from "@/data/forms/create-project/compensationModels";
+import {projectCategories} from "@/data/projects/projectCategories";
+import {projectStages} from "@/data/projects/projectStages";
+import {collaborationModels} from "@/data/projects/collaborationModels";
+import {engagementModels} from "@/data/projects/engagementModels";
+import {availabilityOptions} from "@/data/projects/availabilityOptions";
+import {revenueExpectations} from "@/data/projects/revenueExpectations";
+import {fundingInvestment} from "@/data/projects/fundingInvestment";
+import {compensationModels} from "@/data/projects/compensationModels";
 import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
 
@@ -126,205 +126,215 @@ export const projectCreationValidationSchema = z.object({
     )
     .max(1)
     .optional(),
-  // // 2 step - Enhanced validations
-  // description: z
-  //   .string()
-  //   .trim()
-  //   .min(50, "Description must be at least 50 characters")
-  //   .max(1500, "Description must not exceed 1500 characters")
-  //   .refine((val) => !hasRepeatedChars(val), {
-  //     message: "Description cannot have repetitive characters",
-  //   })
-  //   .refine((val) => hasVariety(val), {
-  //     message: "Description must contain diverse and meaningful content",
-  //   })
-  //   .refine((val) => !isSpamPattern(val), {
-  //     message: "Please write a genuine description of your project",
-  //   })
-  //   .refine((val) => val.split(" ").length >= 8, {
-  //     message: "Description should be more detailed (at least 8 words)",
-  //   })
-  //   .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
-  //     message: "Description cannot be all uppercase",
-  //   }),
-  // why_join: z
-  //   .string()
-  //   .trim()
-  //   .min(20, "Why join must be at least 20 characters")
-  //   .max(1000, "Why join must not exceed 1000 characters")
-  //   .refine((val) => !hasRepeatedChars(val), {
-  //     message: "Why join cannot have repetitive characters",
-  //   })
-  //   .refine((val) => hasVariety(val), {
-  //     message: "Why join must contain meaningful and varied content",
-  //   })
-  //   .refine((val) => !isSpamPattern(val), {
-  //     message: "Please explain genuine reasons to join your project",
-  //   })
-  //   .refine((val) => val.split(" ").length >= 5, {
-  //     message: "Why join should be more descriptive (at least 5 words)",
-  //   })
-  //   .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
-  //     message: "Why join cannot be all uppercase",
-  //   })
-  //   .optional()
-  //   .or(z.literal("")),
-  // project_website: z
-  //   .string()
-  //   .trim()
-  //   .refine(
-  //     (val) => {
-  //       if (!val) return true;
-  //       try {
-  //         const url = new URL(val);
-  //         return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(url.hostname);
-  //       } catch {
-  //         return false;
-  //       }
-  //     },
-  //     {message: "Please enter a valid website URL with a proper domain"},
-  //   )
-  //   .refine((val) => !/[A-Z]/.test(val), {
-  //     message: "The URL should not contain uppercase letters",
-  //   })
-  //   .optional()
-  //   .or(z.literal("")),
-  // category: z
-  //   .string()
-  //   .min(1, {message: "Category is required"})
-  //   .refine((val) => allowedCategories.has(val), {
-  //     message: "Please select a valid project category",
-  //   }),
-  // current_stage: z.string().refine((val) => allowedStages.has(val), {
-  //   message: "Please select a valid project stage",
-  // }),
-  // target_audience: z.string(),
-  // demo: z.array(z.string()),
-  // // 3 step
-  // language_proficiency: z
-  //   .array(
-  //     z
-  //       .string()
-  //       .trim()
-  //       .min(2, {message: "Each language must be at least 2 characters"})
-  //       .max(30, {message: "Each language must be at most 30 characters"})
-  //       .regex(/^[A-Za-z]+$/, {
-  //         message: "Languages can only contain letters (no spaces, numbers, or symbols)",
-  //       })
-  //       .refine((val) => allowedLanguages.has(val), {
-  //         message: "Language must be one of the supported languages",
-  //       }),
-  //   )
-  //   .min(1, {message: "At least one language is required"})
-  //   .max(15, {message: "Languages must be at most 15 tags"}),
-  // technology_stack: z
-  //   .array(
-  //     z
-  //       .string()
-  //       .trim()
-  //       .min(1, {message: "Each technology must be at least 1 character"})
-  //       .max(30, {message: "Each technology must be at most 30 characters"})
-  //       .regex(/^[A-Za-z0-9#+.\-*/ ]+$/, {
-  //         message: "Technologies can contain letters, numbers, and common symbols (# + . - * /)",
-  //       })
-  //       .refine((val) => !hasRepeatedChars(val), {
-  //         message: "Technology names cannot have repetitive characters",
-  //       })
-  //       .refine((val) => !isSpamPattern(val), {
-  //         message: "Please enter valid technology names only",
-  //       })
-  //       .refine((val) => !/^[0-9]+$/.test(val), {
-  //         message: "Technology names cannot be only numbers",
-  //       })
-  //       .refine((val) => hasVariety(val), {
-  //         message: "Technology names must be meaningful and varied",
-  //       }),
-  //   )
-  //   .min(1, {message: "At least one skill is required"})
-  //   .max(15, {message: "Skills must be at most 15 tags"}),
-  // // 4 step
-  // collaboration_model: z
-  //   .string()
-  //   .min(1, {message: "Collaboration model is required"})
-  //   .refine((val) => allowedCollaborationModels.has(val), {
-  //     message: "Please select a valid collaboration model",
-  //   }),
-  // engagement_model: z
-  //   .string()
-  //   .min(1, {message: "Engagement model is required"})
-  //   .refine((val) => allowedEngagementModels.has(val), {
-  //     message: "Please select a valid engagement model",
-  //   }),
-  // working_hours: z
-  //   .string()
-  //   .trim()
-  //   .max(50, {message: "Working hours description must not exceed 50 characters"})
-  //   .refine((val) => !val || !hasRepeatedChars(val), {
-  //     message: "Working hours cannot have repetitive characters",
-  //   })
-  //   .refine((val) => !val || hasVariety(val), {
-  //     message: "Working hours description must be meaningful",
-  //   })
-  //   .refine((val) => !val || !isSpamPattern(val), {
-  //     message: "Please provide a genuine time commitment description",
-  //   })
-  //   .refine((val) => !val || !/^[A-Z\s!?.,]+$/.test(val), {
-  //     message: "Working hours cannot be all uppercase",
-  //   })
-  //   .optional()
-  //   .or(z.literal("")),
-  // availability: z
-  //   .string()
-  //   .min(1, {message: "Availability is required"})
-  //   .refine((val) => allowedAvailabilityOptions.has(val), {
-  //     message: "Please select a valid availability option",
-  //   }),
-  // community_platforms: z
-  //   .array(
-  //     z
-  //       .string()
-  //       .trim()
-  //       .min(1, {message: "Each platform must be at least 1 character"})
-  //       .max(30, {message: "Each platform must be at most 30 characters"})
-  //       .regex(/^[A-Za-z0-9\s\-_+.]+$/, {
-  //         message: "Platform names can only contain letters, numbers, spaces, and common symbols",
-  //       })
-  //       .refine((val) => !hasRepeatedChars(val), {
-  //         message: "Platform names cannot have repetitive characters",
-  //       })
-  //       .refine((val) => hasVariety(val), {
-  //         message: "Platform names must be meaningful and varied",
-  //       })
-  //       .refine((val) => !isSpamPattern(val), {
-  //         message: "Please enter valid communication platform names",
-  //       })
-  //       .refine((val) => !/^[0-9]+$/.test(val), {
-  //         message: "Platform names cannot be only numbers",
-  //       }),
-  //   )
-  //   .max(10, {message: "Communication tools must be at most 10 items"})
-  //   .optional(),
-  // // 5 step
-  // revenue_expectations: z
-  //   .string()
-  //   .min(1, {message: "Revenue expectations is required"})
-  //   .refine((val) => allowedRevenueExpectations.has(val), {
-  //     message: "Please select a valid revenue expectation",
-  //   }),
-  // funding_investment: z
-  //   .string()
-  //   .min(1, {message: "Funding & investment status is required"})
-  //   .refine((val) => allowedFundingInvestment.has(val), {
-  //     message: "Please select a valid funding status",
-  //   }),
-  // compensation_model: z
-  //   .string()
-  //   .min(1, {message: "Compensation model is required"})
-  //   .refine((val) => allowedCompensationModels.has(val), {
-  //     message: "Please select a valid compensation model",
-  //   }),
-  // // Hidden field to track slug loading state
-  // _slugLoading: z.boolean().optional(),
+  // 2 step - Enhanced validations
+  description: z
+    .string()
+    .trim()
+    .min(50, "Description must be at least 50 characters")
+    .max(1500, "Description must not exceed 1500 characters")
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Description cannot have repetitive characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Description must contain diverse and meaningful content",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please write a genuine description of your project",
+    })
+    .refine((val) => val.split(" ").length >= 8, {
+      message: "Description should be more detailed (at least 8 words)",
+    })
+    .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Description cannot be all uppercase",
+    }),
+  why_join: z
+    .string()
+    .trim()
+    .min(20, "Why join must be at least 20 characters")
+    .max(1000, "Why join must not exceed 1000 characters")
+    .refine((val) => !hasRepeatedChars(val), {
+      message: "Why join cannot have repetitive characters",
+    })
+    .refine((val) => hasVariety(val), {
+      message: "Why join must contain meaningful and varied content",
+    })
+    .refine((val) => !isSpamPattern(val), {
+      message: "Please explain genuine reasons to join your project",
+    })
+    .refine((val) => val.split(" ").length >= 5, {
+      message: "Why join should be more descriptive (at least 5 words)",
+    })
+    .refine((val) => !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Why join cannot be all uppercase",
+    })
+    .optional()
+    .or(z.literal("")),
+  project_website: z
+    .string()
+    .trim()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        try {
+          const url = new URL(val);
+          return /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/.test(url.hostname);
+        } catch {
+          return false;
+        }
+      },
+      {message: "Please enter a valid website URL with a proper domain"},
+    )
+    .refine((val) => !/[A-Z]/.test(val), {
+      message: "The URL should not contain uppercase letters",
+    })
+    .optional()
+    .or(z.literal("")),
+  category: z
+    .string()
+    .min(1, {message: "Category is required"})
+    .refine((val) => allowedCategories.has(val), {
+      message: "Please select a valid project category",
+    }),
+  current_stage: z.string().refine((val) => allowedStages.has(val), {
+    message: "Please select a valid project stage",
+  }),
+  target_audience: z.string(),
+  demo: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileSize: z.number(),
+        uploadedAt: z.string(),
+        url: z.string(),
+      }),
+    )
+    .max(5)
+    .optional(),
+  // 3 step
+  language_proficiency: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(2, {message: "Each language must be at least 2 characters"})
+        .max(30, {message: "Each language must be at most 30 characters"})
+        .regex(/^[A-Za-z]+$/, {
+          message: "Languages can only contain letters (no spaces, numbers, or symbols)",
+        })
+        .refine((val) => allowedLanguages.has(val), {
+          message: "Language must be one of the supported languages",
+        }),
+    )
+    .min(1, {message: "At least one language is required"})
+    .max(15, {message: "Languages must be at most 15 tags"}),
+  technology_stack: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, {message: "Each technology must be at least 1 character"})
+        .max(30, {message: "Each technology must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9#+.\-*/ ]+$/, {
+          message: "Technologies can contain letters, numbers, and common symbols (# + . - * /)",
+        })
+        .refine((val) => !hasRepeatedChars(val), {
+          message: "Technology names cannot have repetitive characters",
+        })
+        .refine((val) => !isSpamPattern(val), {
+          message: "Please enter valid technology names only",
+        })
+        .refine((val) => !/^[0-9]+$/.test(val), {
+          message: "Technology names cannot be only numbers",
+        })
+        .refine((val) => hasVariety(val), {
+          message: "Technology names must be meaningful and varied",
+        }),
+    )
+    .min(1, {message: "At least one skill is required"})
+    .max(15, {message: "Skills must be at most 15 tags"}),
+  // 4 step
+  collaboration_model: z
+    .string()
+    .min(1, {message: "Collaboration model is required"})
+    .refine((val) => allowedCollaborationModels.has(val), {
+      message: "Please select a valid collaboration model",
+    }),
+  engagement_model: z
+    .string()
+    .min(1, {message: "Engagement model is required"})
+    .refine((val) => allowedEngagementModels.has(val), {
+      message: "Please select a valid engagement model",
+    }),
+  working_hours: z
+    .string()
+    .trim()
+    .max(50, {message: "Working hours description must not exceed 50 characters"})
+    .refine((val) => !val || !hasRepeatedChars(val), {
+      message: "Working hours cannot have repetitive characters",
+    })
+    .refine((val) => !val || hasVariety(val), {
+      message: "Working hours description must be meaningful",
+    })
+    .refine((val) => !val || !isSpamPattern(val), {
+      message: "Please provide a genuine time commitment description",
+    })
+    .refine((val) => !val || !/^[A-Z\s!?.,]+$/.test(val), {
+      message: "Working hours cannot be all uppercase",
+    })
+    .optional()
+    .or(z.literal("")),
+  availability: z
+    .string()
+    .min(1, {message: "Availability is required"})
+    .refine((val) => allowedAvailabilityOptions.has(val), {
+      message: "Please select a valid availability option",
+    }),
+  community_platforms: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, {message: "Each platform must be at least 1 character"})
+        .max(30, {message: "Each platform must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9\s\-_+.]+$/, {
+          message: "Platform names can only contain letters, numbers, spaces, and common symbols",
+        })
+        .refine((val) => !hasRepeatedChars(val), {
+          message: "Platform names cannot have repetitive characters",
+        })
+        .refine((val) => hasVariety(val), {
+          message: "Platform names must be meaningful and varied",
+        })
+        .refine((val) => !isSpamPattern(val), {
+          message: "Please enter valid communication platform names",
+        })
+        .refine((val) => !/^[0-9]+$/.test(val), {
+          message: "Platform names cannot be only numbers",
+        }),
+    )
+    .max(10, {message: "Communication tools must be at most 10 items"})
+    .optional(),
+  // 5 step
+  revenue_expectations: z
+    .string()
+    .min(1, {message: "Revenue expectations is required"})
+    .refine((val) => allowedRevenueExpectations.has(val), {
+      message: "Please select a valid revenue expectation",
+    }),
+  funding_investment: z
+    .string()
+    .min(1, {message: "Funding & investment status is required"})
+    .refine((val) => allowedFundingInvestment.has(val), {
+      message: "Please select a valid funding status",
+    }),
+  compensation_model: z
+    .string()
+    .min(1, {message: "Compensation model is required"})
+    .refine((val) => allowedCompensationModels.has(val), {
+      message: "Please select a valid compensation model",
+    }),
+  // Hidden field to track slug loading state
+  _slugLoading: z.boolean().optional(),
 });
 
 export type ProjectCreationFormData = z.infer<typeof projectCreationValidationSchema>;

@@ -22,6 +22,7 @@ import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
 import ImageTabs from "@/components/(pages)/settings/ImageTabs";
+import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
 
 const fieldComponents = {
   makeProfilePublic: MakeProfilePublicSwitch,
@@ -40,6 +41,7 @@ const fieldComponents = {
   deleteAccount: DangerZone,
   connectedAccounts: UserConnectedAccounts,
   username: SettingsUsernameInput,
+  demo: DemoImageInput,
 };
 
 const SettingsFormField = ({
@@ -95,7 +97,7 @@ const SettingsFormField = ({
       <div className="w-full min-[990px]:max-w-[652px]">
         <InputComponent
           id={fieldInputProps[0].id}
-          placeholder={fieldInputProps[0].placeholder}
+          placeholder={fieldInputProps[0].placeholder ?? ""}
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
           name={fieldInputProps[0].name}
