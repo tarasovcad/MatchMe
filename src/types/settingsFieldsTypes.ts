@@ -18,7 +18,7 @@ export interface FormFieldProps {
     | "social"
     | "description"
     | "accountVerification"
-    | "makeProfilePublic"
+    | "makePublic"
     | "deleteAccount"
     | "connectedAccounts"
     | "demo";

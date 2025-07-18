@@ -50,7 +50,8 @@ CREATE TABLE projects (
 
     -- Additional fields for enhanced functionality
     project_website TEXT,
-    repository_url TEXT,
+
+    is_project_public BOOLEAN DEFAULT FALSE,
 
     -- Metadata
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

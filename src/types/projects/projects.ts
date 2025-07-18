@@ -55,6 +55,8 @@ export type Project = {
   working_hours: string;
   community_platforms: string;
   project_website: string;
+
+  is_project_public: boolean;
 };
 
 export type TeamPermission = "owner" | "co_owner" | "admin" | "editor" | "viewer" | "member";

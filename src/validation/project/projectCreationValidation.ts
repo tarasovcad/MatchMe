@@ -48,6 +48,7 @@ const allowedFundingInvestment = new Set(fundingInvestment.map((funding) => fund
 const allowedCompensationModels = new Set(compensationModels.map((model) => model.title));
 
 export const projectCreationValidationSchema = z.object({
+  is_project_public: z.boolean(),
   // 1 step - Enhanced validations
   name: z
     .string()

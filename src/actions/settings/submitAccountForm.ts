@@ -2,13 +2,12 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
-// image handling is now delegated to processSingleImageField
 import {processSingleImageField} from "../utils/processImageField";
 import {Ratelimit} from "@upstash/ratelimit";
 import {redis} from "@/utils/redis/redis";
 import {getClientIp} from "@/utils/network/getClientIp";
-import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import {canMakePublic} from "@/functions/canMakePublic";
 
 export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
@@ -72,13 +71,6 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   );
 
   try {
-    //  if (
-    //   transformedData.profile_image &&
-    //   Array.isArray(transformedData.profile_image) &&
-    //   transformedData.profile_image.length > 0
-    // ) {
-    // Reuse helper for profile image
-
     const profileRes = await processSingleImageField(
       transformedData,
       "profile_image",
@@ -123,7 +115,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
       ...transformedData,
     } as MatchMeUser;
 
-    const {canMakeProfilePublic} = canUserMakeProfilePublic(updatedProfileState);
+    const {canMakePublic: canMakeProfilePublic} = canMakePublic(updatedProfileState);
 
     // Check if user is trying to set profile public when it's incomplete
     if (transformedData.is_profile_public === true && !canMakeProfilePublic) {

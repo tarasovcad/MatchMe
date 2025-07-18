@@ -302,7 +302,7 @@ export const accountSettingsFormFieldsTop = [
   {
     fieldTitle: "Make Profile Public",
     fieldDescription: "Enable to make your profile visible to others",
-    fieldType: "makeProfilePublic",
+    fieldType: "makePublic",
     fieldInputProps: [
       {
         id: "is_profile_public",

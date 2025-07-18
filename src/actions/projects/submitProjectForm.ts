@@ -3,6 +3,8 @@
 import {createClient} from "@/utils/supabase/server";
 import {processSingleImageField} from "../utils/processImageField";
 import {processMultipleImageField} from "../utils/processImageField";
+import {canMakePublic} from "@/functions/canMakePublic";
+import {Project} from "@/types/projects/projects";
 
 export const submitProjectForm = async (projectId: string, formData: Record<string, unknown>) => {
   const supabase = await createClient();
@@ -61,6 +63,46 @@ export const submitProjectForm = async (projectId: string, formData: Record<stri
     return {error: true, message: "Error processing images"};
   }
 
+  // ---------------------------------------------------------------------------
+  // Backend validation: ensure project can't be made public if incomplete
+  // ---------------------------------------------------------------------------
+
+  // Fetch current project to merge with incoming updates
+  const {data: currentProject} = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .single();
+
+  let wasAutomaticallySetToPrivate = false;
+
+  if (currentProject) {
+    const updatedProjectState = {
+      ...currentProject,
+      ...transformedData,
+    } as Project;
+
+    const {canMakePublic: canMakeProjectPublic} = canMakePublic(updatedProjectState);
+
+    // Scenario 1: explicit attempt to set public while incomplete
+    if (transformedData.is_project_public === true && !canMakeProjectPublic) {
+      transformedData.is_project_public = false;
+      wasAutomaticallySetToPrivate = true;
+    }
+    // Scenario 2: project currently public but will become incomplete after updates
+    else if (
+      currentProject.is_project_public === true &&
+      !canMakeProjectPublic &&
+      transformedData.is_project_public !== false
+    ) {
+      transformedData.is_project_public = false;
+      wasAutomaticallySetToPrivate = true;
+      console.warn(
+        `Project ${projectId} was public but became incomplete after updates – forced to private`,
+      );
+    }
+  }
+
   const {error} = await supabase.from("projects").update(transformedData).eq("id", projectId);
 
   if (error) {
@@ -68,5 +110,9 @@ export const submitProjectForm = async (projectId: string, formData: Record<stri
     return {error: true, message: "Error updating project"};
   }
 
-  return {error: false, message: "Project updated successfully"};
+  return {
+    error: false,
+    message: "Project updated successfully",
+    projectSetToPrivate: wasAutomaticallySetToPrivate,
+  };
 };

@@ -1,4 +1,4 @@
-import {FormProps} from "@/types/settingsFieldsTypes";
+import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
 import {projectCategories} from "@/data/projects/projectCategories";
 import {projectStages} from "@/data/projects/projectStages";
 import {projectTargetAudiences} from "@/data/projects/projectTargetAudiences";
@@ -324,6 +324,22 @@ export const projectDetailsFormFields: FormProps[] = [
             options: compensationModels,
           },
         ],
+      },
+    ],
+  },
+];
+
+export const projectDetailsFormFieldsTop: FormFieldProps[] = [
+  {
+    fieldTitle: "Make Project Public",
+    fieldDescription: "Enable to make your project visible to others",
+    fieldType: "makePublic",
+    fieldInputProps: [
+      {
+        id: "is_project_public",
+        placeholder: "Make Project Public",
+        type: "text",
+        name: "is_project_public",
       },
     ],
   },

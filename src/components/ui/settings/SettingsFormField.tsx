@@ -10,7 +10,7 @@ import SimpleSlider from "../form/SimpleSlider";
 import PersonalWebsiteInput from "../form/PersonalWebsiteInput";
 import SocialLinksInput from "./SocialLinksInput";
 import {useFormContext} from "react-hook-form";
-import MakeProfilePublicSwitch from "./MakeProfilePublicSwitch";
+import MakePublicSwitch from "./MakePublicSwitch";
 import VerifyAccountButton from "./VerifyAccountButton";
 import {cn} from "@/lib/utils";
 import TagsInput from "../form/TagsInput";
@@ -20,12 +20,13 @@ import UserConnectedAccounts from "./UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import {Project} from "@/types/projects/projects";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
 import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
 
 const fieldComponents = {
-  makeProfilePublic: MakeProfilePublicSwitch,
+  makePublic: MakePublicSwitch,
   accountVerification: VerifyAccountButton,
   text: SimpleInput,
   number: NumberFieldInput,
@@ -48,10 +49,12 @@ const SettingsFormField = ({
   formField,
   user,
   profile,
+  project,
 }: {
   formField: FormFieldProps;
   user?: User;
   profile?: MatchMeUser;
+  project?: Project;
 }) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps, fieldRequired} = formField;
   const fieldName = fieldInputProps[0].name;
@@ -63,7 +66,7 @@ const SettingsFormField = ({
   } = useFormContext();
 
   const isTopSection = () => {
-    return fieldType === "makeProfilePublic" || fieldType === "accountVerification";
+    return fieldType === "makePublic" || fieldType === "accountVerification";
   };
 
   const itemVariants = {
@@ -109,6 +112,7 @@ const SettingsFormField = ({
           user={user!}
           mail={fieldInputProps[0].name === "email"}
           profile={profile}
+          project={project}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

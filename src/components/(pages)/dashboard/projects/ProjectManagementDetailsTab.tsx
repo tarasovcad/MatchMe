@@ -2,7 +2,10 @@ import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
 import React, {useEffect, useState} from "react";
 import SettingsFormField from "@/components/ui/settings/SettingsFormField";
-import {projectDetailsFormFields} from "@/data/forms/projects/projectDetailsFormFields";
+import {
+  projectDetailsFormFields,
+  projectDetailsFormFieldsTop,
+} from "@/data/forms/projects/projectDetailsFormFields";
 import {FormProvider, useForm, useWatch} from "react-hook-form";
 import {
   ProjectCreationFormData,
@@ -19,12 +22,22 @@ import {
   itemVariants,
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
+import {cn} from "@/lib/utils";
 
-const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Project}) => {
+const ProjectManagementDetailsTab = ({
+  user,
+  project,
+  onProjectUpdate,
+}: {
+  user: User;
+  project: Project;
+  onProjectUpdate?: React.Dispatch<React.SetStateAction<Project>>;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
   const [isClearDisabled, setIsClearDisabled] = useState(true);
   const [initialValues, setInitialValues] = useState<ProjectCreationFormData>(() => ({
+    is_project_public: project.is_project_public ?? false,
     // Step 1
     name: project.name ?? "",
     slug: project.slug ?? "",
@@ -76,8 +89,9 @@ const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Proj
 
   // Watch form values to detect changes & validation state
   const watchedValues = useWatch({control: methods.control});
+
   const {formState} = methods;
-  console.log(formState.errors);
+
   useEffect(() => {
     // Detect any meaningful changes excluding internal helper fields (those that start with "_")
     const changedKeys: string[] = [];
@@ -104,7 +118,6 @@ const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Proj
     const hasChanges = hasFieldChanged || imageArraysChanged;
 
     setIsSaveDisabled(!hasChanges || !formState.isValid);
-    // setIsSaveDisabled(false);
 
     setIsClearDisabled(!hasChanges);
   }, [watchedValues, initialValues, formState.isValid]);
@@ -144,10 +157,23 @@ const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Proj
     }
 
     toast.success(response.message, {id: toastId});
+
+    // Assess if project was auto-set private
+    let finalData = data;
+    if (response.projectSetToPrivate) {
+      finalData = {...data, is_project_public: false};
+      toast.warning("Your project was set to private because required fields are missing.");
+    }
+
     // Update local state & reset form
-    const newInitialValues = {...initialValues, ...data};
+    const newInitialValues = {...initialValues, ...finalData};
     setInitialValues(newInitialValues);
     methods.reset(newInitialValues);
+
+    // Inform parent about updated project state
+    if (onProjectUpdate) {
+      onProjectUpdate({...project, ...finalData} as Project);
+    }
     setIsLoading(false);
   };
 
@@ -167,21 +193,37 @@ const ProjectManagementDetailsTab = ({user, project}: {user: User; project: Proj
       onSubmit={(e) => e.preventDefault()}>
       <div className="flex flex-col gap-9 max-[990px]:gap-8">
         <FormProvider {...methods}>
-          {projectDetailsFormFields.map((section, index) => (
-            <motion.div
-              key={section.formTitle}
-              variants={itemVariants}
-              className={`flex flex-col gap-9 ${index !== 0 ? "border-t border-border pt-6" : ""}`}>
-              <h4 className="font-semibold text-foreground text-xl">{section.formTitle}</h4>
-              <motion.div variants={containerVariants} className="flex flex-col gap-6">
-                {section.formData.map((formField) => (
-                  <motion.div key={formField.fieldTitle} variants={itemVariants}>
-                    <SettingsFormField formField={formField} />
-                  </motion.div>
-                ))}
-              </motion.div>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col gap-6">
+            <motion.div variants={itemVariants} className="border border-border rounded-[8px]">
+              {projectDetailsFormFieldsTop.map((formField, index) => (
+                <motion.div
+                  key={formField.fieldTitle}
+                  variants={itemVariants}
+                  className={cn("px-[18px] py-3", index !== 0 && "border-t border-border")}>
+                  <SettingsFormField formField={formField} project={project} />
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
+            {projectDetailsFormFields.map((section, index) => (
+              <motion.div
+                key={section.formTitle}
+                variants={itemVariants}
+                className={`flex flex-col gap-9 ${index !== 0 ? "border-t border-border pt-6" : ""}`}>
+                <h4 className="font-semibold text-foreground text-xl">{section.formTitle}</h4>
+                <motion.div variants={containerVariants} className="flex flex-col gap-6">
+                  {section.formData.map((formField) => (
+                    <motion.div key={formField.fieldTitle} variants={itemVariants}>
+                      <SettingsFormField formField={formField} project={project} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
         </FormProvider>
       </div>
 

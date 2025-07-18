@@ -13,7 +13,7 @@ import {
 import {User} from "@supabase/supabase-js";
 import Alert from "@/components/ui/Alert";
 import {canChangeUsername} from "@/functions/canChangeUsername";
-import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
+import {canMakePublic} from "@/functions/canMakePublic";
 import TabNavigation from "@/components/ui/form/TabNavigation";
 import {settingsTabsData} from "@/data/tabs/settingsTabsData";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
@@ -46,7 +46,7 @@ const SettingsClientPage = ({
     ? canChangeUsername(profile.username_changed_at)
     : {canChange: true, nextAvailableDate: null};
 
-  const {canMakeProfilePublic} = canUserMakeProfilePublic(profile);
+  const {canMakePublic: canMakeProfilePublic} = canMakePublic(profile);
 
   const renderSelectedComponent = () => {
     const commonProps = {
