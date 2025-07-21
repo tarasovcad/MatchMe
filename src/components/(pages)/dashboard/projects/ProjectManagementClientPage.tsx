@@ -11,6 +11,9 @@ import {useRouter} from "next/navigation";
 import ProjectManagementDetailsTab from "./ProjectManagementDetailsTab";
 import Alert from "@/components/ui/Alert";
 import {canMakePublic} from "@/functions/canMakePublic";
+import ProjectManagementSecurityTab from "./ProjectManagementSecurityTab";
+import {canChangeUsername} from "@/functions/canChangeUsername";
+import {canChangeSlug} from "@/functions/canChangeSlug";
 
 const ProjectManagementClientPage = ({
   tab,
@@ -48,10 +51,22 @@ const ProjectManagementClientPage = ({
         return <div>Team Members</div>;
       case "applications":
         return <div>Applications</div>;
+      case "security":
+        return (
+          <ProjectManagementSecurityTab
+            user={user}
+            project={projectState}
+            onProjectUpdate={setProjectState}
+          />
+        );
       default:
         return <DashboardOverviewTab user={user} project={projectState} />;
     }
   };
+
+  const slugChangeStatus = projectState.slug_changed_at
+    ? canChangeSlug(projectState.slug_changed_at)
+    : {canChange: true, nextAvailableDate: null};
 
   return (
     <div className="@container flex flex-col gap-8 pb-24">
@@ -59,6 +74,13 @@ const ProjectManagementClientPage = ({
         <Alert
           title="Your project is incomplete!"
           message="To make your project public, you need to fill in all required details."
+          type="warning"
+        />
+      )}
+      {tab === "security" && !slugChangeStatus.canChange && (
+        <Alert
+          message={`Your next available change date is ${slugChangeStatus.nextAvailableDate}.`}
+          title="Project slugs can only be changed once a month"
           type="warning"
         />
       )}

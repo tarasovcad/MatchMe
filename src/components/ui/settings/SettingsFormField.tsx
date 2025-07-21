@@ -24,6 +24,7 @@ import {Project} from "@/types/projects/projects";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
 import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
+import ProjectSlugInput from "./ProjectSlugInput";
 
 const fieldComponents = {
   makePublic: MakePublicSwitch,
@@ -43,6 +44,7 @@ const fieldComponents = {
   connectedAccounts: UserConnectedAccounts,
   username: SettingsUsernameInput,
   demo: DemoImageInput,
+  slug: ProjectSlugInput,
 };
 
 const SettingsFormField = ({

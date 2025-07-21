@@ -4,6 +4,7 @@ export type Project = {
 
   name: string;
   slug: string;
+  slug_changed_at?: Date | string;
   tagline: string;
   description: string;
   project_image: {
