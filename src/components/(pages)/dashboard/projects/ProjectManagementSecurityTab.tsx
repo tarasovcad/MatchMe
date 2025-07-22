@@ -3,6 +3,7 @@
 import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
 import React, {useEffect, useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
 import {FormProvider, useForm, useWatch} from "react-hook-form";
 import SettingsFormField from "@/components/ui/settings/SettingsFormField";
 import {projectSecurityFormFields} from "@/data/forms/projects/projectSecurityFormFields";
@@ -21,12 +22,12 @@ import {
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {submitProjectSecurityForm} from "@/actions/projects/submitProjectSecurityForm";
+import {updateProjectRoles} from "@/actions/projects/updateProjectRoles";
 import {Button} from "@/components/shadcn/button";
 import {PlusIcon} from "lucide-react";
-import {SearchInput} from "@/components/ui/FilterBtnComponents";
-import {Input} from "@/components/shadcn/input";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import PermissionManagement from "./PermissionManagement";
+import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
 
 const ProjectManagementSecurityTab = ({
   user,
@@ -45,6 +46,13 @@ const ProjectManagementSecurityTab = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
 
+  // Track modified roles coming from the PermissionManagement child component
+  const [changedRoles, setChangedRoles] = useState<ProjectRoleDb[]>([]);
+  // Used to force PermissionManagement to reset when the user presses "Cancel"
+  const [resetRolesSignal, setResetRolesSignal] = useState(false);
+
+  const queryClient = useQueryClient();
+
   const methods = useForm<ProjectSecurityFormData>({
     resolver: zodResolver(projectSecurityValidationSchema),
     mode: "onChange",
@@ -57,49 +65,71 @@ const ProjectManagementSecurityTab = ({
     const filteredInitial = {slug: initialValues.slug};
     const filteredWatch = {slug: watchedValues.slug};
 
-    const hasChanged = !isEqual(filteredWatch, filteredInitial);
-    setIsSaveDisabled(!hasChanged || !methods.formState.isValid);
-  }, [watchedValues, initialValues, methods.formState.isValid]);
+    const slugChanged = !isEqual(filteredWatch, filteredInitial);
+    const rolesChanged = changedRoles.length > 0;
+
+    setIsSaveDisabled(!(slugChanged || rolesChanged) || !methods.formState.isValid);
+  }, [watchedValues, initialValues, methods.formState.isValid, changedRoles]);
 
   const onSubmit = async (data: ProjectSecurityFormData) => {
     setIsLoading(true);
 
-    if (data.slug === initialValues.slug) {
-      setIsLoading(false);
-      return;
+    const toastId = toast.loading("Saving changes…");
+
+    // 1. Handle slug update (if needed)
+    if (data.slug !== initialValues.slug) {
+      const response = await submitProjectSecurityForm(project.id, data);
+
+      if (response.error) {
+        toast.error(response.message, {id: toastId});
+        setIsLoading(false);
+        return;
+      }
+
+      const updatedSlugChangedAt = response.slug_changed_at ?? new Date().toISOString();
+
+      setInitialValues({slug: data.slug, newSlug: ""});
+      methods.reset({slug: data.slug, newSlug: ""});
+
+      // Update local project object with new slug
+      const updatedProject = {
+        ...project,
+        slug: data.slug,
+        slug_changed_at: updatedSlugChangedAt,
+      } as Project;
+
+      if (onProjectUpdate) {
+        onProjectUpdate(updatedProject);
+      }
     }
 
-    const toastId = toast.loading("Updating project slug...");
-    const response = await submitProjectSecurityForm(project.id, data);
+    // 2. Handle roles update
+    if (changedRoles.length > 0) {
+      const rolesResponse = await updateProjectRoles(project.id, changedRoles);
 
-    if (response.error) {
-      toast.error(response.message, {id: toastId});
-      setIsLoading(false);
-      return;
+      if (rolesResponse.error) {
+        toast.error(rolesResponse.message, {id: toastId});
+        setIsLoading(false);
+        return;
+      }
+
+      await queryClient.invalidateQueries({queryKey: ["project-roles", project.id]});
     }
 
-    toast.success(response.message, {id: toastId});
+    toast.success("Changes saved successfully", {id: toastId});
 
-    const updatedSlugChangedAt = response.slug_changed_at ?? new Date().toISOString();
+    setChangedRoles([]);
 
-    setInitialValues({slug: data.slug, newSlug: ""});
-    methods.reset({slug: data.slug, newSlug: ""});
-
-    // Update slug_changed_at in local project object
-    const updatedProject = {
-      ...project,
-      slug: data.slug,
-      slug_changed_at: updatedSlugChangedAt,
-    } as Project;
-
-    if (onProjectUpdate) {
-      onProjectUpdate(updatedProject);
-    }
     setIsLoading(false);
   };
 
   const handleSave = () => methods.handleSubmit(onSubmit)();
-  const handleCancel = () => methods.reset();
+
+  const handleCancel = () => {
+    methods.reset();
+    setChangedRoles([]);
+    setResetRolesSignal((prev) => !prev);
+  };
 
   return (
     <motion.form
@@ -136,7 +166,11 @@ const ProjectManagementSecurityTab = ({
             </div>
           </div>
           <motion.div variants={containerVariants} className="flex flex-col gap-6">
-            <PermissionManagement projectId={project.id} />
+            <PermissionManagement
+              projectId={project.id}
+              onRolesChange={setChangedRoles}
+              resetSignal={resetRolesSignal}
+            />
           </motion.div>
         </motion.div>
       </FormProvider>
@@ -152,7 +186,7 @@ const ProjectManagementSecurityTab = ({
           handleSave={handleSave}
           handleCancel={handleCancel}
           isSaveDisabled={isSaveDisabled}
-          isClearDisabled={!methods.formState.isDirty}
+          isClearDisabled={!methods.formState.isDirty && changedRoles.length === 0}
         />
       </motion.div>
     </motion.form>

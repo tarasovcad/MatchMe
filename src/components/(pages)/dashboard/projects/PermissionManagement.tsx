@@ -1,6 +1,7 @@
 "use client";
 
-import React, {useState, useEffect, useMemo} from "react";
+import React, {useState, useEffect, useMemo, useRef} from "react";
+import {isEqual} from "lodash";
 import {
   ChevronRight,
   ChevronDown,
@@ -42,13 +43,54 @@ import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
 type PermissionKey = "view" | "create" | "update" | "delete";
 const PERMISSION_ORDER: PermissionKey[] = ["view", "create", "update", "delete"];
 
-const PermissionManagement = ({projectId}: {projectId: string}) => {
+interface PermissionManagementProps {
+  projectId: string;
+  onRolesChange?: (changed: ProjectRoleDb[]) => void;
+  resetSignal?: boolean;
+}
+
+const PermissionManagement = ({
+  projectId,
+  onRolesChange,
+  resetSignal,
+}: PermissionManagementProps) => {
   const {data: roles, isLoading: isRolesLoading} = useProjectRoles(projectId);
+  // Keeps track of which roles rows are expanded in the UI
   const [expandedRoles, setExpandedRoles] = useState<Record<string, boolean>>({});
+  const originalRolesRef = useRef<ProjectRoleDb[]>([]);
+
+  // Local editable copy of roles. All UI modifications happen here.
+  const [localRoles, setLocalRoles] = useState<ProjectRoleDb[]>([]);
+
+  // Keep a copy of roles on first fetch so we can always reset back to it.
+  useEffect(() => {
+    if (roles) {
+      originalRolesRef.current = roles;
+      setLocalRoles(roles);
+    }
+  }, [roles]);
+
+  // Reset back to original data when parent toggles the signal.
+  useEffect(() => {
+    setLocalRoles(originalRolesRef.current);
+  }, [resetSignal]);
+
+  // Calculate which roles have changed compared with the original dataset and
+  // notify parent component so it can enable / disable the Save button.
+  useEffect(() => {
+    if (!onRolesChange) return;
+
+    const changed = localRoles.filter((role) => {
+      const original = originalRolesRef.current.find((r) => r.id === role.id);
+      return !isEqual(role, original);
+    });
+
+    onRolesChange(changed);
+  }, [localRoles, onRolesChange]);
 
   // Sort roles: Owner → Co-Founder → Member → rest by updated_at desc
   const sortedRoles = useMemo(() => {
-    if (!roles) return [];
+    if (!localRoles) return [];
     const priority: Record<string, number> = {
       owner: 0,
       "co-founder": 1,
@@ -57,7 +99,7 @@ const PermissionManagement = ({projectId}: {projectId: string}) => {
       member: 2,
     };
 
-    return [...roles].sort((a, b) => {
+    return [...localRoles].sort((a, b) => {
       const aKey = a.name.toLowerCase();
       const bKey = b.name.toLowerCase();
       const aRank = priority[aKey] ?? 3;
@@ -69,7 +111,7 @@ const PermissionManagement = ({projectId}: {projectId: string}) => {
       const bDate = b.updated_at ? new Date(b.updated_at).getTime() : 0;
       return bDate - aDate;
     });
-  }, [roles]);
+  }, [localRoles]);
 
   // Expand the owner role on first load
   useEffect(() => {
@@ -90,11 +132,27 @@ const PermissionManagement = ({projectId}: {projectId: string}) => {
   }
 
   const toggleExpanded = (roleId: string) => {
-    setExpandedRoles((prev) => ({...prev, [roleId]: !prev[roleId]}));
+    setExpandedRoles((prev: Record<string, boolean>) => ({...prev, [roleId]: !prev[roleId]}));
   };
 
   const updatePermission = (roleId: string, resourceId: string, permissionType: PermissionKey) => {
-    console.log("toggle", {roleId, resourceId, permissionType});
+    setLocalRoles((prev: ProjectRoleDb[]) =>
+      prev.map((role) => {
+        if (role.id !== roleId) return role;
+
+        // Defensive: clone permissions object so we never mutate state directly.
+        const updatedPermissions = {...(role.permissions || {})};
+        const resourcePermissions = {...(updatedPermissions[resourceId] || {})};
+
+        resourcePermissions[permissionType] = !resourcePermissions[permissionType];
+        updatedPermissions[resourceId] = resourcePermissions;
+
+        return {
+          ...role,
+          permissions: updatedPermissions,
+        };
+      }),
+    );
   };
 
   const getRoleBadgeColor = (role: ProjectRoleDb) => {
@@ -221,11 +279,23 @@ const PermissionManagement = ({projectId}: {projectId: string}) => {
    * Single role + nested resources row
    */
   const renderRoleRow = (role: ProjectRoleDb) => {
-    const totalResources = Object.keys(role.permissions || {}).length;
-    const viewCount = Object.values(role.permissions || {}).filter((a) => a.view).length;
-    const createCount = Object.values(role.permissions || {}).filter((a) => a.create).length;
-    const updateCount = Object.values(role.permissions || {}).filter((a) => a.update).length;
-    const deleteCount = Object.values(role.permissions || {}).filter((a) => a.delete).length;
+    const resourcesArr = Object.values(role.permissions || {}) as Record<string, boolean>[];
+
+    const countAllowed = (key: PermissionKey) => resourcesArr.filter((r) => r[key]).length;
+    const countPresent = (key: PermissionKey) =>
+      resourcesArr.filter((r) => Object.prototype.hasOwnProperty.call(r, key)).length;
+
+    const viewCount = countAllowed("view");
+    const viewTotal = countPresent("view");
+
+    const createCount = countAllowed("create");
+    const createTotal = countPresent("create");
+
+    const updateCount = countAllowed("update");
+    const updateTotal = countPresent("update");
+
+    const deleteCount = countAllowed("delete");
+    const deleteTotal = countPresent("delete");
 
     return (
       <div key={role.id}>
@@ -249,16 +319,16 @@ const PermissionManagement = ({projectId}: {projectId: string}) => {
             {role.is_system_role ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
           </div>
           <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {viewCount}/{totalResources}
+            {viewCount}/{viewTotal}
           </div>
           <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {createCount}/{totalResources}
+            {createCount}/{createTotal}
           </div>
           <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {updateCount}/{totalResources}
+            {updateCount}/{updateTotal}
           </div>
           <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {deleteCount}/{totalResources}
+            {deleteCount}/{deleteTotal}
           </div>
           {/* Action column */}
           <div className="flex justify-center items-center pr-4  group">
