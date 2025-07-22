@@ -153,6 +153,38 @@ CREATE TABLE project_followers (
 );
 
 -- =============================================
+-- PROJECT PERMISSIONS SYSTEM
+-- =============================================
+
+-- Project roles table (customizable roles per project)
+CREATE TABLE project_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+
+    -- Role details
+    name TEXT NOT NULL,
+    badge_color TEXT NOT NULL,
+    -- JSONB column holding the full permission matrix, e.g. {"members": {"view": true, "update": false}}
+    permissions JSONB NOT NULL DEFAULT '{}',
+    is_default BOOLEAN DEFAULT FALSE,
+    is_system_role BOOLEAN DEFAULT FALSE, -- for owner, cannot be deleted/renamed
+
+    -- Metadata
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Constraints
+    UNIQUE(project_id, name)
+);
+
+-- NOTE: individual permission rows are no longer needed; full matrix is stored in project_roles.permissions JSONB
+
+-- Update project_team_members to reference custom roles instead of enum
+ALTER TABLE project_team_members
+DROP COLUMN permission,
+ADD COLUMN role_id UUID REFERENCES project_roles(id);
+
+-- =============================================
 -- INDEXES FOR PERFORMANCE
 -- =============================================
 
@@ -186,6 +218,14 @@ CREATE INDEX idx_applications_status ON project_applications(status);
 CREATE INDEX idx_followers_project_id ON project_followers(project_id);
 CREATE INDEX idx_followers_user_id ON project_followers(follower_user_id);
 
+-- Project roles indexes
+CREATE INDEX idx_project_roles_project_id ON project_roles(project_id);
+CREATE INDEX idx_project_roles_is_default ON project_roles(is_default);
+CREATE INDEX idx_project_roles_is_system_role ON project_roles(is_system_role);
+
+-- JSONB GIN index for fast permission containment queries
+CREATE INDEX idx_project_roles_permissions_gin ON project_roles USING gin (permissions jsonb_path_ops);
+
 -- =============================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- =============================================
@@ -196,6 +236,8 @@ ALTER TABLE project_team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_open_positions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_followers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE project_roles ENABLE ROW LEVEL SECURITY;
+-- project_role_permissions table removed; no RLS to enable
 
 -- Projects policies
 CREATE POLICY "Projects are viewable by everyone" ON projects
@@ -331,4 +373,28 @@ CREATE POLICY "Followers are viewable by everyone" ON project_followers
 
 CREATE POLICY "Users can follow/unfollow projects" ON project_followers
     FOR ALL USING (auth.uid() = follower_user_id);
+
+-- Project roles policies
+CREATE POLICY "Project roles are viewable by project members" ON project_roles
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM project_team_members tm
+            WHERE tm.project_id = project_roles.project_id
+            AND tm.user_id = auth.uid()
+            AND tm.is_active = true
+        )
+    );
+
+CREATE POLICY "Project owners can manage roles" ON project_roles
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM projects p
+            WHERE p.id = project_roles.project_id
+            AND p.user_id = auth.uid()
+        )
+        OR
+        user_has_permission(auth.uid(), project_roles.project_id, 'members', 'update')
+    );
+
+-- Project_role_permissions table removed; policies no longer needed
 

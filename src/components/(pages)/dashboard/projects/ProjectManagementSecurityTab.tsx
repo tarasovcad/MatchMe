@@ -21,6 +21,12 @@ import {
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {submitProjectSecurityForm} from "@/actions/projects/submitProjectSecurityForm";
+import {Button} from "@/components/shadcn/button";
+import {PlusIcon} from "lucide-react";
+import {SearchInput} from "@/components/ui/FilterBtnComponents";
+import {Input} from "@/components/shadcn/input";
+import SimpleInput from "@/components/ui/form/SimpleInput";
+import PermissionManagement from "./PermissionManagement";
 
 const ProjectManagementSecurityTab = ({
   user,
@@ -102,7 +108,7 @@ const ProjectManagementSecurityTab = ({
       animate="visible"
       onSubmit={(e) => e.preventDefault()}>
       <FormProvider {...methods}>
-        {projectSecurityFormFields.map((section, index) => (
+        {/* {projectSecurityFormFields.map((section, index) => (
           <motion.div
             key={section.formTitle}
             variants={itemVariants}
@@ -116,7 +122,23 @@ const ProjectManagementSecurityTab = ({
               ))}
             </motion.div>
           </motion.div>
-        ))}
+        ))} */}
+        {/* roles and permissions */}
+        <motion.div variants={itemVariants} className={`flex flex-col gap-4.5`}>
+          <div className="flex justify-between items-center">
+            <h4 className="font-semibold text-foreground text-xl">Roles and Permissions</h4>
+            <div className="flex items-center gap-2">
+              <SimpleInput placeholder="Search for a role" search className="max-w-[350px]" />
+              <Button variant="secondary" size="xs">
+                <PlusIcon className="w-4 h-4" />
+                Add Role
+              </Button>
+            </div>
+          </div>
+          <motion.div variants={containerVariants} className="flex flex-col gap-6">
+            <PermissionManagement />
+          </motion.div>
+        </motion.div>
       </FormProvider>
 
       {/* Bottom action buttons */}
