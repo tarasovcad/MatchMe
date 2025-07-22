@@ -136,7 +136,7 @@ const ProjectManagementSecurityTab = ({
             </div>
           </div>
           <motion.div variants={containerVariants} className="flex flex-col gap-6">
-            <PermissionManagement />
+            <PermissionManagement projectId={project.id} />
           </motion.div>
         </motion.div>
       </FormProvider>

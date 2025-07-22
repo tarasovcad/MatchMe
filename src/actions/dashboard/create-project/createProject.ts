@@ -11,7 +11,7 @@ import {Ratelimit} from "@upstash/ratelimit";
 
 import {v4 as uuidv4} from "uuid";
 
-const MAX_PROJECTS = 3;
+const MAX_PROJECTS = 10;
 
 export const createProject = async (formData: Partial<ProjectCreationFormData>) => {
   const supabase = await createClient();
@@ -152,12 +152,70 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
     };
   }
 
+  // ────────────────────────────────────────────
+  //  Create default roles: Owner & Member
+  // ────────────────────────────────────────────
+
+  const ownerPermissions = {
+    project_details: {view: true, update: true},
+    members: {view: true, update: true, delete: true},
+    invitations: {view: true, create: true, delete: true},
+    open_positions: {view: true, create: true, update: true, delete: true},
+    applications: {view: true, create: true, update: true, delete: true},
+    analytics: {view: true},
+    followers: {view: true},
+  };
+
+  const memberPermissions = {
+    project_details: {view: true, update: false},
+    members: {view: true, update: false, delete: false},
+    invitations: {view: true, create: false, delete: false},
+    open_positions: {view: true, create: false, update: false, delete: false},
+    applications: {view: true, create: true, update: false, delete: false},
+    analytics: {view: false},
+    followers: {view: true},
+  };
+
+  const {data: rolesData, error: rolesError} = await supabase
+    .from("project_roles")
+    .insert([
+      {
+        project_id: projectId,
+        name: "Owner",
+        badge_color: "purple",
+        permissions: ownerPermissions,
+        is_default: false,
+        is_system_role: true,
+      },
+      {
+        project_id: projectId,
+        name: "Member",
+        badge_color: "green",
+        permissions: memberPermissions,
+        is_default: true,
+        is_system_role: false,
+      },
+    ])
+    .select("id, name");
+
+  if (rolesError || !rolesData) {
+    console.error("Error creating default roles:", rolesError);
+    // Rollback project as roles are critical
+    await supabase.from("projects").delete().eq("id", projectId);
+    return {
+      error: true,
+      message: "Something went wrong creating default project roles. Please try again.",
+    };
+  }
+
+  const ownerRole = rolesData.find((r) => r.name === "Owner");
+
   // Add the project creator as a team member with 'Founder' role and 'owner' permission
   const {error: teamMemberError} = await supabase.from("project_team_members").insert({
     project_id: projectId,
     user_id: user.id,
     role: "Founder",
-    permission: "owner",
+    role_id: ownerRole?.id ?? null,
     is_active: true,
   });
 
@@ -166,6 +224,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
 
     // Rollback: Delete the created project since team member insertion failed
     await supabase.from("projects").delete().eq("id", projectId);
+    await supabase.from("project_roles").delete().eq("project_id", projectId);
 
     return {
       error: true,

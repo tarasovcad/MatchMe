@@ -65,7 +65,7 @@ const ProjectManagementClientPage = ({
   };
 
   const slugChangeStatus = projectState.slug_changed_at
-    ? canChangeSlug(projectState.slug_changed_at)
+    ? canChangeSlug(projectState.slug_changed_at as Date)
     : {canChange: true, nextAvailableDate: null};
 
   return (
