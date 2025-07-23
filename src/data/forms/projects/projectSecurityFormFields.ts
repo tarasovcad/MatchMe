@@ -32,17 +32,17 @@ export const projectSecurityFormFields = [
           },
         ],
       },
-      // {
-      //   fieldTitle: "Danger Zone",
-      //   fieldDescription: "Deleting your account is irreversible",
-      //   fieldType: "deleteAccount",
-      //   fieldInputProps: [
-      //     {
-      //       id: "deleteAccount",
-      //       name: "deleteAccount",
-      //     },
-      //   ],
-      // },
+      {
+        fieldTitle: "Danger Zone",
+        fieldDescription: "Deleting your project is irreversible",
+        fieldType: "deleteProject",
+        fieldInputProps: [
+          {
+            id: "deleteProject",
+            name: "deleteProject",
+          },
+        ],
+      },
     ],
   },
 ] as FormProps[];

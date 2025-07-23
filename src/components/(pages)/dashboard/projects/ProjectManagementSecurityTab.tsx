@@ -139,7 +139,7 @@ const ProjectManagementSecurityTab = ({
       animate="visible"
       onSubmit={(e) => e.preventDefault()}>
       <FormProvider {...methods}>
-        {/* {projectSecurityFormFields.map((section, index) => (
+        {projectSecurityFormFields.map((section, index) => (
           <motion.div
             key={section.formTitle}
             variants={itemVariants}
@@ -153,9 +153,9 @@ const ProjectManagementSecurityTab = ({
               ))}
             </motion.div>
           </motion.div>
-        ))} */}
+        ))}
         {/* roles and permissions */}
-        <motion.div variants={itemVariants} className={`flex flex-col gap-4.5`}>
+        <motion.div variants={itemVariants} className={`flex flex-col gap-4.5 pt-8`}>
           <motion.div variants={containerVariants} className="flex flex-col gap-6">
             <PermissionManagement
               projectId={project.id}

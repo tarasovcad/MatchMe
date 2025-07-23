@@ -25,6 +25,7 @@ import SelectInputWithSearch from "../form/SelectInputWithSearch";
 import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
 import ProjectSlugInput from "./ProjectSlugInput";
+import ProjectDangerZone from "@/components/(pages)/dashboard/projects/ProjectDangerZone";
 
 const fieldComponents = {
   makePublic: MakePublicSwitch,
@@ -41,6 +42,7 @@ const fieldComponents = {
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   deleteAccount: DangerZone,
+  deleteProject: ProjectDangerZone,
   connectedAccounts: UserConnectedAccounts,
   username: SettingsUsernameInput,
   demo: DemoImageInput,
