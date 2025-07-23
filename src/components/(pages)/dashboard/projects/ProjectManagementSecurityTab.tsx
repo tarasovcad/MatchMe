@@ -28,6 +28,7 @@ import {PlusIcon} from "lucide-react";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import PermissionManagement from "./PermissionManagement";
 import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
+import type {UpdatableRole} from "@/actions/projects/updateProjectRoles";
 
 const ProjectManagementSecurityTab = ({
   user,
@@ -47,7 +48,7 @@ const ProjectManagementSecurityTab = ({
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
 
   // Track modified roles coming from the PermissionManagement child component
-  const [changedRoles, setChangedRoles] = useState<ProjectRoleDb[]>([]);
+  const [changedRoles, setChangedRoles] = useState<UpdatableRole[]>([]);
   // Used to force PermissionManagement to reset when the user presses "Cancel"
   const [resetRolesSignal, setResetRolesSignal] = useState(false);
 
@@ -155,16 +156,6 @@ const ProjectManagementSecurityTab = ({
         ))} */}
         {/* roles and permissions */}
         <motion.div variants={itemVariants} className={`flex flex-col gap-4.5`}>
-          <div className="flex justify-between items-center">
-            <h4 className="font-semibold text-foreground text-xl">Roles and Permissions</h4>
-            <div className="flex items-center gap-2">
-              <SimpleInput placeholder="Search for a role" search className="max-w-[350px]" />
-              <Button variant="secondary" size="xs">
-                <PlusIcon className="w-4 h-4" />
-                Add Role
-              </Button>
-            </div>
-          </div>
           <motion.div variants={containerVariants} className="flex flex-col gap-6">
             <PermissionManagement
               projectId={project.id}

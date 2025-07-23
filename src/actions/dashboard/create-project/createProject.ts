@@ -9,6 +9,13 @@ import {createClient} from "@/utils/supabase/server";
 import {ProjectCreationFormData} from "@/validation/project/projectCreationValidation";
 import {Ratelimit} from "@upstash/ratelimit";
 
+// Default role permissions constants
+import {
+  ownerPermissions,
+  memberPermissions,
+  coFounderPermissions,
+} from "@/data/projects/defaultProjectRoles";
+
 import {v4 as uuidv4} from "uuid";
 
 const MAX_PROJECTS = 10;
@@ -156,26 +163,6 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
   //  Create default roles: Owner & Member
   // ────────────────────────────────────────────
 
-  const ownerPermissions = {
-    project_details: {view: true, update: true},
-    members: {view: true, update: true, delete: true},
-    invitations: {view: true, create: true, delete: true},
-    open_positions: {view: true, create: true, update: true, delete: true},
-    applications: {view: true, create: true, update: true, delete: true},
-    analytics: {view: true},
-    followers: {view: true},
-  };
-
-  const memberPermissions = {
-    project_details: {view: true, update: false},
-    members: {view: true, update: false, delete: false},
-    invitations: {view: true, create: false, delete: false},
-    open_positions: {view: true, create: false, update: false, delete: false},
-    applications: {view: true, create: true, update: false, delete: false},
-    analytics: {view: false},
-    followers: {view: true},
-  };
-
   const {data: rolesData, error: rolesError} = await supabase
     .from("project_roles")
     .insert([
@@ -193,6 +180,14 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
         badge_color: "green",
         permissions: memberPermissions,
         is_default: true,
+        is_system_role: true,
+      },
+      {
+        project_id: projectId,
+        name: "Co-Founder",
+        badge_color: "blue",
+        permissions: coFounderPermissions,
+        is_default: false,
         is_system_role: false,
       },
     ])

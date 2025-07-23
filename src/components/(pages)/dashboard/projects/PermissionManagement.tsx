@@ -4,7 +4,6 @@ import React, {useState, useEffect, useMemo, useRef} from "react";
 import {isEqual} from "lodash";
 import {
   ChevronRight,
-  ChevronDown,
   Lock,
   MoreVertical,
   Pencil,
@@ -13,12 +12,15 @@ import {
   Star,
   RefreshCcw,
   Trash2,
+  PlusIcon,
 } from "lucide-react";
 
 // shadcn/ui components
 import {Checkbox} from "@/components/shadcn/checkbox";
 import {Card, CardContent} from "@/components/shadcn/card";
 import {Badge} from "@/components/shadcn/badge";
+import {Button} from "@/components/shadcn/button";
+import RoleDialog, {AddRoleFormData} from "./RoleDialog";
 import {cn} from "@/lib/utils";
 import {motion, AnimatePresence} from "framer-motion";
 
@@ -38,6 +40,13 @@ import {menuVariants, itemDropdownVariants} from "@/utils/other/variants";
 // TanStack query hook to fetch roles
 import {useProjectRoles} from "@/hooks/query/projects/use-project-roles";
 import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
+import type {UpdatableRole} from "@/actions/projects/updateProjectRoles";
+import SimpleInput from "@/components/ui/form/SimpleInput";
+import {
+  createDefaultPermissions,
+  memberPermissions,
+  coFounderPermissions,
+} from "@/data/projects/defaultProjectRoles";
 
 // Available permission actions and the order in which we want to display them
 type PermissionKey = "view" | "create" | "update" | "delete";
@@ -45,7 +54,7 @@ const PERMISSION_ORDER: PermissionKey[] = ["view", "create", "update", "delete"]
 
 interface PermissionManagementProps {
   projectId: string;
-  onRolesChange?: (changed: ProjectRoleDb[]) => void;
+  onRolesChange?: (changed: UpdatableRole[]) => void;
   resetSignal?: boolean;
 }
 
@@ -55,37 +64,110 @@ const PermissionManagement = ({
   resetSignal,
 }: PermissionManagementProps) => {
   const {data: roles, isLoading: isRolesLoading} = useProjectRoles(projectId);
+
   // Keeps track of which roles rows are expanded in the UI
   const [expandedRoles, setExpandedRoles] = useState<Record<string, boolean>>({});
   const originalRolesRef = useRef<ProjectRoleDb[]>([]);
 
   // Local editable copy of roles. All UI modifications happen here.
   const [localRoles, setLocalRoles] = useState<ProjectRoleDb[]>([]);
+  // Track deleted role ids to include them in the change set sent upwards
+  const deletedRoleIdsRef = useRef<Set<string>>(new Set());
+
+  // Track role currently being edited
+  const [roleToEdit, setRoleToEdit] = useState<ProjectRoleDb | null>(null);
+
+  // State for search query
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Handle updates coming from the edit dialog
+  const handleUpdateRole = (updated: {id: string; name: string; color: string}) => {
+    setLocalRoles((prev: ProjectRoleDb[]) =>
+      prev.map((role) => {
+        if (role.id !== updated.id) return role;
+
+        // Owner / member roles cannot be renamed, preserve their names if passed differently
+        const isOwnerOrMember = isOwnerRole(role) || role.name.toLowerCase() === "member";
+
+        return {
+          ...role,
+          name: isOwnerOrMember ? role.name : updated.name,
+          badge_color: updated.color,
+          updated_at: new Date().toISOString(),
+        };
+      }),
+    );
+  };
+
+  // Add new role from child dialog
+  const handleAddRole = ({name, color, inheritFrom}: AddRoleFormData) => {
+    // Copy permissions from selected template if provided
+    let templatePermissions: Record<string, Record<string, boolean>> = {};
+    if (inheritFrom && inheritFrom !== "Start from scratch") {
+      const templateRole = localRoles.find((r) => r.name === inheritFrom);
+      if (templateRole) {
+        templatePermissions = {...templateRole.permissions};
+      }
+    } else if (inheritFrom === "Start from scratch") {
+      // Create all permissions with false values
+      templatePermissions = createDefaultPermissions();
+    }
+
+    const newRole: ProjectRoleDb = {
+      id: `temp-${Date.now()}`,
+      project_id: projectId,
+      name,
+      badge_color: color,
+      is_default: false,
+      is_system_role: false,
+      permissions: templatePermissions,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setLocalRoles((prev) => [...prev, newRole]);
+  };
 
   // Keep a copy of roles on first fetch so we can always reset back to it.
   useEffect(() => {
     if (roles) {
       originalRolesRef.current = roles;
       setLocalRoles(roles);
+      deletedRoleIdsRef.current.clear();
     }
   }, [roles]);
 
   // Reset back to original data when parent toggles the signal.
   useEffect(() => {
     setLocalRoles(originalRolesRef.current);
+    deletedRoleIdsRef.current.clear();
   }, [resetSignal]);
+
+  // Delete role locally
+  const handleDeleteRole = (roleId: string) => {
+    // Remember deletions so parent can submit them
+    deletedRoleIdsRef.current.add(roleId);
+    setLocalRoles((prev) => prev.filter((r) => r.id !== roleId));
+  };
 
   // Calculate which roles have changed compared with the original dataset and
   // notify parent component so it can enable / disable the Save button.
   useEffect(() => {
     if (!onRolesChange) return;
 
-    const changed = localRoles.filter((role) => {
+    // 1. Detect changed or new roles
+    const changedOrNew = localRoles.filter((role) => {
       const original = originalRolesRef.current.find((r) => r.id === role.id);
-      return !isEqual(role, original);
+      return !original || !isEqual(role, original);
     });
 
-    onRolesChange(changed);
+    // 2. Detect deleted roles
+    const deletedRoles = Array.from(deletedRoleIdsRef.current).map((id) => ({
+      id,
+      _deleted: true,
+    })) as unknown as ProjectRoleDb[];
+
+    onRolesChange([...changedOrNew, ...deletedRoles]);
   }, [localRoles, onRolesChange]);
 
   // Sort roles: Owner → Co-Founder → Member → rest by updated_at desc
@@ -112,6 +194,13 @@ const PermissionManagement = ({
       return bDate - aDate;
     });
   }, [localRoles]);
+
+  // Filter roles based on search query
+  const filteredRoles = useMemo(() => {
+    if (!searchQuery.trim()) return sortedRoles;
+    const query = searchQuery.trim().toLowerCase();
+    return sortedRoles.filter((role) => role.name.toLowerCase().includes(query));
+  }, [searchQuery, sortedRoles]);
 
   // Expand the owner role on first load
   useEffect(() => {
@@ -155,6 +244,42 @@ const PermissionManagement = ({
     );
   };
 
+  // Reset role permissions back to template defaults for Member or Co-Founder roles
+  const resetRolePermissions = (roleId: string) => {
+    setLocalRoles((prev: ProjectRoleDb[]) =>
+      prev.map((role) => {
+        if (role.id !== roleId) return role;
+
+        const roleName = role.name.toLowerCase();
+
+        let template: Record<string, Record<string, boolean>> | null = null;
+        if (roleName === "member") {
+          template = {...memberPermissions};
+        } else if (
+          roleName === "co-founder" ||
+          roleName === "cofounder" ||
+          roleName === "co_owner"
+        ) {
+          template = {...coFounderPermissions};
+        }
+
+        if (!template) return role;
+
+        if (isEqual(role.permissions, template)) {
+          return role;
+        }
+
+        const originalRole = originalRolesRef.current.find((r) => r.id === role.id);
+
+        return {
+          ...role,
+          permissions: template,
+          updated_at: originalRole?.updated_at ?? role.updated_at,
+        };
+      }),
+    );
+  };
+
   const getRoleBadgeColor = (role: ProjectRoleDb) => {
     const colorMap = {
       purple: "bg-purple-100 text-purple-800 hover:bg-purple-100",
@@ -166,6 +291,7 @@ const PermissionManagement = ({
       pink: "bg-pink-100 text-pink-800 hover:bg-pink-100",
       indigo: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
       gray: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+      cyan: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
     };
     return colorMap[role.badge_color as keyof typeof colorMap] || colorMap.gray;
   };
@@ -192,12 +318,37 @@ const PermissionManagement = ({
     );
   };
 
-  // ─────────────────────────────────────────────
-  // Role actions pop-over
-  // ─────────────────────────────────────────────
-  const RoleActionButton = ({role}: {role: ProjectRoleDb}) => {
-    const locked = role.id === "owner" || role.id === "member"; // cannot rename/delete
+  const isOwnerRole = (role: ProjectRoleDb) => {
+    return role.id === "owner" || role.name.toLowerCase() === "owner";
+  };
 
+  const setRoleAsDefault = (roleId: string) => {
+    setLocalRoles((prev: ProjectRoleDb[]) =>
+      prev.map((role) => ({
+        ...role,
+        is_default: role.id === roleId,
+      })),
+    );
+  };
+
+  const RoleActionButton = ({
+    role,
+    onEdit,
+    onReset,
+  }: {
+    role: ProjectRoleDb;
+    onEdit: () => void;
+    onReset: () => void;
+  }) => {
+    const isOwner = isOwnerRole(role);
+    const isMember = role.id === "member" || role.name.toLowerCase() === "member";
+    const isCoFounder =
+      role.name.toLowerCase() === "co-founder" ||
+      role.name.toLowerCase() === "cofounder" ||
+      role.id === "cofounder" ||
+      role.id === "co-founder";
+
+    const canReset = isMember || isCoFounder;
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -215,46 +366,37 @@ const PermissionManagement = ({
             {/* Primary actions */}
             <DropdownMenuGroup>
               <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem disabled={locked} className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={onEdit}>
                   <Pencil size={16} className="opacity-60 mr-2" />
-                  Rename role
-                </DropdownMenuItem>
-              </motion.div>
-
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Palette size={16} className="opacity-60 mr-2" />
-                  Change badge color
+                  Edit
                 </DropdownMenuItem>
               </motion.div>
 
               <motion.div variants={itemDropdownVariants}>
                 <DropdownMenuItem
-                  disabled={Boolean(role.is_system_role)}
-                  className="cursor-pointer">
-                  <Copy size={16} className="opacity-60 mr-2" />
-                  Duplicate role
+                  disabled={isOwner}
+                  onClick={() =>
+                    !isOwner && !(role.is_default ?? false) && setRoleAsDefault(role.id)
+                  }>
+                  {role.is_default ? (
+                    <>
+                      <Star size={16} className="opacity-60 mr-2 text-yellow-500 fill-current " />
+                      Default role for new members
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} className="opacity-60 mr-2" />
+                      Set as default for new members
+                    </>
+                  )}
                 </DropdownMenuItem>
               </motion.div>
 
               <motion.div variants={itemDropdownVariants}>
                 <DropdownMenuItem
-                  disabled={Boolean(role.is_system_role) || role.id === "owner"}
-                  className="cursor-pointer">
-                  <Star size={16} className="opacity-60 mr-2" />
-                  Set as default for new members
-                </DropdownMenuItem>
-              </motion.div>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            {/* Secondary actions */}
-            <DropdownMenuGroup>
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem
-                  disabled={Boolean(role.is_system_role)}
-                  className="cursor-pointer">
+                  disabled={!canReset}
+                  className="cursor-pointer"
+                  onClick={() => canReset && onReset()}>
                   <RefreshCcw size={16} className="opacity-60 mr-2" />
                   Reset permissions to template
                 </DropdownMenuItem>
@@ -262,8 +404,9 @@ const PermissionManagement = ({
 
               <motion.div variants={itemDropdownVariants}>
                 <DropdownMenuItem
-                  disabled={locked || Boolean(role.is_system_role)}
-                  className="cursor-pointer text-destructive focus:text-destructive">
+                  disabled={isOwner || isMember}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onClick={() => !isOwner && !isMember && handleDeleteRole(role.id)}>
                   <Trash2 size={16} className="opacity-60 mr-2" />
                   Delete role
                 </DropdownMenuItem>
@@ -273,6 +416,25 @@ const PermissionManagement = ({
         </DropdownMenuContent>
       </DropdownMenu>
     );
+  };
+
+  // Animation variants for role rows
+  const roleRowVariants = {
+    hidden: {
+      opacity: 0,
+      height: 0,
+      y: -20,
+    },
+    visible: {
+      opacity: 1,
+      height: "auto",
+      y: 0,
+    },
+    exit: {
+      opacity: 0,
+      height: 0,
+      y: -10,
+    },
   };
 
   /**
@@ -298,7 +460,19 @@ const PermissionManagement = ({
     const deleteTotal = countPresent("delete");
 
     return (
-      <div key={role.id}>
+      <motion.div
+        key={role.id}
+        layout
+        variants={roleRowVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        transition={{
+          duration: 0.3,
+          ease: "easeInOut",
+          layout: {duration: 0.2},
+        }}
+        style={{overflow: "hidden"}}>
         <div
           className="grid gap-4 py-3  hover:bg-muted/50"
           style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
@@ -307,16 +481,20 @@ const PermissionManagement = ({
               type="button"
               onClick={() => toggleExpanded(role.id)}
               className="mr-2 p-1 rounded hover:bg-muted cursor-pointer">
-              {expandedRoles[role.id] ? (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              ) : (
+              <motion.div
+                animate={{rotate: expandedRoles[role.id] ? 90 : 0}}
+                transition={{duration: 0.2, ease: "easeInOut"}}>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              )}
+              </motion.div>
             </button>
+
             <Badge variant="secondary" className={getRoleBadgeColor(role)}>
               {role.name}
             </Badge>
-            {role.is_system_role ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
+            {isOwnerRole(role) ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
+            {(role.is_default ?? false) ? (
+              <Star className="text-yellow-500 ml-2 fill-current" size={14} />
+            ) : null}
           </div>
           <div className="flex justify-center items-center text-sm text-muted-foreground">
             {viewCount}/{viewTotal}
@@ -332,7 +510,11 @@ const PermissionManagement = ({
           </div>
           {/* Action column */}
           <div className="flex justify-center items-center pr-4  group">
-            <RoleActionButton role={role} />
+            <RoleActionButton
+              role={role}
+              onEdit={() => setRoleToEdit(role)}
+              onReset={() => resetRolePermissions(role.id)}
+            />
           </div>
         </div>
 
@@ -362,7 +544,7 @@ const PermissionManagement = ({
                       {PERMISSION_ORDER.map((permType) => (
                         <div key={permType} className="flex justify-center items-center">
                           {actions[permType] !== undefined ? (
-                            renderPermissionCheckbox(actions[permType], !role.is_system_role, () =>
+                            renderPermissionCheckbox(actions[permType], !isOwnerRole(role), () =>
                               updatePermission(role.id, resourceId, permType),
                             )
                           ) : (
@@ -378,7 +560,7 @@ const PermissionManagement = ({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     );
   };
 
@@ -405,46 +587,111 @@ const PermissionManagement = ({
   ];
 
   return (
-    <div className="w-full mx-auto space-y-6">
-      <Card className="shadow-none">
-        <CardContent className="p-0">
-          {/* Scrollable container with gradient fade overlays */}
-          <div className="relative">
-            {/* <div className="pointer-events-none absolute top-[45px] left-0 w-full h-6 bg-gradient-to-b from-muted-header via-muted-header/70 to-transparent" /> */}
-            {/* <div className="pointer-events-none absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-card via-card/70 to-transparent" /> */}
-
-            {/* Fixed-height scrollable area */}
-            <div
-              className="max-h-[480px] overflow-y-auto flex flex-col rounded-t-[8px]"
-              style={{scrollbarGutter: "stable"}}>
-              {/* Sticky header */}
-              <div
-                className="grid gap-4 py-3 px-4 bg-muted-header border-b border-border sticky top-0 z-10"
-                style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
-                {/* Column headers */}
-                {columnsNames.map((column) => (
-                  <div
-                    key={column.label}
-                    className={cn(
-                      "text-sm font-medium text-foreground/90",
-                      !column.isMain && "text-center",
-                    )}>
-                    {column.label}
-                  </div>
-                ))}
-              </div>
-
-              {/* Scrollable body */}
-              <div className="flex-1 divide-y divide-border">
-                {sortedRoles.map((role) => renderRoleRow(role))}
-              </div>
-            </div>
-            {/* end scrollable area */}
+    <>
+      <div className="w-full mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h4 className="font-semibold text-foreground text-xl">Roles and Permissions</h4>
+          <div className="flex items-center gap-2">
+            <SimpleInput
+              placeholder="Search for a role"
+              search
+              className="max-w-[344px] w-full"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              showClearButton={Boolean(searchQuery)}
+              onClear={() => setSearchQuery("")}
+            />
+            <RoleDialog
+              mode="add"
+              trigger={
+                <Button variant="secondary" size="xs">
+                  <PlusIcon className="w-4 h-4" />
+                  Add Role
+                </Button>
+              }
+              onAddRole={handleAddRole}
+              existingRoles={localRoles}
+            />
           </div>
-          {/* end relative container */}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+
+        <Card className="shadow-none">
+          <CardContent className="p-0">
+            {/* Scrollable container with gradient fade overlays */}
+            <div className="relative">
+              {/* <div className="pointer-events-none absolute top-[45px] left-0 w-full h-6 bg-gradient-to-b from-muted-header via-muted-header/70 to-transparent" /> */}
+              {/* <div className="pointer-events-none absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-card via-card/70 to-transparent" /> */}
+
+              {/* Fixed-height scrollable area */}
+              <div
+                className="max-h-[480px] overflow-y-auto flex flex-col rounded-t-[8px]"
+                style={{scrollbarGutter: "stable"}}>
+                {/* Sticky header */}
+                <div
+                  className="grid gap-4 py-3 px-4 bg-muted-header border-b border-border sticky top-0 z-10"
+                  style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
+                  {/* Column headers */}
+                  {columnsNames.map((column) => (
+                    <div
+                      key={column.label}
+                      className={cn(
+                        "text-sm font-medium text-foreground/90",
+                        !column.isMain && "text-center",
+                      )}>
+                      {column.label}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Scrollable body */}
+                <div className="flex-1 divide-y divide-border">
+                  <AnimatePresence mode="popLayout">
+                    {filteredRoles.length > 0 ? (
+                      filteredRoles.map((role) => renderRoleRow(role))
+                    ) : searchQuery.trim() ? (
+                      <motion.div
+                        key="no-results"
+                        initial={{opacity: 0, y: 20}}
+                        animate={{opacity: 1, y: 0}}
+                        exit={{opacity: 0, y: -20}}
+                        transition={{duration: 0.3, ease: "easeInOut"}}
+                        className="flex flex-col items-center justify-center py-10  px-4 text-center">
+                        <h3 className="text-lg font-medium text-foreground mb-2">No roles found</h3>
+                        <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                          No roles match &ldquo;{searchQuery}&rdquo;. Try adjusting your search or{" "}
+                          <button
+                            type="button"
+                            onClick={() => setSearchQuery("")}
+                            className="text-primary hover:underline font-medium">
+                            clear the search
+                          </button>{" "}
+                          to see all roles.
+                        </p>
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+                </div>
+              </div>
+              {/* end scrollable area */}
+            </div>
+            {/* end relative container */}
+          </CardContent>
+        </Card>
+      </div>
+      {roleToEdit && (
+        <RoleDialog
+          mode="edit"
+          existingRoles={localRoles}
+          roleData={roleToEdit}
+          open={Boolean(roleToEdit)}
+          onOpenChange={(open) => {
+            if (!open) setRoleToEdit(null);
+          }}
+          onEditRole={handleUpdateRole}
+        />
+      )}
+    </>
   );
 };
 
