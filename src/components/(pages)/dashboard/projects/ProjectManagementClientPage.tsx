@@ -14,6 +14,7 @@ import {canMakePublic} from "@/functions/canMakePublic";
 import ProjectManagementSecurityTab from "./ProjectManagementSecurityTab";
 import {canChangeUsername} from "@/functions/canChangeUsername";
 import {canChangeSlug} from "@/functions/canChangeSlug";
+import ProjectManagementTeamMembers from "./ProjectManagementTeamMembers";
 
 const ProjectManagementClientPage = ({
   tab,
@@ -48,7 +49,7 @@ const ProjectManagementClientPage = ({
       case "analytics":
         return <div>Analytics</div>;
       case "team-members":
-        return <div>Team Members</div>;
+        return <ProjectManagementTeamMembers project={projectState} user={user} />;
       case "applications":
         return <div>Applications</div>;
       case "security":
