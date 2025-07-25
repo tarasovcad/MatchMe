@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowUpDown,
   Filter,
   MoreHorizontal,
   Settings2,
@@ -12,27 +11,21 @@ import {
   Clock,
   Calendar,
   Shield,
-  X,
-  Undo2,
-  Pencil,
-  Archive,
-  Ban,
-  Clipboard,
-  Link2,
-  Trash2,
-  CornerUpRight,
-  // NEW ICONS FOR HEADER POPOVER MENU
-  Sparkles,
-  ArrowUp,
-  ArrowDown,
-  EyeOff,
   ChevronDown,
   Settings,
   // NEW ICONS FOR COLUMN VIEW POPOVER
   GripVertical,
   Check,
+  CornerUpRight,
+  Pencil,
+  Trash2,
+  // NEW ICONS FOR HEADER POPOVER MENU
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
+  EyeOff,
 } from "lucide-react";
-import React, {useMemo, useState} from "react";
+import React, {useMemo, useState, useEffect, useRef} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
@@ -69,8 +62,8 @@ import {
 } from "@/components/shadcn/tooltip";
 // NEW: import popover components
 import {Popover, PopoverTrigger, PopoverContent} from "@/components/shadcn/popover";
-import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
 import ColumnViewPopover from "@/components/table/ColumnViewPopover";
+import TableSettingsPopover from "@/components/table/TableSettingsPopover";
 
 // ----------------------------------------------------------------------------
 // Types & Fake Data
@@ -396,14 +389,41 @@ const HeaderPopover = <TData extends object>({children, column}: HeaderPopoverPr
   );
 };
 
-// ---------------------------------------------------------------------------
-// ProjectManagementTeamMembers Component
-// ---------------------------------------------------------------------------
 const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: User}) => {
+  const LS_KEY = "teamMembersTablePrefs";
+
+  type StoredState = {
+    columnOrder?: string[];
+    columnSizing?: Record<string, number>;
+    columnVisibility?: Record<string, boolean>;
+  };
+
+  const readStoredState = (): StoredState => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  };
+
+  const stored = readStoredState();
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [query, setQuery] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+
+  const [columnOrder, setColumnOrder] = useState<string[]>(stored.columnOrder ?? []);
+  // Column resize state
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
+    stored.columnSizing ?? {},
+  );
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
+    stored.columnVisibility ?? {},
+  );
 
   const data = useMemo(() => {
     if (!query) return FAKE_MEMBERS;
@@ -429,10 +449,15 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       sorting,
       rowSelection,
       columnOrder,
+      columnSizing,
+      columnVisibility,
     },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
+    onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
+    columnResizeMode: "onChange",
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
@@ -440,13 +465,43 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
 
   const selectedCount = table.getSelectedRowModel().rows.length;
 
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+
+    // Debounce saves to run 1s after the last change
+    saveTimeout.current = setTimeout(() => {
+      const payload: StoredState = {
+        columnOrder,
+        columnSizing,
+        columnVisibility,
+      };
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(payload));
+      } catch {
+        /* ignore write errors */
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+        saveTimeout.current = null;
+      }
+    };
+  }, [columnOrder, columnSizing, columnVisibility]);
+
+  // -----------------------------
+  // Settings Popover Handlers
+  // -----------------------------
   const handleChangeRole = () => {
     // TODO: open dialog or dropdown to change role
     console.log(
       "Change role for:",
       table.getSelectedRowModel().rows.map((r) => r.original.id),
     );
-    table.resetRowSelection();
+    table.resetRowSelection(false);
   };
 
   return (
@@ -473,9 +528,8 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
           </Button>
           {/* Column view popover */}
           <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
-            <Settings className="w-4 h-4" />
-          </Button>
+          {/* Settings popover */}
+          <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
           {/* <Button variant="default" size="xs" className="ml-1">
             <PlusIcon className="w-4 h-4" /> Invite
           </Button> */}
@@ -574,7 +628,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
                   <TableHead
                     key={header.id}
                     className={cn(
-                      "!p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
+                      "relative !p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
                       // header.index === 0
                       //   ? "sticky left-0 z-20 bg-[#F9F9FA] dark:bg-[#101013] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
                       //   : "border-r border-border",
@@ -585,10 +639,21 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() && (
                           <HeaderPopover column={header.column}>
-                            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                            <ChevronDown className="w-3.5 h-3.5 pl-1 text-muted-foreground hover:text-foreground transition-colors" />
                           </HeaderPopover>
                         )}
                       </div>
+                    )}
+                    {/* Resize handle */}
+                    {header.column.getCanResize() && (
+                      <div
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        className={cn(
+                          // wider invisible handler for easier grabbing
+                          "absolute right-0 top-0 h-full w-2  cursor-col-resize select-none touch-none",
+                        )}
+                      />
                     )}
                   </TableHead>
                 ))}
