@@ -12,8 +12,28 @@ import {
   Clock,
   Calendar,
   Shield,
+  X,
+  Undo2,
+  Pencil,
+  Archive,
+  Ban,
+  Clipboard,
+  Link2,
+  Trash2,
+  CornerUpRight,
+  // NEW ICONS FOR HEADER POPOVER MENU
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
+  EyeOff,
+  ChevronDown,
+  Settings,
+  // NEW ICONS FOR COLUMN VIEW POPOVER
+  GripVertical,
+  Check,
 } from "lucide-react";
 import React, {useMemo, useState} from "react";
+import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
   SortingState,
@@ -22,6 +42,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import type {Column as ColumnType} from "@tanstack/react-table";
 
 import {Button} from "@/components/shadcn/button";
 import {Checkbox} from "@/components/shadcn/checkbox";
@@ -40,6 +61,16 @@ import {User} from "@supabase/supabase-js";
 import {Badge} from "@/components/shadcn/badge";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/shadcn/tooltip";
+// NEW: import popover components
+import {Popover, PopoverTrigger, PopoverContent} from "@/components/shadcn/popover";
+import {Command, CommandGroup, CommandItem, CommandList} from "@/components/shadcn/command";
+import ColumnViewPopover from "@/components/table/ColumnViewPopover";
 
 // ----------------------------------------------------------------------------
 // Types & Fake Data
@@ -220,26 +251,26 @@ const getColumns = (): ColumnDef<Member>[] => [
     minSize: 130,
     cell: ({row}) => <span>{row.original.availability}</span>,
   },
-  // {
-  //   accessorKey: "skills",
-  //   header: "Skills",
-  //   size: 340,
-  //   minSize: 300,
-  //   cell: ({row}) => (
-  //     <div className="flex flex-wrap  gap-1">
-  //       {row.original.skills.map((skill) => (
-  //         <Badge key={skill} variant="secondary" className="bg-muted text-foreground">
-  //           {skill}
-  //         </Badge>
-  //       ))}
-  //     </div>
-  //   ),
-  // },
+  {
+    accessorKey: "skills",
+    header: "Skills",
+    size: 340,
+    minSize: 300,
+    cell: ({row}) => (
+      <div className="flex flex-wrap  gap-1">
+        {row.original.skills.map((skill) => (
+          <Badge key={skill} variant="secondary" className="bg-muted text-foreground">
+            {skill}
+          </Badge>
+        ))}
+      </div>
+    ),
+  },
 
   {
     accessorKey: "joinedDate",
     header: () => (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 leading-none">
         <Calendar className="w-3.5 h-3.5" />
         <span>Joined Date</span>
       </div>
@@ -249,7 +280,7 @@ const getColumns = (): ColumnDef<Member>[] => [
   {
     accessorKey: "roleBadge",
     header: () => (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 leading-none">
         <Shield className="w-3.5 h-3.5" />
         <span>Role</span>
       </div>
@@ -273,7 +304,7 @@ const getColumns = (): ColumnDef<Member>[] => [
     id: "actions",
     header: "",
     cell: () => (
-      <button type="button" className="p-1 rounded hover:bg-muted cursor-pointer">
+      <button type="button" className="p-1 rounded hover:bg-muted cursor-pointer leading-none">
         <MoreVertical className="w-4 h-4 transition-all duration-200  text-muted-foreground group-hover:text-foreground/60" />
       </button>
     ),
@@ -284,13 +315,95 @@ const getColumns = (): ColumnDef<Member>[] => [
   },
 ];
 
-// ----------------------------------------------------------------------------
-// Component
-// ----------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// HeaderPopover with per-column sorting capabilities
+// ---------------------------------------------------------------------------
+type HeaderPopoverProps<TData extends object> = {
+  column: ColumnType<TData, unknown>;
+  children: React.ReactNode;
+};
 
+const HeaderPopover = <TData extends object>({children, column}: HeaderPopoverProps<TData>) => {
+  // Helpers to perform sorting. We explicitly set the sorting direction to
+  // avoid cycling through states when the user picks an explicit action.
+  const handleSortAsc = () => {
+    // Ascending sort (desc = false)
+    column.toggleSorting(false);
+  };
+
+  const handleSortDesc = () => {
+    // Descending sort (desc = true)
+    column.toggleSorting(true);
+  };
+
+  // Determine current sort state for this column
+  const currentSort = column.getIsSorted(); // "asc" | "desc" | false
+
+  const menuItems: {
+    icon: React.ElementType;
+    label: string;
+    onClick?: () => void;
+    accent?: boolean;
+    disabled?: boolean;
+  }[] = [
+    {icon: Sparkles, label: "AI analyze", disabled: true},
+    {
+      icon: ArrowUp,
+      label: "Sort ascending",
+      onClick: handleSortAsc,
+      accent: currentSort === "asc",
+    },
+    {
+      icon: ArrowDown,
+      label: "Sort descending",
+      onClick: handleSortDesc,
+      accent: currentSort === "desc",
+    },
+    {icon: Filter, label: "Filter", disabled: true},
+    {icon: EyeOff, label: "Hide column", disabled: true},
+  ];
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" className="flex items-center gap-1 w-fit text-left cursor-pointer">
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[180px] rounded-[8px] text-foreground/90" align="start">
+        {/* Menu items */}
+        <div className="py-1 px-1">
+          {menuItems.map(({icon: Icon, label, onClick, accent, disabled}, idx) => (
+            <button
+              key={label}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                onClick?.();
+              }}
+              className={cn(
+                "w-full flex items-center gap-2 px-2 py-[5px] rounded-[5px] text-sm hover:bg-muted transition-colors duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed",
+                accent && "bg-muted font-medium text-foreground",
+                idx === menuItems.length - 2 && "border-b border-border rounded-b-none", // divider before last item
+              )}>
+              <Icon className="w-4 h-4 text-foreground/90" />
+              <span className="whitespace-nowrap">{label}</span>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// ProjectManagementTeamMembers Component
+// ---------------------------------------------------------------------------
 const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: User}) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [query, setQuery] = useState<string>("");
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   const data = useMemo(() => {
     if (!query) return FAKE_MEMBERS;
@@ -314,12 +427,27 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
     columns: getColumns(),
     state: {
       sorting,
+      rowSelection,
+      columnOrder,
     },
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
+    onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
   });
+
+  const selectedCount = table.getSelectedRowModel().rows.length;
+
+  const handleChangeRole = () => {
+    // TODO: open dialog or dropdown to change role
+    console.log(
+      "Change role for:",
+      table.getSelectedRowModel().rows.map((r) => r.original.id),
+    );
+    table.resetRowSelection();
+  };
 
   return (
     <div className="w-full mx-auto space-y-6">
@@ -331,7 +459,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
             {FAKE_MEMBERS.length}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <SimpleInput
             placeholder="Search..."
             search
@@ -343,65 +471,171 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
           <Button variant="outline" size="xs">
             <Filter className="w-4 h-4" /> Filter
           </Button>
-          <Button variant="outline" size="xs">
-            <Settings2 className="w-4 h-4" /> Customize
+          {/* Column view popover */}
+          <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
+          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+            <Settings className="w-4 h-4" />
           </Button>
-          <Button variant="default" size="xs" className="ml-1">
+          {/* <Button variant="default" size="xs" className="ml-1">
             <PlusIcon className="w-4 h-4" /> Invite
-          </Button>
+          </Button> */}
         </div>
       </div>
 
       {/* Table */}
-      <div className="border border-border rounded-[10px] overflow-x-auto">
+
+      <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
+        {/* Bulk actions bar */}
+        <AnimatePresence>
+          {selectedCount > 0 && (
+            <motion.div
+              key="bulk-actions-bar"
+              layout
+              initial={{opacity: 0, y: -8, height: 0}}
+              animate={{opacity: 1, y: 0, height: "auto"}}
+              exit={{opacity: 0, y: -8, height: 0}}
+              transition={{type: "tween", ease: "easeOut", duration: 0.25}}
+              className="sticky top-0 z-30 bg-background border-b border-border overflow-hidden">
+              <TooltipProvider>
+                <div className="flex items-center gap-5 text-muted-foreground text-sm px-2.5 py-2">
+                  {/* Clear selection */}
+                  <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleChangeRole}
+                          className="p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80">
+                          <CornerUpRight className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="px-2 py-1 ">
+                        <span className="text-secondary text-sm">Clear selection</span>
+                      </TooltipContent>
+                    </Tooltip>
+                    {/* Selected count */}
+                    <span className="select-none text-[13px] flex items-baseline gap-1">
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                          key={selectedCount}
+                          initial={{y: -4, opacity: 0}}
+                          animate={{y: 0, opacity: 1}}
+                          exit={{y: 4, opacity: 0}}
+                          transition={{duration: 0.2}}
+                          className="inline-block tabular-nums">
+                          {selectedCount}
+                        </motion.span>
+                      </AnimatePresence>{" "}
+                      {selectedCount === 1 ? "row" : "rows"} selected
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleChangeRole}
+                          className="p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="px-2 py-1">
+                        <span>Edit role</span>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleChangeRole}
+                          className="p-0.5 cursor-pointer transition-all duration-200 text-red-500 hover:text-red-700 ">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="px-2 py-1">
+                        <span>Remove</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              </TooltipProvider>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <Table style={{minWidth: table.getTotalSize()}} className="w-full ">
-          <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013]">
+          <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013] ">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-[#F9F9FA] dark:hover:bg-[#101013]">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className={cn(
-                      "p-2 px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto",
-                      header.index === 0
-                        ? "sticky left-0 z-20 bg-[#F9F9FA] dark:bg-[#101013] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
-                        : "border-r border-border",
+                      "!p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
+                      // header.index === 0
+                      //   ? "sticky left-0 z-20 bg-[#F9F9FA] dark:bg-[#101013] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
+                      //   : "border-r border-border",
                     )}
                     style={{width: header.getSize()}}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : (
+                      <div className="flex items-center justify-between w-full">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() && (
+                          <HeaderPopover column={header.column}>
+                            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                          </HeaderPopover>
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn(
-                        "px-2.5 last:border-r-0 py-1 text-left text-foreground",
-                        cell.column.id === "name"
-                          ? "sticky left-0 z-10 bg-background after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
-                          : "border-r border-border",
-                      )}
-                      style={{width: cell.column.getSize()}}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
+            <AnimatePresence initial={false} mode="popLayout">
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <motion.tr
+                    key={row.original.id || row.id}
+                    layout="position"
+                    initial={{opacity: 0}}
+                    animate={{opacity: 1}}
+                    exit={{opacity: 0}}
+                    transition={{duration: 0.2}}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                          // cell.column.id === "name"
+                          //   ? "sticky left-0 z-10 bg-background after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
+                          //   : "border-r border-border",
+                        )}
+                        style={{width: cell.column.getSize()}}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </motion.tr>
+                ))
+              ) : (
+                <motion.tr
+                  key="no-results"
+                  initial={{opacity: 0}}
+                  animate={{opacity: 1}}
+                  exit={{opacity: 0}}
+                  className="border-b">
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    No results.
+                  </TableCell>
+                </motion.tr>
+              )}
+            </AnimatePresence>
           </TableBody>
         </Table>
       </div>
