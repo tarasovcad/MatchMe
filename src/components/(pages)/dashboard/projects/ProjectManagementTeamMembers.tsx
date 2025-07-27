@@ -16,6 +16,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import React, {useMemo, useState} from "react";
+import {formatDateAbsolute} from "@/functions/formatDate";
 import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
@@ -38,7 +39,7 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/shadcn/avatar";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
-import {Badge} from "@/components/shadcn/badge";
+import ProjectRoleBadge, {ProjectRoleBadgeColorKey} from "@/components/ui/ProjectRoleBadge";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
 import ColumnViewPopover from "@/components/table/ColumnViewPopover";
@@ -47,6 +48,7 @@ import ColumnHeaderPopover from "@/components/table/ColumnHeaderPopover";
 import TeamMemberActionsPopover from "./TeamMemberActionsPopover";
 import BulkActionsBar from "@/components/table/BulkActionsBar";
 import usePersistedTableColumns from "@/hooks/usePersistedTableColumns";
+import {useProjectTeamMembers} from "@/hooks/query/projects/use-project-team-members";
 
 type Member = {
   id: string;
@@ -60,65 +62,13 @@ type Member = {
   skills: string[];
   currentRole: string;
   yearsOfExperience: number | null;
-  roleBadge: "Owner" | "Admin" | "Member";
+  roleBadgeName: string; // e.g. Owner, Member
+  roleBadgeColor: string | null; // color key for ProjectRoleBadge
   joinedDate: string;
-  invitedBy: string;
+  invitedByName: string;
+  invitedByUsername: string;
   invitedDate: string;
 };
-
-const FAKE_MEMBERS: Member[] = [
-  {
-    id: "1",
-    name: "Arthur Khan",
-    username: "arthurass",
-    avatarUrl: "",
-    role: "Full-Stack Developer",
-    pronouns: "She/Her",
-    seniority: "Senior",
-    availability: "Full-time",
-    skills: ["React", "Node.js"],
-    currentRole: "Tech Lead",
-    yearsOfExperience: 8,
-    roleBadge: "Owner",
-    joinedDate: "Dec 12, 2024",
-    invitedBy: "", // demo
-    invitedDate: "Dec 10, 2024",
-  },
-  {
-    id: "2",
-    name: "Ivanna Ramoss",
-    username: "ivanna_ramoss",
-    avatarUrl: "",
-    role: "Data Scientist",
-    pronouns: "He/Him",
-    seniority: "Mid",
-    availability: "Part-time",
-    skills: ["Python", "Tensor"],
-    currentRole: "Data Analyst",
-    yearsOfExperience: 4,
-    roleBadge: "Member",
-    joinedDate: "Dec 27, 2024",
-    invitedBy: "Arthur Khan",
-    invitedDate: "Dec 20, 2024",
-  },
-  {
-    id: "3",
-    name: "Karman Singth",
-    username: "karman1631",
-    avatarUrl: "",
-    role: "UI/UX Designer",
-    pronouns: "",
-    seniority: "Senior",
-    availability: "Contract",
-    skills: ["Figma", "Illustrator", "Photoshop", "After Effects", "Premiere Pro"],
-    currentRole: "Product Designer",
-    yearsOfExperience: null,
-    roleBadge: "Member",
-    joinedDate: "Jan 21, 2025",
-    invitedBy: "Ivanna Ramoss",
-    invitedDate: "Jan 10, 2025",
-  },
-];
 
 const renderOrDash = (value: React.ReactNode) => {
   if (
@@ -285,7 +235,10 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Joined Date</span>
       </div>
     ),
-    cell: ({row}) => <span>{renderOrDash(row.original.joinedDate)}</span>,
+    cell: ({row}) => {
+      const date = row.original.joinedDate;
+      return date ? <span>{formatDateAbsolute(date)}</span> : renderOrDash(date);
+    },
   },
   {
     accessorKey: "invitedDate",
@@ -295,24 +248,43 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Invited Date</span>
       </div>
     ),
-    cell: ({row}) => <span>{renderOrDash(row.original.invitedDate)}</span>,
+    cell: ({row}) => {
+      const date = row.original.invitedDate;
+      return date ? <span>{formatDateAbsolute(date)}</span> : renderOrDash(date);
+    },
     size: 150,
     minSize: 150,
   },
   {
-    accessorKey: "invitedBy",
+    accessorKey: "invitedByName",
     header: () => (
       <div className="flex items-center gap-1 leading-none">
         <UserPlus className="w-3.5 h-3.5" />
         <span>Invited By</span>
       </div>
     ),
-    cell: ({row}) => <span>{renderOrDash(row.original.invitedBy)}</span>,
+    cell: ({row}) => {
+      const {invitedByName: name, invitedByUsername: inviterUsername, username} = row.original;
+      // If the inviter is the same person (self-join) or no inviter recorded, show “System”.
+      const isSystemInvite = !name || inviterUsername === username;
+
+      if (isSystemInvite) {
+        return <span className="text-muted-foreground">System</span>;
+      }
+
+      return (
+        <Link
+          href={`/profiles/${inviterUsername}`}
+          className="leading-none text-foreground/90 hover:underline">
+          {name}
+        </Link>
+      );
+    },
     size: 180,
     minSize: 160,
   },
   {
-    accessorKey: "roleBadge",
+    accessorKey: "roleBadgeName",
     header: () => (
       <div className="flex items-center gap-1 leading-none">
         <Shield className="w-3.5 h-3.5" />
@@ -322,16 +294,9 @@ const getColumns = (): ColumnDef<Member>[] => [
     size: 100,
     minSize: 90,
     cell: ({row}) => {
-      const colorMap: Record<Member["roleBadge"], string> = {
-        Owner: "bg-purple-100 text-purple-800",
-        Admin: "bg-orange-100 text-orange-800",
-        Member: "bg-blue-100 text-blue-800",
-      };
-      return (
-        <Badge variant="secondary" className={colorMap[row.original.roleBadge] ?? ""}>
-          {row.original.roleBadge}
-        </Badge>
-      );
+      const {roleBadgeName, roleBadgeColor} = row.original;
+      const badgeColor = roleBadgeColor ? (roleBadgeColor as ProjectRoleBadgeColorKey) : undefined;
+      return <ProjectRoleBadge color={badgeColor}>{roleBadgeName}</ProjectRoleBadge>;
     },
   },
   {
@@ -373,9 +338,41 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
     setColumnVisibility,
   } = usePersistedTableColumns("teamMembersTablePrefs");
 
+  const {data: fetchedMembers = [], isLoading: isMembersLoading} = useProjectTeamMembers(
+    project.id,
+  );
+
+  console.log("fetchedMembers", fetchedMembers);
+
+  // Transform fetched data into the shape expected by the table
+  const formattedMembers: Member[] = useMemo(() => {
+    return (fetchedMembers ?? []).map((m) => ({
+      id: m.user_id,
+      name: m.name,
+      username: m.username,
+      avatarUrl: m.profile_image?.[0]?.url ?? "",
+      role: m.public_current_role ?? "",
+      pronouns: m.pronouns ?? "",
+      seniority: m.seniority_level ?? "",
+      availability: m.work_availability != null ? `${m.work_availability}` : "",
+      skills: m.skills ?? [],
+      currentRole: m.public_current_role ?? "",
+      yearsOfExperience: m.years_of_experience,
+      roleBadgeName: m.role_name ?? "Member",
+      roleBadgeColor: m.role_badge_color,
+      joinedDate: m.joined_date ?? "",
+      invitedByName: m.invited_by_name ?? "",
+      invitedByUsername: m.invited_by_username ?? "",
+      invitedDate: m.invited_at ?? "",
+    }));
+  }, [fetchedMembers]);
+
   const data = useMemo(() => {
-    if (!query) return FAKE_MEMBERS;
-    return FAKE_MEMBERS.filter((member) => {
+    const baseMembers = formattedMembers.length ? formattedMembers : [];
+
+    if (!query) return baseMembers;
+
+    return baseMembers.filter((member) => {
       const q = query.toLowerCase();
       return (
         member.name.toLowerCase().includes(q) ||
@@ -385,14 +382,14 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         member.seniority.toLowerCase().includes(q) ||
         member.availability.toLowerCase().includes(q) ||
         member.skills.some((s) => s.toLowerCase().includes(q)) ||
-        member.roleBadge.toLowerCase().includes(q) ||
+        member.roleBadgeName.toLowerCase().includes(q) ||
         member.currentRole.toLowerCase().includes(q) ||
         member.yearsOfExperience?.toString().includes(q) ||
-        member.invitedBy.toLowerCase().includes(q) ||
+        member.invitedByName.toLowerCase().includes(q) ||
         member.invitedDate.toLowerCase().includes(q)
       );
     });
-  }, [query]);
+  }, [query, formattedMembers]);
 
   const table = useReactTable({
     data,
@@ -432,7 +429,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         <div className="flex items-center gap-1">
           <h4 className="font-medium text-foreground/90 text-lg">Team Members</h4>
           <div className="px-1 py-0.5 border border-border rounded-[5px] w-fit font-medium text-[10px] text-secondary leading-[13px] ml-1.5">
-            {FAKE_MEMBERS.length}
+            {formattedMembers.length}
           </div>
         </div>
         <div className="flex items-center gap-2">

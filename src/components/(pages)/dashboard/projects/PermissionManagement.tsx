@@ -18,7 +18,6 @@ import {
 // shadcn/ui components
 import {Checkbox} from "@/components/shadcn/checkbox";
 import {Card, CardContent} from "@/components/shadcn/card";
-import {Badge} from "@/components/shadcn/badge";
 import {Button} from "@/components/shadcn/button";
 import RoleDialog, {AddRoleFormData} from "./RoleDialog";
 import {cn} from "@/lib/utils";
@@ -47,6 +46,7 @@ import {
   memberPermissions,
   coFounderPermissions,
 } from "@/data/projects/defaultProjectRoles";
+import ProjectRoleBadge, {ProjectRoleBadgeColorKey} from "@/components/ui/ProjectRoleBadge";
 
 // Available permission actions and the order in which we want to display them
 type PermissionKey = "view" | "create" | "update" | "delete";
@@ -280,22 +280,6 @@ const PermissionManagement = ({
     );
   };
 
-  const getRoleBadgeColor = (role: ProjectRoleDb) => {
-    const colorMap = {
-      purple: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-      red: "bg-red-100 text-red-800 hover:bg-red-100",
-      blue: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      green: "bg-green-100 text-green-800 hover:bg-green-100",
-      yellow: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-      orange: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-      pink: "bg-pink-100 text-pink-800 hover:bg-pink-100",
-      indigo: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
-      gray: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-      cyan: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
-    };
-    return colorMap[role.badge_color as keyof typeof colorMap] || colorMap.gray;
-  };
-
   const renderPermissionCheckbox = (
     allowed: boolean | undefined,
     isEditable: boolean,
@@ -488,9 +472,10 @@ const PermissionManagement = ({
               </motion.div>
             </button>
 
-            <Badge variant="secondary" className={getRoleBadgeColor(role)}>
+            <ProjectRoleBadge
+              color={(role.badge_color ?? undefined) as ProjectRoleBadgeColorKey | undefined}>
               {role.name}
-            </Badge>
+            </ProjectRoleBadge>
             {isOwnerRole(role) ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
             {(role.is_default ?? false) ? (
               <Star className="text-yellow-500 ml-2 fill-current" size={14} />

@@ -7,9 +7,8 @@ export default function usePersistedTableColumns(LS_KEY: string) {
     columnVisibility?: Record<string, boolean>;
   };
 
-  // get from local storage
+  // ---- localStorage helpers ----
   const readStoredState = (): StoredState => {
-    if (typeof window === "undefined") return {};
     try {
       const raw = window.localStorage.getItem(LS_KEY);
       if (!raw) return {};
@@ -18,16 +17,18 @@ export default function usePersistedTableColumns(LS_KEY: string) {
       return {};
     }
   };
-  // data from local storage
-  const stored = readStoredState();
 
-  const [columnOrder, setColumnOrder] = useState<string[]>(stored.columnOrder ?? []);
-  const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
-    stored.columnSizing ?? {},
-  );
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
-    stored.columnVisibility ?? {},
-  );
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+
+  // On mount, load any persisted preferences.
+  useEffect(() => {
+    const stored = readStoredState();
+    if (stored.columnOrder) setColumnOrder(stored.columnOrder);
+    if (stored.columnSizing) setColumnSizing(stored.columnSizing);
+    if (stored.columnVisibility) setColumnVisibility(stored.columnVisibility);
+  }, []);
 
   // debounced to avoid excessive writes.
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
