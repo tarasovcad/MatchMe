@@ -1,31 +1,21 @@
 "use client";
 
 import {
-  Filter,
-  MoreHorizontal,
-  Settings2,
-  PlusIcon,
-  MoreVertical,
   User2,
   TrendingUp,
   Clock,
   Calendar,
   Shield,
   ChevronDown,
-  Settings,
-  // NEW ICONS FOR COLUMN VIEW POPOVER
-  GripVertical,
-  Check,
-  CornerUpRight,
-  Pencil,
   Trash2,
-  // NEW ICONS FOR HEADER POPOVER MENU
   Sparkles,
-  ArrowUp,
-  ArrowDown,
-  EyeOff,
+  Briefcase,
+  Award,
+  UserPlus,
+  CalendarPlus,
+  MessageCircle,
 } from "lucide-react";
-import React, {useMemo, useState, useEffect, useRef} from "react";
+import React, {useMemo, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
@@ -35,9 +25,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import type {Column as ColumnType} from "@tanstack/react-table";
-
-import {Button} from "@/components/shadcn/button";
 import {Checkbox} from "@/components/shadcn/checkbox";
 import {
   Table,
@@ -54,20 +41,12 @@ import {User} from "@supabase/supabase-js";
 import {Badge} from "@/components/shadcn/badge";
 import Link from "next/link";
 import {cn} from "@/lib/utils";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/shadcn/tooltip";
-// NEW: import popover components
-import {Popover, PopoverTrigger, PopoverContent} from "@/components/shadcn/popover";
 import ColumnViewPopover from "@/components/table/ColumnViewPopover";
 import TableSettingsPopover from "@/components/table/TableSettingsPopover";
-
-// ----------------------------------------------------------------------------
-// Types & Fake Data
-// ----------------------------------------------------------------------------
+import ColumnHeaderPopover from "@/components/table/ColumnHeaderPopover";
+import TeamMemberActionsPopover from "./TeamMemberActionsPopover";
+import BulkActionsBar from "@/components/table/BulkActionsBar";
+import usePersistedTableColumns from "@/hooks/usePersistedTableColumns";
 
 type Member = {
   id: string;
@@ -79,8 +58,12 @@ type Member = {
   seniority: string;
   availability: string;
   skills: string[];
+  currentRole: string;
+  yearsOfExperience: number | null;
   roleBadge: "Owner" | "Admin" | "Member";
   joinedDate: string;
+  invitedBy: string;
+  invitedDate: string;
 };
 
 const FAKE_MEMBERS: Member[] = [
@@ -94,8 +77,12 @@ const FAKE_MEMBERS: Member[] = [
     seniority: "Senior",
     availability: "Full-time",
     skills: ["React", "Node.js"],
+    currentRole: "Tech Lead",
+    yearsOfExperience: 8,
     roleBadge: "Owner",
     joinedDate: "Dec 12, 2024",
+    invitedBy: "", // demo
+    invitedDate: "Dec 10, 2024",
   },
   {
     id: "2",
@@ -107,8 +94,12 @@ const FAKE_MEMBERS: Member[] = [
     seniority: "Mid",
     availability: "Part-time",
     skills: ["Python", "Tensor"],
+    currentRole: "Data Analyst",
+    yearsOfExperience: 4,
     roleBadge: "Member",
     joinedDate: "Dec 27, 2024",
+    invitedBy: "Arthur Khan",
+    invitedDate: "Dec 20, 2024",
   },
   {
     id: "3",
@@ -116,52 +107,36 @@ const FAKE_MEMBERS: Member[] = [
     username: "karman1631",
     avatarUrl: "",
     role: "UI/UX Designer",
-    pronouns: "She/Her",
+    pronouns: "",
     seniority: "Senior",
     availability: "Contract",
-    skills: ["Figma", "Illustrator"],
+    skills: ["Figma", "Illustrator", "Photoshop", "After Effects", "Premiere Pro"],
+    currentRole: "Product Designer",
+    yearsOfExperience: null,
     roleBadge: "Member",
     joinedDate: "Jan 21, 2025",
-  },
-  {
-    id: "4",
-    name: "Alice Smith",
-    username: "allis_smith",
-    avatarUrl: "",
-    role: "Backend Developer",
-    pronouns: "He/Him",
-    seniority: "Junior",
-    availability: "Full-time",
-    skills: ["Go", "PostgreSQL"],
-    roleBadge: "Member",
-    joinedDate: "Jan 25, 2025",
-  },
-  {
-    id: "5",
-    name: "John Smith",
-    username: "johncanada",
-    avatarUrl: "/public/test.png",
-    role: "Marketing Specialist",
-    pronouns: "He/Him",
-    seniority: "Senior",
-    availability: "Part-time",
-    skills: ["SEO", "Analytics"],
-    roleBadge: "Admin",
-    joinedDate: "Jan 30, 2025",
+    invitedBy: "Ivanna Ramoss",
+    invitedDate: "Jan 10, 2025",
   },
 ];
 
-// ----------------------------------------------------------------------------
-// Column Definitions
-// ----------------------------------------------------------------------------
+const renderOrDash = (value: React.ReactNode) => {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "") ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  return value;
+};
 
 const getColumns = (): ColumnDef<Member>[] => [
-  // Combined select checkbox with Name column
   {
     accessorKey: "name",
     header: ({table}) => (
       <div className="flex items-center gap-3">
-        {/* Header checkbox: shows a line (indeterminate) when some but not all rows are selected */}
         {(() => {
           const allPageSelected = table.getIsAllPageRowsSelected();
           const somePageSelected = table.getSelectedRowModel().rows.length > 0 && !allPageSelected;
@@ -209,6 +184,18 @@ const getColumns = (): ColumnDef<Member>[] => [
     minSize: 220,
   },
   {
+    accessorKey: "currentRole",
+    header: () => (
+      <div className="flex items-center gap-1 leading-none">
+        <Briefcase className="w-3.5 h-3.5" />
+        <span>Current Role</span>
+      </div>
+    ),
+    size: 200,
+    minSize: 180,
+    cell: ({row}) => <span>{renderOrDash(row.original.currentRole)}</span>,
+  },
+  {
     accessorKey: "pronouns",
     header: () => (
       <div className="flex items-center gap-1 leading-none">
@@ -216,9 +203,9 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Pronouns</span>
       </div>
     ),
-    size: 110,
-    minSize: 110,
-    cell: ({row}) => <span>{row.original.pronouns}</span>,
+    size: 150,
+    minSize: 150,
+    cell: ({row}) => <span>{renderOrDash(row.original.pronouns)}</span>,
   },
   {
     accessorKey: "seniority",
@@ -228,9 +215,9 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Seniority</span>
       </div>
     ),
-    size: 120,
-    minSize: 120,
-    cell: ({row}) => <span>{row.original.seniority}</span>,
+    size: 150,
+    minSize: 150,
+    cell: ({row}) => <span>{renderOrDash(row.original.seniority)}</span>,
   },
   {
     accessorKey: "availability",
@@ -240,26 +227,56 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Availability</span>
       </div>
     ),
-    size: 130,
-    minSize: 130,
-    cell: ({row}) => <span>{row.original.availability}</span>,
+    size: 150,
+    minSize: 150,
+    cell: ({row}) => <span>{renderOrDash(row.original.availability)}</span>,
+  },
+  {
+    accessorKey: "yearsOfExperience",
+    header: () => (
+      <div className="flex items-center gap-1 leading-none">
+        <Award className="w-3.5 h-3.5" />
+        <span>Years Exp.</span>
+      </div>
+    ),
+    size: 110,
+    minSize: 100,
+    cell: ({row}) => {
+      const yrs = row.original.yearsOfExperience;
+      return (
+        <span>{yrs != null ? `${yrs} ${yrs === 1 ? "year" : "years"}` : renderOrDash(yrs)}</span>
+      );
+    },
   },
   {
     accessorKey: "skills",
-    header: "Skills",
-    size: 340,
-    minSize: 300,
-    cell: ({row}) => (
-      <div className="flex flex-wrap  gap-1">
-        {row.original.skills.map((skill) => (
-          <Badge key={skill} variant="secondary" className="bg-muted text-foreground">
-            {skill}
-          </Badge>
-        ))}
+    header: () => (
+      <div className="flex items-center gap-1 leading-none">
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>Skills</span>
       </div>
     ),
+    size: 250,
+    minSize: 200,
+    cell: ({row}) => {
+      const skills = row.original.skills;
+      if (!skills || skills.length === 0) return <span className="text-muted-foreground">—</span>;
+      return (
+        <div className="flex flex-no-wrap gap-2 items-center ">
+          {skills.slice(0, 3).map((s) => (
+            <div
+              key={s}
+              className="h-6 bg-tag dark:bg-muted border border-input rounded-[6px] font-medium text-xs px-2 flex items-center text-foreground">
+              {s}
+            </div>
+          ))}
+          {skills.length > 3 && (
+            <span className="text-xs text-muted-foreground">+{skills.length - 3}</span>
+          )}
+        </div>
+      );
+    },
   },
-
   {
     accessorKey: "joinedDate",
     header: () => (
@@ -268,7 +285,31 @@ const getColumns = (): ColumnDef<Member>[] => [
         <span>Joined Date</span>
       </div>
     ),
-    cell: ({row}) => <span>{row.original.joinedDate}</span>,
+    cell: ({row}) => <span>{renderOrDash(row.original.joinedDate)}</span>,
+  },
+  {
+    accessorKey: "invitedDate",
+    header: () => (
+      <div className="flex items-center gap-1 leading-none">
+        <CalendarPlus className="w-3.5 h-3.5" />
+        <span>Invited Date</span>
+      </div>
+    ),
+    cell: ({row}) => <span>{renderOrDash(row.original.invitedDate)}</span>,
+    size: 150,
+    minSize: 150,
+  },
+  {
+    accessorKey: "invitedBy",
+    header: () => (
+      <div className="flex items-center gap-1 leading-none">
+        <UserPlus className="w-3.5 h-3.5" />
+        <span>Invited By</span>
+      </div>
+    ),
+    cell: ({row}) => <span>{renderOrDash(row.original.invitedBy)}</span>,
+    size: 180,
+    minSize: 160,
   },
   {
     accessorKey: "roleBadge",
@@ -296,11 +337,21 @@ const getColumns = (): ColumnDef<Member>[] => [
   {
     id: "actions",
     header: "",
-    cell: () => (
-      <button type="button" className="p-1 rounded hover:bg-muted cursor-pointer leading-none">
-        <MoreVertical className="w-4 h-4 transition-all duration-200  text-muted-foreground group-hover:text-foreground/60" />
-      </button>
-    ),
+    cell: ({row}) => {
+      const member = row.original as Member;
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      return (
+        <TeamMemberActionsPopover
+          onViewProfile={() => window.open(`/profiles/${member.username}`, "_blank")}
+          onCopyProfileLink={() =>
+            navigator.clipboard.writeText(`${origin}/profiles/${member.username}`)
+          }
+          onChangeRole={() => console.log("Change role for", member.id)}
+          onRemoveFromProject={() => console.log("Remove from project", member.id)}
+          onSendDirectMessage={() => console.log("DM to", member.id)}
+        />
+      );
+    },
     enableSorting: false,
     size: 50,
     minSize: 50,
@@ -308,122 +359,19 @@ const getColumns = (): ColumnDef<Member>[] => [
   },
 ];
 
-// ---------------------------------------------------------------------------
-// HeaderPopover with per-column sorting capabilities
-// ---------------------------------------------------------------------------
-type HeaderPopoverProps<TData extends object> = {
-  column: ColumnType<TData, unknown>;
-  children: React.ReactNode;
-};
-
-const HeaderPopover = <TData extends object>({children, column}: HeaderPopoverProps<TData>) => {
-  // Helpers to perform sorting. We explicitly set the sorting direction to
-  // avoid cycling through states when the user picks an explicit action.
-  const handleSortAsc = () => {
-    // Ascending sort (desc = false)
-    column.toggleSorting(false);
-  };
-
-  const handleSortDesc = () => {
-    // Descending sort (desc = true)
-    column.toggleSorting(true);
-  };
-
-  // Determine current sort state for this column
-  const currentSort = column.getIsSorted(); // "asc" | "desc" | false
-
-  const menuItems: {
-    icon: React.ElementType;
-    label: string;
-    onClick?: () => void;
-    accent?: boolean;
-    disabled?: boolean;
-  }[] = [
-    {icon: Sparkles, label: "AI analyze", disabled: true},
-    {
-      icon: ArrowUp,
-      label: "Sort ascending",
-      onClick: handleSortAsc,
-      accent: currentSort === "asc",
-    },
-    {
-      icon: ArrowDown,
-      label: "Sort descending",
-      onClick: handleSortDesc,
-      accent: currentSort === "desc",
-    },
-    {icon: Filter, label: "Filter", disabled: true},
-    {icon: EyeOff, label: "Hide column", disabled: true},
-  ];
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button type="button" className="flex items-center gap-1 w-fit text-left cursor-pointer">
-          {children}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-[180px] rounded-[8px] text-foreground/90" align="start">
-        {/* Menu items */}
-        <div className="py-1 px-1">
-          {menuItems.map(({icon: Icon, label, onClick, accent, disabled}, idx) => (
-            <button
-              key={label}
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                onClick?.();
-              }}
-              className={cn(
-                "w-full flex items-center gap-2 px-2 py-[5px] rounded-[5px] text-sm hover:bg-muted transition-colors duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed",
-                accent && "bg-muted font-medium text-foreground",
-                idx === menuItems.length - 2 && "border-b border-border rounded-b-none", // divider before last item
-              )}>
-              <Icon className="w-4 h-4 text-foreground/90" />
-              <span className="whitespace-nowrap">{label}</span>
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-};
-
 const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: User}) => {
-  const LS_KEY = "teamMembersTablePrefs";
-
-  type StoredState = {
-    columnOrder?: string[];
-    columnSizing?: Record<string, number>;
-    columnVisibility?: Record<string, boolean>;
-  };
-
-  const readStoredState = (): StoredState => {
-    if (typeof window === "undefined") return {};
-    try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (!raw) return {};
-      return JSON.parse(raw);
-    } catch {
-      return {};
-    }
-  };
-
-  const stored = readStoredState();
-
   const [sorting, setSorting] = useState<SortingState>([]);
   const [query, setQuery] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-
-  const [columnOrder, setColumnOrder] = useState<string[]>(stored.columnOrder ?? []);
-  // Column resize state
-  const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
-    stored.columnSizing ?? {},
-  );
-  // Column visibility state
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
-    stored.columnVisibility ?? {},
-  );
+  //  column state
+  const {
+    columnOrder,
+    setColumnOrder,
+    columnSizing,
+    setColumnSizing,
+    columnVisibility,
+    setColumnVisibility,
+  } = usePersistedTableColumns("teamMembersTablePrefs");
 
   const data = useMemo(() => {
     if (!query) return FAKE_MEMBERS;
@@ -437,7 +385,11 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         member.seniority.toLowerCase().includes(q) ||
         member.availability.toLowerCase().includes(q) ||
         member.skills.some((s) => s.toLowerCase().includes(q)) ||
-        member.roleBadge.toLowerCase().includes(q)
+        member.roleBadge.toLowerCase().includes(q) ||
+        member.currentRole.toLowerCase().includes(q) ||
+        member.yearsOfExperience?.toString().includes(q) ||
+        member.invitedBy.toLowerCase().includes(q) ||
+        member.invitedDate.toLowerCase().includes(q)
       );
     });
   }, [query]);
@@ -465,38 +417,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
 
   const selectedCount = table.getSelectedRowModel().rows.length;
 
-  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-
-    // Debounce saves to run 1s after the last change
-    saveTimeout.current = setTimeout(() => {
-      const payload: StoredState = {
-        columnOrder,
-        columnSizing,
-        columnVisibility,
-      };
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify(payload));
-      } catch {
-        /* ignore write errors */
-      }
-    }, 1000);
-
-    return () => {
-      if (saveTimeout.current) {
-        clearTimeout(saveTimeout.current);
-        saveTimeout.current = null;
-      }
-    };
-  }, [columnOrder, columnSizing, columnVisibility]);
-
-  // -----------------------------
-  // Settings Popover Handlers
-  // -----------------------------
   const handleChangeRole = () => {
-    // TODO: open dialog or dropdown to change role
     console.log(
       "Change role for:",
       table.getSelectedRowModel().rows.map((r) => r.original.id),
@@ -523,12 +444,10 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <Button variant="outline" size="xs">
+          {/* <Button variant="outline" size="xs">
             <Filter className="w-4 h-4" /> Filter
-          </Button>
-          {/* Column view popover */}
+          </Button> */}
           <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
-          {/* Settings popover */}
           <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
           {/* <Button variant="default" size="xs" className="ml-1">
             <PlusIcon className="w-4 h-4" /> Invite
@@ -536,89 +455,25 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         </div>
       </div>
 
-      {/* Table */}
-
       <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
         {/* Bulk actions bar */}
-        <AnimatePresence>
-          {selectedCount > 0 && (
-            <motion.div
-              key="bulk-actions-bar"
-              layout
-              initial={{opacity: 0, y: -8, height: 0}}
-              animate={{opacity: 1, y: 0, height: "auto"}}
-              exit={{opacity: 0, y: -8, height: 0}}
-              transition={{type: "tween", ease: "easeOut", duration: 0.25}}
-              className="sticky top-0 z-30 bg-background border-b border-border overflow-hidden">
-              <TooltipProvider>
-                <div className="flex items-center gap-5 text-muted-foreground text-sm px-2.5 py-2">
-                  {/* Clear selection */}
-                  <div className="flex items-center gap-1">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={handleChangeRole}
-                          className="p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80">
-                          <CornerUpRight className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="px-2 py-1 ">
-                        <span className="text-secondary text-sm">Clear selection</span>
-                      </TooltipContent>
-                    </Tooltip>
-                    {/* Selected count */}
-                    <span className="select-none text-[13px] flex items-baseline gap-1">
-                      <AnimatePresence mode="wait" initial={false}>
-                        <motion.span
-                          key={selectedCount}
-                          initial={{y: -4, opacity: 0}}
-                          animate={{y: 0, opacity: 1}}
-                          exit={{y: 4, opacity: 0}}
-                          transition={{duration: 0.2}}
-                          className="inline-block tabular-nums">
-                          {selectedCount}
-                        </motion.span>
-                      </AnimatePresence>{" "}
-                      {selectedCount === 1 ? "row" : "rows"} selected
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={handleChangeRole}
-                          className="p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80">
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="px-2 py-1">
-                        <span>Edit role</span>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={handleChangeRole}
-                          className="p-0.5 cursor-pointer transition-all duration-200 text-red-500 hover:text-red-700 ">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="px-2 py-1">
-                        <span>Remove</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </TooltipProvider>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <BulkActionsBar
+          selectedCount={selectedCount}
+          onClearSelection={() => table.resetRowSelection(false)}
+          actions={[
+            {
+              label: "Send message",
+              icon: <MessageCircle className="w-4 h-4" />,
+              onClick: handleChangeRole,
+            },
+            {
+              label: "Remove",
+              icon: <Trash2 className="w-4 h-4" />,
+              onClick: handleChangeRole,
+              className: "text-red-500 hover:text-red-700",
+            },
+          ]}
+        />
 
         <Table style={{minWidth: table.getTotalSize()}} className="w-full ">
           <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013] ">
@@ -638,9 +493,9 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
                       <div className="flex items-center justify-between w-full">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() && (
-                          <HeaderPopover column={header.column}>
+                          <ColumnHeaderPopover column={header.column}>
                             <ChevronDown className="w-3.5 h-3.5 pl-1 text-muted-foreground hover:text-foreground transition-colors" />
-                          </HeaderPopover>
+                          </ColumnHeaderPopover>
                         )}
                       </div>
                     )}
@@ -649,10 +504,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
                       <div
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
-                        className={cn(
-                          // wider invisible handler for easier grabbing
-                          "absolute right-0 top-0 h-full w-2  cursor-col-resize select-none touch-none",
-                        )}
+                        className="absolute right-0 top-0 h-full w-2  cursor-col-resize select-none touch-none"
                       />
                     )}
                   </TableHead>

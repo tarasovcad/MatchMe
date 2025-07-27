@@ -23,6 +23,8 @@ function ColumnViewPopoverInner<TData extends object>(props: ColumnViewPopoverPr
   const columnLabelMap: Record<string, string> = {
     roleBadge: "Role",
     joinedDate: "Joined Date",
+    invitedBy: "Invited By",
+    invitedDate: "Invited Date",
   };
 
   const allLeaf = table.getAllLeafColumns();
@@ -189,7 +191,7 @@ function ColumnViewPopoverInner<TData extends object>(props: ColumnViewPopoverPr
           <button
             type="button"
             onClick={() => table.resetColumnOrder()}
-            className="flex items-center gap-2 w-full text-sm px-2 py-[6px] border-t border-border hover:bg-muted">
+            className="flex items-center gap-2 w-full text-sm px-4 py-[6px] border-t border-border hover:bg-muted">
             <Settings2 className="w-4 h-4" /> Reset Column Order
           </button>
         </Command>

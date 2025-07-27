@@ -61,7 +61,7 @@ function TableSettingsPopoverInner<TData extends object>(props: TableSettingsPop
   const defaultTrigger = (
     <button
       type="button"
-      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-md border border-input bg-background hover:bg-muted transition-colors">
+      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-md border border-input bg-background hover:bg-muted transition-colors cursor-pointer">
       <Settings className="w-4 h-4" />
     </button>
   );
