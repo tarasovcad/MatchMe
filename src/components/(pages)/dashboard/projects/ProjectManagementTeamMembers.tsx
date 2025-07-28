@@ -15,8 +15,8 @@ import {
   CalendarPlus,
   MessageCircle,
 } from "lucide-react";
-import React, {useMemo, useState} from "react";
-import {formatDateAbsolute} from "@/functions/formatDate";
+import React, {useMemo, useState, useEffect} from "react";
+import {formatHumanDate} from "@/functions/formatDate";
 import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
@@ -49,6 +49,8 @@ import TeamMemberActionsPopover from "./TeamMemberActionsPopover";
 import BulkActionsBar from "@/components/table/BulkActionsBar";
 import usePersistedTableColumns from "@/hooks/usePersistedTableColumns";
 import {useProjectTeamMembers} from "@/hooks/query/projects/use-project-team-members";
+import TableSkeleton from "@/components/ui/TableSkeleton";
+import {Skeleton} from "@/components/shadcn/skeleton";
 
 type Member = {
   id: string;
@@ -237,7 +239,7 @@ const getColumns = (): ColumnDef<Member>[] => [
     ),
     cell: ({row}) => {
       const date = row.original.joinedDate;
-      return date ? <span>{formatDateAbsolute(date)}</span> : renderOrDash(date);
+      return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
     },
   },
   {
@@ -250,7 +252,7 @@ const getColumns = (): ColumnDef<Member>[] => [
     ),
     cell: ({row}) => {
       const date = row.original.invitedDate;
-      return date ? <span>{formatDateAbsolute(date)}</span> : renderOrDash(date);
+      return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
     },
     size: 150,
     minSize: 150,
@@ -328,6 +330,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [query, setQuery] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+
   //  column state
   const {
     columnOrder,
@@ -370,9 +373,27 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
   const data = useMemo(() => {
     const baseMembers = formattedMembers.length ? formattedMembers : [];
 
-    if (!query) return baseMembers;
+    const rolePriority: Record<string, number> = {
+      Owner: 1,
+      "Co-founder": 2,
+      Member: 3,
+    };
 
-    return baseMembers.filter((member) => {
+    // Sort members by role priority, then by name
+    const sortedMembers = [...baseMembers].sort((a, b) => {
+      const aPriority = rolePriority[a.roleBadgeName] || 999;
+      const bPriority = rolePriority[b.roleBadgeName] || 999;
+
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+
+    if (!query) return sortedMembers;
+
+    return sortedMembers.filter((member) => {
       const q = query.toLowerCase();
       return (
         member.name.toLowerCase().includes(q) ||
@@ -422,6 +443,149 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
     table.resetRowSelection(false);
   };
 
+  // Define skeleton column configurations
+  const skeletonColumns = [
+    {
+      id: "name",
+      header: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ),
+      cell: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-4 mr-1" />
+          <Skeleton className="h-6 w-6 rounded-full" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      ),
+      size: 220,
+    },
+    {
+      id: "currentRole",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 180,
+    },
+    {
+      id: "pronouns",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-12" />,
+      size: 150,
+    },
+    {
+      id: "seniority",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-18" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-16" />,
+      size: 150,
+    },
+    {
+      id: "availability",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-14" />,
+      size: 150,
+    },
+    {
+      id: "yearsOfExperience",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-12" />,
+      size: 110,
+    },
+    {
+      id: "skills",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: (
+        <div className="flex flex-no-wrap gap-2 items-center">
+          <Skeleton className="h-6 w-16 rounded-[6px]" />
+          <Skeleton className="h-6 w-14 rounded-[6px]" />
+          <Skeleton className="h-6 w-12 rounded-[6px]" />
+        </div>
+      ),
+      size: 200,
+    },
+    {
+      id: "joinedDate",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 150,
+    },
+    {
+      id: "invitedDate",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 150,
+    },
+    {
+      id: "invitedByName",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-16" />,
+      size: 160,
+    },
+    {
+      id: "roleBadgeName",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-8" />
+        </div>
+      ),
+      cell: <Skeleton className="h-6 w-12 rounded-full" />,
+      size: 90,
+    },
+    {
+      id: "actions",
+      header: <div className="w-full" />,
+      cell: <Skeleton className="h-8 w-8 rounded-md" />,
+      size: 50,
+    },
+  ];
+
   return (
     <div className="w-full mx-auto space-y-6">
       {/* Header */}
@@ -452,107 +616,127 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         </div>
       </div>
 
-      <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
-        {/* Bulk actions bar */}
-        <BulkActionsBar
-          selectedCount={selectedCount}
-          onClearSelection={() => table.resetRowSelection(false)}
-          actions={[
-            {
-              label: "Send message",
-              icon: <MessageCircle className="w-4 h-4" />,
-              onClick: handleChangeRole,
-            },
-            {
-              label: "Remove",
-              icon: <Trash2 className="w-4 h-4" />,
-              onClick: handleChangeRole,
-              className: "text-red-500 hover:text-red-700",
-            },
-          ]}
-        />
+      {isMembersLoading ? (
+        <motion.div
+          key="skeleton"
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.3, ease: "easeInOut"}}>
+          <TableSkeleton columns={skeletonColumns} rowCount={5} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="table"
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.3, ease: "easeInOut"}}>
+          <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
+            {/* Bulk actions bar */}
+            <BulkActionsBar
+              selectedCount={selectedCount}
+              onClearSelection={() => table.resetRowSelection(false)}
+              actions={[
+                {
+                  label: "Send message",
+                  icon: <MessageCircle className="w-4 h-4" />,
+                  onClick: handleChangeRole,
+                },
+                {
+                  label: "Remove",
+                  icon: <Trash2 className="w-4 h-4" />,
+                  onClick: handleChangeRole,
+                  className: "text-red-500 hover:text-red-700",
+                },
+              ]}
+            />
 
-        <Table style={{minWidth: table.getTotalSize()}} className="w-full ">
-          <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013] ">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-[#F9F9FA] dark:hover:bg-[#101013]">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className={cn(
-                      "relative !p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
-                      // header.index === 0
-                      //   ? "sticky left-0 z-20 bg-[#F9F9FA] dark:bg-[#101013] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
-                      //   : "border-r border-border",
-                    )}
-                    style={{width: header.getSize()}}>
-                    {header.isPlaceholder ? null : (
-                      <div className="flex items-center justify-between w-full">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getCanSort() && (
-                          <ColumnHeaderPopover column={header.column}>
-                            <ChevronDown className="w-3.5 h-3.5 pl-1 text-muted-foreground hover:text-foreground transition-colors" />
-                          </ColumnHeaderPopover>
-                        )}
-                      </div>
-                    )}
-                    {/* Resize handle */}
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        className="absolute right-0 top-0 h-full w-2  cursor-col-resize select-none touch-none"
-                      />
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            <AnimatePresence initial={false} mode="popLayout">
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <motion.tr
-                    key={row.original.id || row.id}
-                    layout="position"
-                    initial={{opacity: 0}}
-                    animate={{opacity: 1}}
-                    exit={{opacity: 0}}
-                    transition={{duration: 0.2}}
-                    data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
+            <Table style={{minWidth: table.getTotalSize()}} className="w-full ">
+              <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013] ">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    className="hover:bg-[#F9F9FA] dark:hover:bg-[#101013]">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
                         className={cn(
-                          "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
-                          // cell.column.id === "name"
-                          //   ? "sticky left-0 z-10 bg-background after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
+                          "relative !p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
+                          // header.index === 0
+                          //   ? "sticky left-0 z-20 bg-[#F9F9FA] dark:bg-[#101013] after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
                           //   : "border-r border-border",
                         )}
-                        style={{width: cell.column.getSize()}}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
+                        style={{width: header.getSize()}}>
+                        {header.isPlaceholder ? null : (
+                          <div className="flex items-center justify-between w-full">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanSort() && (
+                              <ColumnHeaderPopover column={header.column}>
+                                <ChevronDown className="w-3.5 h-3.5 pl-1 text-muted-foreground hover:text-foreground transition-colors" />
+                              </ColumnHeaderPopover>
+                            )}
+                          </div>
+                        )}
+                        {/* Resize handle */}
+                        {header.column.getCanResize() && (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            className="absolute right-0 top-0 h-full w-2  cursor-col-resize select-none touch-none"
+                          />
+                        )}
+                      </TableHead>
                     ))}
-                  </motion.tr>
-                ))
-              ) : (
-                <motion.tr
-                  key="no-results"
-                  initial={{opacity: 0}}
-                  animate={{opacity: 1}}
-                  exit={{opacity: 0}}
-                  className="border-b">
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No results.
-                  </TableCell>
-                </motion.tr>
-              )}
-            </AnimatePresence>
-          </TableBody>
-        </Table>
-      </div>
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence initial={false} mode="popLayout">
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <motion.tr
+                        key={row.original.id || row.id}
+                        layout="position"
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        transition={{duration: 0.2}}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                              // cell.column.id === "name"
+                              //   ? "sticky left-0 z-10 bg-background after:content-[''] after:absolute after:inset-y-0 after:right-0 after:w-px after:bg-border"
+                              //   : "border-r border-border",
+                            )}
+                            style={{width: cell.column.getSize()}}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </motion.tr>
+                    ))
+                  ) : (
+                    <motion.tr
+                      key="no-results"
+                      initial={{opacity: 0}}
+                      animate={{opacity: 1}}
+                      exit={{opacity: 0}}
+                      className="border-b">
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        No results.
+                      </TableCell>
+                    </motion.tr>
+                  )}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

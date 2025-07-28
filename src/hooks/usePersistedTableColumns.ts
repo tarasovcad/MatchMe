@@ -10,6 +10,9 @@ export default function usePersistedTableColumns(LS_KEY: string) {
   // ---- localStorage helpers ----
   const readStoredState = (): StoredState => {
     try {
+      // Check if we're in a browser environment
+      if (typeof window === "undefined") return {};
+
       const raw = window.localStorage.getItem(LS_KEY);
       if (!raw) return {};
       return JSON.parse(raw);
@@ -43,7 +46,10 @@ export default function usePersistedTableColumns(LS_KEY: string) {
         columnVisibility,
       };
       try {
-        window.localStorage.setItem(LS_KEY, JSON.stringify(payload));
+        // Check if we're in a browser environment
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(LS_KEY, JSON.stringify(payload));
+        }
       } catch {
         /* ignore write errors */
       }
