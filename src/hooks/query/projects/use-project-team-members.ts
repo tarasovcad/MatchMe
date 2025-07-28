@@ -4,15 +4,27 @@ import {
   ProjectTeamMemberProfile,
 } from "@/actions/projects/projectTeamMembers";
 
+interface ProjectTeamMembersResponse {
+  members: ProjectTeamMemberProfile[];
+  roles: Array<{
+    id: string;
+    name: string;
+    badge_color: string | null;
+  }>;
+}
+
 export const useProjectTeamMembers = (projectId: string) => {
-  return useQuery<ProjectTeamMemberProfile[]>({
+  return useQuery<ProjectTeamMembersResponse>({
     queryKey: ["project-team-members-profiles", projectId],
     queryFn: async () => {
       const response = await getProjectTeamMembersProfiles(projectId);
       if (response.error) {
         throw new Error(response.error);
       }
-      return response.data ?? [];
+      return {
+        members: response.data ?? [],
+        roles: response.roles ?? [],
+      };
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 2,

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
 import {cn} from "@/lib/utils";
 import {Eye, Copy, Shield, Trash2, MessageCircle, MoreVertical} from "lucide-react";
@@ -13,6 +13,7 @@ export type TeamMemberActions = {
 
 export type TeamMemberActionsPopoverProps = TeamMemberActions & {
   trigger?: React.ReactNode;
+  roleBadgeName?: string;
 };
 
 const TeamMemberActionsPopover: React.FC<TeamMemberActionsPopoverProps> = ({
@@ -22,7 +23,36 @@ const TeamMemberActionsPopover: React.FC<TeamMemberActionsPopoverProps> = ({
   onRemoveFromProject,
   onSendDirectMessage,
   trigger,
+  roleBadgeName,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const isOwner = roleBadgeName === "Owner";
+
+  const handleViewProfile = () => {
+    onViewProfile?.();
+    setIsOpen(false);
+  };
+
+  const handleCopyProfileLink = () => {
+    onCopyProfileLink?.();
+    setIsOpen(false);
+  };
+
+  const handleChangeRole = () => {
+    onChangeRole?.();
+    setIsOpen(false);
+  };
+
+  const handleSendDirectMessage = () => {
+    onSendDirectMessage?.();
+    setIsOpen(false);
+  };
+
+  const handleRemoveFromProject = () => {
+    onRemoveFromProject?.();
+    setIsOpen(false);
+  };
+
   const menuItems: {
     icon: React.ElementType;
     label: string;
@@ -30,15 +60,26 @@ const TeamMemberActionsPopover: React.FC<TeamMemberActionsPopoverProps> = ({
     accent?: boolean;
     disabled?: boolean;
   }[] = [
-    {icon: Eye, label: "View profile", onClick: onViewProfile},
-    {icon: Copy, label: "Copy profile link", onClick: onCopyProfileLink},
-    {icon: Shield, label: "Change role", onClick: onChangeRole},
-    {icon: MessageCircle, label: "Send direct message", onClick: onSendDirectMessage},
-    {icon: Trash2, label: "Remove from project", onClick: onRemoveFromProject, accent: true},
+    {icon: Eye, label: "View profile", onClick: handleViewProfile},
+    {icon: Copy, label: "Copy profile link", onClick: handleCopyProfileLink},
+    {icon: Shield, label: "Change role", onClick: handleChangeRole, disabled: isOwner},
+    {
+      icon: MessageCircle,
+      label: "Send direct message",
+      onClick: handleSendDirectMessage,
+      disabled: true,
+    },
+    {
+      icon: Trash2,
+      label: "Remove from project",
+      onClick: handleRemoveFromProject,
+      accent: true,
+      disabled: isOwner,
+    },
   ];
 
   return (
-    <Popover>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         {trigger ? (
           trigger

@@ -34,7 +34,7 @@ export interface ProjectTeamMemberProfile {
 export const getProjectTeamMembersProfiles = async (projectId: string) => {
   try {
     if (!projectId) {
-      return {error: "Project ID is required", data: null};
+      return {error: "Project ID is required", data: null, roles: null};
     }
 
     const supabase = await createClient();
@@ -47,15 +47,26 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (teamError) {
       console.error("getProjectTeamMembersProfiles – team members error", teamError);
-      return {error: teamError.message, data: null};
+      return {error: teamError.message, data: null, roles: null};
+    }
+
+    // 2. Fetch all project roles
+    const {data: roles, error: rolesError} = await supabase
+      .from("project_roles")
+      .select("id, name, badge_color")
+      .eq("project_id", projectId);
+
+    if (rolesError) {
+      console.error("getProjectTeamMembersProfiles – roles error", rolesError);
+      return {error: rolesError.message, data: null, roles: null};
     }
 
     if (!teamMembers?.length) {
       // No team members found
-      return {error: null, data: []};
+      return {error: null, data: [], roles: roles ?? []};
     }
 
-    // 2. Prepare ids for profile lookup (members + inviters)
+    // 3. Prepare ids for profile lookup (members + inviters)
     const profileIdsSet = new Set<string>();
 
     for (const tm of teamMembers) {
@@ -65,35 +76,23 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     const profileIds = Array.from(profileIdsSet);
 
-    // 3. Fetch profiles & project roles in parallel
-    const [profilesRes, rolesRes] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select(
-          "id, name, username, public_current_role, profile_image, pronouns, seniority_level, work_availability, years_of_experience, skills",
-        )
-        .in("id", profileIds),
-      supabase.from("project_roles").select("id, name, badge_color").eq("project_id", projectId),
-    ]);
-
-    const {data: profiles, error: profilesError} = profilesRes;
-    const {data: roles, error: rolesError} = rolesRes;
+    // 4. Fetch profiles
+    const {data: profiles, error: profilesError} = await supabase
+      .from("profiles")
+      .select(
+        "id, name, username, public_current_role, profile_image, pronouns, seniority_level, work_availability, years_of_experience, skills",
+      )
+      .in("id", profileIds);
 
     if (profilesError) {
       console.error("getProjectTeamMembersProfiles – profiles error", profilesError);
-      return {error: profilesError.message, data: null};
+      return {error: profilesError.message, data: null, roles: null};
     }
 
-    if (rolesError) {
-      console.error("getProjectTeamMembersProfiles – roles error", rolesError);
-      return {error: rolesError.message, data: null};
-    }
-
-    // 4. Build helper maps for quick lookup
     const roleMap = new Map((roles ?? []).map((r) => [r.id, r]));
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-    // 5. Transform into the expected structure (iterate teamMembers to keep membership order)
+    // 5. Transform into the expected structure
     const mapped: ProjectTeamMemberProfile[] = teamMembers.map((tm) => {
       const profile = profileMap.get(tm.user_id);
       const inviterProfile = tm.invited_by_user_id ? profileMap.get(tm.invited_by_user_id) : null;
@@ -122,9 +121,13 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
       };
     });
 
-    return {error: null, data: mapped};
+    return {error: null, data: mapped, roles: roles ?? []};
   } catch (err) {
     console.error("getProjectTeamMembersProfiles unexpected error", err);
-    return {error: err instanceof Error ? err.message : "Unexpected error", data: null};
+    return {
+      error: err instanceof Error ? err.message : "Unexpected error",
+      data: null,
+      roles: null,
+    };
   }
 };
