@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useState, useEffect} from "react";
 import {useForm, FormProvider} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -17,6 +17,10 @@ import {
 import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import SelectInput from "@/components/ui/form/SelectInput";
+import Image from "next/image";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/shadcn/avatar";
+import {ArrowRightIcon} from "lucide-react";
+import {motion, AnimatePresence} from "framer-motion";
 
 const editMemberRoleSchema = z.object({
   newRole: z.string().nonempty("Select a new role"),
@@ -69,15 +73,27 @@ export default function EditMemberRoleDialog({
     handleSubmit,
     formState: {isValid},
     reset,
+    watch,
   } = methods;
 
-  const [internalOpen, setInternalOpen] = React.useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [selectedNewRole, setSelectedNewRole] = useState("New Role");
   const isControlled = open !== undefined;
   const dialogOpen = isControlled ? open : internalOpen;
 
+  const watchedNewRole = watch("newRole");
+
+  useEffect(() => {
+    if (watchedNewRole) {
+      setSelectedNewRole(watchedNewRole);
+    } else {
+      setSelectedNewRole("New Role");
+    }
+  }, [watchedNewRole]);
+
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      reset(); // Reset form when dialog closes
+      reset();
     }
 
     if (isControlled) {
@@ -137,12 +153,44 @@ export default function EditMemberRoleDialog({
               submitAndClose();
             }}
             className="space-y-5">
+            <div className="flex items-center space-x-3  bg-muted/20">
+              {/* User Avatar */}
+              <div className="flex-shrink-0">
+                <Avatar className="w-10 h-10 rounded-full object-cover ">
+                  <AvatarImage src={member.avatarUrl} alt={`${member.name}'s avatar`} />
+                  <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </div>
+
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+                <div className="flex items-center space-x-1 mt-1">
+                  <span className="text-[13px] text-muted-foreground line-through">
+                    {member.roleBadgeName}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </span>
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.span
+                      key={selectedNewRole}
+                      initial={{opacity: 0, y: 10}}
+                      animate={{opacity: 1, y: 0}}
+                      exit={{opacity: 0, y: -10}}
+                      transition={{duration: 0.05, ease: "easeInOut"}}
+                      className="text-[13px] font-medium">
+                      {selectedNewRole}
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
             {/* Current Role (disabled) */}
             <div className="space-y-2">
               <p className="font-medium text-sm">Current Role</p>
               <SimpleInput value={member.roleBadgeName} readOnly className="bg-muted/50" />
             </div>
-
             {/* New Role */}
             <div className="space-y-2">
               <p className="font-medium text-sm">New Role</p>
@@ -163,7 +211,6 @@ export default function EditMemberRoleDialog({
                 </div>
               )}
             </div>
-
             <DialogFooter className="pt-2">
               <DialogClose asChild>
                 <Button variant="outline" size="xs" type="button">
