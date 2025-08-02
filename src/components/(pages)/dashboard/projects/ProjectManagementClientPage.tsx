@@ -16,6 +16,7 @@ import {canChangeUsername} from "@/functions/canChangeUsername";
 import {canChangeSlug} from "@/functions/canChangeSlug";
 import ProjectManagementTeamMembers from "./ProjectManagementTeamMembers";
 import ProjectManagementRequests from "./ProjectManagementRequests";
+import ProjectManagementOpenPositions from "./ProjectManagementOpenPositions";
 
 const ProjectManagementClientPage = ({
   tab,
@@ -53,6 +54,8 @@ const ProjectManagementClientPage = ({
         return <ProjectManagementTeamMembers project={projectState} user={user} />;
       case "requests":
         return <ProjectManagementRequests project={projectState} user={user} />;
+      case "open-positions":
+        return <ProjectManagementOpenPositions project={projectState} user={user} />;
       case "security":
         return (
           <ProjectManagementSecurityTab

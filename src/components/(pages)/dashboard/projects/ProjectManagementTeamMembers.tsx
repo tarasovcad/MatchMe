@@ -145,8 +145,6 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
   const fetchedMembers = teamData?.members ?? [];
   const projectRoles = teamData?.roles ?? [];
 
-  console.log("fetchedMembers", fetchedMembers);
-
   // Transform fetched data into the shape expected by the table
   const formattedMembers: Member[] = useMemo(() => {
     return (fetchedMembers ?? []).map((m) => ({

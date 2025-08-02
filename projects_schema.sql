@@ -107,7 +107,6 @@ CREATE TABLE project_open_positions (
 
     -- Position status
     status position_status NOT NULL DEFAULT 'open',
-    applicant_count INTEGER DEFAULT 0,
 
     -- Posted by information
     posted_by_user_id UUID REFERENCES auth.users(id),

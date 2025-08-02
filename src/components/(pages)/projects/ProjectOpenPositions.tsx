@@ -73,6 +73,115 @@ const jobs: Job[] = [
       postedDate: "1 day ago",
     },
   },
+  {
+    id: 2,
+    title: "Data Scientist",
+    shortDescription:
+      "We're seeking a Data Scientist to analyze medical imaging data and develop machine learning models for cancer detection. Experience with deep learning and medical data is essential.",
+    fullDescription:
+      "Join our AI research team to develop cutting-edge machine learning models for medical image analysis. You'll work with large datasets of medical scans, implement deep learning algorithms, and collaborate with medical professionals to improve cancer detection accuracy. This role involves research, experimentation, and deployment of AI models in healthcare settings.",
+    requirements: [
+      "PhD or Master's in Data Science, Computer Science, or related field\nExperience with medical imaging and DICOM data\nProficiency in Python, TensorFlow, and PyTorch\nKnowledge of computer vision and deep learning\nExperience with statistical analysis and data visualization\nUnderstanding of healthcare regulations and data privacy",
+    ],
+    requiredSkills: [
+      "Python",
+      "TensorFlow",
+      "PyTorch",
+      "Computer Vision",
+      "Medical Imaging",
+      "Statistics",
+    ],
+    applicantCount: 28,
+    compensation: "Equity-based",
+    collaborationType: "Full-time",
+    timeCommitment: "Flexible hours • Monday to Friday",
+    postedBy: {
+      username: "airesearcher",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face",
+      postedDate: "3 days ago",
+    },
+  },
+  {
+    id: 3,
+    title: "UI/UX Designer",
+    shortDescription:
+      "Design intuitive interfaces for our healthcare AI platform. We need someone who understands both user experience principles and the complexities of medical software design.",
+    fullDescription:
+      "We're looking for a creative UI/UX Designer to design user-friendly interfaces for our AI-powered medical diagnostic platform. You'll work closely with doctors, researchers, and engineers to create interfaces that are both beautiful and functional for healthcare professionals. This role requires understanding of medical workflows and accessibility standards.",
+    requirements: [
+      "3+ years of UI/UX design experience\nExperience designing for healthcare or complex technical products\nProficiency in Figma, Sketch, or Adobe Creative Suite\nKnowledge of accessibility standards (WCAG)\nExperience with user research and usability testing\nUnderstanding of design systems and component libraries",
+    ],
+    requiredSkills: [
+      "Figma",
+      "User Research",
+      "Prototyping",
+      "Accessibility",
+      "Design Systems",
+      "Healthcare UX",
+    ],
+    applicantCount: 35,
+    compensation: "Partnership",
+    collaborationType: "Part-time",
+    timeCommitment: "20 hours/week • Flexible schedule",
+    postedBy: {
+      username: "designlead",
+      avatar:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face",
+      postedDate: "5 days ago",
+    },
+  },
+  {
+    id: 4,
+    title: "DevOps Engineer",
+    shortDescription:
+      "Build and maintain our cloud infrastructure for AI model deployment. Experience with containerization, CI/CD pipelines, and healthcare compliance is required.",
+    fullDescription:
+      "We need a skilled DevOps Engineer to manage our cloud infrastructure and deployment pipelines for AI models in healthcare. You'll ensure our systems are secure, scalable, and compliant with healthcare regulations like HIPAA. This role involves working with Docker, Kubernetes, and cloud platforms to deploy machine learning models at scale.",
+    requirements: [
+      "4+ years of DevOps or cloud engineering experience\nExperience with Docker, Kubernetes, and container orchestration\nKnowledge of AWS, GCP, or Azure cloud platforms\nUnderstanding of healthcare compliance (HIPAA, SOC 2)\nExperience with CI/CD pipelines and infrastructure as code\nKnowledge of monitoring and logging tools",
+    ],
+    requiredSkills: ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD", "HIPAA Compliance"],
+    applicantCount: 19,
+    compensation: "Voluntary",
+    collaborationType: "Contract",
+    timeCommitment: "30 hours/week • Remote",
+    postedBy: {
+      username: "cloudarchitect",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face",
+      postedDate: "1 week ago",
+    },
+  },
+  {
+    id: 5,
+    title: "Medical Advisor",
+    shortDescription:
+      "Provide clinical expertise and guidance for our AI cancer detection platform. We need an oncologist or radiologist to ensure our technology meets real-world medical needs.",
+    fullDescription:
+      "We're seeking a Medical Advisor with oncology or radiology expertise to guide the development of our AI-powered cancer detection platform. You'll work with our technical team to ensure clinical accuracy, provide feedback on model performance, and help validate our AI algorithms against real-world medical scenarios. This role is perfect for a medical professional interested in AI innovation.",
+    requirements: [
+      "MD with specialization in oncology or radiology\nMinimum 5 years of clinical experience\nExperience with medical imaging interpretation\nInterest in AI and machine learning applications in healthcare\nStrong communication skills for cross-functional collaboration\nExperience with clinical research or medical device development preferred",
+    ],
+    requiredSkills: [
+      "Oncology",
+      "Radiology",
+      "Medical Imaging",
+      "Clinical Research",
+      "Healthcare AI",
+      "Medical Device Development",
+    ],
+    applicantCount: 12,
+    compensation: "Equity-based",
+    collaborationType: "Consultant",
+    timeCommitment: "10 hours/week • Flexible",
+    postedBy: {
+      username: "medicalteam",
+      avatar:
+        "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=40&h=40&fit=crop&crop=face",
+      postedDate: "2 weeks ago",
+    },
+  },
 ];
 
 const ProjectOpenPositions = () => {
@@ -106,13 +215,8 @@ const ProjectOpenPositions = () => {
               }}>
               {/* Main card content */}
               <motion.div className="relative border border-border/70 rounded-[11px] p-4.5 bg-background">
-                <div className="absolute bottom-4 right-4 flex items-center justify-center gap-1 text-secondary">
-                  <UserRound size={16} />
-                  <span className="text-sm">{job.applicantCount} applicants</span>
-                </div>
-
                 {/* Main content area */}
-                <div className="flex justify-between items-start gap-4 mb-4">
+                <div className="flex justify-between items-start gap-4 ">
                   {/* Left side - Job info */}
                   <div className="flex-1">
                     <h2 className="font-semibold text-foreground/90 text-base leading-tight mb-2">
