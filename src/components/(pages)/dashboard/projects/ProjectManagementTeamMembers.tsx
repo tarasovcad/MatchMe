@@ -14,6 +14,7 @@ import {
   UserPlus,
   CalendarPlus,
   MessageCircle,
+  Plus,
 } from "lucide-react";
 import React, {useMemo, useState, useEffect} from "react";
 import {formatHumanDate} from "@/functions/formatDate";
@@ -55,6 +56,8 @@ import {toast} from "sonner";
 import EditMemberRoleDialog from "./EditMemberRoleDialog";
 import {updateMemberRole} from "@/actions/projects/updateMemberRole";
 import {useQueryClient} from "@tanstack/react-query";
+import {Button} from "@/components/shadcn/button";
+import InviteTeamMembersModalMenu from "./InviteTeamMembersModalMenu";
 
 type Member = {
   id: string;
@@ -654,6 +657,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
           />
           <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
           <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
+          <InviteTeamMembersModalMenu availableRoles={projectRoles} onInviteUser={() => {}} />
         </div>
       </div>
 

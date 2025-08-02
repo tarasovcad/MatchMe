@@ -3,7 +3,7 @@ export const dashboardProjectTabsData = [
   {query: "details", title: "Details"},
   {query: "team-members", title: "Team Members"},
   {query: "open-positions", title: "Open Positions"},
-  {query: "applications", title: "Applications"},
+  {query: "requests", title: "Requests"},
   {query: "analytics", title: "Analytics"},
   {query: "followers", title: "Followers"},
   {query: "security", title: "Security"},
