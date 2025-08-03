@@ -49,6 +49,7 @@ export interface FormProps {
 export interface DropdownOption {
   title: string;
   description?: string;
+  value?: string;
 }
 
 export interface SocialOption {

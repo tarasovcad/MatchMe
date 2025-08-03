@@ -57,8 +57,8 @@ export default function SelectInput({
             return (
               <SelectItem
                 key={index}
-                value={option.title}
-                onClick={() => handleSelectChange(option.title)}>
+                value={option.value ?? option.title}
+                onClick={() => handleSelectChange(option.value ?? option.title)}>
                 {option.title}
               </SelectItem>
             );

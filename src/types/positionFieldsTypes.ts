@@ -45,14 +45,20 @@ export interface PositionDropdownOption {
 
 export interface ProjectOpenPosition {
   id: string;
+  project_id: string;
   title: string;
-  fullDescription: string;
+  description: string;
   requirements: string;
-  requiredSkills: string[];
-  applicants: number;
-  timeCommitment: string;
-  experienceLevel: string;
-  status: "Open" | "Closed" | "Draft";
-  createdAt: string;
-  updatedAt: string;
+  required_skills: string[];
+  time_commitment: string;
+  experience_level: string;
+  status: "open" | "closed" | "draft";
+  posted_by_user_id: string;
+  posted_date: string;
+  created_at: string;
+  updated_at: string;
+  // Additional fields for display
+  posted_by_name?: string;
+  posted_by_username?: string;
+  applicant_count?: number;
 }

@@ -238,17 +238,8 @@ export const projectCreationValidationSchema = z.object({
         .regex(/^[A-Za-z0-9#+.\-*/ ]+$/, {
           message: "Technologies can contain letters, numbers, and common symbols (# + . - * /)",
         })
-        .refine((val) => !hasRepeatedChars(val), {
-          message: "Technology names cannot have repetitive characters",
-        })
         .refine((val) => !isSpamPattern(val), {
           message: "Please enter valid technology names only",
-        })
-        .refine((val) => !/^[0-9]+$/.test(val), {
-          message: "Technology names cannot be only numbers",
-        })
-        .refine((val) => hasVariety(val), {
-          message: "Technology names must be meaningful and varied",
         }),
     )
     .min(1, {message: "At least one skill is required"})

@@ -1,9 +1,11 @@
 export const experienceLevels = [
-  {title: "Entry Level"},
-  {title: "Junior"},
-  {title: "Mid-Level"},
-  {title: "Senior"},
-  {title: "Lead"},
-  {title: "Director"},
-  {title: "Executive"},
+  {title: "Intern", value: "intern"},
+  {title: "Entry Level", value: "entry-level"},
+  {title: "Junior", value: "junior"},
+  {title: "Mid-Level", value: "mid-level"},
+  {title: "Senior", value: "senior"},
+  {title: "Lead", value: "lead"},
+  {title: "Principal", value: "principal"},
+  {title: "Director", value: "director"},
+  {title: "Executive", value: "executive"},
 ];

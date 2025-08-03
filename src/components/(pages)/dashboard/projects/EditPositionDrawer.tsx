@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useMemo} from "react";
 import {
   Sheet,
   SheetContent,
@@ -24,72 +24,105 @@ import {
 } from "@/validation/positions/positionValidation";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
 import {cn} from "@/lib/utils";
+import {createOpenPosition} from "@/actions/projects/createOpenPosition";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
+import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
 
-type OpenPosition = {
-  id: string;
-  title: string;
-  status: string;
-  fullDescription: string;
-  requirements: string;
-  requiredSkills: string[];
-  experienceLevel: string;
-};
-
-interface EditPositionDrawerProps {
+interface PositionDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  position: OpenPosition | null;
+  position?: ProjectOpenPosition | null;
+  mode?: "edit" | "create";
+  projectId: string;
 }
 
-const EditPositionDrawer: React.FC<EditPositionDrawerProps> = ({
+const PositionDrawer: React.FC<PositionDrawerProps> = ({
   isOpen,
   onOpenChange,
   position,
+  mode = position ? "edit" : "create",
+  projectId,
 }) => {
-  const [initialValues, setInitialValues] = useState<PositionFormData>({
-    title: position?.title ?? "",
-    fullDescription: position?.fullDescription ?? "",
-    requirements: position?.requirements ?? "",
-    requiredSkills: position?.requiredSkills ?? [],
-    experienceLevel: position?.experienceLevel ?? "",
-    status: (position?.status as "Open" | "Closed" | "Draft") ?? "Open",
-  });
+  // Default values for create mode
+  const defaultValues: PositionFormData = {
+    title: "",
+    description: "",
+    requirements: "",
+    required_skills: [],
+    time_commitment: "",
+    experience_level: "",
+    status: "draft",
+  };
+
+  const currentValues: PositionFormData = useMemo(
+    () => ({
+      title: position?.title ?? defaultValues.title,
+      description: position?.description ?? defaultValues.description,
+      requirements: position?.requirements ?? defaultValues.requirements,
+      required_skills: position?.required_skills ?? defaultValues.required_skills,
+      time_commitment: position?.time_commitment ?? defaultValues.time_commitment,
+      experience_level: position?.experience_level ?? defaultValues.experience_level,
+      status: position?.status ?? defaultValues.status,
+    }),
+    [position],
+  );
 
   const methods = useForm<PositionFormData>({
     resolver: zodResolver(positionValidationSchema),
     mode: "onChange",
-    defaultValues: initialValues,
+    values: currentValues,
   });
-
+  const [isLoading, setIsLoading] = useState(false);
   const formValues = useWatch({control: methods.control});
   const {formState} = methods;
   const [isDisabled, setIsDisabled] = useState(true);
 
   useEffect(() => {
-    // Check if form has changes
-    const hasChanges = Object.keys(formValues).some((key) => {
-      const formKey = key as keyof PositionFormData;
-      return !isEqual(formValues[formKey], initialValues[formKey]);
-    });
+    if (mode === "create") {
+      // For create mode, enable save when form is valid and has required fields
+      const hasRequiredFields = formValues.title?.trim() && formState.isValid;
+      console.log(formState.errors);
+      setIsDisabled(!hasRequiredFields);
+    } else {
+      // For edit mode, check if form has changes
+      const hasChanges = Object.keys(formValues).some((key) => {
+        const formKey = key as keyof PositionFormData;
+        return !isEqual(formValues[formKey], currentValues[formKey]);
+      });
 
-    // Enable save when there are changes and no validation errors
-    setIsDisabled(!hasChanges || !formState.isValid);
-  }, [formValues, initialValues, formState.isValid]);
+      // Enable save when there are changes and no validation errors
+      setIsDisabled(!hasChanges || !formState.isValid);
+    }
+  }, [formValues, currentValues, formState.isValid, mode]);
 
   const onSubmit = async (data: PositionFormData) => {
     try {
-      // Here you would normally send the data to your API
-      console.log("Submitting position data:", data);
-
-      // Update initial values to reflect the save
-      setInitialValues(data);
-      methods.reset(data);
-
-      toast.success("Position updated successfully");
+      if (mode === "create") {
+        const loadingToast = toast.loading("Creating position...");
+        setIsLoading(true);
+        const result = await createOpenPosition(projectId, data);
+        if (result.success) {
+          toast.success("Position created successfully", {
+            id: loadingToast,
+          });
+        } else {
+          toast.error(result.error, {
+            id: loadingToast,
+          });
+        }
+        methods.reset(currentValues);
+        onOpenChange(false);
+      } else {
+        setIsLoading(true);
+        console.log("Updating position:", data);
+        toast.success("Position updated successfully");
+      }
       onOpenChange(false);
     } catch (error) {
-      console.error("Error updating position:", error);
-      toast.error("Failed to update position");
+      console.error(`Error ${mode === "create" ? "creating" : "updating"} position:`, error);
+      toast.error(`Failed to ${mode === "create" ? "create" : "update"} position`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,9 +131,16 @@ const EditPositionDrawer: React.FC<EditPositionDrawerProps> = ({
   };
 
   const handleCancel = () => {
-    methods.reset(initialValues);
+    methods.reset(currentValues);
     onOpenChange(false);
   };
+
+  const headerText = mode === "create" ? "Create Position" : "Edit Position";
+  const descriptionText =
+    mode === "create"
+      ? "Fill in the details to create a new position."
+      : "Edit the position details to update the position.";
+  const saveButtonText = mode === "create" ? "Create Position" : "Save Changes";
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -113,10 +153,10 @@ const EditPositionDrawer: React.FC<EditPositionDrawerProps> = ({
             <div className="flex flex-row justify-between items-center gap-2">
               <div className="flex flex-col">
                 <SheetTitle className="text-lg font-medium text-foreground ">
-                  Edit Position
+                  {headerText}
                 </SheetTitle>
                 <SheetDescription className="text-muted-foreground text-sm">
-                  Edit the position details to update the position.
+                  {descriptionText}
                 </SheetDescription>
               </div>
               <Button size={"icon"} className="w-6 h-6" onClick={handleCancel}>
@@ -168,10 +208,10 @@ const EditPositionDrawer: React.FC<EditPositionDrawerProps> = ({
             <Button
               variant="secondary"
               size="xs"
-              className="transition-colors duration-300 ease-in-out"
-              disabled={isDisabled}
+              className="transition-colors duration-300 ease-in-out max-w-[126px] w-full"
+              disabled={isDisabled || isLoading}
               onClick={handleSave}>
-              Save Changes
+              {isLoading ? <LoadingButtonCircle size={16} /> : saveButtonText}
             </Button>
           </div>
         </div>
@@ -180,4 +220,4 @@ const EditPositionDrawer: React.FC<EditPositionDrawerProps> = ({
   );
 };
 
-export default EditPositionDrawer;
+export default PositionDrawer;

@@ -47,7 +47,7 @@ export const mockPositions: ProjectOpenPosition[] = [
       "2+ years of UX/UI design experience\nProficiency in Figma, Sketch, or Adobe XD\nExperience with user research and usability testing\nKnowledge of design systems and component libraries\nUnderstanding of accessibility principles\nExperience with prototyping tools",
     requiredSkills: ["Figma", "User Research", "Prototyping", "Design Systems", "Accessibility"],
     applicants: 0,
-    timeCommitment: "Part-time (20 hours/week)",
+    timeCommitment: "Project-based",
     experienceLevel: "Junior",
     status: "Draft",
     createdAt: "2024-01-20T09:00:00Z",

@@ -2,7 +2,11 @@ import {experienceLevels} from "@/data/projects/experienceLevels";
 import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 import {PositionFormProps} from "@/types/positionFieldsTypes";
 
-const positionStatuses = [{title: "Open"}, {title: "Closed"}, {title: "Draft"}];
+const positionStatuses = [
+  {title: "Open", value: "open"},
+  {title: "Closed", value: "closed"},
+  {title: "Draft", value: "draft"},
+];
 
 export const positionFormFields = [
   {
@@ -30,11 +34,11 @@ export const positionFormFields = [
         fieldRequired: true,
         fieldInputProps: [
           {
-            id: "fullDescription",
+            id: "description",
             placeholder:
               "We're looking for a passionate Software Engineer to join our engineering team...",
             type: "text",
-            name: "fullDescription",
+            name: "description",
           },
         ],
       },
@@ -60,10 +64,10 @@ export const positionFormFields = [
         fieldRequired: true,
         fieldInputProps: [
           {
-            id: "requiredSkills",
+            id: "required_skills",
             placeholder: "Add a skill",
             type: "text",
-            name: "requiredSkills",
+            name: "required_skills",
           },
         ],
       },
@@ -74,10 +78,10 @@ export const positionFormFields = [
         fieldRequired: true,
         fieldInputProps: [
           {
-            id: "experienceLevel",
+            id: "experience_level",
             placeholder: "Select experience level",
             type: "text",
-            name: "experienceLevel",
+            name: "experience_level",
             options: experienceLevels,
           },
         ],
@@ -89,10 +93,10 @@ export const positionFormFields = [
         fieldRequired: true,
         fieldInputProps: [
           {
-            id: "timeCommitment",
+            id: "time_commitment",
             placeholder: "Select time commitment",
             type: "text",
-            name: "timeCommitment",
+            name: "time_commitment",
             options: timeCommitment,
           },
         ],
