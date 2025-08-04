@@ -1,11 +1,9 @@
 import {useQuery} from "@tanstack/react-query";
-import {
-  getProjectOpenPositions,
-  ProjectOpenPositionDb,
-} from "@/actions/projects/getProjectOpenPositions";
+import {getProjectOpenPositions} from "@/actions/projects/getProjectOpenPositions";
+import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
 
 export const useProjectOpenPositions = (projectId: string) => {
-  return useQuery<ProjectOpenPositionDb[]>({
+  return useQuery<ProjectOpenPosition[]>({
     queryKey: ["project-open-positions", projectId],
     queryFn: async () => {
       const response = await getProjectOpenPositions(projectId);

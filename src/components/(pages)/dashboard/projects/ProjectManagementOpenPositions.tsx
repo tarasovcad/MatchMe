@@ -17,6 +17,7 @@ import {
   Sparkles,
   Circle,
   User as UserIcon,
+  Calendar,
 } from "lucide-react";
 import React, {useMemo, useState} from "react";
 import {motion} from "framer-motion";
@@ -55,6 +56,7 @@ import PositionDrawer from "./EditPositionDrawer";
 import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
 import {useProjectOpenPositions} from "@/hooks/query/projects/use-project-open-positions";
 import {Skeleton} from "@/components/shadcn/skeleton";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 import {
   createProfileLink,
   getOptionTitle,
@@ -64,9 +66,13 @@ import {
 } from "@/utils/tableHelpers";
 import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 import {experienceLevels} from "@/data/projects/experienceLevels";
+import {formatHumanDate} from "@/functions/formatDate";
 
 const ProjectManagementOpenPositions = ({project, user}: {project: Project; user: User}) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {id: "status", desc: false}, // Initial sort by status
+    {id: "updated_at", desc: true}, // Then by updated_at (newest first)
+  ]);
   const [query, setQuery] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -248,6 +254,37 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
       minSize: 160,
     },
     {
+      accessorKey: "created_at",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>Created at</span>
+        </div>
+      ),
+      cell: ({row}) => {
+        const date = row.original.created_at;
+        return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
+      },
+      size: 150,
+      minSize: 150,
+    },
+
+    {
+      accessorKey: "updated_at",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>Updated at</span>
+        </div>
+      ),
+      cell: ({row}) => {
+        const date = row.original.updated_at;
+        return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
+      },
+      size: 150,
+      minSize: 150,
+    },
+    {
       accessorKey: "status",
       header: () => (
         <div className="flex items-center gap-1 leading-none">
@@ -270,8 +307,13 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
           </div>
         );
       },
+      sortingFn: (rowA, rowB) => {
+        const statusOrder = {open: 0, draft: 1, closed: 2};
+        const statusA = rowA.original.status;
+        const statusB = rowB.original.status;
+        return statusOrder[statusA] - statusOrder[statusB];
+      },
     },
-
     {
       id: "actions",
       header: "",
@@ -286,11 +328,9 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
         return (
           <OpenPositionActionsPopover
             onEditPosition={handleEditPosition}
-            onClosePosition={() => {}}
             onViewApplicants={() => {}}
             onDeletePosition={() => {}}
             onPinToTop={() => {}}
-            positionStatus={position.status}
           />
         );
       },
@@ -320,6 +360,8 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
+    enableMultiSort: true, // Enable multi-column sorting
+    isMultiSortEvent: () => true, // Always keep multi-sort enabled
   });
 
   const selectedCount = table.getSelectedRowModel().rows.length;
@@ -343,6 +385,126 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
     table.resetRowSelection(false);
   };
 
+  const skeletonColumns = [
+    {
+      id: "title",
+      header: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-4 mr-1" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      ),
+      size: 280,
+    },
+    {
+      id: "experience_level",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-16" />,
+      size: 150,
+    },
+    {
+      id: "time_commitment",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 200,
+    },
+    {
+      id: "required_skills",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: (
+        <div className="flex flex-no-wrap gap-2 items-center">
+          <Skeleton className="h-6 w-16 rounded-[6px]" />
+          <Skeleton className="h-6 w-14 rounded-[6px]" />
+          <Skeleton className="h-6 w-12 rounded-[6px]" />
+        </div>
+      ),
+      size: 250,
+    },
+    {
+      id: "applicants",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-18" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-8" />,
+      size: 120,
+    },
+    {
+      id: "posted_by",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-16" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 180,
+    },
+    {
+      id: "created_at",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-18" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 150,
+    },
+    {
+      id: "updated_at",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-18" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-20" />,
+      size: 150,
+    },
+    {
+      id: "status",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: <Skeleton className="h-6 w-16 rounded-[5px]" />,
+      size: 120,
+    },
+    {
+      id: "actions",
+      header: <div className="w-full" />,
+      cell: <Skeleton className="h-8 w-8 rounded-md" />,
+      size: 50,
+    },
+  ];
+
   return (
     <div className="w-full mx-auto space-y-6">
       {/* Header */}
@@ -350,7 +512,7 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
         <div className="flex items-center gap-1">
           <h4 className="font-medium text-foreground/90 text-lg">Open Positions</h4>
           <div className="px-1 py-0.5 border border-border rounded-[5px] w-fit font-medium text-[10px] text-secondary leading-[13px] ml-1.5">
-            {isPositionsLoading ? <Skeleton className="h-3 w-4" /> : data.length}
+            {data.length}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -385,12 +547,7 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
           animate={{opacity: 1}}
           exit={{opacity: 0}}
           transition={{duration: 0.3, ease: "easeInOut"}}>
-          <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
-            <div className="p-6 text-center">
-              <Skeleton className="h-4 w-32 mx-auto mb-2" />
-              <Skeleton className="h-3 w-48 mx-auto" />
-            </div>
-          </div>
+          <TableSkeleton columns={skeletonColumns} rowCount={5} />
         </motion.div>
       ) : (
         <motion.div

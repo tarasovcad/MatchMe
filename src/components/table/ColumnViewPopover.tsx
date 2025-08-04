@@ -25,6 +25,15 @@ function ColumnViewPopoverInner<TData extends object>(props: ColumnViewPopoverPr
     joinedDate: "Joined Date",
     invitedBy: "Invited By",
     invitedDate: "Invited Date",
+    created_at: "Created At",
+    posted_by: "Posted By",
+    experience_level: "Experience Level",
+    time_commitment: "Time Commitment",
+    status: "Status",
+    required_skills: "Required Skills",
+    applications: "Applications",
+    applicants: "Applicants",
+    applicants_count: "Applicants Count",
   };
 
   const allLeaf = table.getAllLeafColumns();

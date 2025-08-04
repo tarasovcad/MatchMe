@@ -3,6 +3,36 @@
 import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
 import {createClient} from "@/utils/supabase/server";
 
+// New function to get just the count of active positions
+export const getActivePositionsCount = async (projectId: string) => {
+  try {
+    if (!projectId) {
+      return {error: "Project ID is required", count: 0};
+    }
+
+    const supabase = await createClient();
+
+    const {count, error} = await supabase
+      .from("project_open_positions")
+      .select("*", {count: "exact", head: true})
+      .eq("project_id", projectId);
+    // .eq("status", "open");
+
+    if (error) {
+      console.error("getActivePositionsCount error", error);
+      return {error: error.message, count: 0};
+    }
+
+    return {error: null, count: count || 0};
+  } catch (err) {
+    console.error("getActivePositionsCount unexpected error", err);
+    return {
+      error: err instanceof Error ? err.message : "Unexpected error",
+      count: 0,
+    };
+  }
+};
+
 export const getProjectOpenPositions = async (projectId: string) => {
   try {
     if (!projectId) {
@@ -49,6 +79,9 @@ export const getProjectOpenPositions = async (projectId: string) => {
       }
     }
 
+    // 3. TODO: Get applicant counts per position
+
+    // 4. Transform positions with additional data
     const enrichedPositions: ProjectOpenPosition[] = positions.map((position) => {
       const poster = position.posted_by_user_id ? postersMap.get(position.posted_by_user_id) : null;
 

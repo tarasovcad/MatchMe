@@ -97,8 +97,8 @@ export const positionValidationSchema = z.object({
         .trim()
         .min(1, {message: "Each skill must be at least 1 character"})
         .max(30, {message: "Each skill must be at most 30 characters"})
-        .regex(/^[A-Za-z0-9#+\-*/ ]+$/, {
-          message: "Skills can only contain letters, numbers, hyphens, #, +, and / symbols",
+        .regex(/^[A-Za-z0-9#+\-*/.  ]+$/, {
+          message: "Skills can only contain letters, numbers, hyphens, #, +, ., and / symbols",
         }),
     )
     .min(1, {message: "At least one skill is required"})

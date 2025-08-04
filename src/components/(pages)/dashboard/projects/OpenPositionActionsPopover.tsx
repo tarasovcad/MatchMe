@@ -5,7 +5,6 @@ import {Edit, X, Users, Trash2, Pin, MoreVertical} from "lucide-react";
 
 export type OpenPositionActions = {
   onEditPosition?: () => void;
-  onClosePosition?: () => void;
   onViewApplicants?: () => void;
   onDeletePosition?: () => void;
   onPinToTop?: () => void;
@@ -13,28 +12,19 @@ export type OpenPositionActions = {
 
 export type OpenPositionActionsPopoverProps = OpenPositionActions & {
   trigger?: React.ReactNode;
-  positionStatus?: string;
 };
 
 const OpenPositionActionsPopover: React.FC<OpenPositionActionsPopoverProps> = ({
   onEditPosition,
-  onClosePosition,
   onViewApplicants,
   onDeletePosition,
   onPinToTop,
   trigger,
-  positionStatus,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const isClosed = positionStatus === "closed";
 
   const handleEditPosition = () => {
     onEditPosition?.();
-    setIsOpen(false);
-  };
-
-  const handleClosePosition = () => {
-    onClosePosition?.();
     setIsOpen(false);
   };
 
@@ -61,11 +51,6 @@ const OpenPositionActionsPopover: React.FC<OpenPositionActionsPopoverProps> = ({
     disabled?: boolean;
   }[] = [
     {icon: Edit, label: "Edit position", onClick: handleEditPosition},
-    {
-      icon: X,
-      label: isClosed ? "Reopen position" : "Close position",
-      onClick: handleClosePosition,
-    },
     {icon: Users, label: "View applicants", onClick: handleViewApplicants},
     {icon: Pin, label: "Pin to top", onClick: handlePinToTop},
     {

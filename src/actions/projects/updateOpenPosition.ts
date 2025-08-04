@@ -5,37 +5,20 @@ import {
   positionValidationSchema,
   PositionFormData,
 } from "@/validation/positions/positionValidation";
-import {getActivePositionsCount} from "./getProjectOpenPositions";
 
-const NUMBER_OF_ACTIVE_POSITIONS_LIMIT = 5;
-
-export async function createOpenPosition(projectId: string, formData: PositionFormData) {
+export async function updateOpenPosition(
+  positionId: string,
+  projectId: string,
+  formData: PositionFormData,
+) {
   try {
     // Validate the form data
     const validatedData = positionValidationSchema.parse(formData);
 
-    // Check if the project has reached the active positions limit
-    const {count: activePositionsCount, error: countError} =
-      await getActivePositionsCount(projectId);
-
-    if (countError) {
-      return {
-        success: false,
-        error: "Unable to verify position limit. Please try again.",
-      };
-    }
-
-    if (activePositionsCount >= NUMBER_OF_ACTIVE_POSITIONS_LIMIT) {
-      return {
-        success: false,
-        error: `You've reached the maximum limit of ${NUMBER_OF_ACTIVE_POSITIONS_LIMIT} active positions. Please close an existing position before creating a new one.`,
-      };
-    }
-
     // Create Supabase client
     const supabase = await createClient();
 
-    // Get current user for posted_by_user_id
+    // Get current user for permission check
     const {
       data: {user},
       error: userError,
@@ -48,9 +31,23 @@ export async function createOpenPosition(projectId: string, formData: PositionFo
       };
     }
 
-    // Map the validation schema fields to database columns
-    const insertData = {
-      project_id: projectId,
+    // Verify the position exists and user has permission to update it
+    const {data: existingPosition, error: positionError} = await supabase
+      .from("project_open_positions")
+      .select("id, project_id")
+      .eq("id", positionId)
+      .eq("project_id", projectId)
+      .single();
+
+    if (positionError || !existingPosition) {
+      return {
+        success: false,
+        error: "Position not found or you don't have permission to update it",
+      };
+    }
+
+    // Map the validation schema fields to database columns for update
+    const updateData = {
       title: validatedData.title,
       description: validatedData.description,
       requirements: validatedData.requirements,
@@ -58,35 +55,35 @@ export async function createOpenPosition(projectId: string, formData: PositionFo
       experience_level: validatedData.experience_level,
       time_commitment: validatedData.time_commitment,
       status: validatedData.status,
-      posted_by_user_id: user.id,
+      updated_at: new Date().toISOString(),
     };
 
     const {data, error} = await supabase
       .from("project_open_positions")
-      .insert(insertData)
-      .select()
-      .single();
+      .update(updateData)
+      .eq("id", positionId)
+      .eq("project_id", projectId)
+      .select();
 
     if (error) {
-      console.error("Error creating open position:", error);
+      console.error("Error updating open position:", error);
       return {
         success: false,
         error: error.message,
       };
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
       console.error("No data returned - likely blocked by RLS");
       return {
         success: false,
-        error:
-          "Unable to create position. You may not have permission to create positions for this project.",
+        error: "Unable to update position. You may not have permission to update this position.",
       };
     }
 
     return {
       success: true,
-      data: data,
+      data: data[0],
     };
   } catch (error) {
     console.error("Validation or server error:", error);
