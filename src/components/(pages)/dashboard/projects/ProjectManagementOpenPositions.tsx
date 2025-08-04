@@ -20,7 +20,7 @@ import {
   Calendar,
 } from "lucide-react";
 import React, {useMemo, useState} from "react";
-import {motion} from "framer-motion";
+import {motion, AnimatePresence} from "framer-motion";
 import {
   ColumnDef,
   SortingState,
@@ -55,6 +55,7 @@ import OpenPositionActionsPopover from "./OpenPositionActionsPopover";
 import PositionDrawer from "./EditPositionDrawer";
 import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
 import {useProjectOpenPositions} from "@/hooks/query/projects/use-project-open-positions";
+import {useQueryClient} from "@tanstack/react-query";
 import {Skeleton} from "@/components/shadcn/skeleton";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import {
@@ -67,23 +68,37 @@ import {
 import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 import {experienceLevels} from "@/data/projects/experienceLevels";
 import {formatHumanDate} from "@/functions/formatDate";
+import {deleteOpenPosition} from "@/actions/projects/deleteOpenPosition";
+import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
 
 const ProjectManagementOpenPositions = ({project, user}: {project: Project; user: User}) => {
   const [sorting, setSorting] = useState<SortingState>([
-    {id: "status", desc: false}, // Initial sort by status
-    {id: "updated_at", desc: true}, // Then by updated_at (newest first)
+    {id: "status", desc: false},
+    {id: "updated_at", desc: true},
   ]);
   const [query, setQuery] = useState<string>("");
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<ProjectOpenPosition | null>(null);
+  const [positionToEdit, setPositionToEdit] = useState<ProjectOpenPosition | null>(null);
+  const [positionToDelete, setPositionToDelete] = useState<ProjectOpenPosition | null>(null);
 
-  // Fetch open positions data
+  const queryClient = useQueryClient();
+
+  const invalidatePositionQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["project-open-positions", project.id],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["project-active-positions-count", project.id],
+      }),
+    ]);
+  };
+
   const {data: fetchedPositions, isLoading: isPositionsLoading} = useProjectOpenPositions(
     project.id,
   );
 
-  // Transform database data to frontend format
   const transformedPositions = useMemo(() => {
     return (fetchedPositions ?? []).map(
       (pos: ProjectOpenPosition): ProjectOpenPosition => ({
@@ -107,7 +122,6 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
     );
   }, [fetchedPositions]);
 
-  //  column state
   const {
     columnOrder,
     setColumnOrder,
@@ -321,15 +335,19 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
         const position = row.original as ProjectOpenPosition;
 
         const handleEditPosition = () => {
-          setSelectedPosition(position);
+          setPositionToEdit(position);
           setIsDrawerOpen(true);
+        };
+
+        const handleDeletePosition = () => {
+          setPositionToDelete(position);
         };
 
         return (
           <OpenPositionActionsPopover
             onEditPosition={handleEditPosition}
             onViewApplicants={() => {}}
-            onDeletePosition={() => {}}
+            onDeletePosition={handleDeletePosition}
             onPinToTop={() => {}}
           />
         );
@@ -360,20 +378,66 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableRowSelection: true,
-    enableMultiSort: true, // Enable multi-column sorting
-    isMultiSortEvent: () => true, // Always keep multi-sort enabled
+    enableMultiSort: true,
+    isMultiSortEvent: () => true,
   });
 
   const selectedCount = table.getSelectedRowModel().rows.length;
   const selectedRows = table.getSelectedRowModel().rows;
 
-  const handleDeletePositions = () => {
-    console.log(
-      "Delete positions:",
-      selectedRows.map((r) => r.original.id),
-    );
-    toast.success(`Deleted ${selectedCount} position${selectedCount === 1 ? "" : "s"}`);
+  // Dynamic confirmation values for bulk delete
+  const getSingleSelectedPosition = () =>
+    selectedRows.length === 1 ? selectedRows[0].original : null;
+  const singlePosition = getSingleSelectedPosition();
+
+  const bulkDeleteConfirmationValue =
+    selectedCount === 1 && singlePosition
+      ? singlePosition.title
+      : `DELETE ${selectedCount} POSITIONS`;
+
+  const bulkDeleteConfirmationLabel = selectedCount === 1 ? "Type the position title" : "Type";
+
+  const bulkDeleteTitle = selectedCount === 1 ? "Delete Position" : "Delete Positions";
+
+  const bulkDeleteButtonText = selectedCount === 1 ? "Delete Position" : "Delete Positions";
+
+  const handleDeletePositions = async () => {
+    const positionIds = selectedRows.map((r) => r.original.id);
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (const positionId of positionIds) {
+      const response = await deleteOpenPosition(positionId, project.id);
+      if (response.error) {
+        errors.push(response.error);
+      } else {
+        successCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`Deleted ${successCount} position${successCount === 1 ? "" : "s"}`);
+
+      await invalidatePositionQueries();
+    }
+
+    if (errors.length > 0) {
+      toast.error(`Failed to delete ${errors.length} position${errors.length === 1 ? "" : "s"}`);
+    }
+
     table.resetRowSelection(false);
+
+    return {
+      message:
+        successCount > 0
+          ? `Deleted ${successCount} position${successCount === 1 ? "" : "s"}`
+          : undefined,
+      error:
+        errors.length > 0
+          ? `Failed to delete ${errors.length} position${errors.length === 1 ? "" : "s"}`
+          : undefined,
+    };
   };
 
   const handleEditPositions = () => {
@@ -383,6 +447,21 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
     );
     toast.success(`Editing ${selectedCount} position${selectedCount === 1 ? "" : "s"}`);
     table.resetRowSelection(false);
+  };
+
+  const handleDeletePosition = async () => {
+    if (!positionToDelete) return {error: "No position selected"};
+
+    const response = await deleteOpenPosition(positionToDelete.id, project.id);
+
+    if (response.error) {
+      return {error: response.error};
+    }
+
+    await invalidatePositionQueries();
+
+    setPositionToDelete(null);
+    return {message: response.message || "Position deleted successfully"};
   };
 
   const skeletonColumns = [
@@ -530,7 +609,7 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
             variant="secondary"
             size="xs"
             onClick={() => {
-              setSelectedPosition(null); // Clear any selected position for create mode
+              setPositionToEdit(null);
               setIsDrawerOpen(true);
             }}
             className="flex items-center gap-2">
@@ -569,8 +648,28 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
                 },
                 {
                   label: "Delete",
-                  icon: <Trash2 className="w-4 h-4" />,
-                  onClick: handleDeletePositions,
+                  icon: (
+                    <ConfirmationModal
+                      id="bulk-delete-positions"
+                      triggerText=""
+                      title={bulkDeleteTitle}
+                      description={
+                        selectedCount === 1 && singlePosition
+                          ? `Are you sure you want to delete the position "${singlePosition.title}"? This action cannot be undone.`
+                          : `Are you sure you want to delete ${selectedCount} position${selectedCount === 1 ? "" : "s"}? This action cannot be undone.`
+                      }
+                      confirmationValue={bulkDeleteConfirmationValue}
+                      confirmationLabel={bulkDeleteConfirmationLabel}
+                      onConfirm={handleDeletePositions}
+                      triggerVariant="ghost"
+                      triggerSize="xs"
+                      confirmButtonText={bulkDeleteButtonText}>
+                      <span className="flex items-center gap-2 text-red-500 hover:text-red-700">
+                        <Trash2 className="w-4 h-4" />
+                      </span>
+                    </ConfirmationModal>
+                  ),
+                  onClick: () => {},
                   className: "text-red-500 hover:text-red-700",
                 },
               ]}
@@ -613,30 +712,43 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.original.id || row.id}
-                      className="hover:bg-muted/50 border-b border-border transition-colors">
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className={cn(
-                            "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
-                          )}
-                          style={{width: cell.column.getSize()}}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow className="border-b">
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
+                <AnimatePresence initial={false} mode="popLayout">
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <motion.tr
+                        key={row.original.id || row.id}
+                        layout="position"
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
+                        transition={{duration: 0.2}}
+                        data-state={row.getIsSelected() && "selected"}
+                        className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                            )}
+                            style={{width: cell.column.getSize()}}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </motion.tr>
+                    ))
+                  ) : (
+                    <motion.tr
+                      key="no-results"
+                      initial={{opacity: 0}}
+                      animate={{opacity: 1}}
+                      exit={{opacity: 0}}
+                      className="border-b">
+                      <TableCell colSpan={5} className="h-24 text-center">
+                        No results.
+                      </TableCell>
+                    </motion.tr>
+                  )}
+                </AnimatePresence>
               </TableBody>
             </Table>
           </div>
@@ -647,10 +759,29 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
       <PositionDrawer
         isOpen={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
-        position={selectedPosition}
+        position={positionToEdit}
         projectId={project.id}
-        mode={selectedPosition ? "edit" : "create"}
+        mode={positionToEdit ? "edit" : "create"}
       />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        id="delete-position-modal"
+        triggerText=""
+        title="Delete Position"
+        description={`Are you sure you want to delete the position "${positionToDelete?.title || ""}"? This action cannot be undone.`}
+        confirmationValue={positionToDelete?.title || ""}
+        confirmationLabel="Type the position title"
+        open={!!positionToDelete}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setPositionToDelete(null);
+          }
+        }}
+        onConfirm={handleDeletePosition}
+        confirmButtonText="Delete Position">
+        <div style={{display: "none"}} />
+      </ConfirmationModal>
     </div>
   );
 };
