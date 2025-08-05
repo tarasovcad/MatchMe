@@ -26,6 +26,7 @@ interface FilterableTabsProps {
   className?: string;
   topPadding?: boolean;
   customSearchInput?: ReactNode;
+  customRightContent?: ReactNode;
 }
 
 export default function FilterableTabs({
@@ -42,6 +43,7 @@ export default function FilterableTabs({
   topPadding = true,
   className = "",
   onTabChange,
+  customRightContent,
 }: FilterableTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value || "");
 
@@ -111,36 +113,39 @@ export default function FilterableTabs({
             ))}
           </div>
         </div>
-
-        <div
-          className={cn(
-            "flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2",
-            !displayFilterButton && "max-w-[344px] w-full",
-          )}>
-          {customSearchInput ? (
-            customSearchInput
-          ) : (
-            <SimpleInput
-              placeholder={searchPlaceholder}
-              className={cn(!displayFilterButton && "w-full")}
-              search
-              disabled={isSearchDisabled}
-              onChange={handleSearchChange}
-            />
-          )}
-          {displayFilterButton && (
-            <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
-              <Button
-                size={"xs"}
-                className="max-[480px]:w-full"
-                disabled={isFilterDisabled}
-                onClick={handleFilterClick}>
-                <Filter size={16} strokeWidth={2} className="text-foreground/90" />
-                Filter
-              </Button>
-            </div>
-          )}
-        </div>
+        {customRightContent ? (
+          customRightContent
+        ) : (
+          <div
+            className={cn(
+              "flex max-[480px]:flex-col justify-between items-center gap-3 max-[480px]:gap-2",
+              !displayFilterButton && "max-w-[344px] w-full",
+            )}>
+            {customSearchInput ? (
+              customSearchInput
+            ) : (
+              <SimpleInput
+                placeholder={searchPlaceholder}
+                className={cn(!displayFilterButton && "w-full")}
+                search
+                disabled={isSearchDisabled}
+                onChange={handleSearchChange}
+              />
+            )}
+            {displayFilterButton && (
+              <div className="flex gap-3 max-[480px]:gap-2 max-[480px]:w-full">
+                <Button
+                  size={"xs"}
+                  className="max-[480px]:w-full"
+                  disabled={isFilterDisabled}
+                  onClick={handleFilterClick}>
+                  <Filter size={16} strokeWidth={2} className="text-foreground/90" />
+                  Filter
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="w-full">
