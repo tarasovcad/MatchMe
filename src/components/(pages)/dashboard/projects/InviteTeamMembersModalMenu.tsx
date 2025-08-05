@@ -22,6 +22,8 @@ import UserSearchDropdown from "@/components/ui/form/UserSearchDropdown";
 import {toast} from "sonner";
 import SelectInputWithSearch from "@/components/ui/form/SelectInputWithSearch";
 import {createProjectRequest} from "@/actions/projects/projectTeamMembers";
+import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
+import {Member} from "./ProjectManagementTeamMembers";
 
 const inviteTeamMemberSchema = z.object({
   searchUsers: z.string().trim(),
@@ -52,6 +54,8 @@ interface InviteTeamMembersModalMenuProps {
     title: string;
     value: string;
   }>;
+  allMembers: Member[];
+  userPendingRequests: string[];
 }
 
 const InviteTeamMembersModalMenu = ({
@@ -60,6 +64,8 @@ const InviteTeamMembersModalMenu = ({
   onInviteUser,
   disabled,
   availablePositions,
+  allMembers,
+  userPendingRequests,
 }: InviteTeamMembersModalMenuProps) => {
   const methods = useForm<InviteTeamMemberFormData>({
     resolver: zodResolver(inviteTeamMemberSchema),
@@ -72,7 +78,7 @@ const InviteTeamMembersModalMenu = ({
       message: "",
     },
   });
-  console.log(availablePositions);
+
   const {
     handleSubmit,
     formState: {isValid},
@@ -81,6 +87,9 @@ const InviteTeamMembersModalMenu = ({
 
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Create list of user IDs to exclude from search (current members + pending requests)
+  const excludeUserIds = [...allMembers.map((member) => member.id), ...userPendingRequests];
 
   const submitAndClose = handleSubmit(async (data) => {
     if (!data._selectedUserId) {
@@ -161,6 +170,7 @@ const InviteTeamMembersModalMenu = ({
                 name="searchUsers"
                 selectedUserIdField="_selectedUserId"
                 placeholder="Search by username or name..."
+                excludeUserIds={excludeUserIds}
                 error={
                   methods.formState.errors.searchUsers || methods.formState.errors._selectedUserId
                 }

@@ -15,6 +15,7 @@ interface ProjectTeamMembersResponse {
     title: string;
     value: string;
   }>;
+  pending_requests: string[];
 }
 
 export const useProjectTeamMembers = (projectId: string) => {
@@ -29,6 +30,7 @@ export const useProjectTeamMembers = (projectId: string) => {
         members: response.data ?? [],
         roles: response.roles ?? [],
         open_positions: response.open_positions ?? [],
+        pending_requests: response.pending_requests ?? [],
       };
     },
     enabled: !!projectId,

@@ -141,7 +141,13 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
 export const getProjectTeamMembersProfiles = async (projectId: string) => {
   try {
     if (!projectId) {
-      return {error: "Project ID is required", data: null, roles: null, open_positions: null};
+      return {
+        error: "Project ID is required",
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
     }
 
     const supabase = await createClient();
@@ -154,7 +160,13 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (teamError) {
       console.error("getProjectTeamMembersProfiles – team members error", teamError);
-      return {error: teamError.message, data: null, roles: null, open_positions: null};
+      return {
+        error: teamError.message,
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
     }
 
     // 2. Fetch all project roles
@@ -165,7 +177,13 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (rolesError) {
       console.error("getProjectTeamMembersProfiles – roles error", rolesError);
-      return {error: rolesError.message, data: null, roles: null, open_positions: null};
+      return {
+        error: rolesError.message,
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
     }
 
     // 3. Fetch open positions for this project
@@ -176,8 +194,35 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (openPositionsError) {
       console.error("getProjectTeamMembersProfiles – open positions error", openPositionsError);
-      return {error: openPositionsError.message, data: null, roles: null, open_positions: null};
+      return {
+        error: openPositionsError.message,
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
     }
+
+    // 4. Fetch pending project requests (user_id only)
+    const {data: pendingRequestsData, error: pendingRequestsError} = await supabase
+      .from("project_requests")
+      .select("user_id")
+      .eq("project_id", projectId)
+      .eq("status", "pending");
+
+    if (pendingRequestsError) {
+      console.error("getProjectTeamMembersProfiles – pending requests error", pendingRequestsError);
+      return {
+        error: pendingRequestsError.message,
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
+    }
+
+    // Extract just the user_ids from pending requests
+    const pending_requests = (pendingRequestsData ?? []).map((request) => request.user_id);
 
     // Transform open positions to the requested format
     const open_positions = (openPositionsData ?? []).map((position) => ({
@@ -187,10 +232,10 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (!teamMembers?.length) {
       // No team members found
-      return {error: null, data: [], roles: roles ?? [], open_positions};
+      return {error: null, data: [], roles: roles ?? [], open_positions, pending_requests};
     }
 
-    // 4. Prepare ids for profile lookup (members + inviters)
+    // 5. Prepare ids for profile lookup (members + inviters)
     const profileIdsSet = new Set<string>();
 
     for (const tm of teamMembers) {
@@ -200,7 +245,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     const profileIds = Array.from(profileIdsSet);
 
-    // 5. Fetch profiles
+    // 6. Fetch profiles
     const {data: profiles, error: profilesError} = await supabase
       .from("profiles")
       .select(
@@ -210,13 +255,19 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (profilesError) {
       console.error("getProjectTeamMembersProfiles – profiles error", profilesError);
-      return {error: profilesError.message, data: null, roles: null, open_positions: null};
+      return {
+        error: profilesError.message,
+        data: null,
+        roles: null,
+        open_positions: null,
+        pending_requests: null,
+      };
     }
 
     const roleMap = new Map((roles ?? []).map((r) => [r.id, r]));
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-    // 6. Transform into the expected structure
+    // 7. Transform into the expected structure
     const mapped: ProjectTeamMemberProfile[] = teamMembers.map((tm) => {
       const profile = profileMap.get(tm.user_id);
       const inviterProfile = tm.invited_by_user_id ? profileMap.get(tm.invited_by_user_id) : null;
@@ -245,7 +296,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
       };
     });
 
-    return {error: null, data: mapped, roles: roles ?? [], open_positions};
+    return {error: null, data: mapped, roles: roles ?? [], open_positions, pending_requests};
   } catch (err) {
     console.error("getProjectTeamMembersProfiles unexpected error", err);
     return {
@@ -253,6 +304,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
       data: null,
       roles: null,
       open_positions: null,
+      pending_requests: null,
     };
   }
 };

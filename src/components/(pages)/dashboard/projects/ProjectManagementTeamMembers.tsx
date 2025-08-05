@@ -59,7 +59,7 @@ import {useQueryClient} from "@tanstack/react-query";
 import {Button} from "@/components/shadcn/button";
 import InviteTeamMembersModalMenu from "./InviteTeamMembersModalMenu";
 
-type Member = {
+export type Member = {
   id: string;
   name: string;
   username: string;
@@ -144,7 +144,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
   const fetchedMembers = teamData?.members ?? [];
   const projectRoles = teamData?.roles ?? [];
   const openPositions = teamData?.open_positions ?? [];
-
+  const userPendingRequests = teamData?.pending_requests ?? [];
   // Transform fetched data into the shape expected by the table
   const formattedMembers: Member[] = useMemo(() => {
     return (fetchedMembers ?? []).map((m) => ({
@@ -657,8 +657,10 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
           <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
           <InviteTeamMembersModalMenu
             projectId={project.id}
+            allMembers={formattedMembers}
             availableRoles={projectRoles}
             availablePositions={openPositions}
+            userPendingRequests={userPendingRequests}
             onInviteUser={() => {}}
             disabled={isMembersLoading}
           />

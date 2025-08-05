@@ -2,7 +2,7 @@
 
 import React, {useState, useEffect} from "react";
 import {useFormContext} from "react-hook-form";
-import {SearchIcon, CheckIcon, X, LoaderCircle} from "lucide-react";
+import {SearchIcon, CheckIcon, X, LoaderCircle, Link} from "lucide-react";
 import {Avatar, AvatarImage, AvatarFallback} from "@/components/shadcn/avatar";
 import {cn} from "@/lib/utils";
 import FormErrorLabel from "../FormErrorLabel";
@@ -28,6 +28,7 @@ interface UserSearchDropdownProps {
   placeholder?: string;
   error?: {message?: string} | undefined;
   className?: string;
+  excludeUserIds?: string[]; // List of user IDs to exclude from search results
 }
 
 const UserSearchDropdown = ({
@@ -36,10 +37,10 @@ const UserSearchDropdown = ({
   placeholder = "Search users...",
   error,
   className,
+  excludeUserIds = [],
 }: UserSearchDropdownProps) => {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
-
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<MiniCardMatchMeUser | null>(null);
@@ -54,7 +55,10 @@ const UserSearchDropdown = ({
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // Use Tanstack Query for fetching users
-  const {data: users = [], isLoading: isPending} = useUserSearch(debouncedSearchQuery);
+  const {data: allUsers = [], isLoading: isPending} = useUserSearch(debouncedSearchQuery);
+
+  // Filter out excluded users
+  const users = allUsers.filter((user) => !excludeUserIds.includes(user.id));
 
   // Reset highlighted index when users change
   useEffect(() => {
@@ -139,19 +143,6 @@ const UserSearchDropdown = ({
     return user.name; // Only return the name, not the username
   };
 
-  const getAvatarUrl = (user: MiniCardMatchMeUser) => {
-    return user.profile_image?.[0]?.url || null;
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   // Function to render dropdown content based on current state
   const renderDropdownContent = () => {
     if (isPending) {
@@ -181,17 +172,19 @@ const UserSearchDropdown = ({
               handleUserSelect(user);
             }}
             className={cn(
-              "w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left",
+              "w-full flex items-center gap-3 p-2 rounded-md transition-colors text-left text-sm",
               "hover:bg-muted",
               highlightedIndex === index && "bg-muted",
             )}>
-            <Avatar className="w-8 h-8">
-              <AvatarImage src={getAvatarUrl(user) || undefined} />
-              <AvatarFallback className="text-xs">{getInitials(user.name)}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col min-w-0">
-              <span className="font-medium text-sm truncate">{user.name}</span>
-              <span className="text-xs text-muted-foreground truncate">@{user.username}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-6 w-6 text-sm">
+                  <AvatarImage src={user.profile_image?.[0]?.url || undefined} />
+                  <AvatarFallback className="text-sm">{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="leading-none">{user.name}</span>
+              </div>
+              <span className="leading-none text-muted-foreground text-xs">@{user.username}</span>
             </div>
             {selectedValue === user.username && (
               <CheckIcon size={16} className="ml-auto text-primary" />
@@ -284,10 +277,8 @@ const UserSearchDropdown = ({
           {selectedUser && !isSearching && (
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <Avatar className="w-6 h-6">
-                <AvatarImage src={getAvatarUrl(selectedUser) || undefined} />
-                <AvatarFallback className="text-xs">
-                  {getInitials(selectedUser.name)}
-                </AvatarFallback>
+                <AvatarImage src={selectedUser.profile_image?.[0]?.url || undefined} />
+                <AvatarFallback className="text-sm">{selectedUser.name.charAt(0)}</AvatarFallback>
               </Avatar>
             </div>
           )}
