@@ -248,33 +248,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       size: 200,
       minSize: 180,
     },
-    {
-      accessorKey: "created_by_name",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <User2 className="w-3.5 h-3.5" />
-          <span>{activeTab === "received" ? "Sent by" : "Invited by"}</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const {
-          created_by_name: name,
-          created_by_username: username,
-          created_by_profile_image,
-        } = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={created_by_profile_image?.[0]?.url} alt={name} />
-              <AvatarFallback className="text-xs">{name?.charAt(0)}</AvatarFallback>
-            </Avatar>
-            {createProfileLink(username, name)}
-          </div>
-        );
-      },
-      size: 200,
-      minSize: 180,
-    },
+
     {
       accessorKey: "user_work_availability",
       header: () => (
@@ -435,6 +409,33 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       },
       size: 120,
       minSize: 100,
+    },
+    {
+      accessorKey: "created_by_name",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <User2 className="w-3.5 h-3.5" />
+          <span>{activeTab === "received" ? "Sent by" : "Invited by"}</span>
+        </div>
+      ),
+      cell: ({row}) => {
+        const {
+          created_by_name: name,
+          created_by_username: username,
+          created_by_profile_image,
+        } = row.original;
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={created_by_profile_image?.[0]?.url} alt={name} />
+              <AvatarFallback className="text-xs">{name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            {createProfileLink(username, name)}
+          </div>
+        );
+      },
+      size: 200,
+      minSize: 180,
     },
     {
       accessorKey: "status",

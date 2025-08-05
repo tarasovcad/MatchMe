@@ -11,6 +11,10 @@ interface ProjectTeamMembersResponse {
     name: string;
     badge_color: string | null;
   }>;
+  open_positions: Array<{
+    title: string;
+    value: string;
+  }>;
 }
 
 export const useProjectTeamMembers = (projectId: string) => {
@@ -24,6 +28,7 @@ export const useProjectTeamMembers = (projectId: string) => {
       return {
         members: response.data ?? [],
         roles: response.roles ?? [],
+        open_positions: response.open_positions ?? [],
       };
     },
     enabled: !!projectId,

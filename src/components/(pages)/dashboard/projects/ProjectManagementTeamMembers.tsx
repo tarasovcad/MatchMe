@@ -141,10 +141,10 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
   } = usePersistedTableColumns("teamMembersTablePrefs");
 
   const {data: teamData, isLoading: isMembersLoading} = useProjectTeamMembers(project.id);
-
   const fetchedMembers = teamData?.members ?? [];
   const projectRoles = teamData?.roles ?? [];
-  console.log(fetchedMembers);
+  const openPositions = teamData?.open_positions ?? [];
+
   // Transform fetched data into the shape expected by the table
   const formattedMembers: Member[] = useMemo(() => {
     return (fetchedMembers ?? []).map((m) => ({
@@ -655,7 +655,13 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
           />
           <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
           <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
-          <InviteTeamMembersModalMenu availableRoles={projectRoles} onInviteUser={() => {}} />
+          <InviteTeamMembersModalMenu
+            projectId={project.id}
+            availableRoles={projectRoles}
+            availablePositions={openPositions}
+            onInviteUser={() => {}}
+            disabled={isMembersLoading}
+          />
         </div>
       </div>
 

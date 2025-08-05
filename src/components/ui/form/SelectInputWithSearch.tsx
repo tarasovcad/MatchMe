@@ -27,7 +27,7 @@ export default function SelectInputWithSearch({
   id: string;
   placeholder: string;
   name: string;
-  className: string;
+  className?: string;
   options: DropdownOption[];
   error?: {message?: string} | undefined;
 }) {
@@ -46,18 +46,25 @@ export default function SelectInputWithSearch({
 
   const options = isCountrySelect ? countries : defaultOptions;
 
-  const handleSelectChange = (value: string) => {
-    if (value === internalValue) {
+  const handleSelectChange = (optionValue: string, optionTitle: string) => {
+    // Use value if it exists, otherwise use title (for backwards compatibility)
+    const valueToSet = optionValue || optionTitle;
+
+    if (valueToSet === selectedValue) {
       setValue(name, "", {shouldValidate: true});
       setInternalValue(null);
     } else {
-      setValue(name, value, {shouldValidate: true});
-      setInternalValue(value);
+      setValue(name, valueToSet, {shouldValidate: true});
+      setInternalValue(valueToSet);
     }
     setOpen(false);
   };
 
-  const selectedOption = options.find((option) => option.title === selectedValue);
+  // Find the selected option to display its title
+  const selectedOption = options.find((option) => {
+    const optionValue = (option as DropdownOption).value || option.title;
+    return optionValue === selectedValue;
+  });
 
   return (
     <div>
@@ -75,7 +82,7 @@ export default function SelectInputWithSearch({
               className,
             )}>
             <span className={cn("truncate", !selectedValue && "text-muted-foreground/70")}>
-              {selectedOption?.title || selectedValue || placeholder}
+              {selectedOption?.title || placeholder}
             </span>
             <ChevronDownIcon
               size={16}
@@ -92,17 +99,22 @@ export default function SelectInputWithSearch({
             <CommandList>
               <CommandEmpty>No option found</CommandEmpty>
               <CommandGroup className="p-1">
-                {options.map((option, index) => (
-                  <CommandItem
-                    key={index}
-                    value={option.title}
-                    onSelect={(currentValue) => {
-                      handleSelectChange(currentValue);
-                    }}>
-                    {option.title}
-                    {selectedValue === option.title && <CheckIcon size={16} className="ml-auto" />}
-                  </CommandItem>
-                ))}
+                {options.map((option, index) => {
+                  const optionValue = (option as DropdownOption).value || option.title;
+                  const isSelected = selectedValue === optionValue;
+
+                  return (
+                    <CommandItem
+                      key={index}
+                      value={option.title}
+                      onSelect={() => {
+                        handleSelectChange(optionValue, option.title);
+                      }}>
+                      {option.title}
+                      {isSelected && <CheckIcon size={16} className="ml-auto" />}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>

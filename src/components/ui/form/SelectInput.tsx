@@ -18,6 +18,7 @@ export default function SelectInput({
   className,
   options,
   error,
+  disabled,
 }: {
   id: string;
   placeholder: string;
@@ -25,6 +26,7 @@ export default function SelectInput({
   className: string;
   options: DropdownOption[];
   error?: {message?: string} | undefined;
+  disabled?: boolean;
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
@@ -42,7 +44,7 @@ export default function SelectInput({
 
   return (
     <div className="space-y-2">
-      <Select onValueChange={handleSelectChange} value={selectedValue}>
+      <Select onValueChange={handleSelectChange} value={selectedValue} disabled={disabled}>
         <SelectTrigger
           id={id}
           className={cn(

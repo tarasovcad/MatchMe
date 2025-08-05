@@ -31,10 +31,117 @@ export interface ProjectTeamMemberProfile {
   role_badge_color: string | null;
 }
 
+export interface CreateProjectRequestData {
+  project_id: string;
+  user_id: string;
+  position_id?: string;
+}
+
+/**
+ * Creates a project request (invite) in the database
+ */
+export const createProjectRequest = async (data: CreateProjectRequestData) => {
+  try {
+    const supabase = await createClient();
+
+    // Get current user (the one sending the invite)
+    const {
+      data: {user},
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return {
+        success: false,
+        error: "User not authenticated",
+      };
+    }
+
+    // Check if the user is already a team member
+    const {data: existingMember, error: memberCheckError} = await supabase
+      .from("project_team_members")
+      .select("id")
+      .eq("project_id", data.project_id)
+      .eq("user_id", data.user_id)
+      .single();
+
+    if (memberCheckError && memberCheckError.code !== "PGRST116") {
+      // PGRST116 is "no rows found", which is what we want
+      return {
+        success: false,
+        error: "Error checking team membership",
+      };
+    }
+
+    if (existingMember) {
+      return {
+        success: false,
+        error: "User is already a team member",
+      };
+    }
+
+    // Check if there's already a pending invite
+    const {data: existingRequest, error: requestCheckError} = await supabase
+      .from("project_requests")
+      .select("id")
+      .eq("project_id", data.project_id)
+      .eq("user_id", data.user_id)
+      .eq("status", "pending")
+      .single();
+
+    if (requestCheckError && requestCheckError.code !== "PGRST116") {
+      return {
+        success: false,
+        error: "Error checking existing requests",
+      };
+    }
+
+    if (existingRequest) {
+      return {
+        success: false,
+        error: "There's already a pending invite for this user",
+      };
+    }
+
+    // Insert the project request
+    const {data: requestData, error: requestError} = await supabase
+      .from("project_requests")
+      .insert({
+        project_id: data.project_id,
+        user_id: data.user_id,
+        created_by: user.id,
+        position_id: data.position_id || null,
+        direction: "invite", // This is an invite from project to user
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (requestError) {
+      console.error("Error creating project request:", requestError);
+      return {
+        success: false,
+        error: requestError.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: requestData,
+    };
+  } catch (error) {
+    console.error("Unexpected error creating project request:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unexpected error",
+    };
+  }
+};
+
 export const getProjectTeamMembersProfiles = async (projectId: string) => {
   try {
     if (!projectId) {
-      return {error: "Project ID is required", data: null, roles: null};
+      return {error: "Project ID is required", data: null, roles: null, open_positions: null};
     }
 
     const supabase = await createClient();
@@ -47,7 +154,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (teamError) {
       console.error("getProjectTeamMembersProfiles – team members error", teamError);
-      return {error: teamError.message, data: null, roles: null};
+      return {error: teamError.message, data: null, roles: null, open_positions: null};
     }
 
     // 2. Fetch all project roles
@@ -58,15 +165,32 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (rolesError) {
       console.error("getProjectTeamMembersProfiles – roles error", rolesError);
-      return {error: rolesError.message, data: null, roles: null};
+      return {error: rolesError.message, data: null, roles: null, open_positions: null};
     }
+
+    // 3. Fetch open positions for this project
+    const {data: openPositionsData, error: openPositionsError} = await supabase
+      .from("project_open_positions")
+      .select("id, title")
+      .eq("project_id", projectId);
+
+    if (openPositionsError) {
+      console.error("getProjectTeamMembersProfiles – open positions error", openPositionsError);
+      return {error: openPositionsError.message, data: null, roles: null, open_positions: null};
+    }
+
+    // Transform open positions to the requested format
+    const open_positions = (openPositionsData ?? []).map((position) => ({
+      title: position.title,
+      value: position.id,
+    }));
 
     if (!teamMembers?.length) {
       // No team members found
-      return {error: null, data: [], roles: roles ?? []};
+      return {error: null, data: [], roles: roles ?? [], open_positions};
     }
 
-    // 3. Prepare ids for profile lookup (members + inviters)
+    // 4. Prepare ids for profile lookup (members + inviters)
     const profileIdsSet = new Set<string>();
 
     for (const tm of teamMembers) {
@@ -76,7 +200,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     const profileIds = Array.from(profileIdsSet);
 
-    // 4. Fetch profiles
+    // 5. Fetch profiles
     const {data: profiles, error: profilesError} = await supabase
       .from("profiles")
       .select(
@@ -86,13 +210,13 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
 
     if (profilesError) {
       console.error("getProjectTeamMembersProfiles – profiles error", profilesError);
-      return {error: profilesError.message, data: null, roles: null};
+      return {error: profilesError.message, data: null, roles: null, open_positions: null};
     }
 
     const roleMap = new Map((roles ?? []).map((r) => [r.id, r]));
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-    // 5. Transform into the expected structure
+    // 6. Transform into the expected structure
     const mapped: ProjectTeamMemberProfile[] = teamMembers.map((tm) => {
       const profile = profileMap.get(tm.user_id);
       const inviterProfile = tm.invited_by_user_id ? profileMap.get(tm.invited_by_user_id) : null;
@@ -121,13 +245,14 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
       };
     });
 
-    return {error: null, data: mapped, roles: roles ?? []};
+    return {error: null, data: mapped, roles: roles ?? [], open_positions};
   } catch (err) {
     console.error("getProjectTeamMembersProfiles unexpected error", err);
     return {
       error: err instanceof Error ? err.message : "Unexpected error",
       data: null,
       roles: null,
+      open_positions: null,
     };
   }
 };

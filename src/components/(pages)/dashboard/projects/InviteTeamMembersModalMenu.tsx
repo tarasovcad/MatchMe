@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useState} from "react";
 import {useForm, FormProvider} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -17,16 +17,17 @@ import {
 import {Button} from "@/components/shadcn/button";
 import SelectInput from "@/components/ui/form/SelectInput";
 import {Plus} from "lucide-react";
-import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
 import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import UserSearchDropdown from "@/components/ui/form/UserSearchDropdown";
 import {toast} from "sonner";
+import SelectInputWithSearch from "@/components/ui/form/SelectInputWithSearch";
+import {createProjectRequest} from "@/actions/projects/projectTeamMembers";
 
 const inviteTeamMemberSchema = z.object({
   searchUsers: z.string().trim(),
   _selectedUserId: z.string().min(1, "Please select a user to invite"),
   role: z.string().nonempty("Please select a role"),
-  inviteExpiry: z.string().nonempty("Please select an expiry time"),
+  position: z.string().optional(),
   message: z
     .string()
     .trim()
@@ -36,14 +37,29 @@ const inviteTeamMemberSchema = z.object({
 
 export type InviteTeamMemberFormData = z.infer<typeof inviteTeamMemberSchema>;
 
+interface SimpleProjectRole {
+  id: string;
+  name: string;
+  badge_color: string | null;
+}
+
 interface InviteTeamMembersModalMenuProps {
-  availableRoles: ProjectRoleDb[];
+  projectId: string;
+  availableRoles: SimpleProjectRole[];
   onInviteUser?: (data: InviteTeamMemberFormData) => void;
+  disabled?: boolean;
+  availablePositions: Array<{
+    title: string;
+    value: string;
+  }>;
 }
 
 const InviteTeamMembersModalMenu = ({
+  projectId,
   availableRoles,
   onInviteUser,
+  disabled,
+  availablePositions,
 }: InviteTeamMembersModalMenuProps) => {
   const methods = useForm<InviteTeamMemberFormData>({
     resolver: zodResolver(inviteTeamMemberSchema),
@@ -52,30 +68,48 @@ const InviteTeamMembersModalMenu = ({
       searchUsers: "",
       _selectedUserId: "",
       role: "Member",
-      inviteExpiry: "7 days",
+      position: "",
       message: "",
     },
   });
-
+  console.log(availablePositions);
   const {
     handleSubmit,
     formState: {isValid},
     reset,
   } = methods;
 
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitAndClose = handleSubmit((data) => {
-    if (data._selectedUserId) {
-      onInviteUser?.(data);
-      reset();
-      // TODO: Send email to user
-      toast.success("Invite sent successfully");
-      toast.info("");
-      setOpen(false);
-    } else {
-      console.log("No user selected, cannot submit form");
+  const submitAndClose = handleSubmit(async (data) => {
+    if (!data._selectedUserId) {
       toast.error("Please select a user to invite");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await createProjectRequest({
+        project_id: projectId,
+        user_id: data._selectedUserId,
+        position_id: data.position || undefined,
+      });
+
+      if (result.success) {
+        onInviteUser?.(data);
+        reset();
+        toast.success("Invite sent successfully");
+        setOpen(false);
+      } else {
+        toast.error(result.error || "Failed to send invite");
+      }
+    } catch (error) {
+      console.error("Error sending invite:", error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   });
 
@@ -99,7 +133,7 @@ const InviteTeamMembersModalMenu = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="xs">
+        <Button variant="secondary" size="xs" disabled={disabled}>
           <Plus className="w-4 h-4" />
           Invite
         </Button>
@@ -146,9 +180,27 @@ const InviteTeamMembersModalMenu = ({
               />
             </div>
 
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-1">
+                <p className="font-medium  text-sm">Assign position</p>
+                <span className="text-muted-foreground text-sm">Optional</span>
+              </div>
+
+              <SelectInputWithSearch
+                id="position"
+                placeholder="Select a position"
+                name="position"
+                options={availablePositions}
+                error={methods.formState.errors.position}
+              />
+            </div>
+
             {/* Message to user */}
             <div className="space-y-2">
-              <p className="font-medium text-sm">Message (optional)</p>
+              <div className="flex items-center justify-between gap-1">
+                <p className="font-medium text-sm">Message</p>
+                <span className="text-muted-foreground text-sm">Optional</span>
+              </div>
               <AutogrowingTextarea
                 id="message"
                 placeholder="Hey! I’d love for you to join our team on AI recruiting – we’re building something amazing together."
@@ -158,32 +210,18 @@ const InviteTeamMembersModalMenu = ({
               />
             </div>
 
-            <div className="space-y-2">
-              <p className="font-medium text-sm">Invite expiry</p>
-              <SelectInput
-                id="invite-expiry"
-                placeholder="Select expiry time"
-                name="inviteExpiry"
-                className=""
-                options={[
-                  {title: "1 day"},
-                  {title: "3 days"},
-                  {title: "7 days"},
-                  {title: "14 days"},
-                  {title: "30 days"},
-                ]}
-                error={methods.formState.errors.inviteExpiry}
-              />
-            </div>
-
             <DialogFooter className="pt-2">
               <DialogClose asChild>
                 <Button variant="outline" size="xs" type="button">
                   Cancel
                 </Button>
               </DialogClose>
-              <Button size="xs" variant="secondary" type="submit" disabled={!isValid}>
-                Send invite
+              <Button
+                size="xs"
+                variant="secondary"
+                type="submit"
+                disabled={!isValid || isSubmitting}>
+                {isSubmitting ? "Sending..." : "Send invite"}
               </Button>
             </DialogFooter>
           </form>
