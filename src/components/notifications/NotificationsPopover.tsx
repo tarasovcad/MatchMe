@@ -43,6 +43,8 @@ const NotificationsPopover = ({
           recipient_id,
           reference_id,
           is_read,
+          status,
+          action_taken_at,
           sender:profiles!notifications_sender_id_fkey (id, username, name, profile_image)
         `,
         )
@@ -63,11 +65,17 @@ const NotificationsPopover = ({
           // Fetch project details for project-related notifications
           if (notification.type === "project_invite" && notification.reference_id) {
             try {
+              // reference_id contains the project ID directly
               const {data: projectData, error: projectError} = await supabase
                 .from("projects")
                 .select("id, name, slug")
                 .eq("id", notification.reference_id)
                 .single();
+
+              if (projectError) {
+                console.error("Error fetching project details:", projectError);
+                toast.error(`Error fetching project details: ${projectError.message}`);
+              }
 
               if (!projectError && projectData) {
                 return {
@@ -168,6 +176,7 @@ const NotificationsPopover = ({
             // Fetch project details for project-related notifications
             if (newNotification.type === "project_invite" && newNotification.reference_id) {
               try {
+                // reference_id contains the project ID directly
                 const {data: projectData, error: projectError} = await supabase
                   .from("projects")
                   .select("id, name, slug")

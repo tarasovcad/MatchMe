@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {formatDateAbsolute, formatTimeRelative} from "@/functions/formatDate";
@@ -6,6 +6,10 @@ import {Notification} from "@/types/notifications";
 import {getNameInitials} from "@/functions/getNameInitials";
 import {Avatar, AvatarFallback, AvatarImage} from "../shadcn/avatar";
 import {Button} from "../shadcn/button";
+import {toast} from "sonner";
+import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
+import {Check} from "lucide-react";
+import {useHandleProjectRequest} from "@/hooks/query/use-handle-project-request";
 
 const FollowNotification = ({
   notification,
@@ -67,6 +71,11 @@ const ProjectInviteNotification = ({
   const {profile_image, name, username} = notification.sender;
   const projectTitle = notification.project?.name || "Unknown Project";
   const isRead = notification.is_read === true;
+  const [isAccepted, setIsAccepted] = useState(notification.status === "accepted");
+  const [isDeclined, setIsDeclined] = useState(notification.status === "declined");
+  const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
+
+  const handleProjectRequestMutation = useHandleProjectRequest();
 
   const handleClick = () => {
     if (!isRead) {
@@ -74,14 +83,54 @@ const ProjectInviteNotification = ({
     }
   };
 
-  const handleAccept = (e: React.MouseEvent) => {
+  const handleAccept = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Handle accept logic here
+
+    if (!notification.reference_id) {
+      toast.error("Cannot process request - missing reference ID");
+      return;
+    }
+
+    setLoadingAction("accept");
+    try {
+      const result = await handleProjectRequestMutation.mutateAsync({
+        requestId: notification.reference_id,
+        action: "accept",
+      });
+
+      if (result.success) {
+        setIsAccepted(true);
+      }
+    } catch (error) {
+      console.error("Error accepting project invite:", error);
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
-  const handleReject = (e: React.MouseEvent) => {
+  const handleReject = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Handle reject logic here
+
+    if (!notification.reference_id) {
+      toast.error("Cannot process request - missing reference ID");
+      return;
+    }
+
+    setLoadingAction("reject");
+    try {
+      const result = await handleProjectRequestMutation.mutateAsync({
+        requestId: notification.reference_id,
+        action: "reject",
+      });
+
+      if (result.success) {
+        setIsDeclined(true);
+      }
+    } catch (error) {
+      console.error("Error declining project invite:", error);
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   return (
@@ -119,20 +168,43 @@ const ProjectInviteNotification = ({
           </div>
         </div>
         <div className="flex gap-1.5">
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className="w-fit text-[13px] leading-[14px] h-fit max-h-[30px]"
-            onClick={handleAccept}>
-            Accept
-          </Button>
-          <Button
-            variant={"outline"}
-            size={"xs"}
-            className="w-fit text-[13px] leading-[14px] h-fit max-h-[30px]"
-            onClick={handleReject}>
-            Reject
-          </Button>
+          {isAccepted ? (
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              className="text-[13px] leading-[14px] h-fit max-h-[30px] w-fit"
+              disabled={true}>
+              <Check className="w-4 h-4" />
+              Joined
+            </Button>
+          ) : isDeclined ? (
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              className="text-[13px] leading-[14px] h-fit max-h-[30px] w-fit text-muted-foreground"
+              disabled={true}>
+              Declined
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant={"secondary"}
+                size={"xs"}
+                className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[60px] w-full"
+                onClick={handleAccept}
+                disabled={loadingAction !== null}>
+                {loadingAction === "accept" ? <LoadingButtonCircle size={16} /> : "Join"}
+              </Button>
+              <Button
+                variant={"outline"}
+                size={"xs"}
+                className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[80px] w-full"
+                onClick={handleReject}
+                disabled={loadingAction !== null}>
+                {loadingAction === "reject" ? <LoadingButtonCircle size={16} /> : "Decline"}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

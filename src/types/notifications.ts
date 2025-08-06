@@ -29,6 +29,8 @@ export interface Notification {
   type: NotificationType;
   created_at: string;
   is_read: boolean;
+  status: "pending" | "accepted" | "declined" | "expired";
+  action_taken_at?: string | null;
   sender: {
     id: string;
     username: string;
