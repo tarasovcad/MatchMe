@@ -15,7 +15,7 @@ const NotificationTabs = ({
   const {scrollRef, handleDragScroll} = useDragScroll();
 
   return (
-    <div className="relative border-b border-border">
+    <div className="relative border-b border-border px-3">
       <div
         className="relative flex overflow-x-auto scrollbar-hide"
         ref={scrollRef}
@@ -27,7 +27,7 @@ const NotificationTabs = ({
               key={group.id}
               onClick={() => onTabChange(group.id)}
               className={cn(
-                "relative flex items-center gap-1.5 px-3.5 py-2 text-secondary transition-colors font-medium",
+                "relative flex items-center gap-1.5 px-3.5 py-2 text-secondary transition-colors font-medium text-[15px]",
                 isActive && "text-foreground",
                 !isActive && "hover:text-foreground cursor-pointer",
               )}>

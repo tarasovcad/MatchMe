@@ -41,6 +41,7 @@ const NotificationsPopover = ({
           created_at,
           sender_id,
           recipient_id,
+          reference_id,
           is_read,
           sender:profiles!notifications_sender_id_fkey (id, username, name, profile_image)
         `,
@@ -50,11 +51,38 @@ const NotificationsPopover = ({
 
       if (error) throw error;
 
-      const formattedNotifications =
-        data?.map((notification) => ({
-          ...notification,
-          sender: Array.isArray(notification.sender) ? notification.sender[0] : notification.sender,
-        })) || [];
+      const formattedNotifications = await Promise.all(
+        (data || []).map(async (notification) => {
+          const baseNotification = {
+            ...notification,
+            sender: Array.isArray(notification.sender)
+              ? notification.sender[0]
+              : notification.sender,
+          };
+
+          // Fetch project details for project-related notifications
+          if (notification.type === "project_invite" && notification.reference_id) {
+            try {
+              const {data: projectData, error: projectError} = await supabase
+                .from("projects")
+                .select("id, name, slug")
+                .eq("id", notification.reference_id)
+                .single();
+
+              if (!projectError && projectData) {
+                return {
+                  ...baseNotification,
+                  project: projectData,
+                };
+              }
+            } catch (projectError) {
+              console.error("Error fetching project details:", projectError);
+            }
+          }
+
+          return baseNotification;
+        }),
+      );
 
       setNotifications(formattedNotifications);
       updateNotificationCounts(formattedNotifications);
@@ -126,15 +154,36 @@ const NotificationsPopover = ({
             }
 
             // Format the notification with sender details
-            const formattedNotification = {
+            let formattedNotification = {
               id: newNotification.id,
               type: newNotification.type,
               created_at: newNotification.created_at,
               sender_id: newNotification.sender_id,
               recipient_id: newNotification.recipient_id,
+              reference_id: newNotification.reference_id,
               is_read: newNotification.is_read,
               sender: senderData,
             } as Notification;
+
+            // Fetch project details for project-related notifications
+            if (newNotification.type === "project_invite" && newNotification.reference_id) {
+              try {
+                const {data: projectData, error: projectError} = await supabase
+                  .from("projects")
+                  .select("id, name, slug")
+                  .eq("id", newNotification.reference_id)
+                  .single();
+
+                if (!projectError && projectData) {
+                  formattedNotification = {
+                    ...formattedNotification,
+                    project: projectData,
+                  };
+                }
+              } catch (projectError) {
+                console.error("Error fetching project details for realtime:", projectError);
+              }
+            }
 
             // Update the notifications state
             setNotifications((prev) => [formattedNotification, ...prev]);
@@ -283,15 +332,15 @@ const NotificationsPopover = ({
       </PopoverTrigger>
       <PopoverContent
         side="right"
-        className="relative bg-transparent shadow-none p-3 border-0 w-[442px] h-screen max-h-screen"
+        className="relative bg-transparent shadow-none p-3 border-0 w-[442px] h-screen max-h-screen "
         sideOffset={8}>
-        <div className="flex flex-col bg-background p-3 border border-border rounded-[12px] h-full">
+        <div className="flex flex-col bg-background border border-border rounded-[12px] h-full">
           {/* Header */}
           <div>
-            <div className="flex justify-between items-center gap-2 mb-3 p-1">
+            <div className="flex justify-between items-center gap-2 mb-3 p-4">
               <p className="font-medium text-[16px]">Notifications</p>
               <div className="flex gap-1">
-                <Button size={"icon"} className="w-6 h-6">
+                <Button size={"icon"} className="w-6 h-6" disabled>
                   <Maximize2 size={12} />
                 </Button>
 
@@ -308,7 +357,7 @@ const NotificationsPopover = ({
             />
           </div>
           {/* Notification list */}
-          <div className="flex-grow mt-2 max-h-[calc(100vh-190px)] overflow-y-auto scrollbar-thin">
+          <div className="flex-grow mt-3 max-h-[calc(100vh-190px)] overflow-y-auto scrollbar-thin ">
             <NotificationList
               isLoading={isLoading}
               notifications={getFilteredNotifications()}
@@ -317,7 +366,7 @@ const NotificationsPopover = ({
           </div>
 
           {/* Footer */}
-          <div className="flex justify-between items-center gap-2 bg-background pt-3 border-t border-border">
+          <div className="flex justify-between items-center gap-2 bg-background border-t border-border p-3 rounded-b-[12px] ">
             <Button variant={"outline"} size={"xs"} onClick={markAllAsRead}>
               <CheckCheck size="16" />
               Mark all as read

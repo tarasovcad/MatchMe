@@ -17,7 +17,7 @@ export interface ProjectTeamMemberProfile {
     | null;
   pronouns: string | null;
   seniority_level: string | null;
-  work_availability: number | null;
+  time_commitment: string | null;
   years_of_experience: number | null;
   skills: string[] | null;
   joined_date: string | null;
@@ -249,7 +249,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
     const {data: profiles, error: profilesError} = await supabase
       .from("profiles")
       .select(
-        "id, name, username, public_current_role, profile_image, pronouns, seniority_level, work_availability, years_of_experience, skills",
+        "id, name, username, public_current_role, profile_image, pronouns, seniority_level, time_commitment, years_of_experience, skills",
       )
       .in("id", profileIds);
 
@@ -281,7 +281,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
         profile_image: profile?.profile_image ?? null,
         pronouns: profile?.pronouns ?? null,
         seniority_level: profile?.seniority_level ?? null,
-        work_availability: profile?.work_availability ?? null,
+        time_commitment: profile?.time_commitment ?? null,
         years_of_experience: profile?.years_of_experience ?? null,
         skills: profile?.skills ?? null,
         joined_date: tm.joined_date ?? null,

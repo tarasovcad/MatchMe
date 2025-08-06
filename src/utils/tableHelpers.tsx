@@ -51,6 +51,13 @@ export const createProfileLink = (username: string | undefined, name: string | u
   );
 };
 
+export const removeProtocol = (url: string | null | undefined): string => {
+  if (!url) return "";
+
+  // Remove common protocols
+  return url.replace(/^(https?:\/\/|wss?:\/\/|ftp:\/\/|sftp:\/\/)/i, "");
+};
+
 export const tableStatusConfig = {
   open: "bg-[#009E61]",
   closed: "bg-[#EF1A2C]",

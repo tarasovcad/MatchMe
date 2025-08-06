@@ -2,6 +2,7 @@ import {FormFieldProps, FormProps} from "@/types/settingsFieldsTypes";
 import {languages} from "./languages";
 import {socialLinks} from "./socialLinks";
 import {seniorityLevels} from "./seniorityLevels";
+import {timeCommitment} from "../../projects/timeCommitmentOptions";
 
 export const accountSettingsFormFields = [
   {
@@ -199,13 +200,16 @@ export const accountSettingsFormFields = [
         ],
       },
       {
-        fieldTitle: "Work Availability",
-        fieldDescription: "Specify how many hours you can work per week",
-        fieldType: "slider",
+        fieldTitle: "Time Commitment",
+        fieldDescription: "How much time are you available to commit per week?",
+        fieldType: "dropdown",
         fieldInputProps: [
           {
-            id: "work_availability",
-            name: "work_availability",
+            id: "time_commitment",
+            placeholder: "Select your availability",
+            type: "text",
+            name: "time_commitment",
+            options: timeCommitment,
           },
         ],
       },

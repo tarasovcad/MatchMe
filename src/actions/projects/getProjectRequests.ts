@@ -13,7 +13,7 @@ interface ProfileRequest {
     uploadedAt: string;
     url: string;
   }[];
-  work_availability?: number;
+  time_commitment?: string;
   location?: string;
   languages?: string[];
   personal_website?: string;
@@ -64,7 +64,7 @@ export async function getProjectRequests(projectId: string) {
         name,
         username,
         profile_image,
-        work_availability,
+        time_commitment,
         location,
         languages,
         personal_website,
@@ -115,7 +115,7 @@ export async function getProjectRequests(projectId: string) {
       user_name: userProfile?.name || null,
       user_username: userProfile?.username || null,
       user_profile_image: userProfile?.profile_image || null,
-      user_work_availability: userProfile?.work_availability || null,
+      user_time_commitment: userProfile?.time_commitment || null,
       user_location: userProfile?.location || null,
       user_languages: userProfile?.languages || null,
       user_personal_website: userProfile?.personal_website || null,

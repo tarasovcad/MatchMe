@@ -58,6 +58,8 @@ import {updateMemberRole} from "@/actions/projects/updateMemberRole";
 import {useQueryClient} from "@tanstack/react-query";
 import {Button} from "@/components/shadcn/button";
 import InviteTeamMembersModalMenu from "./InviteTeamMembersModalMenu";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
+import {getOptionTitle} from "@/utils/tableHelpers";
 
 export type Member = {
   id: string;
@@ -67,7 +69,7 @@ export type Member = {
   role: string; // job title
   pronouns: string;
   seniority: string;
-  availability: string;
+  time_commitment: string;
   skills: string[];
   currentRole: string;
   yearsOfExperience: number | null;
@@ -140,7 +142,12 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
     setColumnVisibility,
   } = usePersistedTableColumns("teamMembersTablePrefs");
 
-  const {data: teamData, isLoading: isMembersLoading} = useProjectTeamMembers(project.id);
+  const {
+    data: teamData,
+    isLoading: isMembersLoading,
+    isError: isMembersError,
+  } = useProjectTeamMembers(project.id);
+
   const fetchedMembers = teamData?.members ?? [];
   const projectRoles = teamData?.roles ?? [];
   const openPositions = teamData?.open_positions ?? [];
@@ -155,7 +162,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       role: m.public_current_role ?? "",
       pronouns: m.pronouns ?? "",
       seniority: m.seniority_level ?? "",
-      availability: m.work_availability != null ? `${m.work_availability}` : "",
+      time_commitment: m.time_commitment ?? "",
       skills: m.skills ?? [],
       currentRole: m.public_current_role ?? "",
       yearsOfExperience: m.years_of_experience,
@@ -199,7 +206,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
         member.role.toLowerCase().includes(q) ||
         member.pronouns.toLowerCase().includes(q) ||
         member.seniority.toLowerCase().includes(q) ||
-        member.availability.toLowerCase().includes(q) ||
+        member.time_commitment.toLowerCase().includes(q) ||
         member.skills.some((s) => s.toLowerCase().includes(q)) ||
         member.roleBadgeName.toLowerCase().includes(q) ||
         member.currentRole.toLowerCase().includes(q) ||
@@ -299,16 +306,18 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       cell: ({row}) => <span>{renderOrDash(row.original.seniority)}</span>,
     },
     {
-      accessorKey: "availability",
+      accessorKey: "time_commitment",
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Clock className="w-3.5 h-3.5" />
-          <span>Availability</span>
+          <span>Time Commitment</span>
         </div>
       ),
       size: 150,
       minSize: 150,
-      cell: ({row}) => <span>{renderOrDash(row.original.availability)}</span>,
+      cell: ({row}) => (
+        <span>{renderOrDash(getOptionTitle(row.original.time_commitment, timeCommitment))}</span>
+      ),
     },
     {
       accessorKey: "yearsOfExperience",

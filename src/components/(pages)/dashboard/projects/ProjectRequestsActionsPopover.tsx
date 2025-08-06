@@ -12,6 +12,8 @@ import {
   RefreshCw,
   UserX,
   Pin,
+  ThumbsUpIcon,
+  ThumbsDownIcon,
 } from "lucide-react";
 import {toast} from "sonner";
 
@@ -122,12 +124,11 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
   // Actions for Received Applications (someone wants to join)
   if (isReceived && isPending) {
     menuItems.push(
-      {icon: Check, label: "Accept request", onClick: handleAcceptRequest},
+      {icon: ThumbsUpIcon, label: "Accept request", onClick: handleAcceptRequest},
       {
-        icon: X,
+        icon: ThumbsDownIcon,
         label: "Reject request",
         onClick: handleRejectRequest,
-        accent: true,
         separator: true,
       },
     );
@@ -141,7 +142,6 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
         icon: UserX,
         label: "Cancel invitation",
         onClick: handleCancelInvitation,
-        accent: true,
         separator: true,
       },
     );

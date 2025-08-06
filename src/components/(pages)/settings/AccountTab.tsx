@@ -36,7 +36,7 @@ const AccountTab = ({
   // Helper function to normalize values for comparison
   const normalizeValue = (value: unknown, fieldName: string) => {
     // For number fields, treat empty string and undefined as equivalent
-    const numberFields = ["age", "years_of_experience", "work_availability"];
+    const numberFields = ["age", "years_of_experience"];
     if (numberFields.includes(fieldName)) {
       if (value === "" || value === undefined || value === null) {
         return undefined;
@@ -75,7 +75,7 @@ const AccountTab = ({
     goal: profile.goal ?? "",
     tagline: profile.tagline ?? "",
     skills: Array.isArray(profile.skills) ? profile.skills : [],
-    work_availability: profile.work_availability ?? undefined,
+    time_commitment: profile.time_commitment ?? undefined,
     location: profile.location ?? "",
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",

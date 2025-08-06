@@ -31,7 +31,9 @@ const getAgeRangeLabel = (age: number) => {
   return range?.label || "";
 };
 
-const LocationWithFlag = ({location}: {location: string}) => {
+export const LocationWithFlag = ({location}: {location?: string | null}) => {
+  if (!location) return <p className="text-[14px] text-foreground">N/A</p>;
+
   const {flag, isLoading} = useCountryFlag(location);
 
   return (

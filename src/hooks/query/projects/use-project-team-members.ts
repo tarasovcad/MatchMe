@@ -3,6 +3,7 @@ import {
   getProjectTeamMembersProfiles,
   ProjectTeamMemberProfile,
 } from "@/actions/projects/projectTeamMembers";
+import {toast} from "sonner";
 
 interface ProjectTeamMembersResponse {
   members: ProjectTeamMemberProfile[];
@@ -24,6 +25,8 @@ export const useProjectTeamMembers = (projectId: string) => {
     queryFn: async () => {
       const response = await getProjectTeamMembersProfiles(projectId);
       if (response.error) {
+        console.error("Error fetching team members:", response.error);
+        toast.error(response.error);
         throw new Error(response.error);
       }
       return {

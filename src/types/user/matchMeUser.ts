@@ -25,7 +25,7 @@ export interface MatchMeUser {
   goal: string | null;
   tagline: string | null;
   skills: string[] | null;
-  work_availability: number | null;
+  time_commitment: string | null;
   years_of_experience: number | null;
   location: string | null;
   languages: string | null;

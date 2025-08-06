@@ -51,9 +51,17 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import {Skeleton} from "@/components/shadcn/skeleton";
 import {Checkbox} from "@/components/shadcn/checkbox";
 import {formatHumanDate} from "@/functions/formatDate";
-import {renderOrDash, createProfileLink} from "@/utils/tableHelpers";
+import {
+  renderOrDash,
+  createProfileLink,
+  renderSkills,
+  getOptionTitle,
+  removeProtocol,
+} from "@/utils/tableHelpers";
 import Link from "next/link";
 import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
+import {LocationWithFlag} from "../../profiles/ProfileDetails";
 
 interface ProjectRequest {
   id: string;
@@ -73,7 +81,7 @@ interface ProjectRequest {
     fileSize: number;
     uploadedAt: string;
   }[];
-  user_work_availability?: number;
+  user_time_commitment?: string;
   user_location?: string;
   user_languages?: string[];
   user_personal_website?: string;
@@ -226,7 +234,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
         );
       },
       size: 200,
-      minSize: 200,
+      minSize: 220,
     },
 
     {
@@ -234,36 +242,31 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Briefcase className="w-3.5 h-3.5" />
-          <span>Position</span>
+          <span>Position Title</span>
         </div>
       ),
       cell: ({row}) => {
         const positionTitle = row.original.position_title;
-        return positionTitle ? (
-          <span className="text-sm">{positionTitle}</span>
-        ) : (
-          renderOrDash(positionTitle)
-        );
+        return renderOrDash(positionTitle);
       },
       size: 200,
-      minSize: 180,
+      minSize: 200,
     },
 
     {
-      accessorKey: "user_work_availability",
+      accessorKey: "user_time_commitment",
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Clock className="w-3.5 h-3.5" />
-          <span>Availability</span>
+          <span>Time Commitment</span>
         </div>
       ),
       cell: ({row}) => {
-        const availability = row.original.user_work_availability;
-        return availability ? (
-          <span className="text-sm">{availability}h/week</span>
-        ) : (
-          renderOrDash(availability)
+        const timeCommitmentValue = getOptionTitle(
+          row.original.user_time_commitment ?? "",
+          timeCommitment,
         );
+        return renderOrDash(timeCommitmentValue);
       },
       size: 120,
       minSize: 100,
@@ -278,10 +281,10 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const location = row.original.user_location;
-        return location ? <span className="text-sm">{location}</span> : renderOrDash(location);
+        return location ? <LocationWithFlag location={String(location)} /> : renderOrDash(location);
       },
       size: 150,
-      minSize: 130,
+      minSize: 150,
     },
     {
       accessorKey: "user_languages",
@@ -293,23 +296,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const languages = row.original.user_languages;
-        if (!languages || languages.length === 0) {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return (
-          <div className="flex flex-wrap gap-1 items-center">
-            {languages.slice(0, 2).map((lang, index) => (
-              <div
-                key={index}
-                className="h-5 bg-tag dark:bg-muted border border-input rounded-[4px] font-medium text-xs px-1.5 flex items-center text-foreground">
-                {lang}
-              </div>
-            ))}
-            {languages.length > 2 && (
-              <span className="text-xs text-muted-foreground">+{languages.length - 2}</span>
-            )}
-          </div>
-        );
+        return renderSkills(languages || [], 2);
       },
       size: 180,
       minSize: 150,
@@ -324,21 +311,25 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const website = row.original.user_personal_website;
-        return website ? (
-          <a
+
+        if (!website) {
+          return renderOrDash(website);
+        }
+
+        const cleanUrl = removeProtocol(website);
+        return (
+          <Link
             href={website}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm hover:underline">
-            Visit
-          </a>
-        ) : (
-          renderOrDash(website)
+            className="underline decoration-secondary">
+            {cleanUrl}
+          </Link>
         );
       },
-      size: 100,
-      minSize: 80,
+      minSize: 150,
     },
+
     {
       accessorKey: "user_skills",
       header: () => (
@@ -349,23 +340,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const skills = row.original.user_skills;
-        if (!skills || skills.length === 0) {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return (
-          <div className="flex flex-wrap gap-1 items-center">
-            {skills.slice(0, 3).map((skill, index) => (
-              <div
-                key={index}
-                className="h-5 bg-tag dark:bg-muted border border-input rounded-[4px] font-medium text-xs px-1.5 flex items-center text-foreground">
-                {skill}
-              </div>
-            ))}
-            {skills.length > 3 && (
-              <span className="text-xs text-muted-foreground">+{skills.length - 3}</span>
-            )}
-          </div>
-        );
+        return renderSkills(skills || [], 3);
       },
       size: 250,
       minSize: 200,
@@ -401,11 +376,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const seniority = row.original.user_seniority_level;
-        return seniority ? (
-          <span className="text-sm capitalize">{seniority}</span>
-        ) : (
-          renderOrDash(seniority)
-        );
+        return seniority ? <span className="text-sm">{seniority}</span> : renderOrDash(seniority);
       },
       size: 120,
       minSize: 100,
@@ -479,7 +450,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const date = row.original.created_at;
-        return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
+        return renderOrDash(date ? formatHumanDate(date) : null);
       },
       size: 130,
       minSize: 130,
@@ -494,7 +465,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: ({row}) => {
         const date = row.original.updated_at;
-        return date ? <span>{formatHumanDate(date)}</span> : renderOrDash(date);
+        return renderOrDash(date ? formatHumanDate(date) : null);
       },
       size: 130,
       minSize: 130,

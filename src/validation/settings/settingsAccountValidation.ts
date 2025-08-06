@@ -3,6 +3,7 @@ import {socialLinks} from "@/data/forms/(settings)/socialLinks";
 import {seniorityLevels} from "@/data/forms/(settings)/seniorityLevels";
 import {z} from "zod";
 import {nameSchema} from "../auth/nameValidation";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
 const allowedSocialLinks = new Set(socialLinks.map((link) => link.title));
@@ -87,11 +88,13 @@ export const settingsAccountValidationSchema = z.object({
     .max(15, {message: "Skills must be at most 15 tags"})
     .optional(),
 
-  work_availability: z.coerce
-    .number()
-    .min(0, {message: "Work availability cannot be negative"})
-    .max(168, {message: "Work availability cannot exceed 168 hours per week"})
-    .optional(),
+  time_commitment: z
+    .string()
+    .optional()
+    .refine((val) => !val || val === "" || timeCommitment.some((option) => option.value === val), {
+      message: "Invalid time commitment. Please select a valid option.",
+    }),
+
   location: z.string().optional(),
 
   languages: z
