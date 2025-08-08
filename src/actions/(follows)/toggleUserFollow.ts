@@ -72,6 +72,7 @@ export async function toggleUserFollow(followingId: string) {
         return {success: false, message: "Error following user"};
       }
 
+      // Send follow notification using the new reusable utility
       const baseUrl =
         process.env.NODE_ENV === "development"
           ? process.env.FAKE_TEST_URL
@@ -81,9 +82,9 @@ export async function toggleUserFollow(followingId: string) {
         .publishJSON({
           url: `${baseUrl}/api/notifications`,
           body: {
-            followerId,
-            followingId,
             type: "follow",
+            senderId: followerId,
+            recipientId: followingId,
           },
         })
         .catch((err) => console.error("Notification error:", err));

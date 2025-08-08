@@ -11,6 +11,109 @@ import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {Check} from "lucide-react";
 import {useHandleProjectRequest} from "@/hooks/query/use-handle-project-request";
 
+const GroupedFollowNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (id: string) => void;
+}) => {
+  const isRead = notification.is_read === true;
+  const senders = notification.grouped_senders || [];
+  const count = notification.grouped_count || senders.length || 1;
+  const [first, second] = senders;
+
+  const handleClick = () => {
+    if (!isRead) {
+      markAsRead(notification.id);
+    }
+  };
+
+  const remaining = Math.max(count - (first ? 1 : 0) - (second ? 1 : 0), 0);
+  const numNames = (first ? 1 : 0) + (second ? 1 : 0);
+
+  return (
+    <div
+      className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
+        isRead ? "cursor-default" : "cursor-pointer hover:bg-muted/50"
+      }`}
+      onClick={handleClick}>
+      <div className="relative h-7.5 w-7.5">
+        <Avatar className="h-6 w-6 absolute -left-0.5 top-0 z-10 ring-2 ring-background">
+          <AvatarImage
+            src={first?.profile_image?.[0]?.url ?? ""}
+            alt={first?.name || ""}
+            className="rounded-full object-cover"
+          />
+          <AvatarFallback>{first ? getNameInitials(first.name) : ""}</AvatarFallback>
+        </Avatar>
+        <Avatar className="h-6 w-6 absolute left-2 top-3 ring-2 ring-background">
+          <AvatarImage
+            src={second?.profile_image?.[0]?.url ?? ""}
+            alt={second?.name || ""}
+            className="rounded-full object-cover"
+          />
+          <AvatarFallback>{second ? getNameInitials(second.name) : ""}</AvatarFallback>
+        </Avatar>
+      </div>
+
+      <div className="w-full text-secondary flex flex-col gap-0.5">
+        <div className="flex justify-between items-start gap-2 text-start">
+          <p>
+            {numNames === 1 && remaining === 0 && first && (
+              <>
+                <Link href={`/profiles/${first.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{first.name}</span>
+                </Link>{" "}
+                started following you
+              </>
+            )}
+            {numNames === 1 && remaining > 0 && first && (
+              <>
+                <Link href={`/profiles/${first.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{first.name}</span>
+                </Link>
+                {" and "}
+                {remaining} other{remaining > 1 ? "s" : ""} started following you
+              </>
+            )}
+            {numNames === 2 && remaining === 0 && first && second && (
+              <>
+                <Link href={`/profiles/${first.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{first.name}</span>
+                </Link>
+                {" and "}
+                <Link href={`/profiles/${second.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{second.name}</span>
+                </Link>{" "}
+                started following you
+              </>
+            )}
+            {numNames === 2 && remaining > 0 && first && second && (
+              <>
+                <Link href={`/profiles/${first.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{first.name}</span>
+                </Link>
+                {", "}
+                <Link href={`/profiles/${second.username}`}>
+                  <span className="font-medium text-foreground hover:underline">{second.name}</span>
+                </Link>
+                {" and "}
+                {remaining} other{remaining > 1 ? "s" : ""} started following you
+              </>
+            )}
+          </p>
+          {!isRead && <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>}
+        </div>
+        <div className="flex justify-between items-center gap-2 text-xs">
+          <p>{formatDateAbsolute(notification.created_at)}</p>
+          <p>{formatTimeRelative(notification.created_at)}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const FollowNotification = ({
   notification,
   markAsRead,
@@ -30,7 +133,7 @@ const FollowNotification = ({
   return (
     <div
       className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
-        isRead ? "cursor-default" : "cursor-pointer"
+        isRead ? "cursor-default" : "cursor-pointer hover:bg-muted/50"
       }`}
       onClick={handleClick}>
       <Avatar className="h-7.5 w-7.5">
@@ -219,6 +322,14 @@ export const createNotificationItem = (
     case "follow":
       return (
         <FollowNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "follow_grouped":
+      return (
+        <GroupedFollowNotification
           key={notification.id}
           notification={notification}
           markAsRead={markAsRead}

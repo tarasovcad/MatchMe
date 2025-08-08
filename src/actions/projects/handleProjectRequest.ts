@@ -14,6 +14,7 @@ interface HandleProjectRequestResult {
     projectId: string;
     userId: string;
     role: string;
+    displayRole?: string;
   };
 }
 
@@ -119,11 +120,47 @@ export async function handleProjectRequest({
         };
       }
 
+      // Get user's current role from profile and position details if assigned
+      const {data: userProfile} = await supabase
+        .from("profiles")
+        .select("public_current_role")
+        .eq("id", user.id)
+        .single();
+
+      let assignedPosition = null;
+      if (projectRequest.position_id) {
+        const {data: position} = await supabase
+          .from("project_open_positions")
+          .select("id, title")
+          .eq("id", projectRequest.position_id)
+          .single();
+        assignedPosition = position;
+      }
+
+      // Determine display role using priority logic
+      let displayRole = null;
+
+      // Priority 1: Use assigned position title
+      if (assignedPosition) {
+        displayRole = assignedPosition.title; // "Backend Developer"
+      }
+      // Priority 2: Use user's current role from profile
+      else if (userProfile?.public_current_role) {
+        displayRole = userProfile.public_current_role; // "Full Stack Developer"
+      }
+      // Priority 3: Default to permission role
+      else {
+        displayRole = defaultRole.name; // "Member"
+      }
+
       // Add the user to the project team first (while request is still pending)
       const {error: teamMemberError} = await supabase.from("project_team_members").insert({
         project_id: projectRequest.project_id,
         user_id: user.id,
         role_id: defaultRole.id,
+        display_role: displayRole,
+        display_role_set_by: user.id,
+        display_role_updated_at: new Date().toISOString(),
         invited_by_user_id: projectRequest.created_by,
         joined_date: new Date().toISOString(),
         invited_at: projectRequest.created_at,
@@ -185,6 +222,7 @@ export async function handleProjectRequest({
           projectId: projectRequest.project_id,
           userId: user.id,
           role: defaultRole.name,
+          displayRole: displayRole,
         },
       };
     }

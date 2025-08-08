@@ -33,7 +33,7 @@ type Member = {
   name: string;
   username: string;
   avatarUrl: string;
-  currentRole: string;
+  displayRole: string;
   roleBadgeName: string;
   roleBadgeColor: string | null;
 };

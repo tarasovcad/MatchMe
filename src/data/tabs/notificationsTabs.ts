@@ -7,9 +7,10 @@ export const NOTIFICATION_GROUPS = [
 ];
 
 export const getNotificationTypeGroup = (type: string): string => {
-  switch (type) {
+  switch (type as string) {
     // Follower Activity
     case "follow":
+    case "follow_grouped":
       return "follower-activity";
 
     // Mentions & Tags

@@ -66,12 +66,11 @@ export type Member = {
   name: string;
   username: string;
   avatarUrl: string;
-  role: string; // job title
+  displayRole: string;
   pronouns: string;
   seniority: string;
   time_commitment: string;
   skills: string[];
-  currentRole: string;
   yearsOfExperience: number | null;
   roleBadgeName: string; // e.g. Owner, Member
   roleBadgeColor: string | null; // color key for ProjectRoleBadge
@@ -159,12 +158,11 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       name: m.name,
       username: m.username,
       avatarUrl: m.profile_image?.[0]?.url ?? "",
-      role: m.public_current_role ?? "",
       pronouns: m.pronouns ?? "",
       seniority: m.seniority_level ?? "",
       time_commitment: m.time_commitment ?? "",
       skills: m.skills ?? [],
-      currentRole: m.public_current_role ?? "",
+      displayRole: m.display_role ?? "",
       yearsOfExperience: m.years_of_experience,
       roleBadgeName: m.role_name ?? "Member",
       roleBadgeColor: m.role_badge_color,
@@ -203,13 +201,13 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       return (
         member.name.toLowerCase().includes(q) ||
         member.username.toLowerCase().includes(q) ||
-        member.role.toLowerCase().includes(q) ||
+        member.displayRole.toLowerCase().includes(q) ||
         member.pronouns.toLowerCase().includes(q) ||
         member.seniority.toLowerCase().includes(q) ||
         member.time_commitment.toLowerCase().includes(q) ||
         member.skills.some((s) => s.toLowerCase().includes(q)) ||
         member.roleBadgeName.toLowerCase().includes(q) ||
-        member.currentRole.toLowerCase().includes(q) ||
+        member.displayRole.toLowerCase().includes(q) ||
         member.yearsOfExperience?.toString().includes(q) ||
         member.invitedByName.toLowerCase().includes(q) ||
         member.invitedDate.toLowerCase().includes(q)
@@ -270,16 +268,16 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       minSize: 220,
     },
     {
-      accessorKey: "currentRole",
+      accessorKey: "displayRole",
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Briefcase className="w-3.5 h-3.5" />
-          <span>Current Role</span>
+          <span>Project Role</span>
         </div>
       ),
       size: 200,
       minSize: 180,
-      cell: ({row}) => <span>{renderOrDash(row.original.currentRole)}</span>,
+      cell: ({row}) => <span>{renderOrDash(row.original.displayRole)}</span>,
     },
     {
       accessorKey: "pronouns",
@@ -520,7 +518,7 @@ const ProjectManagementTeamMembers = ({project, user}: {project: Project; user: 
       size: 220,
     },
     {
-      id: "currentRole",
+      id: "displayRole",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />

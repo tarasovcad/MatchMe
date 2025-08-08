@@ -10,6 +10,24 @@ import {toast} from "sonner";
 import NotificationTabs from "./NotificationTabs";
 import NotificationList from "./NotificationList";
 import {getNotificationTypeGroup, NOTIFICATION_GROUPS} from "@/data/tabs/notificationsTabs";
+import {useInfiniteNotifications} from "@/hooks/query/use-notifications";
+import {useQueryClient, type InfiniteData} from "@tanstack/react-query";
+
+type RawNotificationRow = {
+  id: string;
+  type: Notification["type"];
+  created_at: string;
+  sender_id: string;
+  recipient_id: string;
+  reference_id?: string | null;
+  is_read: boolean;
+  status?: Notification["status"];
+  action_taken_at?: string | null;
+};
+
+type NotificationsInfinitePage = {items: Notification[]; nextPage?: number};
+
+const NOTIFICATION_TABLE = "mock_notifications";
 
 const NotificationsPopover = ({
   item,
@@ -19,89 +37,25 @@ const NotificationsPopover = ({
   userSessionId: string;
 }) => {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [groupsNames, setGroupsNames] = useState(
     NOTIFICATION_GROUPS.map((group) => ({...group, number: 0})),
   );
   const [activeTab, setActiveTab] = useState("all");
-  const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const realtimeSubscriptionRef = useRef<{unsubscribe: () => void} | null>(null);
+  const queryClient = useQueryClient();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const {data, error} = await supabase
-        .from("notifications")
-        .select(
-          `
-          id,
-          type,
-          created_at,
-          sender_id,
-          recipient_id,
-          reference_id,
-          is_read,
-          status,
-          action_taken_at,
-          sender:profiles!notifications_sender_id_fkey (id, username, name, profile_image)
-        `,
-        )
-        .eq("recipient_id", userSessionId)
-        .order("created_at", {ascending: false});
+  const notifications = [];
 
-      if (error) throw error;
-
-      const formattedNotifications = await Promise.all(
-        (data || []).map(async (notification) => {
-          const baseNotification = {
-            ...notification,
-            sender: Array.isArray(notification.sender)
-              ? notification.sender[0]
-              : notification.sender,
-          };
-
-          // Fetch project details for project-related notifications
-          if (notification.type === "project_invite" && notification.reference_id) {
-            try {
-              // reference_id contains the project ID directly
-              const {data: projectData, error: projectError} = await supabase
-                .from("projects")
-                .select("id, name, slug")
-                .eq("id", notification.reference_id)
-                .single();
-
-              if (projectError) {
-                console.error("Error fetching project details:", projectError);
-                toast.error(`Error fetching project details: ${projectError.message}`);
-              }
-
-              if (!projectError && projectData) {
-                return {
-                  ...baseNotification,
-                  project: projectData,
-                };
-              }
-            } catch (projectError) {
-              console.error("Error fetching project details:", projectError);
-            }
-          }
-
-          return baseNotification;
-        }),
-      );
-
-      setNotifications(formattedNotifications);
-      updateNotificationCounts(formattedNotifications);
-      setHasLoaded(true);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      toast.error("Failed to load notifications");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userSessionId]);
+  const {
+    // items: notifications = [],
+    isLoadingInitial: isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+  } = useInfiniteNotifications(userSessionId, open, {firstPageSize: 50, pageSize: 20});
 
   const updateNotificationCounts = (notifications: Notification[]) => {
     const unreadNotifications = notifications.filter((n) => !n.is_read);
@@ -115,13 +69,17 @@ const NotificationsPopover = ({
       ).length;
     });
 
-    // Update groups with counts
-    setGroupsNames(
-      NOTIFICATION_GROUPS.map((group) => ({
-        ...group,
-        number: counts[group.id] || 0,
-      })),
-    );
+    // Compute new groups array
+    const newGroups = NOTIFICATION_GROUPS.map((group) => ({
+      ...group,
+      number: counts[group.id] || 0,
+    }));
+
+    // Only update state if something actually changed (shallow compare numbers)
+    const changed = newGroups.some((g, idx) => g.number !== groupsNames[idx]?.number);
+    if (changed) {
+      setGroupsNames(newGroups);
+    }
   };
 
   // Supabase Realtime subscription
@@ -136,18 +94,18 @@ const NotificationsPopover = ({
 
       // Subscribe to INSERT operations on the notifications table for this user
       const subscription = supabase
-        .channel(`notifications:${userSessionId}`)
+        .channel(`${NOTIFICATION_TABLE}:${userSessionId}`)
         .on(
           "postgres_changes",
           {
             event: "INSERT",
             schema: "public",
-            table: "notifications",
+            table: NOTIFICATION_TABLE,
             filter: `recipient_id=eq.${userSessionId}`,
           },
           async (payload) => {
             // When a new notification is inserted
-            const newNotification = payload.new;
+            const newNotification = payload.new as RawNotificationRow;
 
             // Fetch the sender details
             const {data: senderData, error: senderError} = await supabase
@@ -161,8 +119,7 @@ const NotificationsPopover = ({
               return;
             }
 
-            // Format the notification with sender details
-            let formattedNotification = {
+            let formattedNotification: Notification = {
               id: newNotification.id,
               type: newNotification.type,
               created_at: newNotification.created_at,
@@ -170,20 +127,19 @@ const NotificationsPopover = ({
               recipient_id: newNotification.recipient_id,
               reference_id: newNotification.reference_id,
               is_read: newNotification.is_read,
+              status: (newNotification.status || "pending") as Notification["status"],
+              action_taken_at: newNotification.action_taken_at,
               sender: senderData,
-            } as Notification;
+            };
 
-            // Fetch project details for project-related notifications
             if (newNotification.type === "project_invite" && newNotification.reference_id) {
               try {
-                // reference_id contains the project ID directly
-                const {data: projectData, error: projectError} = await supabase
+                const {data: projectData} = await supabase
                   .from("projects")
                   .select("id, name, slug")
                   .eq("id", newNotification.reference_id)
                   .single();
-
-                if (!projectError && projectData) {
+                if (projectData) {
                   formattedNotification = {
                     ...formattedNotification,
                     project: projectData,
@@ -194,12 +150,35 @@ const NotificationsPopover = ({
               }
             }
 
-            // Update the notifications state
-            setNotifications((prev) => [formattedNotification, ...prev]);
+            // Update infinite cache by prepending to first page
+            queryClient.setQueryData<InfiniteData<NotificationsInfinitePage>>(
+              ["notifications", userSessionId, "infinite"],
+              (prev) => {
+                if (!prev) return prev;
+                const firstPage = prev.pages?.[0];
+                return {
+                  ...prev,
+                  pages: [
+                    {
+                      items: [formattedNotification, ...(firstPage?.items || [])],
+                      nextPage: firstPage?.nextPage,
+                    },
+                    ...prev.pages.slice(1),
+                  ],
+                  pageParams: prev.pageParams,
+                };
+              },
+            );
             setHasNewNotification(true);
 
-            // Update notification counts
-            updateNotificationCounts([formattedNotification, ...notifications]);
+            // Update notification counts from latest cache
+            const latestInfinite = queryClient.getQueryData<
+              InfiniteData<NotificationsInfinitePage>
+            >(["notifications", userSessionId, "infinite"]);
+            const latestItems: Notification[] = latestInfinite
+              ? latestInfinite.pages.flatMap((p) => p.items)
+              : [];
+            updateNotificationCounts(latestItems);
 
             // Show a toast notification
             toast.info(`New notification from ${senderData.name}`);
@@ -210,25 +189,38 @@ const NotificationsPopover = ({
           {
             event: "UPDATE",
             schema: "public",
-            table: "notifications",
+            table: NOTIFICATION_TABLE,
             filter: `recipient_id=eq.${userSessionId}`,
           },
           (payload) => {
             // When a notification is updated (e.g., marked as read)
-            const updatedNotification = payload.new;
+            const updatedNotification = payload.new as Notification;
 
-            setNotifications((prev) =>
-              prev.map((n) =>
-                n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
-              ),
+            queryClient.setQueryData<InfiniteData<NotificationsInfinitePage>>(
+              ["notifications", userSessionId, "infinite"],
+              (prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  pages: prev.pages.map((pg) => ({
+                    ...pg,
+                    items: (pg.items || []).map((n: Notification) =>
+                      n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
+                    ),
+                  })),
+                  pageParams: prev.pageParams,
+                };
+              },
             );
 
             // Update notification counts
-            updateNotificationCounts(
-              notifications.map((n) =>
-                n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
-              ),
-            );
+            const latestInfinite = queryClient.getQueryData<
+              InfiniteData<NotificationsInfinitePage>
+            >(["notifications", userSessionId, "infinite"]);
+            const latestItems: Notification[] = latestInfinite
+              ? latestInfinite.pages.flatMap((p) => p.items)
+              : [];
+            updateNotificationCounts(latestItems);
           },
         )
         .subscribe();
@@ -244,75 +236,24 @@ const NotificationsPopover = ({
         realtimeSubscriptionRef.current.unsubscribe();
       }
     };
-  }, [userSessionId, notifications]);
+  }, [userSessionId, queryClient]);
 
   useEffect(() => {
     if (!userSessionId) return;
 
     if (open && !hasLoaded) {
-      fetchNotifications();
+      setHasLoaded(true);
     }
 
-    // Reset the new notification indicator when opening the popover
     if (open) {
       setHasNewNotification(false);
     }
-  }, [open, fetchNotifications, hasLoaded]);
+  }, [open, hasLoaded, userSessionId]);
 
-  const markAsRead = async (notificationId: string) => {
-    const notification = notifications.find((n) => n.id === notificationId);
-    if (!notification || notification.is_read === true) {
-      return;
-    }
-
-    try {
-      const {error} = await supabase
-        .from("notifications")
-        .update({is_read: true})
-        .eq("id", notificationId);
-
-      if (error) throw error;
-
-      // Update local state
-      const updatedNotifications = notifications.map((n) =>
-        n.id === notificationId ? {...n, is_read: true} : n,
-      );
-
-      setNotifications(updatedNotifications);
-      updateNotificationCounts(updatedNotifications);
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      toast.error("Failed to mark notification as read");
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const unreadNotifications = notifications.filter((n) => !n.is_read);
-      if (unreadNotifications.length === 0) return;
-
-      const {error} = await supabase
-        .from("notifications")
-        .update({is_read: true})
-        .in(
-          "id",
-          unreadNotifications.map((n) => n.id),
-        );
-
-      if (error) throw error;
-
-      // Update local state
-      const updatedNotifications = notifications.map((n) => ({
-        ...n,
-        is_read: true,
-      }));
-      setNotifications(updatedNotifications);
-      updateNotificationCounts(updatedNotifications);
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      toast.error("Failed to mark notifications as read");
-    }
-  };
+  // Recompute counts when query data changes
+  useEffect(() => {
+    updateNotificationCounts(notifications);
+  }, [notifications]);
 
   const getFilteredNotifications = () => {
     if (activeTab === "all") {
@@ -322,6 +263,26 @@ const NotificationsPopover = ({
       (notification) => getNotificationTypeGroup(notification.type as string) === activeTab,
     );
   };
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || !hasMore || isLoadingMore) return;
+    const threshold = 120; // px from bottom
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < threshold) {
+      loadMore();
+    }
+  }, [hasMore, isLoadingMore, loadMore]);
+
+  // Auto-load until the list becomes scrollable or there are no more pages
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!open || !el) return;
+    if (isLoading || isLoadingMore) return;
+    if (!hasMore) return;
+    if (el.scrollHeight <= el.clientHeight + 24) {
+      loadMore();
+    }
+  }, [open, notifications.length, isLoading, isLoadingMore, hasMore, loadMore]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -366,17 +327,21 @@ const NotificationsPopover = ({
             />
           </div>
           {/* Notification list */}
-          <div className="flex-grow mt-3 max-h-[calc(100vh-190px)] overflow-y-auto scrollbar-thin ">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-grow mt-3 max-h-[calc(100vh-190px)] overflow-y-auto scrollbar-thin ">
             <NotificationList
               isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
               notifications={getFilteredNotifications()}
-              markAsRead={markAsRead}
+              markAsRead={() => {}}
             />
           </div>
 
           {/* Footer */}
           <div className="flex justify-between items-center gap-2 bg-background border-t border-border p-3 rounded-b-[12px] ">
-            <Button variant={"outline"} size={"xs"} onClick={markAllAsRead}>
+            <Button variant={"outline"} size={"xs"}>
               <CheckCheck size="16" />
               Mark all as read
             </Button>

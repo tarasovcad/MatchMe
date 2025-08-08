@@ -6,7 +6,7 @@ export interface ProjectTeamMemberProfile {
   user_id: string;
   name: string;
   username: string;
-  public_current_role: string | null;
+  display_role: string | null;
   profile_image:
     | {
         fileName: string;
@@ -170,7 +170,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
     // 1. Fetch active team members for this project
     const {data: teamMembers, error: teamError} = await supabase
       .from("project_team_members")
-      .select("user_id, joined_date, invited_by_user_id, invited_at, role_id")
+      .select("user_id, joined_date, invited_by_user_id, invited_at, role_id, display_role")
       .eq("project_id", projectId);
 
     if (teamError) {
@@ -264,7 +264,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
     const {data: profiles, error: profilesError} = await supabase
       .from("profiles")
       .select(
-        "id, name, username, public_current_role, profile_image, pronouns, seniority_level, time_commitment, years_of_experience, skills",
+        "id, name, username, profile_image, pronouns, seniority_level, time_commitment, years_of_experience, skills",
       )
       .in("id", profileIds);
 
@@ -292,7 +292,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
         user_id: tm.user_id,
         name: profile?.name ?? "",
         username: profile?.username ?? "",
-        public_current_role: profile?.public_current_role ?? null,
+        display_role: tm.display_role ?? null,
         profile_image: profile?.profile_image ?? null,
         pronouns: profile?.pronouns ?? null,
         seniority_level: profile?.seniority_level ?? null,
