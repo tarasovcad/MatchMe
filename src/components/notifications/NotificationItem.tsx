@@ -8,7 +8,7 @@ import {Avatar, AvatarFallback, AvatarImage} from "../shadcn/avatar";
 import {Button} from "../shadcn/button";
 import {toast} from "sonner";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
-import {Check} from "lucide-react";
+import {Check, X} from "lucide-react";
 import {useHandleProjectRequest} from "@/hooks/query/use-handle-project-request";
 
 const GroupedFollowNotification = ({
@@ -16,7 +16,7 @@ const GroupedFollowNotification = ({
   markAsRead,
 }: {
   notification: Notification;
-  markAsRead: (id: string) => void;
+  markAsRead: (ids: string[]) => void;
 }) => {
   const isRead = notification.is_read === true;
   const senders = notification.grouped_senders || [];
@@ -25,7 +25,11 @@ const GroupedFollowNotification = ({
 
   const handleClick = () => {
     if (!isRead) {
-      markAsRead(notification.id);
+      const ids =
+        notification.grouped_ids && notification.grouped_ids.length > 0
+          ? notification.grouped_ids
+          : [notification.id];
+      markAsRead(ids);
     }
   };
 
@@ -82,7 +86,7 @@ const GroupedFollowNotification = ({
                 <Link href={`/profiles/${first.username}`}>
                   <span className="font-medium text-foreground hover:underline">{first.name}</span>
                 </Link>
-                {" and "}
+                {", "}
                 <Link href={`/profiles/${second.username}`}>
                   <span className="font-medium text-foreground hover:underline">{second.name}</span>
                 </Link>{" "}
@@ -119,14 +123,14 @@ const FollowNotification = ({
   markAsRead,
 }: {
   notification: Notification;
-  markAsRead: (id: string) => void;
+  markAsRead: (ids: string[]) => void;
 }) => {
   const {profile_image, name, username} = notification.sender;
   const isRead = notification.is_read === true;
 
   const handleClick = () => {
     if (!isRead) {
-      markAsRead(notification.id);
+      markAsRead([notification.id]);
     }
   };
 
@@ -169,7 +173,7 @@ const ProjectInviteNotification = ({
   markAsRead,
 }: {
   notification: Notification;
-  markAsRead: (id: string) => void;
+  markAsRead: (ids: string[]) => void;
 }) => {
   const {profile_image, name, username} = notification.sender;
   const projectTitle = notification.project?.name || "Unknown Project";
@@ -182,7 +186,7 @@ const ProjectInviteNotification = ({
 
   const handleClick = () => {
     if (!isRead) {
-      markAsRead(notification.id);
+      markAsRead([notification.id]);
     }
   };
 
@@ -314,9 +318,477 @@ const ProjectInviteNotification = ({
   );
 };
 
+const ProjectEventNotification = ({
+  notification,
+  markAsRead,
+  message,
+  status,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+  message: React.ReactNode;
+  status?: "success" | "danger";
+}) => {
+  const {profile_image, name} = notification.sender;
+  const isRead = notification.is_read === true;
+
+  const handleClick = () => {
+    if (!isRead) {
+      markAsRead([notification.id]);
+    }
+  };
+
+  const statusIconClass =
+    status === "success" ? "text-[#009E61]" : status === "danger" ? "text-[#A60000]" : "";
+
+  return (
+    <div
+      className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
+        isRead ? "cursor-default" : "cursor-pointer hover:bg-muted/50 "
+      }`}
+      onClick={handleClick}>
+      <div className="relative">
+        <Avatar className="h-7.5 w-7.5">
+          <AvatarImage
+            src={profile_image?.[0]?.url ?? ""}
+            alt={name}
+            className="rounded-full object-cover"
+          />
+          <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+        </Avatar>
+        {status && (
+          <span
+            className={`flex items-center justify-center  bg-background absolute -bottom-1.5 -right-1.5 h-4.5 w-4.5 rounded-full`}>
+            <span className="h-3 w-3 rounded-full bg-background ">
+              {status === "success" ? (
+                <Check className={`w-2.5 h-2.5   ${statusIconClass}`} />
+              ) : (
+                <X className={`w-2.5 h-2.5  ${statusIconClass}`} />
+              )}
+            </span>
+          </span>
+        )}
+      </div>
+
+      <div className="w-full text-secondary flex flex-col gap-0.5">
+        <div className="flex justify-between items-start gap-2 text-start">
+          <p>{message}</p>
+          {!isRead && <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>}
+        </div>
+        <div className="flex justify-between items-center gap-2 text-xs">
+          <p>{formatDateAbsolute(notification.created_at)}</p>
+          <p>{formatTimeRelative(notification.created_at)}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectRequestAcceptedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "your project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      accepted your request to join{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="success"
+    />
+  );
+};
+
+const ProjectRequestRejectedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "the project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      rejected your request to join{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="danger"
+    />
+  );
+};
+
+const ProjectMemberAddedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "a project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      joined{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="success"
+    />
+  );
+};
+
+const ProjectMemberRemovedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "a project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      was removed from{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="danger"
+    />
+  );
+};
+
+const ProjectInviteAcceptedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "your project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      accepted your invitation to{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="success"
+    />
+  );
+};
+
+const ProjectInviteRejectedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "your project";
+  const projectSlug = notification.project?.slug;
+
+  const message = (
+    <>
+      <Link href={`/profiles/${sender.username}`}>
+        <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+      </Link>{" "}
+      declined your invitation to{" "}
+      {projectSlug ? (
+        <Link href={`/projects/${projectSlug}`}>
+          <span className="font-medium text-foreground hover:underline">{projectName}</span>
+        </Link>
+      ) : (
+        <span className="font-medium text-foreground">{projectName}</span>
+      )}
+    </>
+  );
+
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={message}
+      status="danger"
+    />
+  );
+};
+
+const ProjectJoinRequestNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const {profile_image, name} = sender;
+  const projectName = notification.project?.name || "Unknown Project";
+  const projectSlug = notification.project?.slug;
+  const isRead = notification.is_read === true;
+  const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
+
+  const handleProjectRequestMutation = useHandleProjectRequest();
+
+  const handleClick = () => {
+    if (!isRead) {
+      markAsRead([notification.id]);
+    }
+  };
+
+  const handleAccept = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.reference_id) {
+      toast.error("Cannot process request - missing reference ID");
+      return;
+    }
+    setLoadingAction("accept");
+    try {
+      await handleProjectRequestMutation.mutateAsync({
+        requestId: notification.reference_id,
+        action: "accept",
+      });
+    } catch (error) {
+      console.error("Error accepting join request:", error);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleReject = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!notification.reference_id) {
+      toast.error("Cannot process request - missing reference ID");
+      return;
+    }
+    setLoadingAction("reject");
+    try {
+      await handleProjectRequestMutation.mutateAsync({
+        requestId: notification.reference_id,
+        action: "reject",
+      });
+    } catch (error) {
+      console.error("Error rejecting join request:", error);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
+        isRead ? "cursor-default" : "cursor-pointer hover:bg-muted/50"
+      }`}
+      onClick={handleClick}>
+      <Avatar className="h-7.5 w-7.5">
+        <AvatarImage
+          src={profile_image?.[0]?.url ?? ""}
+          alt={name}
+          className="rounded-full object-cover"
+        />
+        <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+      </Avatar>
+
+      <div className="w-full text-secondary flex flex-col gap-2.5">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex justify-between items-start gap-2 text-start">
+            <p>
+              <Link href={`/profiles/${sender.username}`}>
+                <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+              </Link>{" "}
+              requested to join{" "}
+              {projectSlug ? (
+                <Link href={`/projects/${projectSlug}`}>
+                  <span className="font-medium text-foreground hover:underline">{projectName}</span>
+                </Link>
+              ) : (
+                <span className="font-medium text-foreground">{projectName}</span>
+              )}
+            </p>
+            {!isRead && <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>}
+          </div>
+          <div className="flex justify-between items-center gap-2 text-xs">
+            <p>{formatDateAbsolute(notification.created_at)}</p>
+            <p>{formatTimeRelative(notification.created_at)}</p>
+          </div>
+        </div>
+        <div className="flex gap-1.5">
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[60px] w-full"
+            onClick={handleAccept}
+            disabled={loadingAction !== null}>
+            {loadingAction === "accept" ? <LoadingButtonCircle size={16} /> : "Accept"}
+          </Button>
+          <Button
+            variant={"outline"}
+            size={"xs"}
+            className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[80px] w-full"
+            onClick={handleReject}
+            disabled={loadingAction !== null}>
+            {loadingAction === "reject" ? <LoadingButtonCircle size={16} /> : "Decline"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectRoleUpdatedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "the project";
+  const projectSlug = notification.project?.slug;
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={
+        <>
+          <Link href={`/profiles/${sender.username}`}>
+            <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+          </Link>{" "}
+          updated your role in{" "}
+          {projectSlug ? (
+            <Link href={`/projects/${projectSlug}`}>
+              <span className="font-medium text-foreground hover:underline">{projectName}</span>
+            </Link>
+          ) : (
+            <span className="font-medium text-foreground">{projectName}</span>
+          )}
+        </>
+      }
+    />
+  );
+};
+
+const ProjectDeletedNotification = ({
+  notification,
+  markAsRead,
+}: {
+  notification: Notification;
+  markAsRead: (ids: string[]) => void;
+}) => {
+  const sender = notification.sender;
+  const projectName = notification.project?.name || "this project";
+  return (
+    <ProjectEventNotification
+      notification={notification}
+      markAsRead={markAsRead}
+      message={
+        <>
+          {projectName} was deleted by{" "}
+          <Link href={`/profiles/${sender.username}`}>
+            <span className="font-medium text-foreground hover:underline">{sender.name}</span>
+          </Link>
+        </>
+      }
+      status="danger"
+    />
+  );
+};
+
 export const createNotificationItem = (
   notification: Notification,
-  markAsRead: (id: string) => void,
+  markAsRead: (ids: string[]) => void,
 ) => {
   switch (notification.type) {
     case "follow":
@@ -338,6 +810,79 @@ export const createNotificationItem = (
     case "project_invite":
       return (
         <ProjectInviteNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_request":
+      return (
+        <ProjectJoinRequestNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+
+    case "user_request_accepted":
+      return (
+        <ProjectRequestAcceptedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "user_request_rejected":
+      return (
+        <ProjectRequestRejectedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_invite_accepted":
+      return (
+        <ProjectInviteAcceptedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_invite_rejected":
+      return (
+        <ProjectInviteRejectedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_member_added":
+      return (
+        <ProjectMemberAddedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_member_removed":
+      return (
+        <ProjectMemberRemovedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_role_updated":
+      return (
+        <ProjectRoleUpdatedNotification
+          key={notification.id}
+          notification={notification}
+          markAsRead={markAsRead}
+        />
+      );
+    case "project_deleted":
+      return (
+        <ProjectDeletedNotification
           key={notification.id}
           notification={notification}
           markAsRead={markAsRead}

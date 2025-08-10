@@ -149,6 +149,7 @@ export const groupFollowNotificationsTiered = (notifications: Notification[]): N
       type: "follow_grouped" as NotificationType,
       grouped_count: bucket.length,
       grouped_senders: bucket.slice(0, 2).map((n) => n.sender),
+      grouped_ids: bucket.map((n) => n.id),
     });
   }
 

@@ -1,53 +1,48 @@
+"use server";
+
 import {NotificationType} from "@/types/notifications/notificationType";
 import {createClient} from "@/utils/supabase/server";
-import {NextResponse} from "next/server";
 import type {SupabaseClient} from "@supabase/supabase-js";
 
-interface NotificationRequest {
+export interface SendNotificationBody {
   type: NotificationType;
   recipientId: string;
   referenceId?: string; // For project-related notifications
 }
 
-export async function POST(req: Request) {
+export interface SendNotificationResult {
+  success: boolean;
+  error?: string;
+}
+
+export async function sendNotification(
+  body: SendNotificationBody,
+): Promise<SendNotificationResult> {
   try {
-    const requestData: NotificationRequest = await req.json();
-    const {type, recipientId, referenceId} = requestData;
-
-    // Validate required fields
-    if (!type || !recipientId) {
-      return NextResponse.json(
-        {success: false, error: "Missing required fields: type, recipientId"},
-        {status: 400},
-      );
-    }
-
     const supabase = await createClient();
 
     const {
       data: {user},
     } = await supabase.auth.getUser();
 
-    console.log(user, "user");
-
     if (!user) {
-      return NextResponse.json({success: false, error: "User not found"}, {status: 400});
+      return {success: false, error: "User not authenticated"};
     }
 
-    // Prevent self-notifications (compare against authenticated user)
+    const {type, recipientId, referenceId} = body;
+
+    if (!type || !recipientId) {
+      return {success: false, error: "Missing required fields: type, recipientId"};
+    }
+
     if (user.id === recipientId) {
-      return NextResponse.json(
-        {success: false, error: "Cannot send notification to yourself"},
-        {status: 400},
-      );
+      return {success: false, error: "Cannot send notification to yourself"};
     }
 
-    // Handle different notification types
     switch (type) {
       case "follow":
         return await handleFollowNotification(supabase, user.id, recipientId);
 
-      // Project-related notifications
       case "project_invite":
       case "project_request":
       case "user_request_accepted":
@@ -61,14 +56,11 @@ export async function POST(req: Request) {
         return await handleProjectNotification(supabase, type, user.id, recipientId, referenceId);
 
       default:
-        return NextResponse.json(
-          {success: false, error: "Unsupported notification type"},
-          {status: 400},
-        );
+        return {success: false, error: "Unsupported notification type"};
     }
   } catch (error) {
-    console.error("Notification API error:", error);
-    return NextResponse.json({success: false, error: "Internal server error"}, {status: 500});
+    console.error("sendNotification (server action) error:", error);
+    return {success: false, error: "Internal server error"};
   }
 }
 
@@ -76,7 +68,7 @@ async function handleFollowNotification(
   supabase: SupabaseClient,
   senderId: string,
   recipientId: string,
-) {
+): Promise<SendNotificationResult> {
   const {error} = await supabase.from("notifications").insert([
     {
       recipient_id: recipientId,
@@ -89,13 +81,10 @@ async function handleFollowNotification(
 
   if (error) {
     console.error("Follow notification insert error:", error.message);
-    return NextResponse.json(
-      {success: false, error: "Failed to create notification"},
-      {status: 500},
-    );
+    return {success: false, error: "Failed to create notification"};
   }
 
-  return NextResponse.json({success: true});
+  return {success: true};
 }
 
 async function handleProjectNotification(
@@ -104,20 +93,14 @@ async function handleProjectNotification(
   senderId: string,
   recipientId: string,
   referenceId?: string,
-) {
+): Promise<SendNotificationResult> {
   if (!referenceId) {
-    return NextResponse.json(
-      {success: false, error: "Project notifications require referenceId"},
-      {status: 400},
-    );
+    return {success: false, error: "Project notifications require referenceId"};
   }
 
   let status = "info";
-
   if (type === "project_invite" || type === "project_request") {
     status = "pending";
-  } else {
-    status = "info";
   }
 
   const {error} = await supabase.from("notifications").insert([
@@ -133,11 +116,8 @@ async function handleProjectNotification(
 
   if (error) {
     console.error("Project notification insert error:", error.message);
-    return NextResponse.json(
-      {success: false, error: "Failed to create notification"},
-      {status: 500},
-    );
+    return {success: false, error: "Failed to create notification"};
   }
 
-  return NextResponse.json({success: true});
+  return {success: true};
 }

@@ -8,7 +8,7 @@ export interface Notification {
   type: NotificationType;
   created_at: string;
   is_read: boolean;
-  status: "pending" | "accepted" | "declined" | "expired";
+  status: "pending" | "accepted" | "declined" | "expired" | "info";
   action_taken_at?: string | null;
   sender: {
     id: string;
@@ -39,4 +39,6 @@ export interface Notification {
       uploadedAt: string;
     }[];
   }>;
+  // IDs of notifications represented by a grouped item
+  grouped_ids?: string[];
 }

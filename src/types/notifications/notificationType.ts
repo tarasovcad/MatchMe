@@ -9,11 +9,13 @@ export type NotificationType =
   | "tag"
   // Direct Messages
   | "message"
-  // Project Updates
+  // Project Updates - Clear naming
   | "project_invite"
   | "project_request"
-  | "project_request_accepted"
-  | "project_request_rejected"
+  | "user_request_accepted" // User's request to join was accepted by owner
+  | "user_request_rejected" // User's request to join was rejected by owner
+  | "project_invite_accepted" // Owner's invite was accepted by user
+  | "project_invite_rejected" // Owner's invite was rejected by user
   | "project_member_added"
   | "project_member_removed"
   | "project_role_updated"

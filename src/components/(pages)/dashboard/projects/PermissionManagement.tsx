@@ -49,8 +49,8 @@ import {
 import ProjectRoleBadge, {ProjectRoleBadgeColorKey} from "@/components/ui/ProjectRoleBadge";
 
 // Available permission actions and the order in which we want to display them
-type PermissionKey = "view" | "create" | "update" | "delete";
-const PERMISSION_ORDER: PermissionKey[] = ["view", "create", "update", "delete"];
+type PermissionKey = "view" | "create" | "update" | "delete" | "notification";
+const PERMISSION_ORDER: PermissionKey[] = ["view", "create", "update", "delete", "notification"];
 
 interface PermissionManagementProps {
   projectId: string;
@@ -443,6 +443,9 @@ const PermissionManagement = ({
     const deleteCount = countAllowed("delete");
     const deleteTotal = countPresent("delete");
 
+    const notificationCount = countAllowed("notification");
+    const notificationTotal = countPresent("notification");
+
     return (
       <motion.div
         key={role.id}
@@ -459,7 +462,7 @@ const PermissionManagement = ({
         style={{overflow: "hidden"}}>
         <div
           className="grid gap-4 py-3  hover:bg-muted/50"
-          style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
+          style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
           <div className="flex items-center pl-4">
             <button
               type="button"
@@ -493,6 +496,9 @@ const PermissionManagement = ({
           <div className="flex justify-center items-center text-sm text-muted-foreground">
             {deleteCount}/{deleteTotal}
           </div>
+          <div className="flex justify-center items-center text-sm text-muted-foreground">
+            {notificationCount}/{notificationTotal}
+          </div>
           {/* Action column */}
           <div className="flex justify-center items-center pr-4  group">
             <RoleActionButton
@@ -522,7 +528,7 @@ const PermissionManagement = ({
                     <div
                       key={resourceId}
                       className="grid gap-4 py-2 hover:bg-muted/25"
-                      style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
+                      style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
                       <div className="flex items-center pl-12">
                         <span className="text-sm text-foreground">{resourceId}</span>
                       </div>
@@ -565,6 +571,9 @@ const PermissionManagement = ({
     },
     {
       label: "Delete",
+    },
+    {
+      label: "Notification",
     },
     {
       label: " ", // empty header for actions column
@@ -615,7 +624,7 @@ const PermissionManagement = ({
                 {/* Sticky header */}
                 <div
                   className="grid gap-4 py-3 px-4 bg-muted-header border-b border-border sticky top-0 z-10"
-                  style={{gridTemplateColumns: "repeat(5, minmax(0, 1fr)) 50px"}}>
+                  style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
                   {/* Column headers */}
                   {columnsNames.map((column) => (
                     <div

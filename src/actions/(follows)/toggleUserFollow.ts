@@ -3,6 +3,7 @@ import {qstash} from "@/utils/redis/qstash";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {postProfileInteraction} from "../profiles/profileInteractions";
+import {sendNotification} from "@/actions/notifications/sendNotification";
 
 const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
 
@@ -72,22 +73,10 @@ export async function toggleUserFollow(followingId: string) {
         return {success: false, message: "Error following user"};
       }
 
-      // Send follow notification using the new reusable utility
-      const baseUrl =
-        process.env.NODE_ENV === "development"
-          ? process.env.FAKE_TEST_URL
-          : process.env.NEXT_PUBLIC_SITE_URL;
-
-      qstash
-        .publishJSON({
-          url: `${baseUrl}/api/notifications`,
-          body: {
-            type: "follow",
-            senderId: followerId,
-            recipientId: followingId,
-          },
-        })
-        .catch((err) => console.error("Notification error:", err));
+      await sendNotification({
+        type: "follow",
+        recipientId: followingId,
+      });
 
       result = {success: true, message: "Followed successfully"};
     }

@@ -13,7 +13,6 @@ const NotificationTabs = ({
   onTabChange: (tabId: string) => void;
 }) => {
   const {scrollRef, handleDragScroll} = useDragScroll();
-
   return (
     <div className="relative border-b border-border px-3">
       <div
@@ -57,4 +56,4 @@ const NotificationTabs = ({
   );
 };
 
-export default React.memo(NotificationTabs);
+export default NotificationTabs;

@@ -25,8 +25,10 @@ export const getNotificationTypeGroup = (type: string): string => {
     // Project Updates
     case "project_invite":
     case "project_request":
-    case "project_request_accepted":
-    case "project_request_rejected":
+    case "user_request_accepted":
+    case "user_request_rejected":
+    case "project_invite_accepted":
+    case "project_invite_rejected":
     case "project_member_added":
     case "project_member_removed":
     case "project_role_updated":

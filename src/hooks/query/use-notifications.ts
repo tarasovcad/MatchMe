@@ -26,8 +26,8 @@ type RawNotification = {
 
 type MinimalSender = {id: string};
 
-const NOTIFICATION_TABLE = "mock_notifications";
-const PROFILE_TABLE = "mock_profiles";
+const NOTIFICATION_TABLE = "notifications";
+const PROFILE_TABLE = "profiles";
 
 async function fetchProfilesByIds(ids: string[]): Promise<Record<string, Notification["sender"]>> {
   if (ids.length === 0) return {};
@@ -43,7 +43,6 @@ async function fetchProfilesByIds(ids: string[]): Promise<Record<string, Notific
   return map;
 }
 
-// Simple offset-based pagination (per-page grouping)
 async function fetchNotificationsPage(
   userId: string,
   page: number,
@@ -94,46 +93,49 @@ async function fetchNotificationsPage(
 
   const profilesMap = await fetchProfilesByIds(Array.from(idsSet));
 
-  // Attach sender + project details (same as non-paginated)
-  const final: Notification[] = await Promise.all(
-    grouped.map(async (n) => {
-      const attachSender = (id: string) => profilesMap[id] || {id};
-
-      if (n.type === "follow_grouped") {
-        return {
-          ...n,
-          grouped_senders: (n.grouped_senders || []).map((s) =>
-            attachSender((s as MinimalSender).id),
-          ),
-          sender: attachSender((n.grouped_senders?.[0] as MinimalSender)?.id || ""),
-        } as Notification;
-      }
-
-      if (n.type === "project_invite" && n.reference_id) {
-        try {
-          const {data: projectData} = await supabase
-            .from("projects")
-            .select("id, name, slug")
-            .eq("id", n.reference_id)
-            .single();
-          if (projectData) {
-            return {
-              ...(n as Notification),
-              sender: attachSender(n.sender_id),
-              project: projectData,
-            };
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-
-      return {
-        ...(n as Notification),
-        sender: attachSender(n.sender_id),
-      };
-    }),
+  // Collect project reference IDs (for any project-related notification)
+  const projectRefIds = Array.from(
+    new Set(
+      grouped
+        .map((n) => ("reference_id" in n ? (n as unknown as RawNotification).reference_id : null))
+        .filter((id): id is string => !!id),
+    ),
   );
+
+  const projectsMap: Record<string, {id: string; name: string; slug: string}> = {};
+  if (projectRefIds.length > 0) {
+    const {data: projectsData} = await supabase
+      .from("projects")
+      .select("id, name, slug")
+      .in("id", projectRefIds);
+    (projectsData || []).forEach((p) => {
+      projectsMap[p.id as string] = p as {id: string; name: string; slug: string};
+    });
+  }
+
+  // Attach sender + project details (batched)
+  const final: Notification[] = grouped.map((n) => {
+    const attachSender = (id: string) => profilesMap[id] || {id};
+
+    if (n.type === "follow_grouped") {
+      return {
+        ...n,
+        grouped_senders: (n.grouped_senders || []).map((s) =>
+          attachSender((s as MinimalSender).id),
+        ),
+        sender: attachSender((n.grouped_senders?.[0] as MinimalSender)?.id || ""),
+      } as Notification;
+    }
+
+    const referenceId = (n as unknown as RawNotification).reference_id;
+    const project = referenceId ? projectsMap[referenceId] : undefined;
+
+    return {
+      ...(n as Notification),
+      sender: attachSender(n.sender_id),
+      ...(project ? {project} : {}),
+    };
+  });
 
   return {items: final, rawLength: raw.length};
 }
@@ -167,12 +169,95 @@ export function useInfiniteNotifications(
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: enabled && !!userId,
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
   const items = (infiniteQuery.data?.pages ?? []).flatMap((p) => p.items) as Notification[];
+
+  const queryClient = useQueryClient();
+
+  // Mark specific notifications as read (one or many IDs)
+  const markReadMutation = useMutation({
+    mutationKey: ["notifications", userId, "mark-read"],
+    mutationFn: async (ids: string[]) => {
+      if (!ids || ids.length === 0) return;
+      const {error} = await supabase
+        .from(NOTIFICATION_TABLE)
+        .update({is_read: true})
+        .in("id", ids)
+        .eq("recipient_id", userId);
+      if (error) throw error;
+    },
+    onMutate: (ids) => {
+      queryClient.setQueriesData<InfiniteData<{items: Notification[]; nextPage?: number}>>(
+        {queryKey: ["notifications", userId, "infinite"]},
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((pg) => ({
+              ...pg,
+              items: pg.items.map((n) =>
+                ids.includes(n.id) || n.grouped_ids?.some((gid) => ids.includes(gid))
+                  ? {...n, is_read: true}
+                  : n,
+              ),
+            })),
+          };
+        },
+      );
+    },
+    onSuccess: () => {
+      // Refresh counts
+      queryClient.invalidateQueries({queryKey: ["notifications", userId, "unread-count"]});
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", userId, "grouped-unread-counts"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to mark as read");
+    },
+  });
+
+  // Mark ALL notifications as read for this user
+  const markAllReadMutation = useMutation({
+    mutationKey: ["notifications", userId, "mark-all-read"],
+    mutationFn: async () => {
+      const {error} = await supabase
+        .from(NOTIFICATION_TABLE)
+        .update({is_read: true})
+        .eq("recipient_id", userId)
+        .eq("is_read", false);
+      if (error) throw error;
+    },
+    onMutate: () => {
+      queryClient.setQueriesData<InfiniteData<{items: Notification[]; nextPage?: number}>>(
+        {queryKey: ["notifications", userId, "infinite"]},
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((pg) => ({
+              ...pg,
+              items: pg.items.map((n) => ({...n, is_read: true})),
+            })),
+          };
+        },
+      );
+    },
+    onSuccess: () => {
+      // Refresh counts
+      queryClient.invalidateQueries({queryKey: ["notifications", userId, "unread-count"]});
+      queryClient.invalidateQueries({
+        queryKey: ["notifications", userId, "grouped-unread-counts"],
+      });
+    },
+    onError: () => {
+      toast.error("Failed to mark all as read");
+    },
+  });
 
   return {
     items,
@@ -181,5 +266,8 @@ export function useInfiniteNotifications(
     isLoadingMore: infiniteQuery.isFetchingNextPage,
     hasMore: infiniteQuery.hasNextPage,
     loadMore: () => infiniteQuery.fetchNextPage(),
+    // mutations
+    markAsRead: (ids: string[]) => markReadMutation.mutate(ids),
+    markAllAsRead: () => markAllReadMutation.mutate(),
   };
 }

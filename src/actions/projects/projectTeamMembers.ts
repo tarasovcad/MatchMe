@@ -1,6 +1,6 @@
 "use server";
-
 import {createClient} from "@/utils/supabase/server";
+import {sendNotification} from "@/actions/notifications/sendNotification";
 
 export interface ProjectTeamMemberProfile {
   user_id: string;
@@ -125,20 +125,11 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
       };
     }
 
-    // Create a notification for the invited user
-    const {error: notificationError} = await supabase.from("notifications").insert({
-      recipient_id: data.user_id,
-      sender_id: user.id,
+    await sendNotification({
       type: "project_invite",
-      reference_id: requestData.id, // Reference the project_request ID
-      is_read: false,
+      recipientId: data.user_id,
+      referenceId: data.project_id,
     });
-
-    if (notificationError) {
-      console.error("Error creating notification:", notificationError);
-      // Don't fail the request creation if notification fails
-      // but log it for debugging
-    }
 
     return {
       success: true,

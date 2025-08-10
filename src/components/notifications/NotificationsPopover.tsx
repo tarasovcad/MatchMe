@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {SidebarMenuButton} from "../shadcn/sidebar";
 import {cn} from "@/lib/utils";
 import {CheckCheck, LucideIcon, Maximize2, X} from "lucide-react";
@@ -12,6 +12,9 @@ import NotificationList from "./NotificationList";
 import {getNotificationTypeGroup, NOTIFICATION_GROUPS} from "@/data/tabs/notificationsTabs";
 import {useInfiniteNotifications} from "@/hooks/query/use-notifications";
 import {useQueryClient, type InfiniteData} from "@tanstack/react-query";
+import {useUnreadNotificationsCount} from "@/hooks/query/use-unread-notifications-count";
+import {useNotificationGroupCounts} from "@/hooks/query/use-notification-group-counts";
+import {groupFollowNotificationsTiered} from "@/utils/other/dateGrouping";
 
 type RawNotificationRow = {
   id: string;
@@ -27,7 +30,7 @@ type RawNotificationRow = {
 
 type NotificationsInfinitePage = {items: Notification[]; nextPage?: number};
 
-const NOTIFICATION_TABLE = "mock_notifications";
+const NOTIFICATION_TABLE = "notifications";
 
 const NotificationsPopover = ({
   item,
@@ -37,50 +40,37 @@ const NotificationsPopover = ({
   userSessionId: string;
 }) => {
   const [open, setOpen] = useState(false);
-  const [groupsNames, setGroupsNames] = useState(
-    NOTIFICATION_GROUPS.map((group) => ({...group, number: 0})),
-  );
   const [activeTab, setActiveTab] = useState("all");
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [hasNewNotification, setHasNewNotification] = useState(false);
   const realtimeSubscriptionRef = useRef<{unsubscribe: () => void} | null>(null);
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const notifications = [];
-
+  const {data: unreadCount = 0} = useUnreadNotificationsCount(userSessionId);
+  const {data: groupedCounts} = useNotificationGroupCounts(userSessionId, open);
   const {
-    // items: notifications = [],
+    items: notifications = [],
     isLoadingInitial: isLoading,
     isLoadingMore,
     hasMore,
     loadMore,
+    markAsRead,
+    markAllAsRead,
   } = useInfiniteNotifications(userSessionId, open, {firstPageSize: 50, pageSize: 20});
 
-  const updateNotificationCounts = (notifications: Notification[]) => {
-    const unreadNotifications = notifications.filter((n) => !n.is_read);
-    // Initialize counts
-    const counts: {[key: string]: number} = {all: unreadNotifications.length};
-
-    // Count by type
-    NOTIFICATION_GROUPS.slice(1).forEach((group) => {
-      counts[group.id] = unreadNotifications.filter(
-        (n) => getNotificationTypeGroup(n.type as string) === group.id,
+  const displayGroups = useMemo(() => {
+    if (groupedCounts) {
+      return NOTIFICATION_GROUPS.map((g) => ({...g, number: groupedCounts[g.id] ?? 0}));
+    }
+    const unread = notifications.filter((n) => !n.is_read);
+    const counts: {[key: string]: number} = {all: unread.length};
+    NOTIFICATION_GROUPS.slice(1).forEach((g) => {
+      counts[g.id] = unread.filter(
+        (n) => getNotificationTypeGroup(n.type as string) === g.id,
       ).length;
     });
-
-    // Compute new groups array
-    const newGroups = NOTIFICATION_GROUPS.map((group) => ({
-      ...group,
-      number: counts[group.id] || 0,
-    }));
-
-    // Only update state if something actually changed (shallow compare numbers)
-    const changed = newGroups.some((g, idx) => g.number !== groupsNames[idx]?.number);
-    if (changed) {
-      setGroupsNames(newGroups);
-    }
-  };
+    return NOTIFICATION_GROUPS.map((g) => ({...g, number: counts[g.id] || 0}));
+  }, [groupedCounts, notifications]);
 
   // Supabase Realtime subscription
   useEffect(() => {
@@ -107,17 +97,20 @@ const NotificationsPopover = ({
             // When a new notification is inserted
             const newNotification = payload.new as RawNotificationRow;
 
-            // Fetch the sender details
-            const {data: senderData, error: senderError} = await supabase
-              .from("profiles")
-              .select("id, username, name, profile_image")
-              .eq("id", newNotification.sender_id)
-              .single();
-
-            if (senderError) {
-              console.error("Error fetching sender details:", senderError);
-              return;
-            }
+            const profileKey = ["profile", newNotification.sender_id] as const;
+            const senderData = (await queryClient.fetchQuery({
+              queryKey: profileKey,
+              queryFn: async () => {
+                const {data, error} = await supabase
+                  .from("profiles")
+                  .select("id, username, name, profile_image")
+                  .eq("id", newNotification.sender_id)
+                  .single();
+                if (error) throw error;
+                return data as Notification["sender"];
+              },
+              staleTime: 5 * 60 * 1000,
+            })) as Notification["sender"];
 
             let formattedNotification: Notification = {
               id: newNotification.id,
@@ -132,7 +125,7 @@ const NotificationsPopover = ({
               sender: senderData,
             };
 
-            if (newNotification.type === "project_invite" && newNotification.reference_id) {
+            if (newNotification.reference_id) {
               try {
                 const {data: projectData} = await supabase
                   .from("projects")
@@ -150,35 +143,74 @@ const NotificationsPopover = ({
               }
             }
 
-            // Update infinite cache by prepending to first page
-            queryClient.setQueryData<InfiniteData<NotificationsInfinitePage>>(
-              ["notifications", userSessionId, "infinite"],
+            // Immediate regroup on the first page for smoother UX
+            queryClient.setQueriesData<InfiniteData<NotificationsInfinitePage>>(
+              {queryKey: ["notifications", userSessionId, "infinite"]},
               (prev) => {
                 if (!prev) return prev;
                 const firstPage = prev.pages?.[0];
+                if (!firstPage) return prev;
+
+                const exists = firstPage.items?.some((n) => n.id === formattedNotification.id);
+                if (exists) return prev;
+
+                // Expand any existing grouped follow items back into single follow items
+                const ungroupedFirstPageItems: Notification[] = (firstPage.items || []).flatMap(
+                  (n) => {
+                    if (
+                      n.type === "follow_grouped" &&
+                      Array.isArray(n.grouped_ids) &&
+                      Array.isArray(n.grouped_senders) &&
+                      n.grouped_ids.length > 0
+                    ) {
+                      return n.grouped_ids.map((gid, idx) => ({
+                        id: gid,
+                        type: "follow",
+                        created_at: n.created_at,
+                        sender_id: n.grouped_senders?.[idx]?.id || n.sender_id,
+                        recipient_id: n.recipient_id,
+                        reference_id: null,
+                        is_read: n.is_read,
+                        status: n.status,
+                        action_taken_at: n.action_taken_at,
+                        sender: n.grouped_senders?.[idx] || n.sender,
+                      })) as Notification[];
+                    }
+                    return [n];
+                  },
+                );
+
+                const combined = [formattedNotification, ...ungroupedFirstPageItems];
+                const regrouped = groupFollowNotificationsTiered(combined) as Notification[];
+
+                const updatedFirstPage = {
+                  ...firstPage,
+                  items: regrouped,
+                };
+
                 return {
                   ...prev,
-                  pages: [
-                    {
-                      items: [formattedNotification, ...(firstPage?.items || [])],
-                      nextPage: firstPage?.nextPage,
-                    },
-                    ...prev.pages.slice(1),
-                  ],
+                  pages: [updatedFirstPage, ...prev.pages.slice(1)],
                   pageParams: prev.pageParams,
                 };
               },
             );
-            setHasNewNotification(true);
 
-            // Update notification counts from latest cache
-            const latestInfinite = queryClient.getQueryData<
-              InfiniteData<NotificationsInfinitePage>
-            >(["notifications", userSessionId, "infinite"]);
-            const latestItems: Notification[] = latestInfinite
-              ? latestInfinite.pages.flatMap((p) => p.items)
-              : [];
-            updateNotificationCounts(latestItems);
+            // Refetch from source so grouping is recomputed from raw rows as well
+            await queryClient.invalidateQueries({
+              queryKey: ["notifications", userSessionId, "infinite"],
+            });
+            await queryClient.refetchQueries({
+              queryKey: ["notifications", userSessionId, "infinite"],
+            });
+
+            // Refresh counts queries so tabs and badge stay accurate
+            queryClient.invalidateQueries({
+              queryKey: ["notifications", userSessionId, "unread-count"],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["notifications", userSessionId, "grouped-unread-counts"],
+            });
 
             // Show a toast notification
             toast.info(`New notification from ${senderData.name}`);
@@ -194,36 +226,54 @@ const NotificationsPopover = ({
           },
           (payload) => {
             // When a notification is updated (e.g., marked as read)
-            const updatedNotification = payload.new as Notification;
+            const updated = payload.new as RawNotificationRow;
 
-            queryClient.setQueryData<InfiniteData<NotificationsInfinitePage>>(
-              ["notifications", userSessionId, "infinite"],
+            queryClient.setQueriesData<InfiniteData<NotificationsInfinitePage>>(
+              {queryKey: ["notifications", userSessionId, "infinite"]},
               (prev) => {
                 if (!prev) return prev;
                 return {
                   ...prev,
                   pages: prev.pages.map((pg) => ({
                     ...pg,
-                    items: (pg.items || []).map((n: Notification) =>
-                      n.id === updatedNotification.id ? {...n, ...updatedNotification} : n,
-                    ),
+                    items: (pg.items || []).map((n: Notification) => {
+                      // If this page item is a grouped follow and contains the updated id, only toggle is_read
+                      if (
+                        n.type === "follow_grouped" &&
+                        (n.id === updated.id || (n.grouped_ids || []).includes(updated.id))
+                      ) {
+                        return {...n, is_read: updated.is_read};
+                      }
+                      // For single items, match by id and update is_read (and status if present)
+                      if (n.id === updated.id) {
+                        const next: Notification = {
+                          ...n,
+                          is_read: updated.is_read,
+                        } as Notification;
+                        if (typeof updated.status !== "undefined") {
+                          next.status = updated.status as Notification["status"];
+                        }
+                        if (typeof updated.action_taken_at !== "undefined") {
+                          next.action_taken_at = updated.action_taken_at || null;
+                        }
+                        return next;
+                      }
+                      return n;
+                    }),
                   })),
                   pageParams: prev.pageParams,
                 };
               },
             );
-
-            // Update notification counts
-            const latestInfinite = queryClient.getQueryData<
-              InfiniteData<NotificationsInfinitePage>
-            >(["notifications", userSessionId, "infinite"]);
-            const latestItems: Notification[] = latestInfinite
-              ? latestInfinite.pages.flatMap((p) => p.items)
-              : [];
-            updateNotificationCounts(latestItems);
           },
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR") {
+            console.log("Realtime channel error for notifications");
+          } else if (status === "TIMED_OUT") {
+            console.warn("Realtime channel timeout for notifications");
+          }
+        });
 
       realtimeSubscriptionRef.current = subscription;
     };
@@ -236,7 +286,7 @@ const NotificationsPopover = ({
         realtimeSubscriptionRef.current.unsubscribe();
       }
     };
-  }, [userSessionId, queryClient]);
+  }, [userSessionId, queryClient, open]);
 
   useEffect(() => {
     if (!userSessionId) return;
@@ -244,16 +294,29 @@ const NotificationsPopover = ({
     if (open && !hasLoaded) {
       setHasLoaded(true);
     }
-
-    if (open) {
-      setHasNewNotification(false);
-    }
   }, [open, hasLoaded, userSessionId]);
 
-  // Recompute counts when query data changes
+  // Seed sender profiles into TanStack cache to avoid refetching on realtime
   useEffect(() => {
-    updateNotificationCounts(notifications);
-  }, [notifications]);
+    if (!notifications || notifications.length === 0) return;
+
+    const uniqueSenders = new Map<string, Notification["sender"]>();
+
+    for (const n of notifications) {
+      if (n.sender) {
+        uniqueSenders.set(n.sender.id, n.sender);
+      }
+      if (n.grouped_senders && n.grouped_senders.length > 0) {
+        for (const s of n.grouped_senders) {
+          uniqueSenders.set(s.id, s);
+        }
+      }
+    }
+
+    uniqueSenders.forEach((sender, id) => {
+      queryClient.setQueryData(["profile", id], sender);
+    });
+  }, [notifications, queryClient]);
 
   const getFilteredNotifications = () => {
     if (activeTab === "all") {
@@ -292,10 +355,9 @@ const NotificationsPopover = ({
           tooltip={item.title}
           isActive={item.isActive}
           onClick={() => setOpen(true)}>
-          {(groupsNames[0].number > 0 || hasNewNotification) && (
+          {unreadCount > 0 && (
             <div className="top-[17px] left-[17px] absolute bg-primary rounded-full outline-[1.8px] outline-sidebar-background w-[6px] h-[6px]"></div>
           )}
-
           {item.icon && <item.icon className="stroke-[2.1px]" />}
           {item.title && <span>{item.title}</span>}
         </SidebarMenuButton>
@@ -321,7 +383,7 @@ const NotificationsPopover = ({
             </div>
             {/* Tabs */}
             <NotificationTabs
-              groups={groupsNames}
+              groups={displayGroups}
               activeTab={activeTab}
               onTabChange={setActiveTab}
             />
@@ -335,17 +397,21 @@ const NotificationsPopover = ({
               isLoading={isLoading}
               isLoadingMore={isLoadingMore}
               notifications={getFilteredNotifications()}
-              markAsRead={() => {}}
+              markAsRead={(ids) => markAsRead(ids)}
             />
           </div>
 
           {/* Footer */}
           <div className="flex justify-between items-center gap-2 bg-background border-t border-border p-3 rounded-b-[12px] ">
-            <Button variant={"outline"} size={"xs"}>
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              onClick={() => markAllAsRead()}
+              disabled={unreadCount === 0}>
               <CheckCheck size="16" />
               Mark all as read
             </Button>
-            <Button variant={"secondary"} size={"xs"}>
+            <Button variant={"secondary"} size={"xs"} disabled>
               View all
             </Button>
           </div>

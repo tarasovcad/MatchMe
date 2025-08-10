@@ -16,7 +16,7 @@ const NotificationList = ({
   notifications: Notification[];
   isLoading: boolean;
   isLoadingMore?: boolean;
-  markAsRead: (id: string) => void;
+  markAsRead: (ids: string[]) => void;
 }) => {
   if (isLoading) {
     return (

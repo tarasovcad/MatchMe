@@ -1,6 +1,7 @@
 "use server";
 
 import {createClient} from "@/utils/supabase/server";
+import {sendNotification} from "../notifications/sendNotification";
 
 interface HandleProjectRequestParams {
   requestId: string;
@@ -25,7 +26,6 @@ export async function handleProjectRequest({
   try {
     const supabase = await createClient();
 
-    // Get current user
     const {
       data: {user},
       error: userError,
@@ -38,8 +38,6 @@ export async function handleProjectRequest({
       };
     }
 
-    // Note: requestId is actually the project ID (from notification.reference_id)
-    // We need to find the actual project request using project_id and user_id
     const {data: projectRequest, error: fetchError} = await supabase
       .from("project_requests")
       .select("*")
@@ -91,6 +89,13 @@ export async function handleProjectRequest({
         console.error("Error updating notification:", notificationError);
         // Don't fail the entire operation if notification update fails
       }
+
+      // Send notification to the user who sent the invite
+      await sendNotification({
+        type: "project_invite_rejected",
+        recipientId: projectRequest.created_by,
+        referenceId: projectRequest.project_id,
+      });
 
       return {
         success: true,
@@ -153,7 +158,7 @@ export async function handleProjectRequest({
         displayRole = defaultRole.name; // "Member"
       }
 
-      // Add the user to the project team first (while request is still pending)
+      // Add the user to the project team
       const {error: teamMemberError} = await supabase.from("project_team_members").insert({
         project_id: projectRequest.project_id,
         user_id: user.id,
@@ -184,21 +189,6 @@ export async function handleProjectRequest({
         })
         .eq("id", projectRequest.id);
 
-      if (updateError) {
-        console.error("Error updating project request:", updateError);
-        // Try to remove the team member we just added
-        await supabase
-          .from("project_team_members")
-          .delete()
-          .eq("project_id", projectRequest.project_id)
-          .eq("user_id", user.id);
-
-        return {
-          success: false,
-          message: "Failed to complete acceptance process",
-        };
-      }
-
       // Update the corresponding notification status
       const {error: notificationError} = await supabase
         .from("notifications")
@@ -214,6 +204,13 @@ export async function handleProjectRequest({
         console.error("Error updating notification:", notificationError);
         // Don't fail the entire operation if notification update fails
       }
+
+      // Notify the inviter that the invite was accepted
+      await sendNotification({
+        type: "project_invite_accepted",
+        recipientId: projectRequest.created_by,
+        referenceId: projectRequest.project_id,
+      });
 
       return {
         success: true,
