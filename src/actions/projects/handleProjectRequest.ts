@@ -2,6 +2,7 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {sendNotification} from "../notifications/sendNotification";
+import {notifyOnNewProjectMember} from "./notifyOnNewProjectMember";
 
 interface HandleProjectRequestParams {
   requestId: string;
@@ -40,14 +41,12 @@ export async function handleProjectRequest({
 
     const {data: projectRequest, error: fetchError} = await supabase
       .from("project_requests")
-      .select("*")
+      .select("id, project_id, created_by, created_at, position_id")
       .eq("project_id", requestId)
       .eq("user_id", user.id)
       .eq("status", "pending")
       .eq("direction", "invite")
       .single();
-
-    console.log("projectRequest", projectRequest);
 
     if (fetchError || !projectRequest) {
       return {
@@ -109,13 +108,30 @@ export async function handleProjectRequest({
     }
 
     if (action === "accept") {
-      // First, get the default role for the project
-      const {data: defaultRole, error: roleError} = await supabase
-        .from("project_roles")
-        .select("id, name")
-        .eq("project_id", projectRequest.project_id)
-        .eq("is_default", true)
-        .single();
+      // Fetch default role, profile, and (optional) position concurrently
+      const [defaultRoleRes, userProfileRes, assignedPositionRes] = await Promise.all([
+        supabase
+          .from("project_roles")
+          .select("id, name")
+          .eq("project_id", projectRequest.project_id)
+          .eq("is_default", true)
+          .single(),
+        supabase.from("profiles").select("public_current_role").eq("id", user.id).single(),
+        projectRequest.position_id
+          ? supabase
+              .from("project_open_positions")
+              .select("id, title")
+              .eq("id", projectRequest.position_id)
+              .single()
+          : Promise.resolve({data: null, error: null} as const),
+      ]);
+
+      const {data: defaultRole, error: roleError} = defaultRoleRes;
+      const {data: userProfile} = userProfileRes;
+      const {data: assignedPosition} = assignedPositionRes as {
+        data: {id: string; title: string} | null;
+        error: unknown;
+      };
 
       if (roleError || !defaultRole) {
         console.error("Error fetching default role:", roleError);
@@ -125,37 +141,12 @@ export async function handleProjectRequest({
         };
       }
 
-      // Get user's current role from profile and position details if assigned
-      const {data: userProfile} = await supabase
-        .from("profiles")
-        .select("public_current_role")
-        .eq("id", user.id)
-        .single();
-
-      let assignedPosition = null;
-      if (projectRequest.position_id) {
-        const {data: position} = await supabase
-          .from("project_open_positions")
-          .select("id, title")
-          .eq("id", projectRequest.position_id)
-          .single();
-        assignedPosition = position;
-      }
-
       // Determine display role using priority logic
-      let displayRole = null;
-
-      // Priority 1: Use assigned position title
+      let displayRole: string = defaultRole.name;
       if (assignedPosition) {
-        displayRole = assignedPosition.title; // "Backend Developer"
-      }
-      // Priority 2: Use user's current role from profile
-      else if (userProfile?.public_current_role) {
-        displayRole = userProfile.public_current_role; // "Full Stack Developer"
-      }
-      // Priority 3: Default to permission role
-      else {
-        displayRole = defaultRole.name; // "Member"
+        displayRole = assignedPosition.title;
+      } else if (userProfile?.public_current_role) {
+        displayRole = userProfile.public_current_role;
       }
 
       // Add the user to the project team
@@ -189,28 +180,35 @@ export async function handleProjectRequest({
         })
         .eq("id", projectRequest.id);
 
-      // Update the corresponding notification status
-      const {error: notificationError} = await supabase
-        .from("notifications")
-        .update({
-          status: "accepted",
-          action_taken_at: new Date().toISOString(),
-        })
-        .eq("reference_id", requestId)
-        .eq("recipient_id", user.id)
-        .eq("type", "project_invite");
-
-      if (notificationError) {
-        console.error("Error updating notification:", notificationError);
-        // Don't fail the entire operation if notification update fails
+      if (updateError) {
+        console.error("Error updating project request:", updateError);
+        return {
+          success: false,
+          message: "Failed to update project request",
+        };
       }
 
-      // Notify the inviter that the invite was accepted
-      await sendNotification({
-        type: "project_invite_accepted",
-        recipientId: projectRequest.created_by,
-        referenceId: projectRequest.project_id,
-      });
+      await Promise.allSettled([
+        supabase
+          .from("notifications")
+          .update({
+            status: "accepted",
+            action_taken_at: new Date().toISOString(),
+          })
+          .eq("reference_id", requestId)
+          .eq("recipient_id", user.id)
+          .eq("type", "project_invite"),
+        sendNotification({
+          type: "project_invite_accepted",
+          recipientId: projectRequest.created_by,
+          referenceId: projectRequest.project_id,
+        }),
+        notifyOnNewProjectMember({
+          projectId: projectRequest.project_id,
+          newMemberUserId: user.id,
+          excludeUserIds: [projectRequest.created_by],
+        }),
+      ]);
 
       return {
         success: true,
