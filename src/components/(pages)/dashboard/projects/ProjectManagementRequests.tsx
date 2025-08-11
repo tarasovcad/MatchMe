@@ -4,25 +4,7 @@ import SimpleInput from "@/components/ui/form/SimpleInput";
 import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
 import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
-import {
-  Plus,
-  User2,
-  Calendar,
-  Circle,
-  ChevronDown,
-  Trash2,
-  MessageCircle,
-  UserPlus,
-  UserCheck,
-  Briefcase,
-  Clock,
-  MapPin,
-  Globe,
-  ExternalLink,
-  Sparkles,
-  Award,
-  TrendingUp,
-} from "lucide-react";
+import {User2, Calendar, Circle, ChevronDown, Trash2, MessageCircle, Briefcase} from "lucide-react";
 import React, {useState, useMemo} from "react";
 import {useProjectRequests} from "@/hooks/query/projects/use-project-requests";
 import {motion, AnimatePresence} from "framer-motion";
@@ -51,28 +33,22 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import {Skeleton} from "@/components/shadcn/skeleton";
 import {Checkbox} from "@/components/shadcn/checkbox";
 import {formatHumanDate} from "@/functions/formatDate";
-import {
-  renderOrDash,
-  createProfileLink,
-  renderSkills,
-  getOptionTitle,
-  removeProtocol,
-} from "@/utils/tableHelpers";
+import {renderOrDash, createProfileLink} from "@/utils/tableHelpers";
 import Link from "next/link";
 import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
-import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
-import {LocationWithFlag} from "../../profiles/ProfileDetails";
+import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
 
 interface ProjectRequest {
   id: string;
   project_id: string;
   user_id: string;
   created_by: string;
+  created_at: string;
+  updated_at: string;
   position_id?: string;
   direction: "invite" | "application";
   status: "pending" | "accepted" | "rejected" | "cancelled";
-  created_at: string;
-  updated_at: string;
+  role_id?: string;
   user_name: string;
   user_username: string;
   user_profile_image: {
@@ -81,13 +57,6 @@ interface ProjectRequest {
     fileSize: number;
     uploadedAt: string;
   }[];
-  user_time_commitment?: string;
-  user_location?: string;
-  user_languages?: string[];
-  user_personal_website?: string;
-  user_skills?: string[];
-  user_years_of_experience?: number;
-  user_seniority_level?: string;
   created_by_name: string;
   created_by_username: string;
   created_by_profile_image: {
@@ -97,6 +66,9 @@ interface ProjectRequest {
     uploadedAt: string;
   }[];
   position_title?: string;
+  // Cooldown/resend fields
+  resend_count: number;
+  next_allowed_at: string | null;
 }
 
 const ProjectManagementRequests = ({project, user}: {project: Project; user: User}) => {
@@ -109,6 +81,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 
   const {data: requests, isLoading: isRequestsLoading} = useProjectRequests(project.id);
+  const manageRequestMutation = useManageProjectRequest();
   console.log(requests);
   // Column state management
   const {
@@ -119,6 +92,14 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
     columnVisibility,
     setColumnVisibility,
   } = usePersistedTableColumns("requestsTablePrefs");
+
+  const effectiveColumnVisibility = useMemo(() => {
+    const visibility = {...columnVisibility};
+    if (activeTab === "received") {
+      visibility["created_by_name"] = false;
+    }
+    return visibility;
+  }, [columnVisibility, activeTab]);
 
   // Filter requests based on active tab
   const filteredRequests = useMemo(() => {
@@ -143,18 +124,10 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
         request.user_username.toLowerCase().includes(q) ||
         request.status.toLowerCase().includes(q) ||
         request.direction.toLowerCase().includes(q) ||
-        request.created_by_name.toLowerCase().includes(q) ||
-        request.created_by_username.toLowerCase().includes(q) ||
+        (request.created_by_name && request.created_by_name.toLowerCase().includes(q)) ||
+        (request.created_by_username && request.created_by_username.toLowerCase().includes(q)) ||
         (request.position_id && request.position_id.toLowerCase().includes(q)) ||
-        (request.position_title && request.position_title.toLowerCase().includes(q)) ||
-        (request.user_location && request.user_location.toLowerCase().includes(q)) ||
-        (request.user_personal_website &&
-          request.user_personal_website.toLowerCase().includes(q)) ||
-        (request.user_seniority_level && request.user_seniority_level.toLowerCase().includes(q)) ||
-        (request.user_languages &&
-          request.user_languages.some((lang: string) => lang.toLowerCase().includes(q))) ||
-        (request.user_skills &&
-          request.user_skills.some((skill: string) => skill.toLowerCase().includes(q)))
+        (request.position_title && request.position_title.toLowerCase().includes(q))
       );
     });
   }, [query, filteredRequests]);
@@ -252,135 +225,6 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       size: 200,
       minSize: 200,
     },
-
-    {
-      accessorKey: "user_time_commitment",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Time Commitment</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const timeCommitmentValue = getOptionTitle(
-          row.original.user_time_commitment ?? "",
-          timeCommitment,
-        );
-        return renderOrDash(timeCommitmentValue);
-      },
-      size: 120,
-      minSize: 100,
-    },
-    {
-      accessorKey: "user_location",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <MapPin className="w-3.5 h-3.5" />
-          <span>Location</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const location = row.original.user_location;
-        return location ? <LocationWithFlag location={String(location)} /> : renderOrDash(location);
-      },
-      size: 150,
-      minSize: 150,
-    },
-    {
-      accessorKey: "user_languages",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <Globe className="w-3.5 h-3.5" />
-          <span>Languages</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const languages = row.original.user_languages;
-        return renderSkills(languages || [], 2);
-      },
-      size: 180,
-      minSize: 150,
-    },
-    {
-      accessorKey: "user_personal_website",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <ExternalLink className="w-3.5 h-3.5" />
-          <span>Website</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const website = row.original.user_personal_website;
-
-        if (!website) {
-          return renderOrDash(website);
-        }
-
-        const cleanUrl = removeProtocol(website);
-        return (
-          <Link
-            href={website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline decoration-secondary">
-            {cleanUrl}
-          </Link>
-        );
-      },
-      minSize: 150,
-    },
-
-    {
-      accessorKey: "user_skills",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Skills</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const skills = row.original.user_skills;
-        return renderSkills(skills || [], 3);
-      },
-      size: 250,
-      minSize: 200,
-    },
-    {
-      accessorKey: "user_years_of_experience",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <Award className="w-3.5 h-3.5" />
-          <span>Experience</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const years = row.original.user_years_of_experience;
-        return years ? (
-          <span className="text-sm">
-            {years} {years === 1 ? "year" : "years"}
-          </span>
-        ) : (
-          renderOrDash(years)
-        );
-      },
-      size: 120,
-      minSize: 100,
-    },
-    {
-      accessorKey: "user_seniority_level",
-      header: () => (
-        <div className="flex items-center gap-1 leading-none">
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span>Seniority</span>
-        </div>
-      ),
-      cell: ({row}) => {
-        const seniority = row.original.user_seniority_level;
-        return seniority ? <span className="text-sm">{seniority}</span> : renderOrDash(seniority);
-      },
-      size: 120,
-      minSize: 100,
-    },
     {
       accessorKey: "created_by_name",
       header: () => (
@@ -445,7 +289,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Calendar className="w-3.5 h-3.5" />
-          <span>Created At</span>
+          <span>{activeTab === "received" ? "Received At" : "Sent At"}</span>
         </div>
       ),
       cell: ({row}) => {
@@ -476,31 +320,41 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       header: "",
       cell: ({row}) => {
         const request = row.original as ProjectRequest;
+        console.log(request);
+        const handleAcceptRequest = () =>
+          manageRequestMutation.mutate({
+            requestId: request.id,
+            action: "accept",
+            projectId: project.id,
+          });
 
-        const handleAcceptRequest = () => {
-          console.log("Accept request:", request.id);
-          // TODO: Implement accept request logic
-        };
+        const handleRejectRequest = () =>
+          manageRequestMutation.mutate({
+            requestId: request.id,
+            action: "reject",
+            projectId: project.id,
+          });
 
-        const handleRejectRequest = () => {
-          console.log("Reject request:", request.id);
-          // TODO: Implement reject request logic
-        };
+        const handleCancelInvitation = () =>
+          manageRequestMutation.mutate({
+            requestId: request.id,
+            action: "cancel",
+            projectId: project.id,
+          });
 
-        const handleCancelInvitation = () => {
-          console.log("Cancel invitation:", request.id);
-          // TODO: Implement cancel invitation logic
-        };
+        const handleResendInvitation = () =>
+          manageRequestMutation.mutate({
+            requestId: request.id,
+            action: "resend",
+            projectId: project.id,
+          });
 
-        const handleResendInvitation = () => {
-          console.log("Resend invitation:", request.id);
-          // TODO: Implement resend invitation logic
-        };
-
-        const handleDeleteRequest = () => {
-          console.log("Delete request:", request.id);
-          // TODO: Implement delete request logic
-        };
+        const handleReinvite = () =>
+          manageRequestMutation.mutate({
+            requestId: request.id,
+            action: "reinvite",
+            projectId: project.id,
+          });
 
         const handleSendMessage = () => {
           console.log("Send message to:", request.user_username);
@@ -513,12 +367,14 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
             requestStatus={request.status}
             userName={request.user_name}
             userUsername={request.user_username}
+            resendCount={request.resend_count}
+            nextAllowedAt={request.next_allowed_at}
             onAcceptRequest={handleAcceptRequest}
             onRejectRequest={handleRejectRequest}
             onCancelInvitation={handleCancelInvitation}
             onResendInvitation={handleResendInvitation}
-            onDeleteRequest={handleDeleteRequest}
             onSendMessage={handleSendMessage}
+            onReinvite={handleReinvite}
           />
         );
       },
@@ -537,7 +393,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       rowSelection,
       columnOrder,
       columnSizing,
-      columnVisibility,
+      columnVisibility: effectiveColumnVisibility,
     },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
@@ -580,7 +436,14 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <ColumnViewPopover table={table} hiddenColumnIds={["user_name", "actions"]} />
+      <ColumnViewPopover
+        table={table}
+        hiddenColumnIds={
+          activeTab === "received"
+            ? ["user_name", "actions", "created_by_name"]
+            : ["user_name", "actions"]
+        }
+      />
       <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
     </div>
   );
@@ -605,28 +468,6 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       size: 200,
     },
     {
-      id: "direction",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-8" />
-        </div>
-      ),
-      cell: <Skeleton className="h-6 w-16 rounded-[5px]" />,
-      size: 120,
-    },
-    {
-      id: "status",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      ),
-      cell: <Skeleton className="h-6 w-20 rounded-[5px]" />,
-      size: 120,
-    },
-    {
       id: "position_title",
       header: (
         <div className="flex items-center gap-1">
@@ -636,94 +477,6 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       ),
       cell: <Skeleton className="h-4 w-24" />,
       size: 200,
-    },
-    {
-      id: "user_work_availability",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-20" />
-        </div>
-      ),
-      cell: <Skeleton className="h-4 w-16" />,
-      size: 120,
-    },
-    {
-      id: "user_location",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ),
-      cell: <Skeleton className="h-4 w-20" />,
-      size: 150,
-    },
-    {
-      id: "user_languages",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-18" />
-        </div>
-      ),
-      cell: (
-        <div className="flex flex-wrap gap-1 items-center">
-          <Skeleton className="h-5 w-12 rounded-[4px]" />
-          <Skeleton className="h-5 w-10 rounded-[4px]" />
-        </div>
-      ),
-      size: 180,
-    },
-    {
-      id: "user_personal_website",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ),
-      cell: <Skeleton className="h-4 w-12" />,
-      size: 100,
-    },
-    {
-      id: "user_skills",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      ),
-      cell: (
-        <div className="flex flex-wrap gap-1 items-center">
-          <Skeleton className="h-5 w-16 rounded-[4px]" />
-          <Skeleton className="h-5 w-14 rounded-[4px]" />
-          <Skeleton className="h-5 w-12 rounded-[4px]" />
-        </div>
-      ),
-      size: 250,
-    },
-    {
-      id: "user_years_of_experience",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-20" />
-        </div>
-      ),
-      cell: <Skeleton className="h-4 w-16" />,
-      size: 120,
-    },
-    {
-      id: "user_seniority_level",
-      header: (
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-3.5 w-3.5" />
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ),
-      cell: <Skeleton className="h-4 w-18" />,
-      size: 120,
     },
     {
       id: "created_by_name",
@@ -740,6 +493,17 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
         </div>
       ),
       size: 200,
+    },
+    {
+      id: "status",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: <Skeleton className="h-6 w-20 rounded-[5px]" />,
+      size: 120,
     },
     {
       id: "created_at",

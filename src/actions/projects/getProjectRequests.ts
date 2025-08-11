@@ -1,6 +1,5 @@
 "use server";
 
-import {MatchMeUser} from "@/types/user/matchMeUser";
 import {createClient} from "@/utils/supabase/server";
 
 interface ProfileRequest {
@@ -13,13 +12,6 @@ interface ProfileRequest {
     uploadedAt: string;
     url: string;
   }[];
-  time_commitment?: string;
-  location?: string;
-  languages?: string[];
-  personal_website?: string;
-  skills?: string[];
-  years_of_experience?: number;
-  seniority_level?: string;
 }
 
 export async function getProjectRequests(projectId: string) {
@@ -53,7 +45,7 @@ export async function getProjectRequests(projectId: string) {
   const userIds = Array.from(userIdsSet);
   const positionIds = Array.from(positionIdsSet);
 
-  // 3. Fetch user profiles if we have user IDs
+  // 3. Fetch user basic profiles if we have user IDs
   let profiles: ProfileRequest[] = [];
   if (userIds.length > 0) {
     const {data: profilesData, error: profilesError} = await supabase
@@ -63,14 +55,7 @@ export async function getProjectRequests(projectId: string) {
         id,
         name,
         username,
-        profile_image,
-        time_commitment,
-        location,
-        languages,
-        personal_website,
-        skills,
-        years_of_experience,
-        seniority_level
+        profile_image
       `,
       )
       .in("id", userIds);
@@ -103,7 +88,7 @@ export async function getProjectRequests(projectId: string) {
   const profileMap = new Map(profiles.map((profile) => [profile.id, profile]));
   const positionMap = new Map(positions.map((position) => [position.id, position]));
 
-  // 6. Enhance requests with user profile data and position titles
+  // 6. Enhance requests with minimal user identity and position title
   const enhancedRequests = requests.map((request) => {
     const userProfile = request.user_id ? profileMap.get(request.user_id) : null;
     const createdByProfile = request.created_by ? profileMap.get(request.created_by) : null;
@@ -111,17 +96,10 @@ export async function getProjectRequests(projectId: string) {
 
     return {
       ...request,
-      // User who made the request
+      // User who made the request (basic identity only)
       user_name: userProfile?.name || null,
       user_username: userProfile?.username || null,
       user_profile_image: userProfile?.profile_image || null,
-      user_time_commitment: userProfile?.time_commitment || null,
-      user_location: userProfile?.location || null,
-      user_languages: userProfile?.languages || null,
-      user_personal_website: userProfile?.personal_website || null,
-      user_skills: userProfile?.skills || null,
-      user_years_of_experience: userProfile?.years_of_experience || null,
-      user_seniority_level: userProfile?.seniority_level || null,
       // User who created the request (if different)
       created_by_name: createdByProfile?.name || null,
       created_by_username: createdByProfile?.username || null,

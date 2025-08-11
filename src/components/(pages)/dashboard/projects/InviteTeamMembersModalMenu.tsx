@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {useForm, FormProvider} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -21,14 +21,14 @@ import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import UserSearchDropdown from "@/components/ui/form/UserSearchDropdown";
 import {toast} from "sonner";
 import SelectInputWithSearch from "@/components/ui/form/SelectInputWithSearch";
-import {createProjectRequest} from "@/actions/projects/projectTeamMembers";
+import {useCreateProjectRequest} from "@/hooks/query/projects/use-create-project-request";
 import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
 import {Member} from "./ProjectManagementTeamMembers";
 
 const inviteTeamMemberSchema = z.object({
   searchUsers: z.string().trim(),
   _selectedUserId: z.string().min(1, "Please select a user to invite"),
-  role: z.string().nonempty("Please select a role"),
+  role: z.string().optional(),
   position: z.string().optional(),
   message: z
     .string()
@@ -43,6 +43,7 @@ interface SimpleProjectRole {
   id: string;
   name: string;
   badge_color: string | null;
+  is_default: boolean;
 }
 
 interface InviteTeamMembersModalMenuProps {
@@ -73,7 +74,7 @@ const InviteTeamMembersModalMenu = ({
     defaultValues: {
       searchUsers: "",
       _selectedUserId: "",
-      role: "Member",
+      role: "",
       position: "",
       message: "",
     },
@@ -83,14 +84,25 @@ const InviteTeamMembersModalMenu = ({
     handleSubmit,
     formState: {isValid},
     reset,
+    setValue,
   } = methods;
 
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createInviteMutation = useCreateProjectRequest();
+
+  // Update role field when availableRoles becomes available
+  useEffect(() => {
+    if (availableRoles.length > 0) {
+      const defaultRole = availableRoles.find((role) => role.is_default === true);
+      if (defaultRole) {
+        setValue("role", defaultRole.id);
+      }
+    }
+  }, [availableRoles, setValue]);
 
   // Create list of user IDs to exclude from search (current members + pending requests)
   const excludeUserIds = [...allMembers.map((member) => member.id), ...userPendingRequests];
-
   const submitAndClose = handleSubmit(async (data) => {
     if (!data._selectedUserId) {
       toast.error("Please select a user to invite");
@@ -100,19 +112,19 @@ const InviteTeamMembersModalMenu = ({
     setIsSubmitting(true);
 
     try {
-      const result = await createProjectRequest({
+      // Use selected role or fall back to default role
+      const selectedRole = data.role || availableRoles.find((role) => role.is_default === true)?.id;
+      await createInviteMutation.mutateAsync({
         project_id: projectId,
         user_id: data._selectedUserId,
         position_id: data.position || undefined,
+        role_id: selectedRole || undefined,
       });
 
-      if (result.success) {
+      if (!createInviteMutation.isError) {
         onInviteUser?.(data);
         reset();
-        toast.success("Invite sent successfully");
         setOpen(false);
-      } else {
-        toast.error(result.error || "Failed to send invite");
       }
     } catch (error) {
       console.error("Error sending invite:", error);
@@ -135,7 +147,7 @@ const InviteTeamMembersModalMenu = ({
     () =>
       availableRoles
         .filter((role) => role.name.toLowerCase() !== "owner") // Don't allow inviting as owner
-        .map((role) => ({title: role.name})),
+        .map((role) => ({title: role.name, value: role.id})),
     [availableRoles],
   );
 

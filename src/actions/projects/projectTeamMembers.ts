@@ -35,6 +35,7 @@ export interface CreateProjectRequestData {
   project_id: string;
   user_id: string;
   position_id?: string;
+  role_id?: string;
 }
 
 /**
@@ -111,8 +112,11 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
         user_id: data.user_id,
         created_by: user.id,
         position_id: data.position_id || null,
+        role_id: data.role_id || null,
         direction: "invite", // This is an invite from project to user
         status: "pending",
+        last_sent_at: new Date().toISOString(),
+        next_allowed_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
       })
       .select()
       .single();
@@ -178,7 +182,7 @@ export const getProjectTeamMembersProfiles = async (projectId: string) => {
     // 2. Fetch all project roles
     const {data: roles, error: rolesError} = await supabase
       .from("project_roles")
-      .select("id, name, badge_color")
+      .select("id, name, badge_color, is_default")
       .eq("project_id", projectId);
 
     if (rolesError) {

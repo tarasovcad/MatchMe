@@ -1,28 +1,25 @@
-import React, {useState} from "react";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/shadcn/popover";
-import {cn} from "@/lib/utils";
+import React from "react";
 import {
-  MoreVertical,
-  Check,
-  X,
   Eye,
   MessageCircle,
   Copy,
-  Trash2,
   RefreshCw,
   UserX,
   Pin,
   ThumbsUpIcon,
   ThumbsDownIcon,
+  Archive,
 } from "lucide-react";
 import {toast} from "sonner";
+import OptionsPopover, {OptionsPopoverItem} from "@/components/ui/options/OptionsPopover";
+import {formatDateAbsolute} from "@/functions/formatDate";
 
 export type ProjectRequestActions = {
   onAcceptRequest?: () => void;
   onRejectRequest?: () => void;
   onCancelInvitation?: () => void;
   onResendInvitation?: () => void;
-  onDeleteRequest?: () => void;
+  onReinvite?: () => void;
   onSendMessage?: () => void;
   onViewProfile?: () => void;
   onCopyProfileLink?: () => void;
@@ -33,6 +30,8 @@ export type ProjectRequestsActionsPopoverProps = ProjectRequestActions & {
   requestStatus: "pending" | "accepted" | "rejected" | "cancelled";
   userName: string;
   userUsername: string;
+  resendCount?: number;
+  nextAllowedAt?: string | null;
   trigger?: React.ReactNode;
 };
 
@@ -45,21 +44,20 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
   onRejectRequest,
   onCancelInvitation,
   onResendInvitation,
-  onDeleteRequest,
+  onReinvite,
   onSendMessage,
   onViewProfile,
   onCopyProfileLink,
+  resendCount = 0,
+  nextAllowedAt,
   trigger,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   const handleViewProfile = () => {
     if (onViewProfile) {
       onViewProfile();
     } else {
       window.open(`/profiles/${userUsername}`, "_blank");
     }
-    setIsOpen(false);
   };
 
   const handleCopyProfileLink = () => {
@@ -70,61 +68,91 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
       navigator.clipboard.writeText(`${origin}/profiles/${userUsername}`);
       toast.success("Profile link copied to clipboard");
     }
-    setIsOpen(false);
   };
 
   const handleSendMessage = () => {
     onSendMessage?.();
-    setIsOpen(false);
   };
 
   const handleAcceptRequest = () => {
     onAcceptRequest?.();
     toast.success(`${userName}'s request has been accepted`);
-    setIsOpen(false);
   };
 
   const handleRejectRequest = () => {
     onRejectRequest?.();
     toast.success(`${userName}'s request has been rejected`);
-    setIsOpen(false);
   };
 
   const handleCancelInvitation = () => {
     onCancelInvitation?.();
     toast.success(`Invitation to ${userName} has been cancelled`);
-    setIsOpen(false);
   };
 
   const handleResendInvitation = () => {
     onResendInvitation?.();
-    toast.success(`Invitation resent to ${userName}`);
-    setIsOpen(false);
   };
 
-  const handleDeleteRequest = () => {
-    onDeleteRequest?.();
-    toast.success("Request removed");
-    setIsOpen(false);
+  const handleReinvite = () => {
+    onReinvite?.();
+  };
+
+  const handleArchiveRequest = () => {
+    // TODO: implement archive when backend is ready
+    console.log("Archive request for:", userUsername);
   };
 
   const isReceived = requestDirection === "application";
   const isSent = requestDirection === "invite";
   const isPending = requestStatus === "pending";
 
-  const menuItems: {
-    icon: React.ElementType;
-    label: string;
-    onClick?: () => void;
-    accent?: boolean;
-    disabled?: boolean;
-    separator?: boolean;
-  }[] = [];
+  // Resend availability and description
+  const now = typeof window !== "undefined" ? new Date() : null;
+  const nextAtDate = nextAllowedAt ? new Date(nextAllowedAt) : null;
+  const isOverLimit = resendCount >= 5;
+  const isCoolingDown = !!(nextAtDate && now && nextAtDate.getTime() > now.getTime());
+  const canResend = isSent && isPending && !isOverLimit && !isCoolingDown;
 
-  // Actions for Received Applications (someone wants to join)
+  const getResendWaitText = (count: number): string => {
+    if (count <= 0)
+      return "You can try again in 24 hours. A short pause helps avoid accidental double-sends.";
+    if (count === 1) return "Please check back in 3 days. Extra time helps the recipient respond.";
+    if (count === 2 || count === 3 || count === 4)
+      return "You’ll be able to resend in 7 days. At this stage, resends are limited to weekly to keep outreach respectful and effective.";
+    return "Resend limit reached for this invite.";
+  };
+
+  const getNextWindowAfterText = (count: number): string => {
+    if (count <= 0) return "3 days";
+    if (count === 1) return "7 days";
+    if (count === 2 || count === 3) return "7 days";
+    return "a long time";
+  };
+
+  let resendDescription: string | undefined = undefined;
+  if (isOverLimit) {
+    resendDescription =
+      "Resend limit reached. Further resends aren’t available for this invite. The counter will reset only if the user applies to your project.";
+  } else if (isCoolingDown) {
+    resendDescription = getResendWaitText(resendCount);
+  } else if (canResend) {
+    const nextAfter = getNextWindowAfterText(resendCount);
+    resendDescription =
+      resendCount >= 4
+        ? "You can resend the invitation now. After this attempt, the next resend will not be available."
+        : `You can resend the invitation now. After this attempt, the next resend will be available in ${nextAfter}.`;
+  }
+
+  const items: OptionsPopoverItem[] = [];
+
   if (isReceived && isPending) {
-    menuItems.push(
-      {icon: ThumbsUpIcon, label: "Accept request", onClick: handleAcceptRequest},
+    items.push(
+      {
+        icon: ThumbsUpIcon,
+        label: "Accept request",
+        onClick: handleAcceptRequest,
+        description: "Accept this application and add the user to your project team.",
+      },
       {
         icon: ThumbsDownIcon,
         label: "Reject request",
@@ -134,10 +162,15 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
     );
   }
 
-  // Actions for Sent Invitations (you invited someone)
   if (isSent && isPending) {
-    menuItems.push(
-      {icon: RefreshCw, label: "Resend invitation", onClick: handleResendInvitation},
+    items.push(
+      {
+        icon: RefreshCw,
+        label: "Resend invitation",
+        onClick: handleResendInvitation,
+        description: resendDescription,
+        disabled: !canResend,
+      },
       {
         icon: UserX,
         label: "Cancel invitation",
@@ -147,11 +180,41 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
     );
   }
 
-  menuItems.push(
-    {icon: Eye, label: "View profile", onClick: handleViewProfile},
-    {icon: Copy, label: "Copy profile link", onClick: handleCopyProfileLink},
-    {icon: Pin, label: "Pin to top", onClick: () => {}, disabled: true},
+  // Re-invite path for declined invites (respect 30-day cool-off)
+  if (isSent && requestStatus === "rejected") {
+    const canReinvite = !isCoolingDown;
+    const reinviteDescription =
+      isCoolingDown && nextAtDate
+        ? `You can re-invite on ${formatDateAbsolute(nextAtDate.toISOString())}. A short pause after a decline keeps things considerate.`
+        : "";
 
+    items.push({
+      icon: RefreshCw,
+      label: "Re-invite",
+      onClick: handleReinvite,
+      description: reinviteDescription,
+      disabled: !canReinvite,
+      separator: true,
+    });
+  }
+
+  items.push(
+    {
+      icon: Eye,
+      label: "View profile",
+      onClick: handleViewProfile,
+    },
+    {
+      icon: Copy,
+      label: "Copy profile link",
+      onClick: handleCopyProfileLink,
+    },
+    {
+      icon: Pin,
+      label: "Pin to top",
+      onClick: () => {},
+      disabled: true,
+    },
     {
       icon: MessageCircle,
       label: "Send message",
@@ -160,45 +223,22 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
       separator: true,
     },
     {
-      icon: Trash2,
-      label: "Delete request",
-      onClick: handleDeleteRequest,
-      accent: true,
+      icon: Archive,
+      label: "Archive request",
+      onClick: handleArchiveRequest,
+      disabled: isPending,
     },
   );
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        {trigger ? (
-          trigger
-        ) : (
-          <button type="button" className="p-1 rounded hover:bg-muted cursor-pointer leading-none">
-            <MoreVertical className="w-4 h-4 transition-all duration-200 text-muted-foreground group-hover:text-foreground/60" />
-          </button>
-        )}
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-[200px] rounded-[8px] text-foreground/90" align="end">
-        <div className="py-1 px-1">
-          {menuItems.map(({icon: Icon, label, onClick, accent, disabled, separator}) => (
-            <div key={label}>
-              <button
-                type="button"
-                disabled={disabled}
-                onClick={() => onClick?.()}
-                className={cn(
-                  "w-full flex items-center gap-2 px-2 py-[5px] rounded-[5px] text-sm hover:bg-muted transition-colors duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed",
-                  accent && "text-red-600 hover:text-red-700",
-                )}>
-                <Icon className="w-4 h-4" />
-                <span className="whitespace-nowrap">{label}</span>
-              </button>
-              {separator && <div className="h-px bg-border my-1" />}
-            </div>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <OptionsPopover
+      items={items}
+      trigger={trigger}
+      contentAlign="end"
+      withDescriptions
+      withTitles={false}
+      onOpenAutoFocusPrevent
+    />
   );
 };
 

@@ -34,6 +34,9 @@ function ColumnViewPopoverInner<TData extends object>(props: ColumnViewPopoverPr
     applications: "Applications",
     applicants: "Applicants",
     applicants_count: "Applicants Count",
+    position_title: "Position Title",
+    created_by_name: "Created By",
+    updated_at: "Updated At",
   };
 
   const allLeaf = table.getAllLeafColumns();

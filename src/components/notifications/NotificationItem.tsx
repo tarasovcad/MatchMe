@@ -9,7 +9,7 @@ import {Button} from "../shadcn/button";
 import {toast} from "sonner";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {Check, X} from "lucide-react";
-import {useHandleProjectRequest} from "@/hooks/query/use-handle-project-request";
+import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
 
 const GroupedFollowNotification = ({
   notification,
@@ -182,7 +182,7 @@ const ProjectInviteNotification = ({
   const [isDeclined, setIsDeclined] = useState(notification.status === "declined");
   const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
 
-  const handleProjectRequestMutation = useHandleProjectRequest();
+  const manageRequestMutation = useManageProjectRequest();
 
   const handleClick = () => {
     if (!isRead) {
@@ -200,9 +200,10 @@ const ProjectInviteNotification = ({
 
     setLoadingAction("accept");
     try {
-      const result = await handleProjectRequestMutation.mutateAsync({
-        requestId: notification.reference_id,
+      const result = await manageRequestMutation.mutateAsync({
+        requestId: null,
         action: "accept",
+        projectId: notification.project?.id ?? "",
       });
 
       if (result.success) {
@@ -225,9 +226,10 @@ const ProjectInviteNotification = ({
 
     setLoadingAction("reject");
     try {
-      const result = await handleProjectRequestMutation.mutateAsync({
-        requestId: notification.reference_id,
+      const result = await manageRequestMutation.mutateAsync({
+        requestId: null,
         action: "reject",
+        projectId: notification.project?.id ?? "",
       });
 
       if (result.success) {
@@ -620,7 +622,7 @@ const ProjectJoinRequestNotification = ({
   const isRead = notification.is_read === true;
   const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
 
-  const handleProjectRequestMutation = useHandleProjectRequest();
+  const manageRequestMutation = useManageProjectRequest();
 
   const handleClick = () => {
     if (!isRead) {
@@ -636,9 +638,10 @@ const ProjectJoinRequestNotification = ({
     }
     setLoadingAction("accept");
     try {
-      await handleProjectRequestMutation.mutateAsync({
+      await manageRequestMutation.mutateAsync({
         requestId: notification.reference_id,
         action: "accept",
+        projectId: notification.project?.id ?? "",
       });
     } catch (error) {
       console.error("Error accepting join request:", error);
@@ -655,9 +658,10 @@ const ProjectJoinRequestNotification = ({
     }
     setLoadingAction("reject");
     try {
-      await handleProjectRequestMutation.mutateAsync({
+      await manageRequestMutation.mutateAsync({
         requestId: notification.reference_id,
         action: "reject",
+        projectId: notification.project?.id ?? "",
       });
     } catch (error) {
       console.error("Error rejecting join request:", error);

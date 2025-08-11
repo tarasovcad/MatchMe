@@ -11,6 +11,7 @@ interface ProjectTeamMembersResponse {
     id: string;
     name: string;
     badge_color: string | null;
+    is_default: boolean;
   }>;
   open_positions: Array<{
     title: string;
