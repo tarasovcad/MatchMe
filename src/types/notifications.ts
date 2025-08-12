@@ -8,7 +8,7 @@ export interface Notification {
   type: NotificationType;
   created_at: string;
   is_read: boolean;
-  status: "pending" | "accepted" | "declined" | "expired" | "info";
+  status: "pending" | "accepted" | "declined" | "expired" | "info" | "cancelled";
   action_taken_at?: string | null;
   sender: {
     id: string;

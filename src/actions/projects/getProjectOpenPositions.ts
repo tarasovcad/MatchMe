@@ -79,17 +79,41 @@ export const getProjectOpenPositions = async (projectId: string) => {
       }
     }
 
-    // 3. TODO: Get applicant counts per position
+    // 3. Get applicant counts per position
+    const positionIds = positions.map((p) => p.id);
+    const applicantCountsMap = new Map<string, number>();
+
+    if (positionIds.length > 0) {
+      const {data: applicantCounts, error: countsError} = await supabase
+        .from("project_requests")
+        .select("position_id")
+        .eq("direction", "application")
+        .in("position_id", positionIds);
+
+      if (countsError) {
+        console.error("getProjectOpenPositions – applicant counts error", countsError);
+        // Continue without applicant count rather than failing completely
+      } else if (applicantCounts) {
+        // Count occurrences of each position_id
+        applicantCounts.forEach((request) => {
+          if (request.position_id) {
+            const currentCount = applicantCountsMap.get(request.position_id) || 0;
+            applicantCountsMap.set(request.position_id, currentCount + 1);
+          }
+        });
+      }
+    }
 
     // 4. Transform positions with additional data
     const enrichedPositions: ProjectOpenPosition[] = positions.map((position) => {
       const poster = position.posted_by_user_id ? postersMap.get(position.posted_by_user_id) : null;
+      const applicantCount = applicantCountsMap.get(position.id) || 0;
 
       return {
         ...position,
         posted_by_name: poster?.name || null,
         posted_by_username: poster?.username || null,
-        applicant_count: 0, // TODO: Calculate from applications table
+        applicant_count: applicantCount,
       };
     });
 

@@ -180,6 +180,7 @@ const ProjectInviteNotification = ({
   const isRead = notification.is_read === true;
   const [isAccepted, setIsAccepted] = useState(notification.status === "accepted");
   const [isDeclined, setIsDeclined] = useState(notification.status === "declined");
+  const [isCanceled] = useState(notification.status === "cancelled");
   const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
 
   const manageRequestMutation = useManageProjectRequest();
@@ -293,6 +294,14 @@ const ProjectInviteNotification = ({
               className="text-[13px] leading-[14px] h-fit max-h-[30px] w-fit text-muted-foreground"
               disabled={true}>
               Declined
+            </Button>
+          ) : isCanceled ? (
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              className="text-[13px] leading-[14px] h-fit max-h-[30px] w-fit text-muted-foreground"
+              disabled={true}>
+              Canceled
             </Button>
           ) : (
             <>

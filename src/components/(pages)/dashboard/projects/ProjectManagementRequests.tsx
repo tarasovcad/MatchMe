@@ -37,6 +37,7 @@ import {renderOrDash, createProfileLink} from "@/utils/tableHelpers";
 import Link from "next/link";
 import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
 import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
+import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
 
 interface ProjectRequest {
   id: string;
@@ -79,10 +80,10 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
     {id: "created_at", desc: true},
   ]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-
+  const [requestToCancel, setRequestToCancel] = useState<ProjectRequest | null>(null);
   const {data: requests, isLoading: isRequestsLoading} = useProjectRequests(project.id);
   const manageRequestMutation = useManageProjectRequest();
-  console.log(requests);
+
   // Column state management
   const {
     columnOrder,
@@ -335,12 +336,8 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
             projectId: project.id,
           });
 
-        const handleCancelInvitation = () =>
-          manageRequestMutation.mutate({
-            requestId: request.id,
-            action: "cancel",
-            projectId: project.id,
-          });
+        // Open confirmation modal instead of mutating directly
+        const handleCancelInvitation = () => setRequestToCancel(request);
 
         const handleResendInvitation = () =>
           manageRequestMutation.mutate({
@@ -444,7 +441,15 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
             : ["user_name", "actions"]
         }
       />
-      <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
+      <TableSettingsPopover
+        table={table}
+        setColumnSizing={setColumnSizing}
+        defaultSorting={[
+          {id: "status", desc: false},
+          {id: "created_at", desc: true},
+        ]}
+        resetSorting={() => setSorting([])}
+      />
     </div>
   );
 
@@ -563,7 +568,7 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
                 animate={{opacity: 1}}
                 exit={{opacity: 0}}
                 transition={{duration: 0.3, ease: "easeInOut"}}>
-                <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
+                <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin scrollbar-">
                   {/* Bulk actions bar */}
                   <BulkActionsBar
                     selectedCount={selectedCount}
@@ -665,6 +670,39 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
           </>
         )}
       </FilterableTabs>
+
+      {/* Cancel Invitation Confirmation Modal */}
+      <ConfirmationModal
+        id="cancel-invite-modal"
+        triggerText=""
+        title="Cancel Invitation"
+        description={`Are you sure you want to cancel the invitation to "${requestToCancel?.user_name || ""}"? This action cannot be undone.`}
+        requireInput={false}
+        open={!!requestToCancel}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setRequestToCancel(null);
+          }
+        }}
+        onConfirm={async () => {
+          if (!requestToCancel) return {error: "No request selected"};
+          const result = await manageRequestMutation.mutateAsync({
+            requestId: requestToCancel.id,
+            action: "cancel",
+            projectId: project.id,
+          });
+
+          if (!result.success) {
+            return {error: result.message};
+          }
+
+          setRequestToCancel(null);
+          // Avoid duplicate success toast; hook already toasts on success
+          return {};
+        }}
+        confirmButtonText="Cancel Invitation">
+        <div style={{display: "none"}} />
+      </ConfirmationModal>
     </div>
   );
 };

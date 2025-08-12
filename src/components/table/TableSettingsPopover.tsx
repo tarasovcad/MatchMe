@@ -1,17 +1,19 @@
 import React from "react";
-import {Settings, Undo2, ArrowUpDown, X, Eye} from "lucide-react";
+import {Settings, Undo2, ArrowUpDown, X, Eye, GripVertical} from "lucide-react";
 import {Popover, PopoverTrigger, PopoverContent} from "@/components/shadcn/popover";
 import {cn} from "@/lib/utils";
-import {useReactTable} from "@tanstack/react-table";
+import {SortingState, useReactTable} from "@tanstack/react-table";
 
 export interface TableSettingsPopoverProps<TData extends object> {
   table: ReturnType<typeof useReactTable<TData>>;
   setColumnSizing?: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   trigger?: React.ReactNode;
+  defaultSorting?: SortingState;
+  resetSorting?: () => void;
 }
 
 function TableSettingsPopoverInner<TData extends object>(props: TableSettingsPopoverProps<TData>) {
-  const {table, setColumnSizing, trigger} = props;
+  const {table, setColumnSizing, trigger, defaultSorting, resetSorting} = props;
 
   const hasSelectedRows = table.getSelectedRowModel().rows.length > 0;
 
@@ -39,13 +41,26 @@ function TableSettingsPopoverInner<TData extends object>(props: TableSettingsPop
     });
   };
 
+  const handleResetSorting = () => {
+    if (defaultSorting && typeof table.setSorting === "function") {
+      table.setSorting(defaultSorting);
+      return;
+    }
+    if (typeof resetSorting === "function") {
+      resetSorting();
+      return;
+    }
+    table.setSorting([]);
+  };
+
   const baseMenuItems: {
     icon: React.ElementType;
     label: string;
     onClick: () => void;
   }[] = [
     {icon: Undo2, label: "Reset column sizes", onClick: handleResetColumnSizes},
-    {icon: ArrowUpDown, label: "Reset column order", onClick: handleResetColumnOrder},
+    {icon: GripVertical, label: "Reset column order", onClick: handleResetColumnOrder},
+    {icon: ArrowUpDown, label: "Reset sorting", onClick: handleResetSorting},
     {icon: Eye, label: "Show all columns", onClick: handleShowAllColumns},
   ];
 

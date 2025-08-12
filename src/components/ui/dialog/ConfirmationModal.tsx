@@ -20,7 +20,7 @@ interface ConfirmationModalProps {
   triggerText: string;
   title?: string;
   description?: string;
-  confirmationValue: string;
+  confirmationValue?: string;
   confirmationLabel?: string;
   onConfirm: () => Promise<{error?: string; message?: string}>;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
@@ -29,6 +29,7 @@ interface ConfirmationModalProps {
   children?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  requireInput?: boolean;
 }
 
 const ConfirmationModal = ({
@@ -45,6 +46,7 @@ const ConfirmationModal = ({
   children,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  requireInput = true,
 }: ConfirmationModalProps) => {
   const [inputValue, setInputValue] = useState("");
   const [internalOpen, setInternalOpen] = useState(false);
@@ -61,7 +63,7 @@ const ConfirmationModal = ({
   const handleConfirm = async () => {
     setIsLoading(true);
 
-    if (inputValue !== confirmationValue) {
+    if (requireInput && inputValue !== (confirmationValue ?? "")) {
       setIsLoading(false);
       return;
     }
@@ -116,26 +118,51 @@ const ConfirmationModal = ({
             aria-hidden="true">
             <CircleAlertIcon className="opacity-80" size={16} />
           </div>
-          <DialogHeader>
+          <DialogHeader className="gap-2">
             <DialogTitle className="sm:text-center">{title}</DialogTitle>
             <DialogDescription className="sm:text-center">{description}</DialogDescription>
           </DialogHeader>
         </div>
 
-        <form className="space-y-5">
-          <div className="*:not-first:mt-2">
-            <p className="font-medium text-secondary text-sm">
-              {confirmationLabel || "Type"}{" "}
-              <span className="text-foreground select-none">{confirmationValue}</span> to confirm.
-            </p>
-            <Input
-              id={id}
-              type="text"
-              placeholder={`Type ${confirmationValue} here`}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-          </div>
+        {requireInput ? (
+          <form className="space-y-5">
+            <div className="*:not-first:mt-2">
+              <p className="font-medium text-secondary text-sm">
+                {confirmationLabel || "Type"}{" "}
+                <span className="text-foreground select-none">{confirmationValue}</span> to confirm.
+              </p>
+              <Input
+                id={id}
+                type="text"
+                placeholder={`Type ${confirmationValue ?? ""} here`}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  size={"xs"}
+                  disabled={isLoading}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                type="button"
+                className="flex-1"
+                size={"xs"}
+                variant={"destructive"}
+                disabled={requireInput && inputValue !== (confirmationValue ?? "")}
+                onClick={handleConfirm}
+                isLoading={isLoading}>
+                {confirmButtonText}
+              </Button>
+            </DialogFooter>
+          </form>
+        ) : (
           <DialogFooter>
             <DialogClose asChild>
               <Button
@@ -152,13 +179,12 @@ const ConfirmationModal = ({
               className="flex-1"
               size={"xs"}
               variant={"destructive"}
-              disabled={inputValue !== confirmationValue}
               onClick={handleConfirm}
               isLoading={isLoading}>
               {confirmButtonText}
             </Button>
           </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );

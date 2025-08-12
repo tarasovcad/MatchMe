@@ -22,6 +22,10 @@ export function useCreateProjectRequest() {
       }
       // Refresh requests list so the new pending invite appears
       queryClient.invalidateQueries({queryKey: ["project-requests", variables.project_id]});
+
+      // Refresh open positions to update applicant counts
+      queryClient.invalidateQueries({queryKey: ["project-open-positions", variables.project_id]});
+
       toast.success("Invite sent successfully");
     },
     onError: () => {

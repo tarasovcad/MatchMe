@@ -86,7 +86,6 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
 
   const handleCancelInvitation = () => {
     onCancelInvitation?.();
-    toast.success(`Invitation to ${userName} has been cancelled`);
   };
 
   const handleResendInvitation = () => {
@@ -151,7 +150,6 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
         icon: ThumbsUpIcon,
         label: "Accept request",
         onClick: handleAcceptRequest,
-        description: "Accept this application and add the user to your project team.",
       },
       {
         icon: ThumbsDownIcon,
@@ -175,18 +173,24 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
         icon: UserX,
         label: "Cancel invitation",
         onClick: handleCancelInvitation,
+        description:
+          "Withdraw this invite. After cancelling, you’ll be able to re‑invite in 7 days.",
         separator: true,
       },
     );
   }
 
-  // Re-invite path for declined invites (respect 30-day cool-off)
-  if (isSent && requestStatus === "rejected") {
+  // Re-invite path for declined or cancelled invites (respect cool-off)
+  if (isSent && (requestStatus === "rejected" || requestStatus === "cancelled")) {
     const canReinvite = !isCoolingDown;
-    const reinviteDescription =
-      isCoolingDown && nextAtDate
-        ? `You can re-invite on ${formatDateAbsolute(nextAtDate.toISOString())}. A short pause after a decline keeps things considerate.`
-        : "";
+    let reinviteDescription = "";
+    if (isCoolingDown && nextAtDate) {
+      const dateStr = formatDateAbsolute(nextAtDate.toISOString());
+      reinviteDescription =
+        requestStatus === "cancelled"
+          ? `You can re-invite on ${dateStr}. A short pause after a withdrawal keeps things considerate.`
+          : `You can re-invite on ${dateStr}. A short pause after a decline keeps things considerate.`;
+    }
 
     items.push({
       icon: RefreshCw,
@@ -226,7 +230,8 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
       icon: Archive,
       label: "Archive request",
       onClick: handleArchiveRequest,
-      disabled: isPending,
+      disabled: true,
+      // disabled: isPending,
     },
   );
 

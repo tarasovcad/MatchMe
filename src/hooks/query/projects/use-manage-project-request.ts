@@ -83,6 +83,9 @@ export function useManageProjectRequest() {
       // Invalidate the requests for fresh data
       queryClient.invalidateQueries({queryKey: ["project-requests", projectId]});
 
+      // Invalidate open positions to refresh applicant counts
+      queryClient.invalidateQueries({queryKey: ["project-open-positions", projectId]});
+
       // If accepted, refresh team members to reflect change
       if (action === "accept") {
         queryClient.invalidateQueries({

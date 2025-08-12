@@ -104,7 +104,7 @@ const OptionsPopover: React.FC<OptionsPopoverProps> = ({
                       <AnimatedTooltipContent
                         className={cn(
                           tooltipContentClassName,
-                          "max-w-[250px] shadow-xs rounded-lg border bg-popover text-popover-foreground overflow-hidden",
+                          "max-w-[250px]  shadow-xs rounded-lg border bg-popover text-popover-foreground overflow-hidden",
                         )}>
                         {withTitles && (
                           <div className="border-b border-border px-3 py-2.5">

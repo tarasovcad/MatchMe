@@ -3,7 +3,7 @@
 import {useQuery} from "@tanstack/react-query";
 import {getActivePositionsCount} from "@/actions/projects/getProjectOpenPositions";
 
-const NUMBER_OF_ACTIVE_POSITIONS_LIMIT = 5;
+const NUMBER_OF_ACTIVE_POSITIONS_LIMIT = 10;
 
 export const useProjectActivePositionsCount = (projectId: string) => {
   return useQuery({

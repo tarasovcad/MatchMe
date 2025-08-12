@@ -4,6 +4,7 @@ import {createClient} from "@/utils/supabase/server";
 import {sendNotification} from "@/actions/notifications/sendNotification";
 import {notifyOnNewProjectMember} from "./notifyOnNewProjectMember";
 import {PostgrestError} from "@supabase/supabase-js";
+import {createClient as createAdminClient} from "@/utils/supabase/admin";
 
 export type ManageProjectRequestAction =
   | "accept"
@@ -49,7 +50,7 @@ export async function manageProjectRequest({
   action,
 }: ManageProjectRequestParams): Promise<ManageProjectRequestResult> {
   const supabase = await createClient();
-
+  const admin = await createAdminClient();
   const {
     data: {user},
     error: userError,
@@ -260,8 +261,33 @@ export async function manageProjectRequest({
     }
 
     const statusErr = await updateStatus("cancelled");
+
     if (statusErr) {
       return {success: false, message: "Failed to cancel invite"};
+    }
+
+    // Set a 7-day cool-off and clear resend-related fields so owners cannot cancel to bypass cooldowns
+    const now = new Date();
+    const coolOffMs = 7 * 24 * 60 * 60 * 1000;
+    await supabase
+      .from("project_requests")
+      .update({
+        resend_count: 0,
+        last_sent_at: null,
+        next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
+      })
+      .eq("id", request.id);
+
+    const {error: notificationError} = await admin
+      .from("notifications")
+      .update({status: "cancelled", action_taken_at: new Date().toISOString()})
+      .eq("recipient_id", request.user_id)
+      .eq("reference_id", request.project_id)
+      .eq("type", "project_invite");
+
+    console.log("notificationError", notificationError);
+    if (notificationError) {
+      return {success: false, message: "Failed to update notification status"};
     }
 
     return {
@@ -351,11 +377,12 @@ export async function manageProjectRequest({
     if (request.direction !== "invite") {
       return {success: false, message: "Only invites can be re-invited"};
     }
-    if (request.status !== "rejected") {
-      return {success: false, message: "Re-invite is only available for declined invites"};
+
+    if (request.status !== "cancelled" && request.status !== "rejected") {
+      return {success: false, message: "Only cancelled or rejected invites can be re-invited"};
     }
 
-    // Respect cool-off window set on decline
+    // Respect cool-off set on cancel/reject
     const now = new Date();
     const nextAllowedAt = request.next_allowed_at ? new Date(request.next_allowed_at) : null;
     if (nextAllowedAt && nextAllowedAt.getTime() > now.getTime()) {

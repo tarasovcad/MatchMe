@@ -104,6 +104,52 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
       };
     }
 
+    // If most recent invite was rejected and still in cool-off, block re-invite
+    const {data: lastRejected, error: lastRejectedErr} = await supabase
+      .from("project_requests")
+      .select("id, status, next_allowed_at")
+      .eq("project_id", data.project_id)
+      .eq("user_id", data.user_id)
+      .eq("direction", "invite")
+      .eq("status", "rejected")
+      .order("updated_at", {ascending: false})
+      .limit(1)
+      .maybeSingle();
+
+    if (!lastRejectedErr && lastRejected?.next_allowed_at) {
+      const now = new Date();
+      const nextAllowed = new Date(lastRejected.next_allowed_at);
+      if (nextAllowed.getTime() > now.getTime()) {
+        return {
+          success: false,
+          error: `User declined recently. You can re-invite on ${nextAllowed.toISOString()}`,
+        };
+      }
+    }
+
+    // If most recent invite was cancelled and still in cool-off, block re-invite
+    const {data: lastCancelled, error: lastCancelledErr} = await supabase
+      .from("project_requests")
+      .select("id, status, next_allowed_at")
+      .eq("project_id", data.project_id)
+      .eq("user_id", data.user_id)
+      .eq("direction", "invite")
+      .eq("status", "cancelled")
+      .order("updated_at", {ascending: false})
+      .limit(1)
+      .maybeSingle();
+
+    if (!lastCancelledErr && lastCancelled?.next_allowed_at) {
+      const now = new Date();
+      const nextAllowed = new Date(lastCancelled.next_allowed_at);
+      if (nextAllowed.getTime() > now.getTime()) {
+        return {
+          success: false,
+          error: `You withdrew the invite recently. You can re-invite on ${nextAllowed.toISOString()}`,
+        };
+      }
+    }
+
     // Insert the project request
     const {data: requestData, error: requestError} = await supabase
       .from("project_requests")

@@ -1,5 +1,5 @@
 import React from "react";
-import {Edit, Users, Trash2, Pin} from "lucide-react";
+import {Edit, Users, Trash2, Pin, Copy} from "lucide-react";
 import OptionsPopover, {OptionsPopoverItem} from "@/components/ui/options/OptionsPopover";
 
 export type OpenPositionActions = {
@@ -38,8 +38,15 @@ const OpenPositionActionsPopover: React.FC<OpenPositionActionsPopoverProps> = ({
 
   const items: OptionsPopoverItem[] = [
     {icon: Edit, label: "Edit position", onClick: handleEditPosition},
-    {icon: Users, label: "View applicants", onClick: handleViewApplicants},
-    {icon: Pin, label: "Pin to top", onClick: handlePinToTop},
+    {icon: Users, label: "View applicants", onClick: handleViewApplicants, disabled: true},
+    {icon: Copy, label: "Duplicate as draft", onClick: () => {}, disabled: true},
+    {
+      icon: Pin,
+      label: "Pin to top",
+      onClick: handlePinToTop,
+      separator: true,
+      disabled: true,
+    },
     {
       icon: Trash2,
       label: "Delete position",

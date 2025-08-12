@@ -604,7 +604,15 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
             onChange={(e) => setQuery(e.target.value)}
           />
           <ColumnViewPopover table={table} hiddenColumnIds={["title", "actions"]} />
-          <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
+          <TableSettingsPopover
+            table={table}
+            setColumnSizing={setColumnSizing}
+            resetSorting={() => setSorting([])}
+            defaultSorting={[
+              {id: "status", desc: false},
+              {id: "updated_at", desc: true},
+            ]}
+          />
           <Button
             variant="secondary"
             size="xs"
@@ -779,6 +787,7 @@ const ProjectManagementOpenPositions = ({project, user}: {project: Project; user
           }
         }}
         onConfirm={handleDeletePosition}
+        requireInput={false}
         confirmButtonText="Delete Position">
         <div style={{display: "none"}} />
       </ConfirmationModal>

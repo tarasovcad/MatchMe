@@ -47,6 +47,7 @@ const PositionDrawer: React.FC<PositionDrawerProps> = ({
   position,
   mode = position ? "edit" : "create",
   projectId,
+  why,
 }) => {
   // Fetch active positions count
   const {
@@ -54,6 +55,7 @@ const PositionDrawer: React.FC<PositionDrawerProps> = ({
     isLoading: isLoadingCount,
     error: countError,
   } = useProjectActivePositionsCount(projectId);
+
   // Default values for create mode
   const defaultValues: PositionFormData = {
     title: "",
@@ -213,7 +215,7 @@ const PositionDrawer: React.FC<PositionDrawerProps> = ({
                   {positionsData?.count || 0}/{positionsData?.limit || 5} active positions used
                 </h3>
                 <p className="text-xs text-secondary">
-                  You can have up to 5 active positions with your current plan.
+                  You can have up to 10 active positions with your current plan.
                 </p>
                 <p className="text-xs text-secondary">
                   Upgrade to Premium to unlock unlimited listings.

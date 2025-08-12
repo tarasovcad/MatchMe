@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import {createPortal} from "react-dom";
-import {motion, AnimatePresence, LayoutGroup, type Transition} from "framer-motion";
+import {motion, AnimatePresence, type Transition} from "framer-motion";
 import {cn} from "@/lib/utils";
 
 type Side = "top" | "bottom" | "left" | "right";
@@ -171,6 +171,7 @@ export function AnimatedTooltipProvider({
     (data: TooltipData) => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (currentTooltip !== null) {
+        // If tooltip is already showing, update immediately to prevent jumping
         setCurrentTooltip(data);
         return;
       }
@@ -209,7 +210,7 @@ export function AnimatedTooltipProvider({
         transition,
         globalId,
       }}>
-      <LayoutGroup>{children}</LayoutGroup>
+      {children}
       <TooltipOverlay />
     </GlobalTooltipContext.Provider>
   );
@@ -247,11 +248,19 @@ function TooltipOverlay() {
               transform: position.transform,
             }}>
             <motion.div
-              layoutId={`tooltip-overlay-${globalId}`}
-              initial={{opacity: 0}}
-              animate={{opacity: 1}}
-              exit={{opacity: 0}}
-              transition={transition}
+              layout
+              initial={{opacity: 0, scale: 0.9}}
+              animate={{opacity: 1, scale: 1}}
+              exit={{opacity: 0, scale: 0.9}}
+              transition={{
+                ...transition,
+                layout: {
+                  type: "spring",
+                  stiffness: 500,
+                  damping: 30,
+                  mass: 0.5,
+                },
+              }}
               className={currentTooltip.className}>
               {currentTooltip.content}
             </motion.div>
@@ -397,6 +406,7 @@ export function AnimatedTooltipTrigger({children}: TooltipTriggerProps) {
 
     if (currentTooltip.content === content && currentTooltip.className === className) return;
 
+    // Only update position, not content, to avoid jumping
     const rect = triggerRef.current.getBoundingClientRect();
     showTooltip({
       content,
@@ -408,7 +418,17 @@ export function AnimatedTooltipTrigger({children}: TooltipTriggerProps) {
       id,
       className,
     });
-  }, [content, className, currentTooltip?.id]);
+  }, [
+    content,
+    className,
+    currentTooltip?.id,
+    showTooltip,
+    side,
+    sideOffset,
+    align,
+    alignOffset,
+    id,
+  ]);
 
   return React.cloneElement(children, {
     ref: triggerRef,
