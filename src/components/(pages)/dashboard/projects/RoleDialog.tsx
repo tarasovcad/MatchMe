@@ -18,6 +18,7 @@ import {
 import {Button} from "@/components/shadcn/button";
 import SimpleInput from "@/components/ui/form/SimpleInput";
 import SelectInput from "@/components/ui/form/SelectInput";
+import ProjectRoleBadge, {type ProjectRoleBadgeColorKey} from "@/components/ui/ProjectRoleBadge";
 import type {ProjectRoleDb} from "@/actions/projects/projectsRoles";
 
 export const COLOR_OPTIONS = [
@@ -118,6 +119,23 @@ function ColorSwatches({disabled = false}: {disabled?: boolean}) {
   );
 }
 
+function BadgePreview() {
+  const {watch} = useFormContext<{name: string; color: string}>();
+  const name = watch("name");
+  const color = watch("color");
+
+  return (
+    <div className="flex items-center gap-2">
+      <p className="text-sm text-muted-foreground">Preview</p>
+      <div className="flex items-center">
+        <ProjectRoleBadge color={color as ProjectRoleBadgeColorKey}>
+          {name || "Role"}
+        </ProjectRoleBadge>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // Main reusable dialog component
 // ─────────────────────────────────────────────────────────────
@@ -190,6 +208,10 @@ export default function RoleDialog({
   const dialogOpen = isControlled ? open : internalOpen;
 
   const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      reset();
+    }
+
     if (isControlled) {
       onOpenChange?.(newOpen);
     } else {
@@ -242,6 +264,9 @@ export default function RoleDialog({
               <p className="font-medium text-sm">Badge colour</p>
               <ColorSwatches />
             </div>
+
+            {/* badge preview */}
+            <BadgePreview />
 
             {/* permission template (add mode) */}
             <div className="space-y-2">

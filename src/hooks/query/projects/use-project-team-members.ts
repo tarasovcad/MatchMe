@@ -3,7 +3,6 @@ import {
   getProjectTeamMembersProfiles,
   ProjectTeamMemberProfile,
 } from "@/actions/projects/projectTeamMembers";
-import {toast} from "sonner";
 
 interface ProjectTeamMembersResponse {
   members: ProjectTeamMemberProfile[];
@@ -26,9 +25,14 @@ export const useProjectTeamMembers = (projectId: string) => {
     queryFn: async () => {
       const response = await getProjectTeamMembersProfiles(projectId);
       if (response.error) {
+        // Return safe defaults instead of triggering render-time toasts/throws
         console.error("Error fetching team members:", response.error);
-        toast.error(response.error);
-        throw new Error(response.error);
+        return {
+          members: [],
+          roles: [],
+          open_positions: [],
+          pending_requests: [],
+        };
       }
       return {
         members: response.data ?? [],

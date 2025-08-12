@@ -3,16 +3,16 @@ import {Badge} from "@/components/shadcn/badge";
 import {cn} from "@/lib/utils";
 
 const colorClasses = {
-  purple: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-  red: "bg-red-100 text-red-800 hover:bg-red-100",
-  blue: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  green: "bg-green-100 text-green-800 hover:bg-green-100",
-  yellow: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-  orange: "bg-orange-100 text-orange-800 hover:bg-orange-100",
-  pink: "bg-pink-100 text-pink-800 hover:bg-pink-100",
-  indigo: "bg-indigo-100 text-indigo-800 hover:bg-indigo-100",
-  gray: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-  cyan: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
+  purple: "bg-[#EDE9FE] text-[#5B21B6]",
+  red: "bg-[#FEE2E2] text-[#991B1B]",
+  blue: "bg-[#D6E4EE] text-[#10578A]",
+  green: "bg-[#DCFCE7] text-[#166534]",
+  yellow: "bg-[#FEF3C7] text-[#92400E]",
+  orange: "bg-[#F5DFCC] text-[#713400]",
+  pink: "bg-[#F1E1E9] text-[#941956]",
+  indigo: "bg-[#E0E7FF] text-[#3730A3]",
+  gray: "bg-[#F3F4F6] text-[#374151]",
+  cyan: "bg-[#CFFAFE] text-[#155E75]",
 } as const;
 
 export type ProjectRoleBadgeColorKey = keyof typeof colorClasses;

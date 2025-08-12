@@ -95,7 +95,8 @@ const InviteTeamMembersModalMenu = ({
   useEffect(() => {
     if (availableRoles.length > 0) {
       const defaultRole = availableRoles.find((role) => role.is_default === true);
-      if (defaultRole) {
+      const currentRole = methods.getValues("role");
+      if (defaultRole && !currentRole) {
         setValue("role", defaultRole.id);
       }
     }

@@ -4,37 +4,23 @@ import React, {useState, useEffect, useMemo, useRef} from "react";
 import {isEqual} from "lodash";
 import {
   ChevronRight,
+  ChevronDown,
   Lock,
   MoreVertical,
   Pencil,
-  Palette,
-  Copy,
   Star,
   RefreshCcw,
   Trash2,
   PlusIcon,
+  Eye,
+  Bell,
 } from "lucide-react";
 
-// shadcn/ui components
 import {Checkbox} from "@/components/shadcn/checkbox";
-import {Card, CardContent} from "@/components/shadcn/card";
 import {Button} from "@/components/shadcn/button";
 import RoleDialog, {AddRoleFormData} from "./RoleDialog";
 import {cn} from "@/lib/utils";
 import {motion, AnimatePresence} from "framer-motion";
-
-// dropdown menu
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/shadcn/dropdown-menu";
-
-// motion variants for fancy dropdown appearance
-import {menuVariants, itemDropdownVariants} from "@/utils/other/variants";
 
 // TanStack query hook to fetch roles
 import {useProjectRoles} from "@/hooks/query/projects/use-project-roles";
@@ -47,6 +33,29 @@ import {
   coFounderPermissions,
 } from "@/data/projects/defaultProjectRoles";
 import ProjectRoleBadge, {ProjectRoleBadgeColorKey} from "@/components/ui/ProjectRoleBadge";
+import ColumnViewPopover from "@/components/table/ColumnViewPopover";
+import TableSettingsPopover from "@/components/table/TableSettingsPopover";
+import ColumnHeaderPopover from "@/components/table/ColumnHeaderPopover";
+import OptionsPopover from "@/components/ui/options/OptionsPopover";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
+import TableSkeleton from "@/components/ui/TableSkeleton";
+import {Skeleton} from "@/components/shadcn/skeleton";
+import {
+  ColumnDef,
+  SortingState,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import usePersistedTableColumns from "@/hooks/usePersistedTableColumns";
 
 // Available permission actions and the order in which we want to display them
 type PermissionKey = "view" | "create" | "update" | "delete" | "notification";
@@ -79,6 +88,18 @@ const PermissionManagement = ({
 
   // State for search query
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // TanStack table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const {
+    columnOrder,
+    setColumnOrder,
+    columnSizing,
+    setColumnSizing,
+    columnVisibility,
+    setColumnVisibility,
+  } = usePersistedTableColumns("rolesPermissionsTablePrefs");
 
   // Handle updates coming from the edit dialog
   const handleUpdateRole = (updated: {id: string; name: string; color: string}) => {
@@ -212,16 +233,18 @@ const PermissionManagement = ({
     }
   }, [roles]);
 
-  if (isRolesLoading) {
-    return <div>Loading roles…</div>;
-  }
-
-  if (!roles || roles.length === 0) {
-    return <div>No roles configured.</div>;
-  }
-
   const toggleExpanded = (roleId: string) => {
-    setExpandedRoles((prev: Record<string, boolean>) => ({...prev, [roleId]: !prev[roleId]}));
+    setExpandedRoles((prev: Record<string, boolean>) => {
+      const isCurrentlyExpanded = prev[roleId];
+
+      // If clicking on an already expanded role, just close it
+      if (isCurrentlyExpanded) {
+        return {...prev, [roleId]: false};
+      }
+
+      // Otherwise, close all roles and open only the clicked one
+      return {[roleId]: true};
+    });
   };
 
   const updatePermission = (roleId: string, resourceId: string, permissionType: PermissionKey) => {
@@ -286,7 +309,7 @@ const PermissionManagement = ({
     onChange: () => void,
   ) => {
     return (
-      <div className="flex justify-center items-center">
+      <div className="flex justify-center items-center  w-full">
         <Checkbox
           checked={Boolean(allowed)}
           onCheckedChange={isEditable ? onChange : undefined}
@@ -297,7 +320,11 @@ const PermissionManagement = ({
               : "border-gray-300"
           }
         />
-        {!isEditable && <Lock className="w-3 h-3 text-muted-foreground ml-1" />}
+        {!isEditable ? (
+          <Lock className="w-3 h-3 text-muted-foreground ml-1" />
+        ) : (
+          <div className="w-3 h-3" />
+        )}
       </div>
     );
   };
@@ -334,345 +361,519 @@ const PermissionManagement = ({
 
     const canReset = isMember || isCoFounder;
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <OptionsPopover
+        contentClassName="!w-auto"
+        trigger={
           <button type="button" className="p-1 rounded hover:bg-muted cursor-pointer">
             <MoreVertical className="w-4 h-4 transition-all duration-200  text-muted-foreground group-hover:text-foreground/60" />
           </button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent asChild side="bottom" align="end" sideOffset={4}>
-          <motion.div
-            initial="closed"
-            animate="open"
-            variants={menuVariants}
-            className="space-y-2 rounded-lg min-w-[200px]">
-            {/* Primary actions */}
-            <DropdownMenuGroup>
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem className="cursor-pointer" onClick={onEdit}>
-                  <Pencil size={16} className="opacity-60 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-              </motion.div>
-
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem
-                  disabled={isOwner}
-                  onClick={() =>
-                    !isOwner && !(role.is_default ?? false) && setRoleAsDefault(role.id)
-                  }>
-                  {role.is_default ? (
-                    <>
-                      <Star size={16} className="opacity-60 mr-2 text-yellow-500 fill-current " />
-                      Default role for new members
-                    </>
-                  ) : (
-                    <>
-                      <Star size={16} className="opacity-60 mr-2" />
-                      Set as default for new members
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </motion.div>
-
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem
-                  disabled={!canReset}
-                  className="cursor-pointer"
-                  onClick={() => canReset && onReset()}>
-                  <RefreshCcw size={16} className="opacity-60 mr-2" />
-                  Reset permissions to template
-                </DropdownMenuItem>
-              </motion.div>
-
-              <motion.div variants={itemDropdownVariants}>
-                <DropdownMenuItem
-                  disabled={isOwner || isMember}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => !isOwner && !isMember && handleDeleteRole(role.id)}>
-                  <Trash2 size={16} className="opacity-60 mr-2" />
-                  Delete role
-                </DropdownMenuItem>
-              </motion.div>
-            </DropdownMenuGroup>
-          </motion.div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        }
+        items={[
+          {
+            label: "Edit",
+            icon: Pencil,
+            onClick: onEdit,
+          },
+          {
+            label: "Set as default for new members",
+            icon: Star,
+            onClick: () => !isOwner && !(role.is_default ?? false) && setRoleAsDefault(role.id),
+            disabled: isOwner || (role.is_default ?? false),
+          },
+          {
+            label: "Reset permissions to template",
+            icon: RefreshCcw,
+            onClick: onReset,
+            disabled: !canReset,
+            separator: true,
+          },
+          {
+            label: "Delete role",
+            icon: Trash2,
+            onClick: () => !isOwner && !isMember && handleDeleteRole(role.id),
+            disabled: isOwner || isMember,
+            accent: true,
+          },
+        ]}
+      />
     );
   };
 
-  // Animation variants for role rows
-  const roleRowVariants = {
-    hidden: {
-      opacity: 0,
-      height: 0,
-      y: -20,
-    },
-    visible: {
-      opacity: 1,
-      height: "auto",
-      y: 0,
-    },
-    exit: {
-      opacity: 0,
-      height: 0,
-      y: -10,
-    },
+  // Build TanStack table rows with computed counts
+  type RoleRow = {
+    id: string;
+    role: ProjectRoleDb;
+    name: string;
+    viewCount: number;
+    viewTotal: number;
+    createCount: number;
+    createTotal: number;
+    updateCount: number;
+    updateTotal: number;
+    deleteCount: number;
+    deleteTotal: number;
+    notificationCount: number;
+    notificationTotal: number;
   };
 
-  /**
-   * Single role + nested resources row
-   */
-  const renderRoleRow = (role: ProjectRoleDb) => {
-    const resourcesArr = Object.values(role.permissions || {}) as Record<string, boolean>[];
+  const tableData: RoleRow[] = useMemo(() => {
+    return filteredRoles.map((role) => {
+      const resourcesArr = Object.values(role.permissions || {}) as Record<string, boolean>[];
+      const countAllowed = (key: PermissionKey) => resourcesArr.filter((r) => r[key]).length;
+      const countPresent = (key: PermissionKey) =>
+        resourcesArr.filter((r) => Object.prototype.hasOwnProperty.call(r, key)).length;
 
-    const countAllowed = (key: PermissionKey) => resourcesArr.filter((r) => r[key]).length;
-    const countPresent = (key: PermissionKey) =>
-      resourcesArr.filter((r) => Object.prototype.hasOwnProperty.call(r, key)).length;
+      return {
+        id: role.id,
+        role,
+        name: role.name,
+        viewCount: countAllowed("view"),
+        viewTotal: countPresent("view"),
+        createCount: countAllowed("create"),
+        createTotal: countPresent("create"),
+        updateCount: countAllowed("update"),
+        updateTotal: countPresent("update"),
+        deleteCount: countAllowed("delete"),
+        deleteTotal: countPresent("delete"),
+        notificationCount: countAllowed("notification"),
+        notificationTotal: countPresent("notification"),
+      };
+    });
+  }, [filteredRoles, localRoles]);
 
-    const viewCount = countAllowed("view");
-    const viewTotal = countPresent("view");
-
-    const createCount = countAllowed("create");
-    const createTotal = countPresent("create");
-
-    const updateCount = countAllowed("update");
-    const updateTotal = countPresent("update");
-
-    const deleteCount = countAllowed("delete");
-    const deleteTotal = countPresent("delete");
-
-    const notificationCount = countAllowed("notification");
-    const notificationTotal = countPresent("notification");
-
-    return (
-      <motion.div
-        key={role.id}
-        layout
-        variants={roleRowVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-        transition={{
-          duration: 0.3,
-          ease: "easeInOut",
-          layout: {duration: 0.2},
-        }}
-        style={{overflow: "hidden"}}>
-        <div
-          className="grid gap-4 py-3  hover:bg-muted/50"
-          style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
-          <div className="flex items-center pl-4">
+  const getColumns = (): ColumnDef<RoleRow>[] => [
+    {
+      accessorKey: "name",
+      header: () => <span>Role</span>,
+      cell: ({row}) => {
+        const r = row.original.role;
+        const isExpanded = !!expandedRoles[r.id];
+        return (
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => toggleExpanded(role.id)}
-              className="mr-2 p-1 rounded hover:bg-muted cursor-pointer">
-              <motion.div
-                animate={{rotate: expandedRoles[role.id] ? 90 : 0}}
-                transition={{duration: 0.2, ease: "easeInOut"}}>
+              onClick={() => toggleExpanded(r.id)}
+              className="mr-1 p-1 rounded hover:bg-muted cursor-pointer">
+              <motion.div animate={{rotate: isExpanded ? 90 : 0}} transition={{duration: 0.2}}>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </motion.div>
             </button>
-
             <ProjectRoleBadge
-              color={(role.badge_color ?? undefined) as ProjectRoleBadgeColorKey | undefined}>
-              {role.name}
+              color={(r.badge_color ?? undefined) as ProjectRoleBadgeColorKey | undefined}>
+              {r.name}
             </ProjectRoleBadge>
-            {isOwnerRole(role) ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
-            {(role.is_default ?? false) ? (
+            {isOwnerRole(r) ? <Lock className="text-muted-foreground ml-2" size={14} /> : null}
+            {(r.is_default ?? false) ? (
               <Star className="text-yellow-500 ml-2 fill-current" size={14} />
             ) : null}
           </div>
-          <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {viewCount}/{viewTotal}
-          </div>
-          <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {createCount}/{createTotal}
-          </div>
-          <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {updateCount}/{updateTotal}
-          </div>
-          <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {deleteCount}/{deleteTotal}
-          </div>
-          <div className="flex justify-center items-center text-sm text-muted-foreground">
-            {notificationCount}/{notificationTotal}
-          </div>
-          {/* Action column */}
-          <div className="flex justify-center items-center pr-4  group">
+        );
+      },
+      size: 260,
+      minSize: 240,
+    },
+    {
+      accessorKey: "view_count",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Eye className="w-3.5 h-3.5" />
+          <span>View</span>
+        </div>
+      ),
+      cell: ({row}) => (
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          {row.original.viewCount}/{row.original.viewTotal}
+        </div>
+      ),
+      size: 120,
+      minSize: 100,
+    },
+    {
+      accessorKey: "create_count",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <PlusIcon className="w-3.5 h-3.5" />
+          <span>Create</span>
+        </div>
+      ),
+      cell: ({row}) => (
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          {row.original.createCount}/{row.original.createTotal}
+        </div>
+      ),
+      size: 120,
+      minSize: 100,
+    },
+    {
+      accessorKey: "update_count",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Pencil className="w-3.5 h-3.5" />
+          <span>Update</span>
+        </div>
+      ),
+      cell: ({row}) => (
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          {row.original.updateCount}/{row.original.updateTotal}
+        </div>
+      ),
+      size: 120,
+      minSize: 100,
+    },
+    {
+      accessorKey: "delete_count",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Delete</span>
+        </div>
+      ),
+      cell: ({row}) => (
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          {row.original.deleteCount}/{row.original.deleteTotal}
+        </div>
+      ),
+      size: 120,
+      minSize: 100,
+    },
+    {
+      accessorKey: "notification_count",
+      header: () => (
+        <div className="flex items-center gap-1 leading-none">
+          <Bell className="w-3.5 h-3.5" />
+          <span>Notification</span>
+        </div>
+      ),
+      cell: ({row}) => (
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          {row.original.notificationCount}/{row.original.notificationTotal}
+        </div>
+      ),
+      size: 140,
+      minSize: 120,
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({row}) => {
+        const role = row.original.role;
+        return (
+          <div className="flex justify-center items-center pr-1 group">
             <RoleActionButton
               role={role}
               onEdit={() => setRoleToEdit(role)}
               onReset={() => resetRolePermissions(role.id)}
             />
           </div>
+        );
+      },
+      enableSorting: false,
+      size: 50,
+      minSize: 50,
+      maxSize: 50,
+    },
+  ];
+
+  const table = useReactTable({
+    data: tableData,
+    columns: getColumns(),
+    state: {
+      sorting,
+      columnOrder,
+      columnSizing,
+      columnVisibility,
+    },
+    onSortingChange: setSorting,
+    onColumnOrderChange: setColumnOrder,
+    onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
+    columnResizeMode: "onChange",
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    enableRowSelection: false,
+  });
+
+  const skeletonColumns = [
+    {
+      id: "name",
+      header: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-16" />
         </div>
-
-        {/* animation wrapper */}
-        <AnimatePresence initial={false}>
-          {expandedRoles[role.id] && (
-            <motion.div
-              key="resources"
-              initial="collapsed"
-              animate="open"
-              exit="collapsed"
-              variants={{
-                open: {opacity: 1, height: "auto"},
-                collapsed: {opacity: 0, height: 0},
-              }}
-              transition={{duration: 0.25, ease: "easeInOut"}}
-              style={{overflow: "hidden"}}>
-              {role.permissions
-                ? Object.entries(role.permissions).map(([resourceId, actions]) => (
-                    <div
-                      key={resourceId}
-                      className="grid gap-4 py-2 hover:bg-muted/25"
-                      style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
-                      <div className="flex items-center pl-12">
-                        <span className="text-sm text-foreground">{resourceId}</span>
-                      </div>
-                      {PERMISSION_ORDER.map((permType) => (
-                        <div key={permType} className="flex justify-center items-center">
-                          {actions[permType] !== undefined ? (
-                            renderPermissionCheckbox(actions[permType], !isOwnerRole(role), () =>
-                              updatePermission(role.id, resourceId, permType),
-                            )
-                          ) : (
-                            <span className="text-muted-foreground text-xs select-none">N/A</span>
-                          )}
-                        </div>
-                      ))}
-                      {/* empty cell to align with action column */}
-                      <div />
-                    </div>
-                  ))
-                : null}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    );
-  };
-
-  const columnsNames = [
-    {
-      label: "Permissions",
-      isMain: true,
+      ),
+      cell: (
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+      ),
+      size: 260,
     },
     {
-      label: "View",
+      id: "view",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-10" />,
+      size: 120,
     },
     {
-      label: "Create",
+      id: "create",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-14" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-10" />,
+      size: 120,
     },
     {
-      label: "Update",
+      id: "update",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-14" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-10" />,
+      size: 120,
     },
     {
-      label: "Delete",
+      id: "delete",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-10" />,
+      size: 120,
     },
     {
-      label: "Notification",
+      id: "notification",
+      header: (
+        <div className="flex items-center gap-1">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+      ),
+      cell: <Skeleton className="h-4 w-10" />,
+      size: 140,
     },
     {
-      label: " ", // empty header for actions column
+      id: "actions",
+      header: <div className="w-full" />,
+      cell: <Skeleton className="h-8 w-8 rounded-md" />,
+      size: 50,
     },
   ];
 
   return (
-    <>
-      <div className="w-full mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h4 className="font-semibold text-foreground text-xl">Roles and Permissions</h4>
-          <div className="flex items-center gap-2">
-            <SimpleInput
-              placeholder="Search for a role"
-              search
-              className="max-w-[344px] w-full"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              showClearButton={Boolean(searchQuery)}
-              onClear={() => setSearchQuery("")}
-            />
-            <RoleDialog
-              mode="add"
-              trigger={
-                <Button variant="secondary" size="xs">
-                  <PlusIcon className="w-4 h-4" />
-                  Add Role
-                </Button>
-              }
-              onAddRole={handleAddRole}
-              existingRoles={localRoles}
-            />
+    <div className="w-full mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-1">
+          <h4 className="font-medium text-foreground/90 text-lg">Roles and Permissions</h4>
+          <div className="px-1 py-0.5 border border-border rounded-[5px] w-fit font-medium text-[10px] text-secondary leading-[13px] ml-1.5">
+            {localRoles.length}
           </div>
         </div>
-
-        <Card className="shadow-none">
-          <CardContent className="p-0">
-            {/* Scrollable container with gradient fade overlays */}
-            <div className="relative">
-              {/* <div className="pointer-events-none absolute top-[45px] left-0 w-full h-6 bg-gradient-to-b from-muted-header via-muted-header/70 to-transparent" /> */}
-              {/* <div className="pointer-events-none absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-card via-card/70 to-transparent" /> */}
-
-              {/* Fixed-height scrollable area */}
-              <div
-                className="max-h-[480px] overflow-y-auto flex flex-col rounded-t-[8px]"
-                style={{scrollbarGutter: "stable"}}>
-                {/* Sticky header */}
-                <div
-                  className="grid gap-4 py-3 px-4 bg-muted-header border-b border-border sticky top-0 z-10"
-                  style={{gridTemplateColumns: "repeat(6, minmax(0, 1fr)) 50px"}}>
-                  {/* Column headers */}
-                  {columnsNames.map((column) => (
-                    <div
-                      key={column.label}
-                      className={cn(
-                        "text-sm font-medium text-foreground/90",
-                        !column.isMain && "text-center",
-                      )}>
-                      {column.label}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Scrollable body */}
-                <div className="flex-1 divide-y divide-border">
-                  <AnimatePresence mode="popLayout">
-                    {filteredRoles.length > 0 ? (
-                      filteredRoles.map((role) => renderRoleRow(role))
-                    ) : searchQuery.trim() ? (
-                      <motion.div
-                        key="no-results"
-                        initial={{opacity: 0, y: 20}}
-                        animate={{opacity: 1, y: 0}}
-                        exit={{opacity: 0, y: -20}}
-                        transition={{duration: 0.3, ease: "easeInOut"}}
-                        className="flex flex-col items-center justify-center py-10  px-4 text-center">
-                        <h3 className="text-lg font-medium text-foreground mb-2">No roles found</h3>
-                        <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                          No roles match &ldquo;{searchQuery}&rdquo;. Try adjusting your search or{" "}
-                          <button
-                            type="button"
-                            onClick={() => setSearchQuery("")}
-                            className="text-primary hover:underline font-medium">
-                            clear the search
-                          </button>{" "}
-                          to see all roles.
-                        </p>
-                      </motion.div>
-                    ) : null}
-                  </AnimatePresence>
-                </div>
-              </div>
-              {/* end scrollable area */}
-            </div>
-            {/* end relative container */}
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2">
+          <SimpleInput
+            placeholder="Search..."
+            search
+            className="max-w-[344px] w-full"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            showClearButton={Boolean(searchQuery)}
+            onClear={() => setSearchQuery("")}
+          />
+          <ColumnViewPopover table={table} hiddenColumnIds={["name", "actions"]} />
+          <TableSettingsPopover table={table} setColumnSizing={setColumnSizing} />
+          <RoleDialog
+            mode="add"
+            trigger={
+              <Button variant="secondary" size="xs">
+                <PlusIcon className="h-4 w-4" />
+                Add Role
+              </Button>
+            }
+            onAddRole={handleAddRole}
+            existingRoles={localRoles}
+          />
+        </div>
       </div>
+
+      {isRolesLoading ? (
+        <motion.div
+          key="skeleton"
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.3, ease: "easeInOut"}}>
+          <TableSkeleton columns={skeletonColumns} rowCount={5} />
+        </motion.div>
+      ) : !roles || roles.length === 0 ? (
+        <motion.div
+          key="empty"
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.3, ease: "easeInOut"}}>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No roles configured.</p>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="table"
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          exit={{opacity: 0}}
+          transition={{duration: 0.3, ease: "easeInOut"}}>
+          <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin">
+            <Table style={{minWidth: table.getTotalSize()}} className="w-full">
+              <TableHeader className="bg-[#F9F9FA] dark:bg-[#101013]">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    className="hover:bg-[#F9F9FA] dark:hover:bg-[#101013]">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "relative !p-2 !px-2.5 text-[13px] last:border-r-0 text-left font-medium text-secondary h-auto border-r border-border",
+                        )}
+                        style={{width: header.getSize()}}>
+                        {header.isPlaceholder ? null : (
+                          <div className="flex items-center justify-between w-full">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {header.column.getCanSort() && (
+                              <ColumnHeaderPopover column={header.column}>
+                                <ChevronDown className="w-3.5 h-3.5 pl-1 text-muted-foreground hover:text-foreground transition-colors" />
+                              </ColumnHeaderPopover>
+                            )}
+                          </div>
+                        )}
+                        {/* Resize handle */}
+                        {header.column.getCanResize() && (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            className="absolute right-0 top-0 h-full w-2 cursor-col-resize select-none touch-none"
+                          />
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                <AnimatePresence initial={false} mode="popLayout">
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => {
+                      const role = (row.original as RoleRow).role;
+                      const isExpanded = !!expandedRoles[role.id];
+                      return [
+                        <motion.tr
+                          key={`${role.id}-row`}
+                          layout="position"
+                          initial={{opacity: 0}}
+                          animate={{opacity: 1}}
+                          exit={{opacity: 0}}
+                          transition={{duration: 0.2}}
+                          className="hover:bg-muted/50 border-b border-border transition-colors">
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={cn(
+                                "px-2.5 h-[34px] last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                              )}
+                              style={{width: cell.column.getSize()}}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </motion.tr>,
+                        ...(isExpanded && role.permissions
+                          ? Object.entries(role.permissions).map(([resourceId, actions]) => (
+                              <motion.tr
+                                key={`${role.id}-${resourceId}`}
+                                initial={{opacity: 0}}
+                                animate={{opacity: 1}}
+                                exit={{opacity: 0}}
+                                transition={{duration: 0.2}}
+                                className="border-b border-border bg-muted/25">
+                                <TableCell
+                                  className={cn(
+                                    "px-2.5 h-[34px] last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                                  )}
+                                  style={{width: table.getHeaderGroups()[0].headers[0].getSize()}}>
+                                  <div className="flex items-center pl-8">
+                                    <span className="text-sm text-foreground">{resourceId}</span>
+                                  </div>
+                                </TableCell>
+                                {PERMISSION_ORDER.map((permType, permIndex) => (
+                                  <TableCell
+                                    key={`${resourceId}-${permType}`}
+                                    className={cn(
+                                      "px-2.5 h-[34px] last:border-r-0 py-1 text-center text-foreground border-r border-border",
+                                    )}
+                                    style={{
+                                      width: table
+                                        .getHeaderGroups()[0]
+                                        .headers[permIndex + 1].getSize(),
+                                    }}>
+                                    {(actions as Record<string, boolean>)[permType] !==
+                                    undefined ? (
+                                      renderPermissionCheckbox(
+                                        (actions as Record<string, boolean>)[permType],
+                                        !isOwnerRole(role),
+                                        () => updatePermission(role.id, resourceId, permType),
+                                      )
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs select-none">
+                                        N/A
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                ))}
+                                <TableCell
+                                  className={cn(
+                                    "px-2.5 h-[34px] last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                                  )}
+                                  style={{
+                                    width: table.getHeaderGroups()[0].headers[6].getSize(),
+                                  }}></TableCell>
+                              </motion.tr>
+                            ))
+                          : []),
+                      ];
+                    })
+                  ) : (
+                    <motion.tr
+                      key="no-results"
+                      initial={{opacity: 0}}
+                      animate={{opacity: 1}}
+                      exit={{opacity: 0}}
+                      className="border-b">
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        No results.
+                      </TableCell>
+                    </motion.tr>
+                  )}
+                </AnimatePresence>
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
+      )}
+
       {roleToEdit && (
         <RoleDialog
           mode="edit"
@@ -680,12 +881,14 @@ const PermissionManagement = ({
           roleData={roleToEdit}
           open={Boolean(roleToEdit)}
           onOpenChange={(open) => {
-            if (!open) setRoleToEdit(null);
+            if (!open) {
+              setRoleToEdit(null);
+            }
           }}
           onEditRole={handleUpdateRole}
         />
       )}
-    </>
+    </div>
   );
 };
 
