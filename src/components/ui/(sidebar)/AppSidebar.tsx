@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   Bell,
+  Bug,
   FolderOpen,
   Globe,
   HelpCircle,
@@ -92,6 +93,12 @@ export function AppSidebar({
         url: "/support",
         icon: HelpCircle,
         isActive: isActive("/support"),
+      },
+      {
+        title: "Send Feedback",
+        url: "https://matchme.userjot.com/",
+        icon: Bug,
+        external: true,
       },
     ],
   };

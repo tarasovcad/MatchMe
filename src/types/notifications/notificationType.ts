@@ -22,4 +22,6 @@ export type NotificationType =
   | "project_deleted"
   // System/Admin
   | "system_announcement"
-  | "account_security";
+  | "account_security"
+  // Profile milestones
+  | "profile_milestone";

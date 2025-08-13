@@ -10,21 +10,15 @@ function Dialog({...props}: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger({...props}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function DialogPortal({...props}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose({...props}: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
@@ -48,9 +42,11 @@ function DialogContent({
   className,
   children,
   onClose,
+  disableClose = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   onClose?: () => void;
+  disableClose?: boolean;
 }) {
   return (
     <DialogPortal>
@@ -63,15 +59,17 @@ function DialogContent({
         )}
         {...props}>
         {children}
-        <DialogPrimitive.Close
-          className="group top-3 right-3 absolute flex justify-center items-center focus-visible:border-ring rounded outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 transition-[color,box-shadow] disabled:pointer-events-none"
-          onClick={onClose}>
-          <XIcon
-            size={16}
-            className="opacity-60 group-hover:opacity-100 transition-opacity cursor-pointer"
-          />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        {disableClose && (
+          <DialogPrimitive.Close
+            className="group top-3 right-3 absolute flex justify-center items-center focus-visible:border-ring rounded outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 transition-[color,box-shadow] disabled:pointer-events-none"
+            onClick={onClose}>
+            <XIcon
+              size={16}
+              className="opacity-60 group-hover:opacity-100 transition-opacity cursor-pointer"
+            />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        )}
       </DialogPrimitive.Content>
     </DialogPortal>
   );
@@ -91,19 +89,13 @@ function DialogFooter({className, ...props}: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-dialog-footer"
-      className={cn(
-        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end",
-        className,
-      )}
+      className={cn("flex flex-col-reverse gap-3 sm:flex-row sm:justify-end", className)}
       {...props}
     />
   );
 }
 
-function DialogTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+function DialogTitle({className, ...props}: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
       data-slot="alert-dialog-title"

@@ -15,8 +15,27 @@ export function applyFiltersToSupabaseQuery(query: any, filters: SerializableFil
 
       case "multiSelect":
         if (filter.selectedOptions && filter.selectedOptions.length > 0) {
-          // For multi-select filters
-          query = query.in(filter.value, filter.selectedOptions);
+          if (filter.value === "age") {
+            const clauses = filter.selectedOptions
+              .map((opt) => {
+                const [minStr, maxStr] = String(opt).split("-");
+                const min = Number(minStr);
+                const max = Number(maxStr);
+                if (Number.isFinite(min) && Number.isFinite(max)) {
+                  return `${filter.value}.gte.${min},${filter.value}.lte.${max}`;
+                }
+                return null;
+              })
+              .filter(Boolean) as string[];
+
+            if (clauses.length > 0) {
+              // Combine ranges with OR
+              query = query.or(clauses.map((c) => `and(${c})`).join(","));
+            }
+          } else {
+            // For other multi-select filters
+            query = query.in(filter.value, filter.selectedOptions);
+          }
         }
         break;
 

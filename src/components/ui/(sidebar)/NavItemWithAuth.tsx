@@ -9,21 +9,19 @@ import NotificationsPopover from "@/components/notifications/NotificationsPopove
 export function NavItemWithAuth({
   item,
   userSessionId,
+  external,
 }: {
   item: {
     title: string;
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    external?: boolean;
   };
   userSessionId?: string;
+  external?: boolean;
 }) {
-  const isProtected = [
-    "Inbox",
-    "Settings",
-    "Notifications",
-    "Dashboard",
-  ].includes(item.title);
+  const isProtected = ["Inbox", "Settings", "Notifications", "Dashboard"].includes(item.title);
   const isNotifications = item.url === "/notifications";
   const isLoggedIn = !!userSessionId;
 
@@ -58,7 +56,7 @@ export function NavItemWithAuth({
   return isProtected ? (
     <AuthGate userSessionId={userSessionId}>{button}</AuthGate>
   ) : (
-    <Link href={item.url}>
+    <Link href={item.url} target={external ? "_blank" : undefined}>
       <SidebarMenuButton
         className={cn(!item.isActive && "cursor-pointer")}
         tooltip={item.title}

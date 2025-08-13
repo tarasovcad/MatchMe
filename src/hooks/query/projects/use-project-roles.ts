@@ -1,7 +1,7 @@
 import {useQuery} from "@tanstack/react-query";
 import {getAllProjectRoles} from "@/actions/projects/projectsRoles";
 
-export const useProjectRoles = (projectId: string) => {
+export const useProjectRoles = (projectId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ["project-roles", projectId],
     queryFn: async () => {
@@ -11,7 +11,7 @@ export const useProjectRoles = (projectId: string) => {
       }
       return response.data ?? [];
     },
-    enabled: !!projectId,
+    enabled: !!projectId && enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,

@@ -15,6 +15,7 @@ import {
 import {Button} from "../../shadcn/button";
 import {cn} from "@/lib/utils";
 import {useCountries} from "@/hooks/useCountries";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 
 export default function SelectInputWithSearch({
   id,
@@ -23,6 +24,8 @@ export default function SelectInputWithSearch({
   className,
   options: defaultOptions,
   error,
+  disabled,
+  loading,
 }: {
   id: string;
   placeholder: string;
@@ -30,6 +33,8 @@ export default function SelectInputWithSearch({
   className?: string;
   options: DropdownOption[];
   error?: {message?: string} | undefined;
+  disabled?: boolean;
+  loading?: boolean;
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
@@ -42,7 +47,7 @@ export default function SelectInputWithSearch({
   }, [selectedValue]);
 
   const isCountrySelect = name === "location";
-  const {countries} = useCountries(isCountrySelect && open);
+  const {countries} = useCountries(isCountrySelect ? true : open);
 
   const options = isCountrySelect ? countries : defaultOptions;
 
@@ -66,23 +71,30 @@ export default function SelectInputWithSearch({
     return optionValue === selectedValue;
   });
 
+  const isDisabled = !!disabled || !!loading;
+
   return (
     <div>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(val) => !isDisabled && setOpen(val)}>
         <PopoverTrigger asChild>
           <Button
             id={id}
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={isDisabled}
             className={cn(
               "bg-background hover:bg-background border-input max-h-[36px]  w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               className,
             )}>
-            <span className={cn("truncate", !selectedValue && "text-muted-foreground/70")}>
-              {selectedOption?.title || placeholder}
+            <span
+              className={cn(
+                "truncate flex items-center gap-2",
+                !selectedValue && "text-muted-foreground/70",
+              )}>
+              {selectedOption?.title || (loading ? <LoadingButtonCircle size={16} /> : placeholder)}
             </span>
             <ChevronDownIcon
               size={16}

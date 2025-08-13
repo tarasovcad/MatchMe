@@ -25,10 +25,7 @@ export function useInfiniteItems<T extends {id: string}>({
   const infiniteQuery = useInfiniteQuery({
     queryKey: [infiniteKey, serializableFilters],
     queryFn: async ({pageParam}) => {
-      const start = Date.now();
       const items = await fetchItems(pageParam, itemsPerPage, serializableFilters);
-      const end = Date.now();
-      console.log(`Fetch ${type} page ${pageParam} took ${end - start}ms`);
       return {
         items,
         nextPage: items.length === itemsPerPage ? pageParam + 1 : undefined,

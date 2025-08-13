@@ -901,6 +901,31 @@ export const createNotificationItem = (
           markAsRead={markAsRead}
         />
       );
+    case "profile_milestone":
+      return (
+        <div
+          key={notification.id}
+          className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
+            notification.is_read ? "cursor-default" : "cursor-pointer hover:bg-muted/50"
+          }`}
+          onClick={() => markAsRead([notification.id])}>
+          <div className="w-full text-secondary flex flex-col gap-0.5">
+            <div className="flex justify-between items-start gap-2 text-start">
+              <p>
+                <span className="font-medium text-foreground">Congrats!</span> Your profile reached
+                a new milestone.
+              </p>
+              {!notification.is_read && (
+                <div className="bg-primary rounded-full w-2 h-2 shrink-0"></div>
+              )}
+            </div>
+            <div className="flex justify-between items-center gap-2 text-xs">
+              <p>{formatDateAbsolute(notification.created_at)}</p>
+              <p>{formatTimeRelative(notification.created_at)}</p>
+            </div>
+          </div>
+        </div>
+      );
     // Other notification types here
     default:
       return null;

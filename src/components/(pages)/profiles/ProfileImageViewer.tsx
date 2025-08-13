@@ -36,7 +36,10 @@ const ProfileImageViewer = ({
 
   if (profileImage && profileImage.length > 0) {
     return (
-      <a href={profileImage[0].url} data-fancybox="profile-image" className="cursor-pointer">
+      <a
+        href={profileImage[0].url}
+        data-fancybox="profile-image"
+        className="cursor-pointer shrink-0">
         <Image
           src={profileImage[0].url}
           alt={name}

@@ -15,6 +15,7 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    external?: boolean;
     items?: {
       title: string;
       url: string;
@@ -29,7 +30,7 @@ export function NavMain({
           <Collapsible
             key={item.title}
             asChild
-            defaultOpen={item.isActive}
+            defaultOpen={item?.isActive || false}
             className="group/collapsible">
             <SidebarMenuItem className="relative">
               {item.title === "Inbox" && (
@@ -38,7 +39,7 @@ export function NavMain({
                 </div>
               )}
               <CollapsibleTrigger asChild>
-                <NavItemWithAuth item={item} userSessionId={user?.id} />
+                <NavItemWithAuth item={item} userSessionId={user?.id} external={item.external} />
               </CollapsibleTrigger>
             </SidebarMenuItem>
           </Collapsible>

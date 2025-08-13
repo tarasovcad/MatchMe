@@ -61,16 +61,10 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
               transition={{duration: 0.2}}>
               {skillImage && (
                 <div className="flex justify-center items-center border border-border rounded-radius w-7 h-7">
-                  {skillImage ? (
-                    <Image src={skillImage} alt={skill.name} width={17} height={17} />
-                  ) : (
-                    ""
-                  )}
+                  <Image src={skillImage} alt={skill.name} width={17} height={17} />
                 </div>
               )}
-              <MainGradient as="span" className="font-medium text-[14px]">
-                {skill.name}
-              </MainGradient>
+              <span className="font-medium text-[14px] text-foreground/70">{skill.name}</span>
             </motion.div>
           );
         })}

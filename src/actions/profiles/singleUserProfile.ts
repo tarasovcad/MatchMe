@@ -5,14 +5,14 @@ import {createClient} from "@/utils/supabase/server";
 interface CachedUserStats {
   followerCount: number;
   followingCount: number;
-  skills: Array<{name: string; image_url: string}>;
+  skills: Array<{name: string; image_url?: string}>;
   lastUpdated: number;
 }
 
 interface UserStats {
   followerCount: number;
   followingCount: number;
-  skills: Array<{name: string; image_url: string}>;
+  skills: Array<{name: string; image_url?: string}>;
 }
 
 interface UserFollowRelationship {
@@ -165,7 +165,7 @@ export async function getUserStats(
       // Following count
       supabase.from("follows").select("*", {count: "exact", head: true}).eq("follower_id", userId),
 
-      // Skills - only fetch if user has skills
+      // Skills - fetch skills from database if user has skills
       user.skills?.length
         ? supabase.from("skills").select("name, image_url").in("name", user.skills)
         : Promise.resolve({data: []}),
@@ -174,13 +174,23 @@ export async function getUserStats(
     // Extract results
     const followerCount = followerCountResult.error ? 0 : followerCountResult.count || 0;
     const followingCount = followingCountResult.error ? 0 : followingCountResult.count || 0;
-    const skills = skillsResult.data || [];
+    const skillsFromDb = skillsResult.data || [];
+
+    // Merge user skills with database skills - include all user skills, with image_url when available
+    const mergedSkills =
+      user.skills?.map((skillName) => {
+        const skillFromDb = skillsFromDb.find((dbSkill) => dbSkill.name === skillName);
+        return {
+          name: skillName,
+          image_url: skillFromDb?.image_url,
+        };
+      }) || [];
 
     // Cache the stats
     const statsForCache = {
       followerCount,
       followingCount,
-      skills,
+      skills: mergedSkills,
       lastUpdated: Date.now(),
     };
 
@@ -189,7 +199,7 @@ export async function getUserStats(
     return {
       followerCount,
       followingCount,
-      skills,
+      skills: mergedSkills,
     };
   } catch (error) {
     console.error("Error in getUserStats:", error);

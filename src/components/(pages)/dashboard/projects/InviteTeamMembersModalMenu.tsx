@@ -16,7 +16,7 @@ import {
 } from "@/components/shadcn/dialog";
 import {Button} from "@/components/shadcn/button";
 import SelectInput from "@/components/ui/form/SelectInput";
-import {Plus} from "lucide-react";
+import {Plus, X} from "lucide-react";
 import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import UserSearchDropdown from "@/components/ui/form/UserSearchDropdown";
 import {toast} from "sonner";
@@ -161,12 +161,21 @@ const InviteTeamMembersModalMenu = ({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md p-4 py-6">
-        <DialogHeader className="pb-2">
-          <DialogTitle>Invite team members</DialogTitle>
-          <DialogDescription>
-            Search for users and invite them to your project team
-          </DialogDescription>
+      <DialogContent className="sm:max-w-md p-4 py-6" disableClose={false}>
+        <DialogHeader className="pb-2 relative">
+          <div className="flex flex-row justify-between items-start gap-2">
+            <div className="flex flex-col">
+              <DialogTitle>Invite team members</DialogTitle>
+              <DialogDescription>
+                Search for users and invite them to your project team
+              </DialogDescription>
+            </div>
+            <DialogClose asChild>
+              <Button size={"icon"} className="w-6 h-6">
+                <X size={12} />
+              </Button>
+            </DialogClose>
+          </div>
         </DialogHeader>
 
         <FormProvider {...methods}>
@@ -219,18 +228,23 @@ const InviteTeamMembersModalMenu = ({
             </div>
 
             {/* Message to user */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-1">
-                <p className="font-medium text-sm">Message</p>
-                <span className="text-muted-foreground text-sm">Optional</span>
+            <div className="space-y-1.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-1">
+                  <p className="font-medium text-sm">Message</p>
+                  <span className="text-muted-foreground text-sm">Optional</span>
+                </div>
+                <AutogrowingTextarea
+                  id="message"
+                  placeholder="Hey! I’d love for you to join our team on AI recruiting – we’re building something amazing together."
+                  name="message"
+                  register={methods.register("message")}
+                  error={methods.formState.errors.message}
+                />
               </div>
-              <AutogrowingTextarea
-                id="message"
-                placeholder="Hey! I’d love for you to join our team on AI recruiting – we’re building something amazing together."
-                name="message"
-                register={methods.register("message")}
-                error={methods.formState.errors.message}
-              />
+              <p className="text-xs text-muted-foreground">
+                A friendly message helps increase acceptance rates
+              </p>
             </div>
 
             <DialogFooter className="pt-2">

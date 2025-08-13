@@ -7,6 +7,7 @@ import {
 import {Filter, useFilterStore} from "@/store/filterStore";
 import {X} from "lucide-react";
 import React from "react";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
@@ -19,6 +20,10 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
       case "searchInput":
         return filter.searchValue || "";
       case "multiSelect":
+        if (filter.value === "time_commitment") {
+          const valueToTitle = new Map(timeCommitment.map((opt) => [opt.value, opt.title]));
+          return filter.selectedOptions?.map((v) => valueToTitle.get(v) || v).join(", ") || "";
+        }
         return filter.selectedOptions?.join(", ") || "";
       case "tagsSearch":
         return filter.selectedTags?.join(", ") || "";
@@ -36,8 +41,7 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
     const words = displayValue.split(" ");
     const shownWords = words.slice(0, 3).join(" ");
     const remainingCount = words.length - 3;
-    const suffix =
-      filter.title === "Availability" ? " hours" : filter.title === "Age" ? " years old" : "";
+    const suffix = filter.title === "Age" ? " years old" : "";
 
     return remainingCount > 0 ? (
       <Tooltip>

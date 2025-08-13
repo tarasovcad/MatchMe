@@ -20,7 +20,7 @@ const ProfileFormField = ({
   user: MatchMeUser;
   skills: {
     name: string;
-    image_url: string;
+    image_url?: string;
   }[];
 }) => {
   const {fieldTitle, fieldDescription, fieldType} = formField;

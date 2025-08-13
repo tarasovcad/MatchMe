@@ -17,6 +17,7 @@ export type OptionsPopoverItem = {
   disabled?: boolean;
   separator?: boolean;
   description?: string;
+  keepOpenOnClick?: boolean;
 };
 
 export type OptionsPopoverProps = {
@@ -42,9 +43,11 @@ const OptionsPopover: React.FC<OptionsPopoverProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleItemClick = (onClick?: () => void) => {
+  const handleItemClick = (onClick?: () => void, keepOpenOnClick?: boolean) => {
     onClick?.();
-    setIsOpen(false);
+    if (!keepOpenOnClick) {
+      setIsOpen(false);
+    }
   };
 
   const contentProps = {
@@ -71,7 +74,16 @@ const OptionsPopover: React.FC<OptionsPopoverProps> = ({
         <PopoverContent {...contentProps}>
           <div className="py-1 px-1">
             {items.map((item, index) => {
-              const {icon: Icon, label, onClick, accent, disabled, separator, description} = item;
+              const {
+                icon: Icon,
+                label,
+                onClick,
+                accent,
+                disabled,
+                separator,
+                description,
+                keepOpenOnClick,
+              } = item;
               const isFirstItem = index === 0;
               const isLastItem = index === items.length - 1;
 
@@ -79,7 +91,7 @@ const OptionsPopover: React.FC<OptionsPopoverProps> = ({
                 <button
                   type="button"
                   disabled={disabled}
-                  onClick={() => handleItemClick(onClick)}
+                  onClick={() => handleItemClick(onClick, keepOpenOnClick)}
                   className={cn(
                     "w-full flex items-center gap-2 px-2 py-[5px] rounded-[5px] text-sm transition-colors duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed",
                     !disabled && "hover:bg-muted",

@@ -8,6 +8,7 @@ import {redis} from "@/utils/redis/redis";
 import {getClientIp} from "@/utils/network/getClientIp";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {canMakePublic} from "@/functions/canMakePublic";
+import {invalidateUserCaches} from "../profiles/singleUserProfile";
 
 export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
@@ -146,6 +147,16 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   if (error) {
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
+  }
+
+  // Invalidate user caches after successful update
+  if (currentProfile?.username) {
+    try {
+      await invalidateUserCaches(user.id, currentProfile.username);
+    } catch (cacheError) {
+      console.error("Error invalidating user caches:", cacheError);
+      // Don't fail the request if cache invalidation fails
+    }
   }
   // Update the user session with the new image
   if (

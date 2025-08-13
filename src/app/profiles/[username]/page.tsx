@@ -54,7 +54,7 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
 
     const {followerCount, followingCount, skills} = statsData;
     const {isFollowing, isFollowingBack} = followRelationship;
-
+    console.log(user);
     return (
       <SidebarProvider removePadding>
         <BackgroundImageViewer
@@ -85,7 +85,7 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                   name={user.name}
                   width={125}
                   height={125}
-                  className="-mt-9 border-4 border-background rounded-full shrink-0"
+                  className="-mt-9 border-4 border-background rounded-full shrink-0 "
                   style={{
                     width: "clamp(100px, 10vw, 125px)",
                     height: "clamp(100px, 10vw, 125px)",
@@ -249,7 +249,7 @@ const UserNumbers = ({
       <div>
         <span className="text-[13px] text-secondary leading-[16px]">Posts</span>
         <MainGradient as="h3" className="font-semibold text-[26px] text-secondary leading-[34px]">
-          5
+          0
         </MainGradient>
       </div>
     </div>

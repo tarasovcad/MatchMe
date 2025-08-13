@@ -11,16 +11,16 @@ export const settingsTabsData = [
     query: "security",
     title: "Security",
   },
-  {
-    query: "notifications",
-    title: "Notifications",
-  },
-  {
-    query: "appearance",
-    title: "Appearance",
-  },
-  {
-    query: "billing",
-    title: "Billing",
-  },
+  // {
+  //   query: "notifications",
+  //   title: "Notifications",
+  // },
+  // {
+  //   query: "appearance",
+  //   title: "Appearance",
+  // },
+  // {
+  //   query: "billing",
+  //   title: "Billing",
+  // },
 ];
