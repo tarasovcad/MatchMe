@@ -20,6 +20,63 @@ import {createClient} from "@/utils/supabase/server";
 import {Messages2} from "iconsax-react";
 import Image from "next/image";
 import React from "react";
+import type {Metadata} from "next";
+import {getUserProfile} from "@/actions/profiles/singleUserProfile";
+
+export async function generateMetadata({params}: {params: {username: string}}): Promise<Metadata> {
+  const {username} = params;
+
+  try {
+    const user = await getUserProfile(username);
+
+    if (!user) {
+      return {
+        title: "User not found | MatchMe",
+        description: "This profile does not exist.",
+        robots: {index: false, follow: false},
+        alternates: {canonical: `https://matchme.me/profiles/${username}`},
+      };
+    }
+
+    const titleBase = user.tagline ? `${user.name} – ${user.tagline}` : `${user.name} – Profile`;
+    const title = `${titleBase} | MatchMe`;
+    const rawDescription = user.tagline || user.about_you || "View profile on MatchMe.";
+    const description =
+      rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
+    const url = `https://matchme.me/profiles/${username}`;
+    const keywords = (user.skills ?? []).slice(0, 12).join(", ");
+    const ogImage =
+      Array.isArray(user.profile_image) && user.profile_image[0]?.url
+        ? user.profile_image[0].url
+        : "/logo/full_logo.svg";
+
+    return {
+      title,
+      description,
+      keywords,
+      alternates: {canonical: url},
+      openGraph: {
+        title,
+        description,
+        url,
+        type: "profile",
+        images: [ogImage],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  } catch {
+    return {
+      title: "Profile | MatchMe",
+      description: "Explore profiles on MatchMe.",
+      alternates: {canonical: `https://matchme.me/profiles/${params.username}`},
+    };
+  }
+}
 
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const {username} = await params;
@@ -49,6 +106,17 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
     const {followerCount, followingCount, skills} = stats;
     const {isFollowing, isFollowingBack} = follow;
 
+    const profileImageUrl =
+      Array.isArray(user.profile_image) && user.profile_image[0]?.url
+        ? user.profile_image[0].url
+        : undefined;
+    const sameAs = [
+      user.personal_website,
+      user.social_links_1,
+      user.social_links_2,
+      user.social_links_3,
+    ].filter(Boolean) as string[];
+
     return (
       <SidebarProvider removePadding>
         <BackgroundImageViewer
@@ -58,6 +126,26 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
           style={{
             width: "100%",
             height: "clamp(130px, 20vw, 156px)",
+          }}
+        />
+
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ProfilePage",
+              mainEntity: {
+                "@type": "Person",
+                name: user.name,
+                url: `https://matchme.me/profiles/${username}`,
+                image: profileImageUrl,
+                description: user.about_you || user.tagline || undefined,
+                knowsAbout: (skills || []).map((s) => s.name).slice(0, 20),
+                sameAs,
+              },
+            }),
           }}
         />
 
