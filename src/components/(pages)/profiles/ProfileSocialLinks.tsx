@@ -33,7 +33,7 @@ const ProfileSocialLinks = ({user}: {user: MatchMeUser}) => {
       };
     })
     .filter(({link}) => link);
-  console.log(userSocialLinks);
+
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex items-center gap-1">

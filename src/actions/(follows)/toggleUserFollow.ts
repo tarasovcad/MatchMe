@@ -4,8 +4,7 @@ import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {postProfileInteraction} from "../profiles/profileInteractions";
 import {sendNotification} from "@/actions/notifications/sendNotification";
-
-const USER_STATS_CACHE_KEY = (userId: string) => `user_stats_${userId}`;
+import {invalidateFollowRelationship} from "../profiles/singleUserProfile";
 
 export async function toggleUserFollow(followingId: string) {
   try {
@@ -80,8 +79,16 @@ export async function toggleUserFollow(followingId: string) {
 
       result = {success: true, message: "Followed successfully"};
     }
-    redis.del(USER_STATS_CACHE_KEY(followingId)).catch((err) => console.error("Cache error:", err));
-    redis.del(USER_STATS_CACHE_KEY(followerId)).catch((err) => console.error("Cache error:", err));
+
+    // Invalidate caches affected by follow changes
+    await Promise.all([
+      // Stats (counts) for both users
+      redis.del(`stats_${followingId}`),
+      redis.del(`stats_${followerId}`),
+      // Follow relationship in both directions
+      invalidateFollowRelationship(followerId, followingId),
+      invalidateFollowRelationship(followingId, followerId),
+    ]).catch((err) => console.error("Cache error:", err));
 
     return result;
   } catch (error) {

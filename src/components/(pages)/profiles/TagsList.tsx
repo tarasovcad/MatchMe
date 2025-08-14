@@ -1,10 +1,8 @@
 "use client";
-import MainGradient from "@/components/ui/Text";
-import {MatchMeUser} from "@/types/user/matchMeUser";
+
 import Image from "next/image";
 import React, {useEffect, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
-import {Project} from "@/types/projects/projects";
 
 const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
   const [expanded, setExpanded] = useState(false);
@@ -61,7 +59,13 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
               transition={{duration: 0.2}}>
               {skillImage && (
                 <div className="flex justify-center items-center border border-border rounded-radius w-7 h-7">
-                  <Image src={skillImage} alt={skill.name} width={17} height={17} />
+                  <Image
+                    src={skillImage}
+                    alt={skill.name}
+                    width={17}
+                    height={17}
+                    className="w-[17px] h-[17px]"
+                  />
                 </div>
               )}
               <span className="font-medium text-[14px] text-foreground/70">{skill.name}</span>

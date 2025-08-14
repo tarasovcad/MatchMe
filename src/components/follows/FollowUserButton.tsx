@@ -142,28 +142,28 @@ const FollowUserButton = ({
   const buttonConfigs: Record<FollowState, ButtonConfig> = {
     follow: {
       text: isFollowingBack ? "Follow Back" : "Follow",
-      icon: <UserRoundPlus size="18" strokeWidth={2} />,
+      icon: <UserRoundPlus size="16" />,
       variant: followVariant,
       action: handleFollow,
       needsConfirmation: false,
     },
     following: {
       text: "Following",
-      icon: <UserRoundPlus size="18" strokeWidth={2} />,
+      icon: <UserRoundPlus size="16" />,
       variant: "outline",
       action: () => setShowUnfollow(true),
       needsConfirmation: false,
     },
     friends: {
       text: "Friends",
-      icon: <Users size="18" strokeWidth={2} />,
+      icon: <Users size="16" />,
       variant: "outline",
       action: handleUnfollow,
       needsConfirmation: true,
     },
     unfollow: {
       text: "Unfollow",
-      icon: <UserRoundMinus size="18" strokeWidth={2} />,
+      icon: <UserRoundMinus size="16" />,
       variant: unfollowVariant,
       action: handleUnfollow,
       needsConfirmation: true,
@@ -171,7 +171,7 @@ const FollowUserButton = ({
   };
 
   const config = buttonConfigs[currentState];
-  const MotionButton = motion(Button);
+  const MotionButton = motion.create(Button);
 
   // Animation props - disable when simpleStyle is true
   const animationProps = simpleStyle ? {} : {whileTap: {scale: 0.95}};
@@ -192,7 +192,7 @@ const FollowUserButton = ({
         "transition-all duration-300",
         buttonClassName,
       )}
-      disabled={followMutation.isPending || !userSessionId}
+      disabled={followMutation.isPending}
       onClick={userSessionId && !config.needsConfirmation ? config.action : undefined}
       onMouseLeave={() => setShowUnfollow(false)}
       {...animationProps}>

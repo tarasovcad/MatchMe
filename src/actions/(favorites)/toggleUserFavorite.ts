@@ -3,9 +3,9 @@ import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {postProfileInteraction} from "../profiles/profileInteractions";
 
-async function invalidateUserFavoritesCache(userId: string) {
-  const cacheKey = `favorites_${userId}`;
-  await redis.del(cacheKey);
+async function invalidateFavoritePair(userId: string, favoriteUserId: string) {
+  const pairKey = `favorite_${userId}_${favoriteUserId}`;
+  await redis.del(pairKey);
 }
 
 export async function toggleUserFavorite(userId: string, favoriteUserId: string) {
@@ -52,8 +52,8 @@ export async function toggleUserFavorite(userId: string, favoriteUserId: string)
         console.error("Error removing from favorites:", deleteError.message);
         return {success: false, message: "Error removing from favorites"};
       }
-      // Invalidate the favorites cache for this user
-      await invalidateUserFavoritesCache(userId);
+      // Invalidate caches
+      await invalidateFavoritePair(userId, favoriteUserId);
 
       return {success: true, message: "Removed from favorites"};
     } else {
@@ -66,8 +66,8 @@ export async function toggleUserFavorite(userId: string, favoriteUserId: string)
         console.error("Error adding to favorites:", insertError.message);
         return {success: false, message: "Error adding to favorites"};
       }
-      // Invalidate the favorites cache for this user
-      await invalidateUserFavoritesCache(userId);
+      // Invalidate caches
+      await invalidateFavoritePair(userId, favoriteUserId);
 
       return {success: true, message: "Added to favorites"};
     }

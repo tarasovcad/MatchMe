@@ -25,9 +25,9 @@ import {projectFormFields} from "@/data/forms/projects/projectFormFields";
 import ProjectFormField from "./ProjectFormField";
 import ProjectImageSlider from "./ProjectImageSlider";
 import ProjectTabs from "./ProjectTabs";
-import ProjectTagsSection from "./ProjectTagsSection";
-import ProjectShareSection from "./ProjectShareSection";
 import ProjectSimilarSection from "./ProjectSimilarSection";
+import KeywordTagList from "../other/KeywordTagList";
+import ContentShareSection from "../other/ContentShareSection";
 
 const options = [
   {
@@ -45,6 +45,7 @@ const ProjectClient = ({
   project: Project;
   skills: {name: string; image_url: string}[];
 }) => {
+  const tags = ["ai", "healcare", "cancer-research", "social-media"];
   return (
     <>
       {/* Background Image */}
@@ -138,8 +139,14 @@ const ProjectClient = ({
               </div>
             ))}
             <ProjectTabs />
-            <ProjectTagsSection />
-            <ProjectShareSection />
+            <KeywordTagList tags={tags} type="projects" />
+            <ContentShareSection
+              contentType="project"
+              contentUrl={`https://matchme.me/projects/${project.slug}`}
+              contentName={project.name}
+              contentTagline={project.tagline}
+              excludeProjectId={project.id}
+            />
             <ProjectSimilarSection />
           </div>
         </div>
@@ -166,7 +173,6 @@ const ProjectButtons = ({
   isFavorite: boolean;
 }) => {
   const [selectedIndex, setSelectedIndex] = useState("0");
-
   return (
     <div className={cn("flex items-center gap-3 max-[620px] max-[360px]:gap-1", className)}>
       <AuthGate userSessionId={userSessionId}>

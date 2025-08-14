@@ -1,14 +1,12 @@
-import {
-  getUserFollowRelationship,
-  getUserProfile,
-  getUserStats,
-  isUserFavorite,
-} from "@/actions/profiles/singleUserProfile";
+import {getUserProfileBundle} from "@/actions/profiles/singleUserProfile";
 import {trackProfileVisit} from "@/actions/profiles/trackProfileVisit";
+import ContentShareSection from "@/components/(pages)/other/ContentShareSection";
+import KeywordTagList from "@/components/(pages)/other/KeywordTagList";
 import BackgroundImageViewer from "@/components/(pages)/profiles/BackgroundImageViewer";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
 import ProfileImageViewer from "@/components/(pages)/profiles/ProfileImageViewer";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
+import ProfileProjectsList from "@/components/(pages)/profiles/ProfileProjectsList";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
 import FollowUserButton from "@/components/follows/FollowUserButton";
 import AuthGate from "@/components/other/AuthGate";
@@ -26,8 +24,13 @@ import React from "react";
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const {username} = await params;
   try {
-    const user = await getUserProfile(username);
-    if (!user) {
+    const supabase = await createClient();
+    const {data: userSession} = await supabase.auth.getUser();
+    const userSessionId = userSession?.user?.id;
+
+    const bundle = await getUserProfileBundle(username, userSessionId, supabase);
+
+    if (!bundle) {
       return (
         <div className="mx-auto p-4 container">
           <h1 className="font-bold text-xl">User not found</h1>
@@ -35,26 +38,17 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
         </div>
       );
     }
-    const supabase = await createClient();
-    const {data: userSession} = await supabase.auth.getUser();
-    const userSessionId = userSession?.user?.id;
 
-    const [statsData, followRelationship, isFavorite] = await Promise.all([
-      getUserStats(user.id, userSessionId, user),
-      userSessionId
-        ? getUserFollowRelationship(userSessionId, user.id)
-        : Promise.resolve({isFollowing: false, isFollowingBack: false}),
-      userSessionId ? isUserFavorite(userSessionId, user.id) : Promise.resolve(false),
-    ]);
+    const {user, stats, follow, favorite, projects} = bundle;
 
     // track profile visit
     if (userSessionId && userSessionId !== user.id) {
       await trackProfileVisit(userSessionId, user.id);
     }
 
-    const {followerCount, followingCount, skills} = statsData;
-    const {isFollowing, isFollowingBack} = followRelationship;
-    console.log(user);
+    const {followerCount, followingCount, skills} = stats;
+    const {isFollowing, isFollowingBack} = follow;
+
     return (
       <SidebarProvider removePadding>
         <BackgroundImageViewer
@@ -77,7 +71,7 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                 profileId={user.id}
                 isFollowingBack={isFollowingBack}
                 username={username}
-                isFavorite={isFavorite}
+                isFavorite={favorite}
               />
               <div className="flex max-[1130px]:flex-col gap-3">
                 <ProfileImageViewer
@@ -98,14 +92,13 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                       <MainGradient as="h1" className="font-semibold text-[26px] leading-[26px]">
                         {user.name}
                       </MainGradient>
-                      {!user.is_profile_verified && (
+                      {user.is_profile_verified && (
                         <Image
                           src="/svg/verified.svg"
                           alt="Verified"
                           width={18}
                           height={18}
-                          className="w-4.5 h-auto shrink-0"
-                          style={{width: "auto", height: "auto"}}
+                          className="w-auto h-auto shrink-0"
                         />
                       )}
                     </div>
@@ -133,7 +126,7 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                 profileId={user.id}
                 isFollowingBack={isFollowingBack}
                 username={username}
-                isFavorite={isFavorite}
+                isFavorite={favorite}
               />
               <UserNumbers
                 className="min-[950px]:hidden justify-between"
@@ -150,13 +143,29 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                   <ProfileFormField formField={formField} user={user} skills={skills} />
                 </div>
               ))}
+              <ProfileProjectsList projects={projects} userId={userSessionId ?? ""} />
+              <KeywordTagList tags={skills.map((skill) => skill.name)} type="profiles" />
+              <ContentShareSection
+                contentType="profile"
+                contentUrl={`https://matchme.me/profiles/${username}`}
+                contentName={user.name}
+                contentTagline={user.tagline ?? ""}
+              />
             </div>
           </div>
         </div>
       </SidebarProvider>
     );
-  } catch (error) {
-    console.error("Error rendering user profile:", error);
+  } catch (e) {
+    if (e instanceof Error && e.message === "RATE_LIMITED") {
+      return (
+        <div className="mx-auto p-4 container">
+          <h1 className="font-bold text-xl">Too many requests</h1>
+          <p>Please wait a minute and try again.</p>
+        </div>
+      );
+    }
+    console.error("Error rendering user profile:", e);
     return (
       <div className="mx-auto p-4 container">
         <h1 className="font-bold text-xl">Something went wrong</h1>
@@ -198,12 +207,7 @@ const UserButtons = ({
         <div className="flex items-center gap-[10px] max-[360px]:gap-1 @max-[620px]:w-full">
           <AuthGate userSessionId={userSessionId}>
             <Button size={"default"} className="@max-[620px]:order-2 @max-[620px]:w-full">
-              <Messages2
-                size="18"
-                color="currentColor"
-                strokeWidth={2}
-                className="max-[450px]:hidden stroke-2"
-              />
+              <Messages2 size="16" color="currentColor" className="max-[450px]:hidden" />
               Message
             </Button>
           </AuthGate>

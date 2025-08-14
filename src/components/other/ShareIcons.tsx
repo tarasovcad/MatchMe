@@ -10,20 +10,23 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import {toast} from "sonner";
 
 interface ShareIconsProps {
   size?: number;
-  projectUrl: string;
-  projectName: string;
-  projectTagline: string;
+  contentUrl: string;
+  contentName: string;
+  contentTagline: string;
+  contentType: "project" | "profile" | "post";
   className?: string;
 }
 
 const ShareIcons = ({
   size = 16,
-  projectUrl,
-  projectName,
-  projectTagline,
+  contentUrl,
+  contentName,
+  contentTagline,
+  contentType,
   className = "",
 }: ShareIconsProps) => {
   const copyToClipboard = async (text: string) => {
@@ -34,37 +37,45 @@ const ShareIcons = ({
     }
   };
 
+  const typeNoun =
+    contentType === "project" ? "project" : contentType === "profile" ? "profile" : "post";
+
   const getTwitterUrl = () => {
-    const text = `Just launched my project "${projectName}" - ${projectTagline}! Check it out:`;
-    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(projectUrl)}`;
+    const leading =
+      contentType === "project"
+        ? `Just launched my ${typeNoun} "${contentName}" - ${contentTagline}!`
+        : contentType === "profile"
+          ? `Check out my ${typeNoun}: ${contentName} - ${contentTagline}`
+          : `New ${typeNoun}: ${contentName} - ${contentTagline}`;
+    const text = `${leading} Check it out:`;
+    return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(contentUrl)}`;
   };
 
   const getLinkedInUrl = () => {
-    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(projectUrl)}`;
+    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(contentUrl)}`;
   };
 
   const getFacebookUrl = () => {
-    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(projectUrl)}`;
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(contentUrl)}`;
   };
 
   const getWhatsAppUrl = () => {
-    const text = `Check out this project: ${projectName} - ${projectTagline}`;
-    return `https://wa.me/?text=${encodeURIComponent(text + " " + projectUrl)}`;
+    const text = `Check out this ${typeNoun}: ${contentName} - ${contentTagline}`;
+    return `https://wa.me/?text=${encodeURIComponent(text + " " + contentUrl)}`;
   };
 
   const getRedditUrl = () => {
-    const title = `${projectName} - ${projectTagline}`;
-    return `https://reddit.com/submit?url=${encodeURIComponent(projectUrl)}&title=${encodeURIComponent(title)}`;
+    const title = `${contentName} - ${contentTagline}`;
+    return `https://reddit.com/submit?url=${encodeURIComponent(contentUrl)}&title=${encodeURIComponent(title)}`;
   };
 
   const getHackerNewsUrl = () => {
-    const title = `${projectName} - ${projectTagline}`;
-    return `https://news.ycombinator.com/submitlink?u=${encodeURIComponent(projectUrl)}&t=${encodeURIComponent(title)}`;
+    const title = `${contentName} - ${contentTagline}`;
+    return `https://news.ycombinator.com/submitlink?u=${encodeURIComponent(contentUrl)}&t=${encodeURIComponent(title)}`;
   };
 
   const shareToDevTo = () => {
-    // Dev.to doesn't have a direct share URL, so we'll copy the link with a message
-    const text = `Check out this project: ${projectName} - ${projectTagline}\n${projectUrl}`;
+    const text = `Check out this ${typeNoun}: ${contentName} - ${contentTagline}\n${contentUrl}`;
     copyToClipboard(text);
   };
 

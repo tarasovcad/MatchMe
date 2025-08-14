@@ -69,6 +69,22 @@ async function handleFollowNotification(
   senderId: string,
   recipientId: string,
 ): Promise<SendNotificationResult> {
+  // Deduplicate: if a follow notification from this sender to this recipient exists in the last 3 days, do not insert another
+  const threeDaysAgoIso = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  const {count, error: checkError} = await supabase
+    .from("notifications")
+    .select("*", {count: "exact", head: true})
+    .eq("recipient_id", recipientId)
+    .eq("sender_id", senderId)
+    .eq("type", "follow")
+    .gte("created_at", threeDaysAgoIso);
+
+  if (!checkError && (count ?? 0) > 0) {
+    // A recent follow notification already exists; treat as success without inserting a duplicate
+    return {success: true};
+  }
+
   const {error} = await supabase.from("notifications").insert([
     {
       recipient_id: recipientId,

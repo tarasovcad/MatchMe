@@ -19,8 +19,7 @@ export const profileFormFields = [
   },
   {
     fieldTitle: "Current Goal",
-    fieldDescription:
-      "Current professional aspirations or next steps in your career.",
+    fieldDescription: "Current professional aspirations or next steps in your career.",
     fieldType: "description",
     fieldInputProps: [
       {
