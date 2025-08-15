@@ -8,7 +8,6 @@ import {motion, AnimatePresence} from "framer-motion";
 
 const KeywordTagList = ({tags, type}: {tags: string[]; type: "projects" | "profiles"}) => {
   const href = type === "projects" ? "/projects" : "/profiles";
-  const label = type === "projects" ? "Categories:" : "Skills:";
 
   const [expanded, setExpanded] = useState(false);
   const [maxKeywords, setMaxKeywords] = useState(10);
@@ -39,10 +38,14 @@ const KeywordTagList = ({tags, type}: {tags: string[]; type: "projects" | "profi
     setKeywordsToShow(expanded ? tags || [] : tags?.slice(0, maxKeywords) || []);
   }, [maxKeywords, expanded, tags]);
 
+  if (tags.length === 0) {
+    return null;
+  }
+
   return (
     <div className={`flex flex-col justify-between pt-15 items-start gap-3`}>
       <div className={`flex flex-col gap-[1px] w-full`}>
-        <p className="font-medium text-foreground text-base">{label}</p>
+        <p className="font-medium text-foreground text-base">Categories:</p>
       </div>
       <motion.div className="w-full flex flex-wrap gap-2" layout>
         <AnimatePresence initial={false}>

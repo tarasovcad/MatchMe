@@ -23,8 +23,10 @@ export interface MatchMeUser {
     | null;
   looking_for: string | null;
   goal: string | null;
+  dream: string | null;
   tagline: string | null;
   skills: string[] | null;
+  tags: string[] | null;
   time_commitment: string | null;
   years_of_experience: number | null;
   location: string | null;

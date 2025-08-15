@@ -26,6 +26,7 @@ export type InfiniteListProps<T> = {
   displaySearch?: boolean;
   cacheKey?: string;
   pageKey?: string; // Custom page key for filter store
+  initialData?: T[]; // Initial data from server-side rendering
 };
 
 const InfiniteItemLoader = <T extends {id: string}>({
@@ -40,6 +41,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
   displaySearch = true,
   cacheKey,
   pageKey, // Custom page key for filter store
+  initialData, // Initial data from server-side rendering
 }: InfiniteListProps<T>) => {
   const userId = userSession?.id || "";
 
@@ -57,6 +59,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
       serializableFilters,
       fetchItems,
       cacheKey,
+      initialData, // Pass initial data to the hook
     });
 
   // Intersection observer for infinite loading

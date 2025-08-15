@@ -22,6 +22,7 @@ import Image from "next/image";
 import React from "react";
 import type {Metadata} from "next";
 import {getUserProfile} from "@/actions/profiles/singleUserProfile";
+import {notFound} from "next/navigation";
 
 export async function generateMetadata({params}: {params: {username: string}}): Promise<Metadata> {
   const {username} = params;
@@ -44,7 +45,10 @@ export async function generateMetadata({params}: {params: {username: string}}): 
     const description =
       rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
     const url = `https://matchme.me/profiles/${username}`;
-    const keywords = (user.skills ?? []).slice(0, 12).join(", ");
+    const keywords = [...(user.skills ?? []), ...(user.tags ?? [])]
+      .filter(Boolean)
+      .slice(0, 12)
+      .join(", ");
     const ogImage =
       Array.isArray(user.profile_image) && user.profile_image[0]?.url
         ? user.profile_image[0].url
@@ -80,170 +84,16 @@ export async function generateMetadata({params}: {params: {username: string}}): 
 
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const {username} = await params;
+
+  let bundle;
+  let userSessionId: string | undefined;
+
   try {
     const supabase = await createClient();
     const {data: userSession} = await supabase.auth.getUser();
-    const userSessionId = userSession?.user?.id;
+    userSessionId = userSession?.user?.id;
 
-    const bundle = await getUserProfileBundle(username, userSessionId, supabase);
-
-    if (!bundle) {
-      return (
-        <div className="mx-auto p-4 container">
-          <h1 className="font-bold text-xl">User not found</h1>
-          <p>The user you are looking for doesn&apos;t exist or has been removed.</p>
-        </div>
-      );
-    }
-
-    const {user, stats, follow, favorite, projects} = bundle;
-
-    // track profile visit
-    if (userSessionId && userSessionId !== user.id) {
-      await trackProfileVisit(userSessionId, user.id);
-    }
-
-    const {followerCount, followingCount, skills} = stats;
-    const {isFollowing, isFollowingBack} = follow;
-
-    const profileImageUrl =
-      Array.isArray(user.profile_image) && user.profile_image[0]?.url
-        ? user.profile_image[0].url
-        : undefined;
-    const sameAs = [
-      user.personal_website,
-      user.social_links_1,
-      user.social_links_2,
-      user.social_links_3,
-    ].filter(Boolean) as string[];
-
-    return (
-      <SidebarProvider removePadding>
-        <BackgroundImageViewer
-          backgroundImage={user.background_image}
-          name={user.name}
-          className="bg-gray-200 rounded-[6px] rounded-t-none w-full object-cover"
-          style={{
-            width: "100%",
-            height: "clamp(130px, 20vw, 156px)",
-          }}
-        />
-
-        <script
-          type="application/ld+json"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "ProfilePage",
-              mainEntity: {
-                "@type": "Person",
-                name: user.name,
-                url: `https://matchme.me/profiles/${username}`,
-                image: profileImageUrl,
-                description: user.about_you || user.tagline || undefined,
-                knowsAbout: (skills || []).map((s) => s.name).slice(0, 20),
-                sameAs,
-              },
-            }),
-          }}
-        />
-
-        <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
-          <div className="flex flex-col gap-6">
-            <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
-              <UserButtons
-                className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
-                isFollowing={isFollowing}
-                userSessionId={userSessionId}
-                profileId={user.id}
-                isFollowingBack={isFollowingBack}
-                username={username}
-                isFavorite={favorite}
-              />
-              <div className="flex max-[1130px]:flex-col gap-3">
-                <ProfileImageViewer
-                  profileImage={user.profile_image}
-                  name={user.name}
-                  width={125}
-                  height={125}
-                  className="-mt-9 border-4 border-background rounded-full shrink-0 "
-                  style={{
-                    width: "clamp(100px, 10vw, 125px)",
-                    height: "clamp(100px, 10vw, 125px)",
-                  }}
-                />
-                <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
-                  {/* name and verified */}
-                  <div className="flex flex-col gap-[6px]">
-                    <div className="flex items-center gap-2">
-                      <MainGradient as="h1" className="font-semibold text-[26px] leading-[26px]">
-                        {user.name}
-                      </MainGradient>
-                      {user.is_profile_verified && (
-                        <Image
-                          src="/svg/verified.svg"
-                          alt="Verified"
-                          width={18}
-                          height={18}
-                          className="w-auto h-auto shrink-0"
-                        />
-                      )}
-                    </div>
-                    <p className="text-secondary text-sm">
-                      {user.tagline} to create a successful career in tech.
-                    </p>
-                  </div>
-                  {/* social links */}
-                  <ProfileSocialLinks user={user} />
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
-                <UserNumbers
-                  className="max-[950px]:hidden pt-[75px] pr-[47px]"
-                  followerCount={followerCount}
-                  followingCount={followingCount}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-4">
-              <UserButtons
-                className="@min-[620px]:hidden w-full"
-                isFollowing={isFollowing}
-                userSessionId={userSessionId}
-                profileId={user.id}
-                isFollowingBack={isFollowingBack}
-                username={username}
-                isFavorite={favorite}
-              />
-              <UserNumbers
-                className="min-[950px]:hidden justify-between"
-                followerCount={followerCount}
-                followingCount={followingCount}
-              />
-            </div>
-          </div>
-          {/* main section */}
-          <div>
-            <div className="flex flex-col gap-8 max-[990px]:gap-10">
-              {profileFormFields.map((formField) => (
-                <div key={formField.fieldTitle}>
-                  <ProfileFormField formField={formField} user={user} skills={skills} />
-                </div>
-              ))}
-              <ProfileProjectsList projects={projects} userId={userSessionId ?? ""} />
-              <KeywordTagList tags={skills.map((skill) => skill.name)} type="profiles" />
-              <ContentShareSection
-                contentType="profile"
-                contentUrl={`https://matchme.me/profiles/${username}`}
-                contentName={user.name}
-                contentTagline={user.tagline ?? ""}
-              />
-            </div>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
+    bundle = await getUserProfileBundle(username, userSessionId, supabase);
   } catch (e) {
     if (e instanceof Error && e.message === "RATE_LIMITED") {
       return (
@@ -261,6 +111,161 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
       </div>
     );
   }
+
+  // Handle user not found outside of try-catch to allow notFound() to work
+  if (!bundle) {
+    notFound();
+  }
+
+  const {user, stats, follow, favorite, projects} = bundle;
+
+  // track profile visit
+  if (userSessionId && userSessionId !== user.id) {
+    await trackProfileVisit(userSessionId, user.id);
+  }
+
+  const {followerCount, followingCount, skills} = stats;
+  const {isFollowing, isFollowingBack} = follow;
+
+  const profileImageUrl =
+    Array.isArray(user.profile_image) && user.profile_image[0]?.url
+      ? user.profile_image[0].url
+      : undefined;
+  const sameAs = [
+    user.personal_website,
+    user.social_links_1,
+    user.social_links_2,
+    user.social_links_3,
+  ].filter(Boolean) as string[];
+
+  return (
+    <SidebarProvider removePadding>
+      <BackgroundImageViewer
+        backgroundImage={user.background_image}
+        name={user.name}
+        className="bg-gray-200 rounded-[6px] rounded-t-none w-full object-cover"
+        style={{
+          width: "100%",
+          height: "clamp(130px, 20vw, 156px)",
+        }}
+      />
+
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ProfilePage",
+            mainEntity: {
+              "@type": "Person",
+              name: user.name,
+              url: `https://matchme.me/profiles/${username}`,
+              image: profileImageUrl,
+              description: user.about_you || user.tagline || user.dream || undefined,
+              knowsAbout: [
+                ...((user.tags ?? []) as string[]),
+                ...(skills || []).map((s) => s.name),
+              ].slice(0, 20),
+              sameAs,
+            },
+          }),
+        }}
+      />
+
+      <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
+        <div className="flex flex-col gap-6">
+          <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
+            <UserButtons
+              className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
+              isFollowing={isFollowing}
+              userSessionId={userSessionId}
+              profileId={user.id}
+              isFollowingBack={isFollowingBack}
+              username={username}
+              isFavorite={favorite}
+            />
+            <div className="flex max-[1130px]:flex-col gap-3">
+              <ProfileImageViewer
+                profileImage={user.profile_image}
+                name={user.name}
+                width={125}
+                height={125}
+                className="-mt-9 border-4 border-background rounded-full shrink-0 "
+                style={{
+                  width: "clamp(100px, 10vw, 125px)",
+                  height: "clamp(100px, 10vw, 125px)",
+                }}
+              />
+              <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
+                {/* name and verified */}
+                <div className="flex flex-col gap-[6px]">
+                  <div className="flex items-center gap-2">
+                    <MainGradient as="h1" className="font-semibold text-[26px] leading-[26px]">
+                      {user.name}
+                    </MainGradient>
+                    {user.is_profile_verified && (
+                      <Image
+                        src="/svg/verified.svg"
+                        alt="Verified"
+                        width={18}
+                        height={18}
+                        className="w-auto h-auto shrink-0"
+                      />
+                    )}
+                  </div>
+                  <p className="text-secondary text-sm">{user.tagline}</p>
+                </div>
+                {/* social links */}
+                <ProfileSocialLinks user={user} />
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
+              <UserNumbers
+                className="max-[950px]:hidden pt-[75px] pr-[47px]"
+                followerCount={followerCount}
+                followingCount={followingCount}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <UserButtons
+              className="@min-[620px]:hidden w-full"
+              isFollowing={isFollowing}
+              userSessionId={userSessionId}
+              profileId={user.id}
+              isFollowingBack={isFollowingBack}
+              username={username}
+              isFavorite={favorite}
+            />
+            <UserNumbers
+              className="min-[950px]:hidden justify-between"
+              followerCount={followerCount}
+              followingCount={followingCount}
+            />
+          </div>
+        </div>
+        {/* main section */}
+        <div>
+          <div className="flex flex-col gap-8 max-[990px]:gap-10">
+            {profileFormFields.map((formField) => (
+              <div key={formField.fieldTitle}>
+                <ProfileFormField formField={formField} user={user} skills={skills} />
+              </div>
+            ))}
+            <ProfileProjectsList projects={projects} userId={userSessionId ?? ""} />
+            <KeywordTagList tags={user.tags ?? []} type="profiles" />
+            <ContentShareSection
+              contentType="profile"
+              contentUrl={`https://matchme.me/profiles/${username}`}
+              contentName={user.name}
+              contentTagline={user.tagline ?? ""}
+            />
+          </div>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
 };
 
 const UserButtons = ({

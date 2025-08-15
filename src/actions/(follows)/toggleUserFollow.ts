@@ -1,9 +1,11 @@
 "use server";
-import {qstash} from "@/utils/redis/qstash";
-import {redis} from "@/utils/redis/redis";
+
 import {createClient} from "@/utils/supabase/server";
 import {postProfileInteraction} from "../profiles/profileInteractions";
-import {sendNotification} from "@/actions/notifications/sendNotification";
+import {redis} from "@/utils/redis/redis";
+import {sendNotification} from "../notifications/sendNotification";
+import {Ratelimit} from "@upstash/ratelimit";
+import {getClientIp} from "@/utils/network/getClientIp";
 import {invalidateFollowRelationship} from "../profiles/singleUserProfile";
 
 export async function toggleUserFollow(followingId: string) {
@@ -19,10 +21,64 @@ export async function toggleUserFollow(followingId: string) {
     }
 
     const followerId = user.id;
+    const ip = await getClientIp();
 
     if (followerId === followingId) {
       return {
         error: "You cannot follow yourself",
+      };
+    }
+
+    // Rate limiting for follow actions
+    const followUserLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(20, "5 m"), // 20 follow actions per 5 minutes per user
+      analytics: true,
+      prefix: "ratelimit:user:follow",
+      enableProtection: true,
+    });
+
+    const followIpLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, "5 m"), // 100 follow actions per 5 minutes per IP
+      analytics: true,
+      prefix: "ratelimit:ip:follow",
+      enableProtection: true,
+    });
+
+    // Per-user-target pair limit to prevent targeting specific users
+    const followPairLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "1 m"), // 5 follow toggles per minute per user-target pair
+      analytics: true,
+      prefix: "ratelimit:pair:follow",
+      enableProtection: true,
+    });
+
+    const [userLimit, ipLimit, pairLimit] = await Promise.all([
+      followUserLimiter.limit(followerId),
+      followIpLimiter.limit(ip),
+      followPairLimiter.limit(`${followerId}:${followingId}`),
+    ]);
+
+    if (!userLimit.success) {
+      return {
+        success: false,
+        message: "You're following/unfollowing too quickly. Please wait a moment and try again.",
+      };
+    }
+
+    if (!ipLimit.success) {
+      return {
+        success: false,
+        message: "Too many follow actions from this connection. Please try again later.",
+      };
+    }
+
+    if (!pairLimit.success) {
+      return {
+        success: false,
+        message: "You're interacting with this profile too frequently. Please wait a moment.",
       };
     }
 
@@ -38,6 +94,7 @@ export async function toggleUserFollow(followingId: string) {
       console.error("Error checking follow status:", error.message);
       return {success: false, message: "Error checking follow status"};
     }
+
     let result;
     if (existingFollow) {
       // Unfollow (delete entry)

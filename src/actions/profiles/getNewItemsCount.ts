@@ -3,7 +3,7 @@
 import {createClient} from "@/utils/supabase/server";
 import {redis} from "@/utils/redis/redis";
 
-const CACHE_TTL = 600; // 10 minutes cache
+const CACHE_TTL = 60 * 60 * 12; // 12 hours cache
 
 export async function getNewItemsCount(table: "profiles" | "projects"): Promise<number> {
   try {

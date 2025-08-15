@@ -261,6 +261,20 @@ export const accountSettingsFormFields = [
         ],
       },
       {
+        fieldTitle: "My dream",
+        fieldDescription: "Share your long-term dream or vision",
+        fieldType: "textarea",
+        fieldInputProps: [
+          {
+            id: "dream",
+            placeholder:
+              "Create an edtech app that teaches 1M students to code, hit $1M ARR, and buy a BMW M4",
+            type: "text",
+            name: "dream",
+          },
+        ],
+      },
+      {
         fieldTitle: "Personal Website",
         fieldDescription: "If you have a personal website enter its URL here",
         fieldType: "webiste",
@@ -295,6 +309,25 @@ export const accountSettingsFormFields = [
               },
             ],
             options: socialLinks,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "Boost Discoverability (Optional)",
+    formData: [
+      {
+        fieldTitle: "Tags",
+        fieldDescription:
+          "These tags help more people find your profile. Only for reach and popularity.",
+        fieldType: "tags",
+        fieldInputProps: [
+          {
+            id: "tags",
+            placeholder: "Add a tag",
+            type: "text",
+            name: "tags",
           },
         ],
       },

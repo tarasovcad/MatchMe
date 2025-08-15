@@ -10,6 +10,7 @@ import {hasProfanity} from "@/utils/other/profanityCheck";
 export default function TagsInput({placeholder, name}: {placeholder: string; name: string}) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   const {control} = useFormContext();
+  const showHashPrefix = name === "tags";
   return (
     <Controller
       name={name}
@@ -32,7 +33,7 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
               } rounded-[6px] font-medium text-sm ps-2 pe-7 flex items-center ${
                 error ? "text-destructive" : "text-foreground"
               } ${isActiveTag ? `ring-2 ring-${error ? "destructive/30" : "ring/50"}` : ""} `}>
-              {tag.text}
+              {showHashPrefix ? `#${tag.text}` : tag.text}
               <motion.button
                 className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
                 onClick={(e) => {
@@ -67,14 +68,16 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
 
                 const normalizedMap = new Map();
                 const uniqueTags = tagArray.filter((tag) => {
-                  const normalized = tag.text.toLowerCase();
+                  const raw = typeof tag.text === "string" ? tag.text : "";
+                  const cleaned = raw.replace(/^#/, "");
+                  const normalized = cleaned.toLowerCase();
                   if (normalizedMap.has(normalized)) {
                     return false;
                   }
                   normalizedMap.set(normalized, true);
                   return true;
                 });
-                const values = uniqueTags.map((tag) => tag.text);
+                const values = uniqueTags.map((tag) => tag.text.replace(/^#/, ""));
                 field.onChange(values);
               }}
               placeholder={placeholder}

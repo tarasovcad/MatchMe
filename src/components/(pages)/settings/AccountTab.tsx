@@ -73,6 +73,8 @@ const AccountTab = ({
     years_of_experience: profile.years_of_experience ?? undefined,
     looking_for: profile.looking_for ?? "",
     goal: profile.goal ?? "",
+    dream: profile.dream ?? "",
+    tags: Array.isArray(profile.tags) ? profile.tags : [],
     tagline: profile.tagline ?? "",
     skills: Array.isArray(profile.skills) ? profile.skills : [],
     time_commitment: profile.time_commitment ?? undefined,
@@ -114,7 +116,6 @@ const AccountTab = ({
       // Check if the values are different
       return !isEqual(currentValue, initialValue);
     });
-
     // Special check for image arrays - if they go from empty to having content, that's a change
     const imageArraysChanged =
       ((!initialValues.profile_image || initialValues.profile_image.length === 0) &&

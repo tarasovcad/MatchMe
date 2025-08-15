@@ -12,7 +12,12 @@ import MainGradient, {SecGradient} from "@/components/ui/Text";
 import NewItemsCounter from "@/components/ui/NewItemsCounter";
 import {CardMatchMeUser} from "@/types/user/matchMeUser";
 
-const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
+interface ProfilesClientPageProps {
+  userSession: User | null;
+  initialProfiles: CardMatchMeUser[];
+}
+
+const ProfilesClientPage = ({userSession, initialProfiles}: ProfilesClientPageProps) => {
   const renderProfileItem = (
     profile: CardMatchMeUser,
     isLast: boolean,
@@ -59,6 +64,7 @@ const ProfilesClientPage = ({userSession}: {userSession: User | null}) => {
         filtersData={profileFiltersData}
         type="profiles"
         itemsPerPage={15}
+        initialData={initialProfiles}
       />
     </motion.div>
   );

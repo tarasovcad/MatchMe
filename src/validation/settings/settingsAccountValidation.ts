@@ -75,6 +75,7 @@ export const settingsAccountValidationSchema = z
         },
       ),
     goal: z.string().max(200, {message: "Goals must be at most 200 characters"}).optional(),
+    dream: z.string().max(500, {message: "Dream must be at most 500 characters"}).optional(),
     tagline: z.string().max(70, {message: "Tagline must be at most 70 characters"}),
     skills: z
       .array(
@@ -87,6 +88,19 @@ export const settingsAccountValidationSchema = z
           }),
       )
       .max(15, {message: "Skills must be at most 15 tags"})
+      .optional(),
+
+    tags: z
+      .array(
+        z
+          .string()
+          .min(1, {message: "Each tag must be at least 1 character"})
+          .max(30, {message: "Each tag must be at most 30 characters"})
+          .regex(/^[A-Za-z0-9_\-+]+$/, {
+            message: "Tags can only contain letters, numbers, and the symbols -, _, + (no spaces)",
+          }),
+      )
+      .max(8, {message: "You can add at most 8 tags"})
       .optional(),
 
     time_commitment: z

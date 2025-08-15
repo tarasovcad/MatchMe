@@ -29,6 +29,17 @@ export const profileFormFields = [
     ],
   },
   {
+    fieldTitle: "My Dream",
+    fieldDescription: "What drives me to get up every day",
+    fieldType: "description",
+    fieldInputProps: [
+      {
+        id: "dream",
+        maxNmberOfLines: 9,
+      },
+    ],
+  },
+  {
     fieldTitle: "Skills",
     fieldDescription: "Main Skills",
     fieldType: "tags",

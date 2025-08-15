@@ -10,6 +10,7 @@ interface UseInfiniteItemsProps<T> {
   serializableFilters: SerializableFilter[];
   fetchItems: (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => Promise<T[]>;
   cacheKey?: string;
+  initialData?: T[]; // Initial data from server-side rendering
 }
 
 export function useInfiniteItems<T extends {id: string}>({
@@ -19,9 +20,20 @@ export function useInfiniteItems<T extends {id: string}>({
   serializableFilters,
   fetchItems,
   cacheKey,
+  initialData,
 }: UseInfiniteItemsProps<T>) {
-  // Infinite query for items
   const infiniteKey = cacheKey ? `${type}-${cacheKey}-infinite` : `${type}-infinite`;
+
+  // Prepare initial data for TanStack Query if provided
+  const queryInitialData = initialData
+    ? {
+        pages: [
+          {items: initialData, nextPage: initialData.length === itemsPerPage ? 2 : undefined},
+        ],
+        pageParams: [1],
+      }
+    : undefined;
+
   const infiniteQuery = useInfiniteQuery({
     queryKey: [infiniteKey, serializableFilters],
     queryFn: async ({pageParam}) => {
@@ -33,6 +45,7 @@ export function useInfiniteItems<T extends {id: string}>({
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialData: queryInitialData, // Use server-side data for initial load
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2, // Retry failed requests 2 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff

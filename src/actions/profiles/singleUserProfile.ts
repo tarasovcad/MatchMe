@@ -67,6 +67,7 @@ export async function getUserProfile(username: string, client?: SupabaseServerCl
           "skills",
           "about_you",
           "goal",
+          "dream",
           "public_current_role",
           "looking_for",
           "years_of_experience",
@@ -83,13 +84,24 @@ export async function getUserProfile(username: string, client?: SupabaseServerCl
           "social_links_2",
           "social_links_3_platform",
           "social_links_3",
+          "tags",
         ].join(", "),
       )
       .eq("username", username)
       .single<MatchMeUser>();
 
-    if (error || !data) {
+    if (error) {
+      // Check if it's a "no rows found" error (user doesn't exist)
+      if (error.code === "PGRST116" || error.message?.includes("No rows found")) {
+        // User not found is not an error we need to log
+        return null;
+      }
+      // Only log actual database errors
       console.error("Error fetching user:", error);
+      return null;
+    }
+
+    if (!data) {
       return null;
     }
     await redis.set(cacheKey, data, {ex: 600}); //10min
@@ -356,44 +368,55 @@ export async function getUserProfileBundle(
   favorite: boolean;
   projects: UserProjects;
 }> {
-  // Rate limit to prevent scraping/spam
-  const ip = await getClientIp();
-  const globalLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(120, "1 m"), // up to 120 profile bundles per minute per IP
-    analytics: true,
-    prefix: "ratelimit:ip:profile-bundle",
-    enableProtection: true,
-  });
-  const pairLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(30, "1 m"), // up to 30 hits/min per IP-target pair
-    analytics: true,
-    prefix: "ratelimit:ip-target:profile-bundle",
-    enableProtection: true,
-  });
+  try {
+    // Rate limit to prevent scraping/spam
+    const ip = await getClientIp();
+    const globalLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(120, "1 m"), // up to 120 profile bundles per minute per IP
+      analytics: true,
+      prefix: "ratelimit:ip:profile-bundle",
+      enableProtection: true,
+    });
+    const pairLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, "1 m"), // up to 30 hits/min per IP-target pair
+      analytics: true,
+      prefix: "ratelimit:ip-target:profile-bundle",
+      enableProtection: true,
+    });
 
-  const [globalRes, pairRes] = await Promise.all([
-    globalLimiter.limit(ip),
-    pairLimiter.limit(`${ip}:${username}`),
-  ]);
+    const [globalRes, pairRes] = await Promise.all([
+      globalLimiter.limit(ip),
+      pairLimiter.limit(`${ip}:${username}`),
+    ]);
 
-  if (!globalRes.success || !pairRes.success) {
-    throw new Error("RATE_LIMITED");
+    if (!globalRes.success || !pairRes.success) {
+      throw new Error("RATE_LIMITED");
+    }
+
+    const supabase = client ?? (await createClient());
+    const user = await getUserProfile(username, supabase);
+    if (!user) return null;
+
+    const [stats, follow, favorite, projects] = await Promise.all([
+      getUserStats(user.id, viewerUserId, user, supabase),
+      viewerUserId
+        ? getUserFollowRelationship(viewerUserId, user.id, supabase)
+        : Promise.resolve({isFollowing: false, isFollowingBack: false, lastUpdated: Date.now()}),
+      viewerUserId ? isUserFavorite(viewerUserId, user.id, supabase) : Promise.resolve(false),
+      getUserProjects(user.id, supabase),
+    ]);
+
+    return {user, stats, follow, favorite, projects};
+  } catch (error) {
+    // Re-throw rate limit errors to be handled specifically in the page component
+    if (error instanceof Error && error.message === "RATE_LIMITED") {
+      throw error;
+    }
+
+    // Log other errors but return null to trigger 404 instead of generic error
+    console.error("Error in getUserProfileBundle:", error);
+    return null;
   }
-
-  const supabase = client ?? (await createClient());
-  const user = await getUserProfile(username, supabase);
-  if (!user) return null;
-
-  const [stats, follow, favorite, projects] = await Promise.all([
-    getUserStats(user.id, viewerUserId, user, supabase),
-    viewerUserId
-      ? getUserFollowRelationship(viewerUserId, user.id, supabase)
-      : Promise.resolve({isFollowing: false, isFollowingBack: false, lastUpdated: Date.now()}),
-    viewerUserId ? isUserFavorite(viewerUserId, user.id, supabase) : Promise.resolve(false),
-    getUserProjects(user.id, supabase),
-  ]);
-
-  return {user, stats, follow, favorite, projects};
 }

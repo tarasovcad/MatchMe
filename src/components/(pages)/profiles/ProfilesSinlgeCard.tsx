@@ -55,11 +55,11 @@ const ProfilesSinlgeCard = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-secondary">
+          {/* <div className="flex items-center gap-1 text-secondary">
             <BellRing size={14} strokeWidth={2} aria-hidden="true" className="text-secondary" />
             <span className="text-[13px]">•</span>
             <span className="text-[15px]">5d</span>
-          </div>
+          </div> */}
         </div>
         <p className="text-[14px] text-secondary line-clamp-1">{profile.tagline}</p>
         <div className="flex flex-col gap-1 text-[14px] text-secondary">
