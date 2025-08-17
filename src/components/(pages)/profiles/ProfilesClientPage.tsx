@@ -12,6 +12,7 @@ import MainGradient, {SecGradient} from "@/components/ui/Text";
 import NewItemsCounter from "@/components/ui/NewItemsCounter";
 import {CardMatchMeUser} from "@/types/user/matchMeUser";
 import {OpenSearchModal} from "@/components/search/OpenSearchModal";
+import ProfilesSearchPopover from "@/components/search/ProfilesSearchPopover";
 
 interface ProfilesClientPageProps {
   userSession: User | null;
@@ -66,7 +67,7 @@ const ProfilesClientPage = ({userSession, initialProfiles}: ProfilesClientPagePr
         type="profiles"
         itemsPerPage={15}
         initialData={initialProfiles}
-        customSearch={<OpenSearchModal className="w-full" type="profiles" />}
+        customSearch={<ProfilesSearchPopover placeholder="Search..." />}
       />
     </motion.div>
   );

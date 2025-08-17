@@ -1,4 +1,4 @@
-import {LucideIcon} from "lucide-react";
+import {LucideIcon, Search} from "lucide-react";
 import {create} from "zustand";
 
 export type FilterOption = {
@@ -106,6 +106,9 @@ interface FilterStore {
   clearFilters: (pageKey: string) => void;
   updateFilter: (pageKey: string, updatedFilter: Filter) => void;
 
+  // URL sync methods
+  setFiltersFromUrl: (pageKey: string, filters: SerializableFilter[]) => void;
+
   // Get filters for specific page
   getFiltersForPage: (pageKey: string) => Filter[];
   getSerializableFilters: (pageKey: string) => SerializableFilter[];
@@ -170,6 +173,63 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
           [pageKey]: state.appliedFilters[pageKey].map((filter) =>
             filter.value === updatedFilter.value ? updatedFilter : filter,
           ),
+        },
+      };
+    }),
+
+  setFiltersFromUrl: (pageKey: string, filters: SerializableFilter[]) =>
+    set((state) => {
+      const convertedFilters: Filter[] = filters.map((serializableFilter) => {
+        const baseFilter = {
+          value: serializableFilter.value,
+          type: serializableFilter.type,
+          title: serializableFilter.title,
+          icon: Search,
+          showInFilterBtn: true,
+        };
+
+        switch (serializableFilter.type) {
+          case "multiSelect":
+            return {
+              ...baseFilter,
+              selectedOptions:
+                (serializableFilter as SerializableMultiSelectFilter).selectedOptions || [],
+              options: [],
+            };
+
+          case "tagsSearch":
+            return {
+              ...baseFilter,
+              selectedTags: (serializableFilter as SerializableTagsSearchFilter).selectedTags || [],
+            };
+
+          case "globalSearch":
+          case "searchInput":
+            return {
+              ...baseFilter,
+              searchValue:
+                (
+                  serializableFilter as
+                    | SerializableGlobalSearchFilter
+                    | SerializableSearchInputFilter
+                ).searchValue || "",
+            };
+
+          case "numberSelect":
+            return {
+              ...baseFilter,
+              selectedValue: (serializableFilter as SerializableNumberSelectFilter).selectedValue,
+            };
+
+          default:
+            return baseFilter as Filter;
+        }
+      });
+
+      return {
+        appliedFilters: {
+          ...state.appliedFilters,
+          [pageKey]: convertedFilters,
         },
       };
     }),

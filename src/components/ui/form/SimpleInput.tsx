@@ -73,7 +73,7 @@ const SimpleInput = ({
               <Mail size={16} strokeWidth={2} aria-hidden="true" />
             </div>
           )}
-          {search && (
+          {search && !loading && (
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <Search size={16} strokeWidth={2} aria-hidden="true" />
             </div>

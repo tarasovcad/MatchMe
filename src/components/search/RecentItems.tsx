@@ -6,6 +6,7 @@ import {Avatar, AvatarFallback, AvatarImage} from "@/components/shadcn/avatar";
 import {getNameInitials} from "@/functions/getNameInitials";
 import {cn} from "@/lib/utils";
 import {X, RotateCcw} from "lucide-react";
+import {AnimatePresence, motion} from "framer-motion";
 import type {RecentItem} from "@/hooks/query/use-recent-items";
 import {GROUP_HEADING_CLASSES, STICKY_HEADING_CLASSES, ITEM_BASE_CLASSES} from "./shared";
 
@@ -69,14 +70,21 @@ const RecentItems = ({items, sectionType, onSelect, onDelete}: RecentItemsProps)
           </div>
 
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center">
-            {hoveredItemId === item.id && (
-              <button
-                onClick={(e) => handleDeleteClick(e, item)}
-                className="cursor-pointer h-6 w-6 rounded-full flex items-center justify-center z-10"
-                aria-label="Delete recent item">
-                <X size={16} />
-              </button>
-            )}
+            <AnimatePresence initial={false}>
+              {hoveredItemId === item.id && (
+                <motion.button
+                  key="recent-item-x"
+                  initial={{opacity: 0, x: -6}}
+                  animate={{opacity: 1, x: 0}}
+                  exit={{opacity: 0, x: -6}}
+                  transition={{type: "spring", stiffness: 800, damping: 24, mass: 0.4}}
+                  onClick={(e: React.MouseEvent) => handleDeleteClick(e, item)}
+                  className="cursor-pointer h-6 w-6 rounded-full flex items-center justify-center z-10"
+                  aria-label="Delete recent item">
+                  <X size={16} />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </CommandItem>
       ))}

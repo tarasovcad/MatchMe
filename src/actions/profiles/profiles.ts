@@ -16,7 +16,7 @@ export async function getAllProfiles(
 ) {
   try {
     const ip = await getClientIp();
-
+    console.log(pageFilters);
     // Rate limiting for profile listing
     const profilesIpLimiter = new Ratelimit({
       redis,

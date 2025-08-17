@@ -118,7 +118,7 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <OpenSearchModal type="sidebar" />
+        <OpenSearchModal />
         <NavMain items={data.navMain} user={user} />
       </SidebarContent>
 

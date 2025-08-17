@@ -11,13 +11,14 @@ import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
-  const filters = getFiltersForPage(pageKey);
-
+  const rawFilters = getFiltersForPage(pageKey);
+  const filters = rawFilters.filter((f) => !(f.value === "search" || f.type === "globalSearch"));
   if (!filters?.length) return null;
-
   const getFilterDisplayValue = (filter: Filter) => {
     switch (filter.type) {
       case "searchInput":
+        return filter.searchValue || "";
+      case "globalSearch":
         return filter.searchValue || "";
       case "multiSelect":
         if (filter.value === "time_commitment") {
@@ -66,10 +67,10 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="flex gap-2 overflow-y-auto">
+      <div className="flex gap-2 overflow-y-auto ">
         {filters.map((filter) => {
           const displayValue = getFilterDisplayValue(filter);
-          if (!displayValue) return null;
+          // if (!displayValue) return null;
 
           return (
             <div

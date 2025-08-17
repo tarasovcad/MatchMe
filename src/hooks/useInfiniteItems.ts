@@ -24,18 +24,27 @@ export function useInfiniteItems<T extends {id: string}>({
 }: UseInfiniteItemsProps<T>) {
   const infiniteKey = cacheKey ? `${type}-${cacheKey}-infinite` : `${type}-infinite`;
 
-  // Prepare initial data for TanStack Query if provided
-  const queryInitialData = initialData
-    ? {
-        pages: [
-          {items: initialData, nextPage: initialData.length === itemsPerPage ? 2 : undefined},
-        ],
-        pageParams: [1],
-      }
-    : undefined;
+  // Check if current filters are empty (no active filters)
+  const hasActiveFilters = serializableFilters && serializableFilters.length > 0;
+
+  const queryInitialData =
+    initialData && !hasActiveFilters
+      ? {
+          pages: [
+            {items: initialData, nextPage: initialData.length === itemsPerPage ? 2 : undefined},
+          ],
+          pageParams: [1],
+        }
+      : undefined;
+
+  // Create a stable query key that includes URL params for proper cache invalidation
+  const queryKey = [
+    infiniteKey,
+    JSON.stringify(serializableFilters.sort((a, b) => a.value.localeCompare(b.value))),
+  ];
 
   const infiniteQuery = useInfiniteQuery({
-    queryKey: [infiniteKey, serializableFilters],
+    queryKey,
     queryFn: async ({pageParam}) => {
       const items = await fetchItems(pageParam, itemsPerPage, serializableFilters);
       return {
@@ -45,7 +54,7 @@ export function useInfiniteItems<T extends {id: string}>({
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialData: queryInitialData, // Use server-side data for initial load
+    initialData: queryInitialData, // Use server-side data only when no filters are active
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2, // Retry failed requests 2 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff

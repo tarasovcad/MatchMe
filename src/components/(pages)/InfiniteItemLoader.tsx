@@ -8,6 +8,7 @@ import {Filter, SerializableFilter, useFilterStore} from "@/store/filterStore";
 import FilterPanel from "../ui/filter/FilterPanel";
 import SearchInputPage from "../ui/form/SearchInputPage";
 import {useInfiniteItems} from "@/hooks/useInfiniteItems";
+import {useFiltersWithUrl} from "@/hooks/useFiltersWithUrl";
 
 export type InfiniteListProps<T> = {
   userSession: User | null;
@@ -25,8 +26,8 @@ export type InfiniteListProps<T> = {
   displayFilterButton?: boolean;
   displaySearch?: boolean;
   cacheKey?: string;
-  pageKey?: string; // Custom page key for filter store
-  initialData?: T[]; // Initial data from server-side rendering
+  pageKey?: string;
+  initialData?: T[];
   customSearch?: React.ReactNode;
 };
 
@@ -41,15 +42,17 @@ const InfiniteItemLoader = <T extends {id: string}>({
   displayFilterButton = true,
   displaySearch = true,
   cacheKey,
-  pageKey, // Custom page key for filter store
-  initialData, // Initial data from server-side rendering
+  pageKey,
+  initialData,
   customSearch,
 }: InfiniteListProps<T>) => {
   const userId = userSession?.id || "";
+  const filterStoreKey = pageKey || type;
+
+  // Initialize URL-based filters
+  useFiltersWithUrl(filterStoreKey);
 
   const {getSerializableFilters} = useFilterStore();
-  // Use custom pageKey if provided, otherwise use type
-  const filterStoreKey = pageKey || type;
   const serializableFilters = getSerializableFilters(filterStoreKey);
 
   // Use the custom hook for data fetching

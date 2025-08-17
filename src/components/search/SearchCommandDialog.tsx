@@ -16,6 +16,7 @@ import {
   FolderPlus,
   Star,
   AtSign,
+  X,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -45,6 +46,7 @@ import {
 import {useRandomEntity} from "@/hooks/query/use-random-entity";
 import AnimatedDice from "@/components/ui/AnimatedDice";
 import {AnimatePresence, motion} from "framer-motion";
+import {useFilterStore} from "@/store/filterStore";
 
 const SECTIONS: QuickActionSection[] = [
   {id: "profiles", title: "Profiles", icon: Users},
@@ -69,6 +71,7 @@ export const SearchCommandDialog = ({
   const [searchValue, setSearchValue] = useState<string>("");
   const [debouncedSearchValue, setDebouncedSearchValue] = useState<string>("");
   const router = useRouter();
+  const {addFilter} = useFilterStore();
 
   // Debounce input like SearchInputPage
   useEffect(() => {
@@ -118,7 +121,7 @@ export const SearchCommandDialog = ({
   const handleRecentItemSelect = useCallback(
     (item: RecentItem) => {
       if (item.type === "profile") navigate(`/profiles/${item.username}`);
-      else setSearchValue(item.text || "");
+      else if (item.text) navigate(`/profiles?search=${encodeURIComponent(item.text)}`);
     },
     [navigate],
   );
@@ -289,12 +292,26 @@ export const SearchCommandDialog = ({
         onOpenChange={onOpenChange}
         title="Search MatchMe"
         description="Search for profiles, projects, and more">
-        <CommandInput
-          placeholder="Type a command or search..."
-          className="w-full py-3 h-auto rounded-b-none shadow-none "
-          value={searchValue}
-          onValueChange={setSearchValue}
-        />
+        <div className="relative">
+          <CommandInput
+            placeholder="Type a command or search..."
+            className="w-full py-3 h-auto rounded-b-none shadow-none pr-10"
+            value={searchValue}
+            onValueChange={setSearchValue}
+          />
+          {searchValue.length >= 2 && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchValue("");
+                setDebouncedSearchValue("");
+              }}
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Clear search">
+              <X size={16} />
+            </button>
+          )}
+        </div>
 
         <CommandList className="relative" style={{maxHeight: maxHeight}}>
           {selectedSection && (
@@ -376,6 +393,9 @@ export const SearchCommandDialog = ({
                                 value={`search-for-${liveTrimmedValue}`}
                                 onSelect={async () => {
                                   await addSearchQuery(liveTrimmedValue);
+                                  navigate(
+                                    `/profiles?search=${encodeURIComponent(liveTrimmedValue)}`,
+                                  );
                                 }}>
                                 <div className="flex items-center gap-2 w-full">
                                   <Search size={16} className="text-muted-foreground/80" />

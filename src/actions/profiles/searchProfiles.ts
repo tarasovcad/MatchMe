@@ -17,9 +17,6 @@ export interface SearchProfileResult {
     fileSize: number;
     uploadedAt: string;
   }[];
-  tagline: string | null;
-  public_current_role: string | null;
-  is_profile_verified?: boolean;
 }
 
 export async function searchProfiles(query: string, limit = 10): Promise<SearchProfileResult[]> {
@@ -27,22 +24,36 @@ export async function searchProfiles(query: string, limit = 10): Promise<SearchP
     return [];
   }
 
+  // Create cache key for this search query
+  const cacheKey = `search:profiles:${query.toLowerCase().trim()}:${limit}`;
+
   try {
     const ip = await getClientIp();
 
-    // Rate limiting for profile search
-    const searchLimiter = new Ratelimit({
+    // Rate limiting for search profiles
+    const searchProfilesIpLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(100, "1 m"), // 100 search requests per minute per IP
+      limiter: Ratelimit.slidingWindow(50, "5 m"), // 50 searches per 5 minutes per IP
       analytics: true,
-      prefix: "ratelimit:ip:profile-search",
+      prefix: "ratelimit:ip:search-profiles",
       enableProtection: true,
     });
 
-    const ipLimit = await searchLimiter.limit(ip);
+    const ipLimit = await searchProfilesIpLimiter.limit(ip);
 
     if (!ipLimit.success) {
-      throw new Error("Too many search requests. Please slow down and try again.");
+      throw new Error("RATE_LIMITED");
+    }
+
+    // Try to get cached results first
+    try {
+      const cachedResults = await redis.get(cacheKey);
+      if (cachedResults) {
+        return JSON.parse(cachedResults as string) as SearchProfileResult[];
+      }
+    } catch (cacheError) {
+      console.warn("Redis cache read error:", cacheError);
+      // Continue to database query if cache fails
     }
 
     const supabase = await createClient();
@@ -55,10 +66,7 @@ export async function searchProfiles(query: string, limit = 10): Promise<SearchP
         id,
         name,
         username,
-        profile_image,
-        tagline,
-        public_current_role,
-        is_profile_verified
+        profile_image
       `,
       )
       .eq("is_profile_public", true)
@@ -70,12 +78,25 @@ export async function searchProfiles(query: string, limit = 10): Promise<SearchP
       throw new Error("Failed to search profiles");
     }
 
-    return data || [];
+    const results = data || [];
+
+    // Cache the results for 5 minutes
+    try {
+      await redis.set(cacheKey, JSON.stringify(results), {ex: 600}); // 600 seconds = 10 minutes
+      console.log(`Cached search results for query: ${query}`);
+    } catch (cacheError) {
+      console.warn("Redis cache write error:", cacheError);
+      // Don't throw error, just continue without caching
+    }
+
+    return results;
   } catch (error) {
     console.error("Error in searchProfiles:", error);
-    if (error instanceof Error && error.message.includes("Too many")) {
-      throw error; // Re-throw rate limit errors
+
+    if (error instanceof Error && error.message === "RATE_LIMITED") {
+      throw new Error("Too many search requests. Please try again later.");
     }
+
     throw new Error("Failed to search profiles");
   }
 }
