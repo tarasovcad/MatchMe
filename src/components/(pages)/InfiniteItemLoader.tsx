@@ -27,6 +27,7 @@ export type InfiniteListProps<T> = {
   cacheKey?: string;
   pageKey?: string; // Custom page key for filter store
   initialData?: T[]; // Initial data from server-side rendering
+  customSearch?: React.ReactNode;
 };
 
 const InfiniteItemLoader = <T extends {id: string}>({
@@ -42,6 +43,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
   cacheKey,
   pageKey, // Custom page key for filter store
   initialData, // Initial data from server-side rendering
+  customSearch,
 }: InfiniteListProps<T>) => {
   const userId = userSession?.id || "";
 
@@ -104,12 +106,15 @@ const InfiniteItemLoader = <T extends {id: string}>({
         <motion.div
           className="flex justify-between items-center gap-3"
           variants={controlsSectionVariants}>
-          {displaySearch && (
-            <SearchInputPage
-              pageKey={filterStoreKey}
-              loading={{initial: isLoadingInitial, more: isLoadingMore}}
-            />
-          )}
+          {customSearch
+            ? customSearch
+            : displaySearch && (
+                <SearchInputPage
+                  pageKey={filterStoreKey}
+                  loading={{initial: isLoadingInitial, more: isLoadingMore}}
+                />
+              )}
+
           {displayFilterButton && filtersData && (
             <FilterButton pageKey={filterStoreKey} data={filtersData} />
           )}

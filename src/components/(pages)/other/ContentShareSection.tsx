@@ -8,10 +8,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import {useMutation} from "@tanstack/react-query";
 import {useRouter} from "next/navigation";
-import {supabase} from "@/utils/supabase/client";
 import {toast} from "sonner";
+import {useRandomEntity, RandomWhereFilter} from "@/hooks/query/use-random-entity";
 
 interface ProjectShareSectionProps {
   contentUrl: string;
@@ -97,43 +96,40 @@ const ContentShareSection = ({
   const typeLabel =
     contentType === "project" ? "Project" : contentType === "profile" ? "Profile" : "Post";
 
-  const {mutate: goRandom, isPending} = useMutation({
-    mutationKey: ["random-entity", contentType, excludeProjectId, excludeUsername],
-    mutationFn: async () => {
-      if (contentType === "project") {
-        const query = supabase
-          .from("projects")
-          .select("id, slug", {count: "exact"})
-          .eq("is_project_public", true);
+  const projectWhere: RandomWhereFilter[] = [{column: "is_project_public", value: true}];
+  if (excludeProjectId) projectWhere.push({column: "id", op: "neq", value: excludeProjectId});
 
-        const filtered = excludeProjectId ? query.neq("id", excludeProjectId) : query;
-        const {data, error} = await filtered;
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error("No public projects found");
-        const random = data[Math.floor(Math.random() * data.length)];
-        return {href: `/projects/${random.slug}`};
-      }
+  const profileWhere: RandomWhereFilter[] = [{column: "is_profile_public", value: true}];
+  if (excludeUsername) profileWhere.push({column: "username", op: "neq", value: excludeUsername});
 
-      if (contentType === "profile") {
-        const query = supabase
-          .from("profiles")
-          .select("username", {count: "exact"})
-          .eq("is_profile_public", true);
-
-        const filtered = excludeUsername ? query.neq("username", excludeUsername) : query;
-        const {data, error} = await filtered;
-        if (error) throw error;
-        if (!data || data.length === 0) throw new Error("No public profiles found");
-        const random = data[Math.floor(Math.random() * data.length)];
-        return {href: `/profiles/${random.username}`};
-      }
-
-      throw new Error("Unsupported content type");
-    },
-    onSuccess: ({href}) => {
-      router.push(href);
-    },
+  const projectRandom = useRandomEntity({
+    table: "projects",
+    selectColumns: ["id", "slug"],
+    where: projectWhere,
+    buildHref: (row) => `/projects/${row.slug}`,
   });
+
+  const profileRandom = useRandomEntity({
+    table: "profiles",
+    selectColumns: ["username"],
+    where: profileWhere,
+    buildHref: (row) => `/profiles/${row.username}`,
+  });
+
+  const isPending = projectRandom.isPending || profileRandom.isPending;
+
+  const goRandom = async () => {
+    if (contentType === "project") {
+      const {href} = await projectRandom.mutateAsync();
+      router.push(href);
+    } else if (contentType === "profile") {
+      const {href} = await profileRandom.mutateAsync();
+      router.push(href);
+    } else {
+      // Extend here for other content types (e.g., posts, docs)
+      throw new Error("Unsupported content type");
+    }
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -175,7 +171,9 @@ const ContentShareSection = ({
               </Tooltip>
               <RandomDiceButton
                 tooltipText={`Random ${typeLabel}`}
-                onClick={() => goRandom()}
+                onClick={() => {
+                  void goRandom();
+                }}
                 isLoading={isPending}
               />
               <div className="w-[1px] h-[16px] bg-border"></div>

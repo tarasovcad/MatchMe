@@ -29,7 +29,7 @@ export async function getAllProfiles(
     // More restrictive limit for high page numbers to prevent deep scraping
     const profilesDeepLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(50, "1 m"), // 50 requests per minute for pages > 5
+      limiter: Ratelimit.slidingWindow(150, "1 m"), // 150 requests per minute for pages > 5
       analytics: true,
       prefix: "ratelimit:ip:profiles-deep",
       enableProtection: true,

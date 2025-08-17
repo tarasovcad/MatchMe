@@ -11,6 +11,7 @@ import {profileFiltersData} from "@/data/filter/profileFiltersData";
 import MainGradient, {SecGradient} from "@/components/ui/Text";
 import NewItemsCounter from "@/components/ui/NewItemsCounter";
 import {CardMatchMeUser} from "@/types/user/matchMeUser";
+import {OpenSearchModal} from "@/components/search/OpenSearchModal";
 
 interface ProfilesClientPageProps {
   userSession: User | null;
@@ -65,6 +66,7 @@ const ProfilesClientPage = ({userSession, initialProfiles}: ProfilesClientPagePr
         type="profiles"
         itemsPerPage={15}
         initialData={initialProfiles}
+        customSearch={<OpenSearchModal className="w-full" type="profiles" />}
       />
     </motion.div>
   );

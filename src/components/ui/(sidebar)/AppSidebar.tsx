@@ -22,7 +22,7 @@ import {
   SidebarTrigger,
 } from "@/components/shadcn/sidebar";
 import {LogoImage, LogoText} from "../Logo";
-import OpenSearchModal from "../../search/OpenSearchModal";
+import {OpenSearchModal} from "../../search/OpenSearchModal";
 import type {User} from "@supabase/supabase-js";
 import Link from "next/link";
 import {SidebarUserDropdown} from "./SidebarUserDropdown";
@@ -118,7 +118,7 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <OpenSearchModal />
+        <OpenSearchModal type="sidebar" />
         <NavMain items={data.navMain} user={user} />
       </SidebarContent>
 

@@ -136,7 +136,7 @@ const FollowNotification = ({
 
   return (
     <div
-      className={`flex items-start gap-2 p-1.5 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
+      className={`flex items-start gap-2 py-2.5 text-sm border-b border-border last:border-b-0 px-3 ${
         isRead ? "cursor-default" : "cursor-pointer hover:bg-muted/50"
       }`}
       onClick={handleClick}>
