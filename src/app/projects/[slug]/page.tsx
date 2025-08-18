@@ -26,6 +26,7 @@ import {getProjectBundle} from "@/actions/projects/singleProject";
 import {createClient} from "@/utils/supabase/server";
 import {notFound} from "next/navigation";
 import FollowProjectButton from "@/components/follows/FollowProjectButton";
+import ProjectFormField from "@/components/(pages)/projects/ProjectFormField";
 
 const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) => {
   const {slug} = await params;
@@ -164,11 +165,11 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
         <div>
           <div className="flex flex-col gap-8 max-[990px]:gap-10">
             {/* <ProjectImageSlider demo={project.demo} /> */}
-            {/* {projectFormFields.map((formField) => (
+            {projectFormFields.map((formField) => (
               <div key={formField.fieldTitle}>
-                <ProjectFormField formField={formField} project={project} skills={skills} />
+                <ProjectFormField formField={formField} project={project} skills={[]} />
               </div>
-            ))} */}
+            ))}
             {/* <ProjectTabs />
             <KeywordTagList tags={tags} type="projects" />
             <ContentShareSection

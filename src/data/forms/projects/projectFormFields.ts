@@ -3,7 +3,8 @@ export const projectFormFields = [
     fieldTitle: "About Us",
     fieldDescription: "",
     fieldType: "text",
-    layout: "column",
+    // Switch to column layout automatically when content length reaches this threshold
+    columnIfCharsAtLeast: 800,
     fieldInputProps: [
       {
         id: "description",
@@ -103,6 +104,8 @@ export interface ProjectFormFieldProps {
   fieldDescription: string;
   fieldType: "text" | "details" | "description" | "skills";
   layout?: "row" | "column";
+  // If set, switch to column layout when content length >= this number (for text/description)
+  columnIfCharsAtLeast?: number;
   fieldInputProps: [
     {
       id: string;

@@ -1,3 +1,4 @@
+"use client";
 import {ProjectFormFieldProps} from "@/data/forms/projects/projectFormFields";
 import React from "react";
 import ExpandedDescription from "../profiles/ExpandedDescription";
@@ -5,6 +6,7 @@ import TagsList from "../profiles/TagsList";
 import ProjectDetails from "./ProjectDetails";
 import {Project} from "@/types/projects/projects";
 import ProjectOpenPositions from "./ProjectOpenPositions";
+import {projectDetailsSections} from "@/data/forms/projects/projectFormFields";
 
 const TextComponent = ({project, id}: {project: Project; id: string}) => {
   const content = project[id as keyof Project] as string;
@@ -19,6 +21,45 @@ const fieldComponents = {
   open_positions: ProjectOpenPositions,
 };
 
+const isNonEmpty = (value: unknown): boolean => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === "string") return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+  return true;
+};
+
+const hasFieldContent = (
+  project: Project,
+  formField: ProjectFormFieldProps,
+  skills: {name: string; image_url: string}[],
+): boolean => {
+  const {fieldType, fieldInputProps} = formField;
+
+  const getValuesToCheck = (): unknown[] => {
+    switch (fieldType) {
+      case "details": {
+        const sectionId = fieldInputProps?.[0]?.id;
+        const section = projectDetailsSections.find((s) => s.id === sectionId);
+        if (!section) return [];
+        return section.fields.map(({value}) => project[value as keyof Project]);
+      }
+      case "skills":
+        return [skills];
+      case "text":
+      case "description": {
+        const key = fieldInputProps?.[0]?.id as keyof Project | undefined;
+        return key ? [project[key]] : [];
+      }
+      default:
+        return [];
+    }
+  };
+
+  const values = getValuesToCheck();
+  return values.some(isNonEmpty);
+};
+
 const ProjectFormField = ({
   formField,
   project,
@@ -31,11 +72,23 @@ const ProjectFormField = ({
     image_url: string;
   }[];
 }) => {
-  const {fieldTitle, fieldDescription, fieldType, layout = "row"} = formField;
+  const {fieldTitle, fieldDescription, fieldType, layout = "row", columnIfCharsAtLeast} = formField;
+
+  if (!hasFieldContent(project, formField, skills)) {
+    return null;
+  }
 
   const InputComponent = fieldComponents[fieldType as keyof typeof fieldComponents];
 
-  const isColumnLayout = layout === "column";
+  let isColumnLayout = layout === "column";
+  if ((fieldType === "text" || fieldType === "description") && columnIfCharsAtLeast) {
+    const key = formField.fieldInputProps?.[0]?.id as keyof Project | undefined;
+    const raw = key ? (project[key] as unknown) : undefined;
+    const length = typeof raw === "string" ? raw.trim().length : 0;
+    if (length >= columnIfCharsAtLeast) {
+      isColumnLayout = true;
+    }
+  }
 
   return (
     <div
