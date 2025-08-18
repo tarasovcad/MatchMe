@@ -4,7 +4,7 @@ import ContentShareSection from "@/components/(pages)/other/ContentShareSection"
 import KeywordTagList from "@/components/(pages)/other/KeywordTagList";
 import BackgroundImageViewer from "@/components/(pages)/profiles/BackgroundImageViewer";
 import ProfileFormField from "@/components/(pages)/profiles/ProfileFormField";
-import ProfileImageViewer from "@/components/(pages)/profiles/ProfileImageViewer";
+import ImageViewer from "@/components/ui/ImageViewer";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileProjectsList from "@/components/(pages)/profiles/ProfileProjectsList";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
@@ -23,9 +23,15 @@ import React from "react";
 import type {Metadata} from "next";
 import {getUserProfile} from "@/actions/profiles/singleUserProfile";
 import {notFound} from "next/navigation";
+import {UserPen} from "lucide-react";
+import Link from "next/link";
 
-export async function generateMetadata({params}: {params: {username: string}}): Promise<Metadata> {
-  const {username} = params;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{username: string}>;
+}): Promise<Metadata> {
+  const {username} = await params;
 
   try {
     const user = await getUserProfile(username);
@@ -77,14 +83,14 @@ export async function generateMetadata({params}: {params: {username: string}}): 
     return {
       title: "Profile | MatchMe",
       description: "Explore profiles on MatchMe.",
-      alternates: {canonical: `https://matchme.me/profiles/${params.username}`},
+      alternates: {canonical: `https://matchme.me/profiles/${username}`},
     };
   }
 }
 
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const {username} = await params;
-
+  console.log(username, "username");
   let bundle;
   let userSessionId: string | undefined;
 
@@ -186,9 +192,10 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
               isFavorite={favorite}
             />
             <div className="flex max-[1130px]:flex-col gap-3">
-              <ProfileImageViewer
-                profileImage={user.profile_image}
+              <ImageViewer
+                image={user.profile_image}
                 name={user.name}
+                fallbackImage="/avatar/default-user-avatar.png"
                 width={125}
                 height={125}
                 className="-mt-9 border-4 border-background rounded-full shrink-0 "
@@ -196,6 +203,7 @@ const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) =
                   width: "clamp(100px, 10vw, 125px)",
                   height: "clamp(100px, 10vw, 125px)",
                 }}
+                type="profile"
               />
               <div className="flex flex-col gap-3 min-[1130px]:pt-[15px]">
                 {/* name and verified */}
@@ -315,6 +323,17 @@ const UserButtons = ({
             />
           </AuthGate>
         </div>
+      </div>
+    );
+  } else {
+    return (
+      <div className={cn("flex items-center gap-3 max-[620px] max-[360px]:gap-1", className)}>
+        <Link href={`/settings?tab=account`} className="w-full">
+          <Button size={"default"} className="@max-[620px]:order-2 @max-[620px]:w-full">
+            <UserPen size="16" color="currentColor" className="max-[450px]:hidden" />
+            Edit Profile
+          </Button>
+        </Link>
       </div>
     );
   }

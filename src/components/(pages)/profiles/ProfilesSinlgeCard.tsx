@@ -19,36 +19,29 @@ const ProfilesSinlgeCard = ({
   userId: string | undefined | null;
   customButton?: React.ReactNode;
 }) => {
+  const imageLink =
+    profile.profile_image && profile.profile_image.length > 0
+      ? profile.profile_image[0].url
+      : "/avatar/default-user-avatar.png";
   return (
     <div className="p-4 border border-border rounded-[12px]">
       <div className="flex flex-col gap-3">
         <div className="flex justify-between items-center gap-2">
           <div className="flex items-center gap-3">
-            {profile.profile_image && profile.profile_image.length > 0 ? (
-              <Image
-                src={profile.profile_image[0].url}
-                alt={`${profile.name} profile picture`}
-                width={42}
-                height={42}
-                className="rounded-full min-h-[42px] object-cover shrink-0"
-                unoptimized
-              />
-            ) : (
-              <Avatar
-                name={getNameInitials(profile.name)}
-                size={42}
-                className="rounded-full shrink-0"
-                variant="beam"
-              />
-            )}
+            <Image
+              src={imageLink}
+              alt={`${profile.name} profile picture`}
+              width={42}
+              height={42}
+              className="rounded-full min-h-[42px] object-cover shrink-0"
+              unoptimized
+            />
 
             <div>
               <Link href={`/profiles/${profile.username}`}>
-                <MainGradient
-                  as="h4"
-                  className="font-medium text-[18px] hover:text-foreground/50 line-clamp-1 leading-[23px] transition-colors duration-300">
+                <h4 className="font-medium text-[18px] text-foreground/85  hover:text-foreground line-clamp-1 leading-[23px] transition-colors duration-300">
                   {profile.name}
-                </MainGradient>
+                </h4>
               </Link>
               <p className="text-[13px] text-secondary line-clamp-1 leading-[17px]">
                 {profile.public_current_role}

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Bell,
-  ChevronsUpDown,
-  Folders,
-  Home,
-  LogOut,
-  Moon,
-  Sun,
-  UserCircle,
-} from "lucide-react";
+import {Bell, ChevronsUpDown, Folders, Home, LogOut, Moon, Sun, UserCircle} from "lucide-react";
 import Avvvatars from "avvvatars-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/shadcn/avatar";
 import {
@@ -33,11 +24,7 @@ import {motion} from "framer-motion";
 import {useState} from "react";
 import Image from "next/image";
 import {getNameInitials} from "@/functions/getNameInitials";
-import {
-  itemDropdownVariants,
-  menuVariants,
-  userInfoVariants,
-} from "@/utils/other/variants";
+import {itemDropdownVariants, menuVariants, userInfoVariants} from "@/utils/other/variants";
 import AlertComponent from "../dialog/AlertComponent";
 import {toast} from "sonner";
 import {signOut} from "@/actions/(auth)/signOut";
@@ -72,25 +59,19 @@ export function SidebarUserDropdown({
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-text-hover">
-              <Avatar className="rounded-lg w-8 h-8">
-                {user.avatar ? (
-                  <Image
-                    src={user.avatar}
-                    alt={user.name}
-                    width={100}
-                    height={100}
-                  />
-                ) : (
-                  <Avvvatars value={getNameInitials(user.name)} radius={6} />
-                )}
-              </Avatar>
+              <div className="rounded-lg w-8 h-8 relative flex size-8 shrink-0 overflow-hidden">
+                <Image
+                  src={user.avatar || "/avatar/default-user-avatar.png"}
+                  alt={user.name}
+                  width={100}
+                  height={100}
+                />
+              </div>
               <div className="flex-1 grid text-sm text-left leading-tight">
                 <span className="font-semibold truncate">{user.name}</span>
                 <span className="text-xs truncate">{user.email}</span>
               </div>
-              <motion.div
-                animate={{rotate: isOpen ? 180 : 0}}
-                transition={{duration: 0.2}}>
+              <motion.div animate={{rotate: isOpen ? 180 : 0}} transition={{duration: 0.2}}>
                 <ChevronsUpDown className="ml-auto size-4" />
               </motion.div>
             </SidebarMenuButton>
@@ -110,22 +91,16 @@ export function SidebarUserDropdown({
                 <motion.div variants={userInfoVariants}>
                   <DropdownMenuLabel className="p-0 font-normal">
                     <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
-                      <Avatar className="rounded-lg w-8 h-8">
-                        {user.avatar ? (
-                          <Image
-                            src={user.avatar}
-                            alt={user.name}
-                            width={100}
-                            height={100}
-                          />
-                        ) : (
-                          <Avvvatars value="MT" radius={6} />
-                        )}
-                      </Avatar>
+                      <div className="rounded-lg w-8 h-8 relative flex size-8 shrink-0 overflow-hidden">
+                        <Image
+                          src={user.avatar || "/avatar/default-user-avatar.png"}
+                          alt={user.name}
+                          width={100}
+                          height={100}
+                        />
+                      </div>
                       <div className="flex-1 grid text-sm text-left leading-tight">
-                        <span className="font-semibold truncate">
-                          {user.name}
-                        </span>
+                        <span className="font-semibold truncate">{user.name}</span>
                         <span className="text-xs truncate">{user.email}</span>
                       </div>
                     </div>
@@ -138,9 +113,7 @@ export function SidebarUserDropdown({
                   <motion.div variants={itemDropdownVariants}>
                     <button
                       className="w-full"
-                      onClick={() =>
-                        setTheme(theme === "dark" ? "light" : "dark")
-                      }>
+                      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
                       <DropdownMenuItem className="flex justify-between items-center gap-2 cursor-pointer">
                         <div className="flex items-center gap-2">
                           {theme === "dark" ? <Moon /> : <Sun />}
@@ -154,9 +127,7 @@ export function SidebarUserDropdown({
                   </motion.div>
 
                   <motion.div variants={itemDropdownVariants}>
-                    <Link
-                      className="w-full"
-                      href={`/profiles/${user.username}`}>
+                    <Link className="w-full" href={`/profiles/${user.username}`}>
                       <DropdownMenuItem className="cursor-pointer">
                         <UserCircle />
                         My Profile

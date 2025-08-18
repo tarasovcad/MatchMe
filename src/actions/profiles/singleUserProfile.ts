@@ -298,7 +298,6 @@ export async function invalidateFollowRelationship(
   const key = CACHE_KEYS.followRelationship(followerId, followingId);
   await redis.del(key);
 }
-
 export async function getUserProjects(
   userId: string,
   client?: SupabaseServerClient,

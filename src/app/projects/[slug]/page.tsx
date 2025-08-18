@@ -1,4 +1,3 @@
-"use client";
 import ProfileOtherButton from "@/components/(pages)/profiles/ProfileOtherButton";
 import ProfileSocialLinks from "@/components/(pages)/profiles/ProfileSocialLinks";
 import FollowUserButton from "@/components/follows/FollowUserButton";
@@ -7,10 +6,10 @@ import {Button} from "@/components/shadcn/button";
 import MainGradient from "@/components/ui/Text";
 import {formatNumber} from "@/functions/formatNumber";
 import {cn} from "@/lib/utils";
-import Avatar from "boring-avatars";
+import ImageViewer from "@/components/ui/ImageViewer";
 import {Messages2} from "iconsax-react";
 import Image from "next/image";
-import React, {useState} from "react";
+import React from "react";
 import {ChevronDownIcon, Plus} from "lucide-react";
 import {
   DropdownMenu,
@@ -20,40 +19,74 @@ import {
   DropdownMenuTrigger,
 } from "@/components/shadcn/dropdown-menu";
 import {Project} from "@/types/projects/projects";
-import PageFormField from "../profiles/ProfileFormField";
 import {projectFormFields} from "@/data/forms/projects/projectFormFields";
-import ProjectFormField from "./ProjectFormField";
-import ProjectImageSlider from "./ProjectImageSlider";
-import ProjectTabs from "./ProjectTabs";
-import ProjectSimilarSection from "./ProjectSimilarSection";
-import KeywordTagList from "../other/KeywordTagList";
-import ContentShareSection from "../other/ContentShareSection";
+import SidebarProvider from "@/providers/SidebarProvider";
+import ProjectOtherButton from "@/components/(pages)/projects/ProjectOtherButton";
+import {getProjectBundle} from "@/actions/projects/singleProject";
+import {createClient} from "@/utils/supabase/server";
+import {notFound} from "next/navigation";
+import FollowProjectButton from "@/components/follows/FollowProjectButton";
 
-const options = [
-  {
-    label: "Follow",
-  },
-  {
-    label: "Join",
-  },
-];
+const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) => {
+  const {slug} = await params;
+  let bundle;
+  let userSessionId: string | undefined;
 
-const ProjectClient = ({
-  project,
-  skills,
-}: {
-  project: Project;
-  skills: {name: string; image_url: string}[];
-}) => {
-  const tags = ["ai", "healcare", "cancer-research", "social-media"];
+  try {
+    const supabase = await createClient();
+    const {data: userSession} = await supabase.auth.getUser();
+    userSessionId = userSession?.user?.id;
+
+    bundle = await getProjectBundle(slug, userSessionId, supabase);
+  } catch (e) {
+    if (e instanceof Error && e.message === "RATE_LIMITED") {
+      return (
+        <div className="mx-auto p-4 container">
+          <h1 className="font-bold text-xl">Too many requests</h1>
+          <p>Please wait a minute and try again.</p>
+        </div>
+      );
+    }
+    console.error("Error rendering project:", e);
+    return (
+      <div className="mx-auto p-4 container">
+        <h1 className="font-bold text-xl">Something went wrong</h1>
+        <p>We encountered an error while loading this project. Please try again later.</p>
+      </div>
+    );
+  }
+
+  // Handle project not found outside of try-catch to allow notFound() to work
+  if (!bundle) {
+    notFound();
+  }
+
+  const {project, isFollowing, isFavorite, stats} = bundle;
+  const {followers, members, openRoles} = stats;
+
+  // Get project image URL
+  const projectImageUrl =
+    Array.isArray(project.project_image) && project.project_image[0]?.url
+      ? project.project_image[0].url
+      : undefined;
+
+  // Get background image URL
+  const backgroundImageUrl =
+    Array.isArray(project.background_image) && project.background_image[0]?.url
+      ? project.background_image[0].url
+      : undefined;
+
   return (
-    <>
+    <SidebarProvider removePadding>
       {/* Background Image */}
       <div
-        className="bg-gray-200 dark:bg-gray-900 rounded-[6px] rounded-t-none w-full"
+        className={cn("bg-gray-200 dark:bg-gray-900 rounded-[6px] rounded-t-none w-full", {
+          "bg-cover bg-center": backgroundImageUrl,
+        })}
         style={{
           width: "100%",
           height: "clamp(130px, 20vw, 156px)",
+          backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
         }}></div>
 
       <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
@@ -61,84 +94,82 @@ const ProjectClient = ({
           <div className="relative flex justify-between gap-28 max-[1130px]:gap-16">
             <ProjectButtons
               className="@max-[620px]:hidden top-0 right-0 absolute pt-[15px]"
-              userSessionId="placeholder-user-id"
-              profileId="placeholder-profile-id"
-              isFollowing={false}
-              isFollowingBack={false}
-              username="placeholder-username"
-              isFavorite={false}
+              isFavorite={isFavorite}
+              userSessionId={userSessionId}
+              projectTitle={project.name}
+              projectId={project.id}
+              isFollowing={isFollowing}
             />
             <div className="flex max-[1130px]:flex-col gap-3 min-[1130px]:pt-[15px]">
               {/* Project Image/Avatar */}
-              <div className="h-[60px] w-[60px] border-1 border-border rounded-[8px] shrink-0 flex items-center justify-center">
+              {projectImageUrl && (
                 <Image
-                  width={40}
-                  height={40}
-                  className="h-[40px] w-[40px] object-cover"
-                  src="/test.svg"
-                  alt="Project"
+                  src={projectImageUrl}
+                  alt={project.name}
+                  width={46}
+                  height={46}
+                  quality={100}
+                  unoptimized={true}
+                  className="h-[46px] w-[46px] object-cover rounded"
                 />
-              </div>
+              )}
 
               <div className="flex flex-col gap-3 ">
                 {/* Project name and info */}
-                <div className="flex flex-col gap-[6px]">
+                <div className="flex flex-col gap-[4px]">
                   <div className="flex items-center gap-2">
                     <MainGradient as="h1" className="font-semibold text-[26px] leading-[26px]">
-                      Glow
+                      {project.name}
                     </MainGradient>
-                    <Image
+                    {/* <Image
                       src="/svg/verified.svg"
                       alt="Verified"
                       width={18}
                       height={18}
                       className="w-4.5 h-auto shrink-0"
                       style={{width: "auto", height: "auto"}}
-                    />
+                    /> */}
                   </div>
-                  <p className="text-secondary text-sm">
-                    Revolutionizing cancer diagnosis with AI-powered precision
-                  </p>
+                  <p className="text-secondary text-sm">{project.tagline}</p>
                 </div>
               </div>
             </div>
             <div className="flex flex-col items-end gap-[30px] max-[1130px]:gap-[45px]">
               <ProjectNumbers
                 className="max-[950px]:hidden pt-[75px] pr-[47px]"
-                followers={1245}
-                members={4}
-                posts={89}
+                followers={followers}
+                members={members}
+                posts={openRoles}
               />
             </div>
           </div>
           <div className="flex flex-col gap-4">
             <ProjectButtons
               className="@min-[620px]:hidden w-full"
-              userSessionId="placeholder-user-id"
-              profileId="placeholder-profile-id"
-              isFollowing={false}
-              isFollowingBack={false}
-              username="placeholder-username"
-              isFavorite={false}
+              isFavorite={isFavorite}
+              userSessionId={userSessionId}
+              projectTitle={project.name}
+              isFollowing={isFollowing}
+              projectId={project.id}
             />
             <ProjectNumbers
               className="min-[950px]:hidden justify-between"
-              followers={1245}
-              members={4}
-              posts={89}
+              followers={followers}
+              members={members}
+              posts={openRoles}
             />
           </div>
         </div>
         {/* Main content section */}
         <div>
           <div className="flex flex-col gap-8 max-[990px]:gap-10">
-            <ProjectImageSlider demo={project.demo} />
-            {projectFormFields.map((formField) => (
+            {/* <ProjectImageSlider demo={project.demo} /> */}
+            {/* {projectFormFields.map((formField) => (
               <div key={formField.fieldTitle}>
                 <ProjectFormField formField={formField} project={project} skills={skills} />
               </div>
-            ))}
-            <ProjectTabs />
+            ))} */}
+            {/* <ProjectTabs />
             <KeywordTagList tags={tags} type="projects" />
             <ContentShareSection
               contentType="project"
@@ -147,38 +178,35 @@ const ProjectClient = ({
               contentTagline={project.tagline}
               excludeProjectId={project.id}
             />
-            <ProjectSimilarSection />
+            <ProjectSimilarSection /> */}
           </div>
         </div>
       </div>
-    </>
+    </SidebarProvider>
   );
 };
 
 const ProjectButtons = ({
   className,
   userSessionId,
-  profileId,
-  isFollowing,
-  isFollowingBack,
-  username,
   isFavorite,
+  projectTitle,
+  projectId,
+  isFollowing,
 }: {
   className?: string;
   userSessionId: string | undefined;
-  profileId: string | undefined;
-  isFollowing: boolean;
-  isFollowingBack?: boolean;
-  username: string;
   isFavorite: boolean;
+  projectTitle: string;
+  projectId: string;
+  isFollowing: boolean;
 }) => {
-  const [selectedIndex, setSelectedIndex] = useState("0");
   return (
     <div className={cn("flex items-center gap-3 max-[620px] max-[360px]:gap-1", className)}>
       <AuthGate userSessionId={userSessionId}>
-        <ProfileOtherButton
+        <ProjectOtherButton
           userId={userSessionId}
-          profileId={profileId ?? ""}
+          projectId={projectId}
           isFavorite={isFavorite}
           buttonClassName="@max-[620px]:order-2"
         />
@@ -197,55 +225,13 @@ const ProjectButtons = ({
           </Button>
         </AuthGate>
         <AuthGate userSessionId={userSessionId}>
-          <div className="divide-primary-foreground/30 inline-flex divide-x rounded-md shadow-xs rtl:space-x-reverse">
-            {options[Number(selectedIndex)].label === "Follow" ? (
-              <FollowUserButton
-                followingId={profileId || ""}
-                isFollowing={isFollowing}
-                isFollowingBack={isFollowingBack}
-                userSessionId={userSessionId}
-                username={username}
-                buttonClassName="@max-[620px]:w-full  rounded-r-none"
-              />
-            ) : (
-              <Button
-                className="rounded-none shadow-none first:rounded-s-md last:rounded-e-md focus-visible:z-10 "
-                variant="default">
-                <Plus size={16} />
-                Join
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="rounded-none shadow-none first:rounded-s-md last:rounded-e-md focus-visible:z-10 "
-                  size="icon"
-                  variant="default"
-                  aria-label="Options">
-                  <ChevronDownIcon size={16} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="max-w-64 md:max-w-xs"
-                side="bottom"
-                sideOffset={4}
-                align="end">
-                <DropdownMenuRadioGroup value={selectedIndex} onValueChange={setSelectedIndex}>
-                  {options.map((option, index) => (
-                    <DropdownMenuRadioItem
-                      key={option.label}
-                      value={String(index)}
-                      className="items-start [&>span]:pt-1.5">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">{option.label}</span>
-                        {/* <span className="text-muted-foreground text-xs">{option.description}</span> */}
-                      </div>
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <FollowProjectButton
+            projectId={projectId}
+            isFollowing={isFollowing}
+            userSessionId={userSessionId}
+            projectTitle={projectTitle}
+            buttonClassName="@max-[620px]:w-full"
+          />
         </AuthGate>
       </div>
     </div>
@@ -278,7 +264,7 @@ const ProjectNumbers = ({
         </MainGradient>
       </div>
       <div>
-        <span className="text-[13px] text-secondary leading-[16px]">Posts</span>
+        <span className="text-[13px] text-secondary leading-[16px]">Open roles</span>
         <MainGradient as="h3" className="font-semibold text-[26px] text-secondary leading-[34px]">
           {formatNumber(posts)}
         </MainGradient>
@@ -287,4 +273,4 @@ const ProjectNumbers = ({
   );
 };
 
-export default ProjectClient;
+export default ProjectSinglePage;

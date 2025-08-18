@@ -10,6 +10,7 @@ export type NotificationType =
   // Direct Messages
   | "message"
   // Project Updates - Clear naming
+  | "project_follow"
   | "project_invite"
   | "project_request"
   | "user_request_accepted" // User's request to join was accepted by owner

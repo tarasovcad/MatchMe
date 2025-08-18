@@ -33,32 +33,28 @@ const ProfilesSinlgeCard = ({
           </div>
         )} */}
         <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center gap-2 h-[38px]">
+          <div className="flex justify-between items-center gap-2 h-[32px]">
             <div className="flex items-center gap-3 ">
               {project.project_image && project.project_image.length > 0 && (
-                <div className="w-[38px] h-[38px] rounded-[6px] p-[5px] border border-border shrink-0">
-                  <Image
-                    src={project.project_image[0].url}
-                    alt={`${project.name} project picture`}
-                    width={26}
-                    height={26}
-                    quality={100}
-                    className="object-cover shrink-0"
-                    unoptimized
-                  />
-                </div>
+                <Image
+                  src={project.project_image[0].url}
+                  alt={`${project.name} project picture`}
+                  width={32}
+                  height={32}
+                  quality={100}
+                  className="object-cover shrink-0"
+                  unoptimized
+                />
               )}
 
               <Link href={`/projects/${project.slug}`}>
-                <MainGradient
-                  as="h4"
-                  className="font-medium  text-[18px] hover:text-foreground/60 line-clamp-1 transition-colors duration-300">
+                <h4 className="font-medium text-foreground/85  text-[18px] hover:text-foreground line-clamp-1 transition-colors duration-300">
                   {project.name}
-                </MainGradient>
+                </h4>
               </Link>
             </div>
           </div>
-          <p className="text-[14px] text-secondary line-clamp-2 h-[42px]">{project.tagline}</p>
+          <p className="text-[14px] text-secondary line-clamp-1 ">{project.tagline}</p>
           <div className="flex flex-col gap-1 text-[14px] text-secondary">
             <div className="flex items-center gap-2">
               <Star size={16} strokeWidth={2} className="shrink-0" />

@@ -1,5 +1,5 @@
 import {UserProjects} from "@/actions/profiles/singleUserProfile";
-import ProjectSinglePage from "@/app/projects/[id]/page";
+import ProjectSinglePage from "@/app/projects/[slug]/page";
 import React from "react";
 import ProjectSingleCard from "../projects/ProjectSingleCard";
 import {Project} from "@/types/projects/projects";

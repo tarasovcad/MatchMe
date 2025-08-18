@@ -138,7 +138,7 @@
     /* MY COLORS THAT I USE IN MY DESIGN */
     --primary: 246 78% 68%; /* #EA4C89 */
     --secondary: 240 3.8% 46.1%; /* #71717a */
-    --maingradient: linear-gradient(180deg, #1c1d1f 0%, rgba(28, 29, 31, 0.68) 100%);
+    --maingradient: linear-gradient(180deg, #131415 0%, rgba(19, 20, 21, 0.68) 100%);
     --secgradient: linear-gradient(180deg, #39393a 0%, rgba(28, 29, 31, 0.68) 100%);
     --purplegradient: linear-gradient(180deg, #7e72ee 40%, #aba1ff 100%);
     --hoverpurplegradient: linear-gradient(180deg, #7e72ee 0%, #aba1ff 0%);
