@@ -16,28 +16,28 @@ export function useFiltersWithUrl(pageKey: string) {
     getFiltersForPage,
   } = useFilterStore();
 
-  // Initialize filters from URL on mount
+  // Subscribe to just this page's filters so we can detect store changes
+  const pageFilters = useFilterStore((state) => state.appliedFilters[pageKey]);
+
+  // Always reflect URL -> Store (including clearing when URL has no filters)
   useEffect(() => {
-    if (filtersFromUrl.length > 0) {
-      setFiltersFromUrl(pageKey, filtersFromUrl);
-    }
-  }, [pageKey, setFiltersFromUrl]);
+    setFiltersFromUrl(pageKey, filtersFromUrl);
+  }, [pageKey, filtersFromUrl, setFiltersFromUrl]);
 
-  // Sync URL when filters change in store
+  // Store -> URL (only when different to avoid echo loops)
   useEffect(() => {
-    const currentFilters = getSerializableFilters(pageKey);
+    const currentStoreFilters = getSerializableFilters(pageKey);
 
-    const urlFiltersString = JSON.stringify(
-      filtersFromUrl.sort((a, b) => a.value.localeCompare(b.value)),
-    );
-    const storeFiltersString = JSON.stringify(
-      currentFilters.sort((a, b) => a.value.localeCompare(b.value)),
-    );
+    const sortByValue = <T extends {value: string}>(arr: T[]) =>
+      [...arr].sort((a, b) => a.value.localeCompare(b.value));
 
-    if (urlFiltersString !== storeFiltersString) {
-      updateUrlFilters(currentFilters);
+    const urlStr = JSON.stringify(sortByValue(filtersFromUrl));
+    const storeStr = JSON.stringify(sortByValue(currentStoreFilters));
+
+    if (urlStr !== storeStr) {
+      updateUrlFilters(currentStoreFilters);
     }
-  }, [getSerializableFilters(pageKey)]);
+  }, [pageKey, pageFilters, filtersFromUrl, getSerializableFilters, updateUrlFilters]);
 
   return {
     // Filter store methods

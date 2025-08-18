@@ -37,10 +37,9 @@ export function useInfiniteItems<T extends {id: string}>({
         }
       : undefined;
 
-  // Create a stable query key that includes URL params for proper cache invalidation
   const queryKey = [
     infiniteKey,
-    JSON.stringify(serializableFilters.sort((a, b) => a.value.localeCompare(b.value))),
+    JSON.stringify([...serializableFilters].sort((a, b) => a.value.localeCompare(b.value))),
   ];
 
   const infiniteQuery = useInfiniteQuery({

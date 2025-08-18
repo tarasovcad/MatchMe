@@ -12,7 +12,7 @@ import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
   const rawFilters = getFiltersForPage(pageKey);
-  const filters = rawFilters.filter((f) => !(f.value === "search" || f.type === "globalSearch"));
+  const filters = rawFilters.filter((f) => f.type !== "globalSearch" && f.type !== "searchInput");
   if (!filters?.length) return null;
   const getFilterDisplayValue = (filter: Filter) => {
     switch (filter.type) {
@@ -70,7 +70,7 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
       <div className="flex gap-2 overflow-y-auto ">
         {filters.map((filter) => {
           const displayValue = getFilterDisplayValue(filter);
-          // if (!displayValue) return null;
+          if (!displayValue) return null;
 
           return (
             <div

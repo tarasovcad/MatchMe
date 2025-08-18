@@ -22,7 +22,7 @@ import {SearchProfileResult} from "@/actions/profiles/searchProfiles";
 import {useRandomEntity} from "@/hooks/query/use-random-entity";
 import AnimatedDice from "@/components/ui/AnimatedDice";
 import SearchResultsSkeleton from "@/components/search/SearchResultsSkeleton";
-import {useFilterStore, Filter, SearchInputFilter, GlobalSearchFilter} from "@/store/filterStore";
+import {useFilterStore} from "@/store/filterStore";
 
 interface ProfilesSearchPopoverProps {
   className?: string;
@@ -41,24 +41,25 @@ export default function ProfilesSearchPopover({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
-  const {addFilter, removeFilter} = useFilterStore();
-  const pageFilters = useFilterStore((s) => s.appliedFilters[pageKey] || []);
+  const {addFilter, removeFilter, getFiltersForPage} = useFilterStore();
+
+  // Initialize input from existing globalSearch filter to reflect URL/search state
+  useEffect(() => {
+    const filters = getFiltersForPage(pageKey);
+    const searchFilter = filters.find((f) => f.type === "globalSearch" && f.value === "search");
+    if (searchFilter && (searchFilter as {searchValue?: string}).searchValue) {
+      const sv = (searchFilter as {searchValue?: string}).searchValue || "";
+      if (sv) {
+        setSearchValue(sv);
+        setDebouncedSearchValue(sv);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearchValue(searchValue), 300);
     return () => clearTimeout(timer);
   }, [searchValue]);
-
-  // Sync input with active search filter from store (URL or UI)
-  useEffect(() => {
-    const searchFilter = pageFilters.find(
-      (f): f is SearchInputFilter | GlobalSearchFilter =>
-        f.value === "search" && (f.type === "globalSearch" || f.type === "searchInput"),
-    );
-    const next = searchFilter?.searchValue || "";
-    setSearchValue(next);
-    setDebouncedSearchValue(next);
-  }, [pageFilters]);
 
   const liveTrimmedValue = useMemo(() => searchValue.trim(), [searchValue]);
   const trimmedSearchValue = useMemo(() => debouncedSearchValue.trim(), [debouncedSearchValue]);
