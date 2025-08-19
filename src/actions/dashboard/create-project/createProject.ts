@@ -35,7 +35,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
 
   const projectUserRateLimiter = new Ratelimit({
     redis: redis,
-    limiter: Ratelimit.slidingWindow(3, "6 h"), // 3 projects per 6 hours per user
+    limiter: Ratelimit.slidingWindow(10, "6 h"), // 10 projects per 6 hours per user
     analytics: true,
     prefix: "ratelimit:user:project-creation",
     enableProtection: true,
@@ -160,7 +160,7 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
   }
 
   // ────────────────────────────────────────────
-  //  Create default roles: Owner & Member
+  //  Create default roles: Owner & Member & Co-Founder
   // ────────────────────────────────────────────
 
   const {data: rolesData, error: rolesError} = await supabase
@@ -209,8 +209,9 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
   const {error: teamMemberError} = await supabase.from("project_team_members").insert({
     project_id: projectId,
     user_id: user.id,
-    role: "Founder",
+    display_role: "Founder",
     role_id: ownerRole?.id ?? null,
+    joined_date: new Date().toISOString(),
     is_active: true,
   });
 

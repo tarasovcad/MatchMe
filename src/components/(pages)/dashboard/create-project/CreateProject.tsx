@@ -24,7 +24,7 @@ const stepRequiredFields = {
   1: ["name", "slug", "tagline"],
   2: ["description", "category", "current_stage"],
   3: ["language_proficiency", "technology_stack"],
-  4: ["collaboration_model", "engagement_model", "availability"],
+  4: ["collaboration_model", "time_commitment"],
   5: ["revenue_expectations", "funding_investment", "compensation_model"],
 };
 
@@ -36,17 +36,12 @@ const stepAllFields = {
     "project_website",
     "category",
     "current_stage",
+    "expected_timeline",
     "target_audience",
     "demo",
   ],
   3: ["language_proficiency", "technology_stack"],
-  4: [
-    "collaboration_model",
-    "engagement_model",
-    "working_hours",
-    "availability",
-    "community_platforms",
-  ],
+  4: ["collaboration_model", "collaboration_style", "time_commitment", "community_platforms"],
   5: ["revenue_expectations", "funding_investment", "compensation_model"],
 };
 
@@ -74,6 +69,7 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       project_website: "",
       category: "",
       current_stage: "",
+      expected_timeline: "",
       target_audience: "",
       demo: [],
       // 3 step
@@ -81,9 +77,8 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
       technology_stack: [],
       // 4 step
       collaboration_model: "",
-      engagement_model: "",
-      working_hours: "",
-      availability: "",
+      collaboration_style: "",
+      time_commitment: "",
       community_platforms: [],
       // 5 step
       revenue_expectations: "",
@@ -158,10 +153,11 @@ const CreateProject = ({projectCount}: {projectCount: number}) => {
   const handleBack = () => {
     setCurrentStep(currentStep - 1);
   };
-
+  console.log(methods.getValues());
   // Handle form submission
   const handleSubmit = async () => {
     const toastId = toast.loading("Creating project...");
+
     setIsLoading(true);
     const response = await createProject(methods.getValues());
     if (response.error) {

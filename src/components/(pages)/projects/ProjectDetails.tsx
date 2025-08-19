@@ -5,10 +5,36 @@ import {ArrowUpRight} from "lucide-react";
 import Link from "next/link";
 import React, {JSX} from "react";
 
-// Project type for display purposes with dynamic field access
-interface ProjectDisplay {
-  [key: string]: string | number | boolean | string[] | null;
-}
+import {projectStages} from "@/data/projects/projectStages";
+import {collaborationModels} from "@/data/projects/collaborationModels";
+import {compensationModels} from "@/data/projects/compensationModels";
+import {fundingInvestment} from "@/data/projects/fundingInvestment";
+import {revenueExpectations} from "@/data/projects/revenueExpectations";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
+import {expectedTimelineOptions} from "@/data/projects/expectedTimelineOptions";
+import {collaborationStyles} from "@/data/projects/collaborationStyles";
+import {experienceLevels} from "@/data/projects/experienceLevels";
+
+const enumMappings: Record<string, Array<{title: string; value: string}>> = {
+  current_stage: projectStages,
+  collaboration_model: collaborationModels,
+  compensation_model: compensationModels,
+  funding_investment: fundingInvestment,
+  revenue_expectations: revenueExpectations,
+  time_commitment: timeCommitment,
+  expected_timeline: expectedTimelineOptions,
+  collaboration_style: collaborationStyles,
+  experience_level: experienceLevels,
+};
+
+const getEnumDisplayValue = (key: string, value: string): string => {
+  const enumData = enumMappings[key];
+  if (enumData && value) {
+    const found = enumData.find((item) => item.value === value);
+    return found?.title ?? value;
+  }
+  return value;
+};
 
 const displayProjectValue = (
   key: string,
@@ -19,7 +45,7 @@ const displayProjectValue = (
   switch (key) {
     case "skills":
     case "language_proficiency":
-    case "communication_tools":
+    case "community_platforms":
       return (
         <p className="text-[14px] text-foreground">
           {Array.isArray(value) ? value.join(", ") : String(value)}
@@ -38,12 +64,10 @@ const displayProjectValue = (
           />
         </Link>
       );
-    case "working_hours":
-      return <p className="text-[14px] text-foreground">{`${value} hours / week`}</p>;
-    case "compensation_model":
-      return <p className="text-[14px] text-foreground capitalize">{String(value)}</p>;
-    default:
-      return <p className="text-[14px] text-foreground">{String(value)}</p>;
+    default: {
+      const displayValue = getEnumDisplayValue(key, String(value));
+      return <p className="text-[14px] text-foreground">{displayValue}</p>;
+    }
   }
 };
 

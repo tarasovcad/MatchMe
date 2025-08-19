@@ -90,7 +90,7 @@ export async function generateMetadata({
 
 const UserSinglePage = async ({params}: {params: Promise<{username: string}>}) => {
   const {username} = await params;
-  console.log(username, "username");
+
   let bundle;
   let userSessionId: string | undefined;
 

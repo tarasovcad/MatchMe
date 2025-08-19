@@ -28,6 +28,7 @@ export type Project = {
 
   category: string;
   current_stage: string;
+  expected_timeline: string;
   why_join: string;
 
   language_proficiency: string[];
@@ -38,25 +39,15 @@ export type Project = {
 
   target_audience: string;
   revenue_expectations: string;
+  collaboration_style: string;
   collaboration_model: string;
   funding_investment: string;
   compensation_model: string;
 
-  open_positions: {
-    title: string;
-    description: string;
-    slots: number;
-    required_skills: string[];
-    engagement: string;
-  }[];
-
   required_skills: string[];
-  engagement_model: string;
-  availability: string;
-  working_hours: string;
+  time_commitment: string;
   community_platforms: string;
   project_website: string;
-
   is_project_public: boolean;
 };
 

@@ -6,6 +6,21 @@ import {createClient, SupabaseServerClient} from "@/utils/supabase/server";
 import {getClientIp} from "@/utils/network/getClientIp";
 import {Ratelimit} from "@upstash/ratelimit";
 
+interface CachedProjectStats {
+  followers: number;
+  members: number;
+  openRoles: number;
+  skills: Array<{name: string; image_url?: string}>;
+  lastUpdated: number;
+}
+
+interface ProjectStats {
+  followers: number;
+  members: number;
+  openRoles: number;
+  skills: Array<{name: string; image_url?: string}>;
+}
+
 const CACHE_KEYS = {
   project: (slug: string) => `project_${slug}`,
   projectFollow: (userId: string, projectId: string) => `project_follow_${userId}_${projectId}`,
@@ -131,20 +146,45 @@ export async function isProjectFavorite(
 
 export async function getProjectStats(
   projectId: string,
+  project?: Project,
   client?: SupabaseServerClient,
-): Promise<{followers: number; members: number; openRoles: number}> {
+): Promise<ProjectStats> {
+  const defaultStats: ProjectStats = {
+    followers: 0,
+    members: 0,
+    openRoles: 0,
+    skills: [],
+  };
+
   try {
     const cacheKey = CACHE_KEYS.projectStats(projectId);
-    const cached = (await redis.get(cacheKey)) as {
-      followers: number;
-      members: number;
-      openRoles: number;
-    } | null;
-    if (cached) return cached;
+    const cached = (await redis.get(cacheKey)) as CachedProjectStats | null;
+
+    if (cached) {
+      return {
+        followers: cached.followers,
+        members: cached.members,
+        openRoles: cached.openRoles,
+        skills: cached.skills,
+      };
+    }
 
     const supabase = client ?? (await createClient());
 
-    const [followersRes, membersRes, openRolesRes] = await Promise.all([
+    let projectData = project;
+    if (!projectData) {
+      const {data: fetchedProject} = await supabase
+        .from(TABLE_NAME)
+        .select("technology_stack")
+        .eq("id", projectId)
+        .single();
+      if (!fetchedProject) {
+        return defaultStats;
+      }
+      projectData = fetchedProject as Project;
+    }
+
+    const [followersRes, membersRes, openRolesRes, skillsResult] = await Promise.all([
       supabase
         .from("project_followers")
         .select("*", {count: "exact", head: true})
@@ -159,19 +199,47 @@ export async function getProjectStats(
         .select("*", {count: "exact", head: true})
         .eq("project_id", projectId)
         .eq("status", "open"),
+      // Fetch skills data from skills table based on project's technology_stack
+      projectData?.technology_stack?.length
+        ? supabase.from("skills").select("name, image_url").in("name", projectData.technology_stack)
+        : Promise.resolve({data: [] as Array<{name: string; image_url?: string}>}),
     ]);
 
-    const stats = {
-      followers: followersRes.error ? 0 : followersRes.count || 0,
-      members: membersRes.error ? 0 : membersRes.count || 0,
-      openRoles: openRolesRes.error ? 0 : openRolesRes.count || 0,
+    const followers = followersRes.error ? 0 : followersRes.count || 0;
+    const members = membersRes.error ? 0 : membersRes.count || 0;
+    const openRoles = openRolesRes.error ? 0 : openRolesRes.count || 0;
+    const skillsFromDb =
+      (skillsResult as {data?: Array<{name: string; image_url?: string}>}).data || [];
+
+    // Merge project technology_stack with skills data from database
+    const mergedSkills =
+      projectData?.technology_stack?.map((skillName) => {
+        const skillFromDb = skillsFromDb.find((dbSkill) => dbSkill.name === skillName);
+        return {
+          name: skillName,
+          image_url: skillFromDb?.image_url,
+        };
+      }) || [];
+
+    const statsForCache: CachedProjectStats = {
+      followers,
+      members,
+      openRoles,
+      skills: mergedSkills,
+      lastUpdated: Date.now(),
     };
 
-    await redis.set(cacheKey, stats, {ex: CACHE_TTL});
-    return stats;
+    await redis.set(cacheKey, statsForCache, {ex: CACHE_TTL});
+
+    return {
+      followers,
+      members,
+      openRoles,
+      skills: mergedSkills,
+    };
   } catch (error) {
     console.error("Error in getProjectStats:", error);
-    return {followers: 0, members: 0, openRoles: 0};
+    return defaultStats;
   }
 }
 
@@ -183,7 +251,7 @@ export async function getProjectBundle(
   project: Project;
   isFollowing: boolean;
   isFavorite: boolean;
-  stats: {followers: number; members: number; openRoles: number};
+  stats: ProjectStats;
 }> {
   try {
     // Rate limit to prevent scraping/spam
@@ -220,7 +288,7 @@ export async function getProjectBundle(
     const [isFollowing, isFavorite, stats] = await Promise.all([
       sessionId ? isProjectFollowing(sessionId, project.id, supabase) : Promise.resolve(false),
       sessionId ? isProjectFavorite(sessionId, project.id, supabase) : Promise.resolve(false),
-      getProjectStats(project.id, supabase),
+      getProjectStats(project.id, project, supabase),
     ]);
 
     return {project, isFollowing, isFavorite, stats};

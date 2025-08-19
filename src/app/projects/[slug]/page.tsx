@@ -27,6 +27,7 @@ import {createClient} from "@/utils/supabase/server";
 import {notFound} from "next/navigation";
 import FollowProjectButton from "@/components/follows/FollowProjectButton";
 import ProjectFormField from "@/components/(pages)/projects/ProjectFormField";
+import ProjectImageSlider from "@/components/(pages)/projects/ProjectImageSlider";
 
 const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) => {
   const {slug} = await params;
@@ -63,8 +64,7 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
   }
 
   const {project, isFollowing, isFavorite, stats} = bundle;
-  const {followers, members, openRoles} = stats;
-
+  const {followers, members, openRoles, skills} = stats;
   // Get project image URL
   const projectImageUrl =
     Array.isArray(project.project_image) && project.project_image[0]?.url
@@ -164,11 +164,16 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
         {/* Main content section */}
         <div>
           <div className="flex flex-col gap-8 max-[990px]:gap-10">
-            {/* <ProjectImageSlider demo={project.demo} /> */}
+            {project.demo.length > 0 && (
+              <ProjectImageSlider demo={project.demo.map((item) => item.url)} />
+            )}
             {projectFormFields.map((formField) => (
-              <div key={formField.fieldTitle}>
-                <ProjectFormField formField={formField} project={project} skills={[]} />
-              </div>
+              <ProjectFormField
+                key={formField.fieldTitle}
+                formField={formField}
+                project={project}
+                skills={skills}
+              />
             ))}
             {/* <ProjectTabs />
             <KeywordTagList tags={tags} type="projects" />

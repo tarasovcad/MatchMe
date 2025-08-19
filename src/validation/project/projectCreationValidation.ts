@@ -2,13 +2,14 @@ import {languages} from "@/data/forms/(settings)/languages";
 import {projectCategories} from "@/data/projects/projectCategories";
 import {projectStages} from "@/data/projects/projectStages";
 import {collaborationModels} from "@/data/projects/collaborationModels";
-import {engagementModels} from "@/data/projects/engagementModels";
-import {availabilityOptions} from "@/data/projects/availabilityOptions";
+import {collaborationStyles} from "@/data/projects/collaborationStyles";
+import {expectedTimelineOptions} from "@/data/projects/expectedTimelineOptions";
 import {revenueExpectations} from "@/data/projects/revenueExpectations";
 import {fundingInvestment} from "@/data/projects/fundingInvestment";
 import {compensationModels} from "@/data/projects/compensationModels";
 import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 // Common spam patterns to prevent
 const SPAM_PATTERNS = [
@@ -35,17 +36,17 @@ const isSpamPattern = (str: string): boolean => {
   return SPAM_PATTERNS.some((pattern) => pattern.test(cleanStr));
 };
 
-const allowedStages = new Set(projectStages.map((value) => value.title));
+const allowedStages = new Set(projectStages.map((value) => value.value));
 const allowedCategories = new Set(projectCategories.map((cat) => cat.title));
 const allowedLanguages = new Set(languages.map((lang) => lang.value));
-const allowedCollaborationModels = new Set(collaborationModels.map((model) => model.title));
-const allowedEngagementModels = new Set(engagementModels.map((model) => model.title));
-const allowedAvailabilityOptions = new Set(availabilityOptions.map((option) => option.title));
+const allowedCollaborationModels = new Set(collaborationModels.map((model) => model.value));
+const allowedCollaborationStyles = new Set(collaborationStyles.map((style) => style.value));
+const allowedExpectedTimelines = new Set(expectedTimelineOptions.map((timeline) => timeline.value));
 const allowedRevenueExpectations = new Set(
-  revenueExpectations.map((expectation) => expectation.title),
+  revenueExpectations.map((expectation) => expectation.value),
 );
-const allowedFundingInvestment = new Set(fundingInvestment.map((funding) => funding.title));
-const allowedCompensationModels = new Set(compensationModels.map((model) => model.title));
+const allowedFundingInvestment = new Set(fundingInvestment.map((funding) => funding.value));
+const allowedCompensationModels = new Set(compensationModels.map((model) => model.value));
 
 export const projectCreationValidationSchema = z.object({
   is_project_public: z.boolean(),
@@ -199,6 +200,12 @@ export const projectCreationValidationSchema = z.object({
   current_stage: z.string().refine((val) => allowedStages.has(val), {
     message: "Please select a valid project stage",
   }),
+  expected_timeline: z
+    .string()
+    .min(1, {message: "Expected timeline is required"})
+    .refine((val) => allowedExpectedTimelines.has(val), {
+      message: "Please select a valid expected timeline",
+    }),
   target_audience: z.string(),
   demo: z
     .array(
@@ -245,41 +252,17 @@ export const projectCreationValidationSchema = z.object({
     .min(1, {message: "At least one skill is required"})
     .max(15, {message: "Skills must be at most 15 tags"}),
   // 4 step
-  collaboration_model: z
+  collaboration_style: z
     .string()
-    .min(1, {message: "Collaboration model is required"})
-    .refine((val) => allowedCollaborationModels.has(val), {
-      message: "Please select a valid collaboration model",
+    .min(1, {message: "Collaboration style is required"})
+    .refine((val) => allowedCollaborationStyles.has(val), {
+      message: "Please select a valid collaboration style",
     }),
-  engagement_model: z
+  time_commitment: z
     .string()
-    .min(1, {message: "Engagement model is required"})
-    .refine((val) => allowedEngagementModels.has(val), {
-      message: "Please select a valid engagement model",
-    }),
-  working_hours: z
-    .string()
-    .trim()
-    .max(50, {message: "Working hours description must not exceed 50 characters"})
-    .refine((val) => !val || !hasRepeatedChars(val), {
-      message: "Working hours cannot have repetitive characters",
-    })
-    .refine((val) => !val || hasVariety(val), {
-      message: "Working hours description must be meaningful",
-    })
-    .refine((val) => !val || !isSpamPattern(val), {
-      message: "Please provide a genuine time commitment description",
-    })
-    .refine((val) => !val || !/^[A-Z\s!?.,]+$/.test(val), {
-      message: "Working hours cannot be all uppercase",
-    })
     .optional()
-    .or(z.literal("")),
-  availability: z
-    .string()
-    .min(1, {message: "Availability is required"})
-    .refine((val) => allowedAvailabilityOptions.has(val), {
-      message: "Please select a valid availability option",
+    .refine((val) => !val || val === "" || timeCommitment.some((option) => option.value === val), {
+      message: "Invalid time commitment. Please select a valid option.",
     }),
   community_platforms: z
     .array(

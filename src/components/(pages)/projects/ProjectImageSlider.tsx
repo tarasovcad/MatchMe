@@ -1,3 +1,4 @@
+"use client";
 import React, {useRef, useEffect, useState} from "react";
 import {Swiper, SwiperSlide} from "swiper/react";
 import {Navigation} from "swiper/modules";
@@ -62,6 +63,7 @@ const ProjectImageSlider = ({demo}: {demo: string[]}) => {
                     width={1000}
                     height={1000}
                     quality={100}
+                    unoptimized={true}
                     alt={`Project demo ${index + 1}`}
                     className="w-full h-full object-cover  transition-transform duration-300"
                   />

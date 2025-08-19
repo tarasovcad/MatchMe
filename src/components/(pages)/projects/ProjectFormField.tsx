@@ -32,7 +32,7 @@ const isNonEmpty = (value: unknown): boolean => {
 const hasFieldContent = (
   project: Project,
   formField: ProjectFormFieldProps,
-  skills: {name: string; image_url: string}[],
+  skills: {name: string; image_url?: string}[],
 ): boolean => {
   const {fieldType, fieldInputProps} = formField;
 
@@ -69,7 +69,7 @@ const ProjectFormField = ({
   project: Project;
   skills: {
     name: string;
-    image_url: string;
+    image_url?: string;
   }[];
 }) => {
   const {fieldTitle, fieldDescription, fieldType, layout = "row", columnIfCharsAtLeast} = formField;

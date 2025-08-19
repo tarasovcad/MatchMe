@@ -3,7 +3,6 @@ export const projectFormFields = [
     fieldTitle: "About Us",
     fieldDescription: "",
     fieldType: "text",
-    // Switch to column layout automatically when content length reaches this threshold
     columnIfCharsAtLeast: 800,
     fieldInputProps: [
       {
@@ -61,21 +60,17 @@ export const projectFormFields = [
       },
     ],
   },
-  // {
-  //   fieldTitle: "Open Positions",
-  //   fieldDescription: "Current open positions in the project",
-  //   fieldType: "open_positions",
-  //   layout: "column",
-  // },
 ] as ProjectFormFieldProps[];
 
 export const projectDetailsSections = [
   {
     id: "overview_section",
     fields: [
-      {title: "Project Category", value: "project_category"},
+      {title: "Project Category", value: "category"},
       {title: "Target Audience", value: "target_audience"},
       {title: "Current Stage", value: "current_stage"},
+      {title: "Expected Timeline", value: "expected_timeline"},
+      {title: "Project Website", value: "project_website"},
       {title: "Collaboration Model", value: "collaboration_model"},
       {title: "Language Proficiency", value: "language_proficiency"},
     ],
@@ -83,10 +78,10 @@ export const projectDetailsSections = [
   {
     id: "team_operations_section",
     fields: [
-      {title: "Engagement Model", value: "engagement_model"},
-      {title: "Working Hours", value: "working_hours"},
-      {title: "Availability", value: "availability"},
-      {title: "Community & Communication Tools", value: "communication_tools"},
+      {title: "Time Commitment", value: "time_commitment"},
+      {title: "Collaboration Model", value: "collaboration_model"},
+      {title: "Collaboration Style", value: "collaboration_style"},
+      {title: "Communication Tools", value: "community_platforms"},
     ],
   },
   {

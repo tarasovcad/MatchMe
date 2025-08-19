@@ -68,7 +68,7 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
                   />
                 </div>
               )}
-              <span className="font-medium text-[14px] text-foreground/70">{skill.name}</span>
+              <span className="font-medium text-[14px] text-foreground/80">{skill.name}</span>
             </motion.div>
           );
         })}

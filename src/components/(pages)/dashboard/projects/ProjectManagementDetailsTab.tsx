@@ -50,6 +50,7 @@ const ProjectManagementDetailsTab = ({
     project_website: project.project_website ?? "",
     category: project.category ?? "",
     current_stage: project.current_stage ?? "",
+    expected_timeline: project.expected_timeline ?? "",
     target_audience: project.target_audience ?? "",
     demo: project.demo ?? [],
     // Step 3
@@ -59,9 +60,8 @@ const ProjectManagementDetailsTab = ({
     technology_stack: Array.isArray(project.technology_stack) ? project.technology_stack : [],
     // Step 4
     collaboration_model: project.collaboration_model ?? "",
-    engagement_model: project.engagement_model ?? "",
-    working_hours: project.working_hours ?? "",
-    availability: project.availability ?? "",
+    collaboration_style: project.collaboration_style ?? "",
+    time_commitment: project.time_commitment ?? "",
     community_platforms: project.community_platforms
       ? Array.isArray(project.community_platforms)
         ? project.community_platforms

@@ -3,11 +3,12 @@ import {projectCategories} from "../../projects/projectCategories";
 import {projectStages} from "../../projects/projectStages";
 import {projectTargetAudiences} from "@/data/projects/projectTargetAudiences";
 import {collaborationModels} from "../../projects/collaborationModels";
-import {engagementModels} from "../../projects/engagementModels";
-import {availabilityOptions} from "../../projects/availabilityOptions";
+import {collaborationStyles} from "../../projects/collaborationStyles";
+import {expectedTimelineOptions} from "../../projects/expectedTimelineOptions";
 import {revenueExpectations} from "../../projects/revenueExpectations";
 import {fundingInvestment} from "../../projects/fundingInvestment";
 import {compensationModels} from "../../projects/compensationModels";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 export const projectCreationFormFields = [
   {
@@ -146,6 +147,21 @@ export const projectCreationFormFields = [
         ],
       },
       {
+        fieldTitle: "Expected Timeline",
+        fieldType: "dropdown",
+        fieldRequired: true,
+        fieldDescription: "How long do you expect this project to take?",
+        fieldInputProps: [
+          {
+            id: "expected_timeline",
+            type: "text",
+            placeholder: "Select expected timeline",
+            name: "expected_timeline",
+            options: expectedTimelineOptions,
+          },
+        ],
+      },
+      {
         fieldTitle: "Target Audience",
         fieldType: "selectWithSearch",
         fieldDescription: "Specify who will benefit from or use your project",
@@ -227,46 +243,32 @@ export const projectCreationFormFields = [
         ],
       },
       {
-        fieldTitle: "Engagement Model",
+        fieldTitle: "Preferred Collaboration Style",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "How do you envision team members engaging with the project?",
+        fieldDescription: "How do you prefer to communicate and coordinate with your team?",
         fieldInputProps: [
           {
-            id: "engagement_model",
+            id: "collaboration_style",
             type: "text",
-            placeholder: "Select engagement model",
-            name: "engagement_model",
-            options: engagementModels,
+            placeholder: "Select collaboration style",
+            name: "collaboration_style",
+            options: collaborationStyles,
           },
         ],
       },
       {
         fieldTitle: "Time Commitment",
-        fieldType: "text",
-        fieldRequired: false,
-        fieldDescription: "Specify the expected weekly time commitment for team members",
-        fieldInputProps: [
-          {
-            id: "working_hours",
-            type: "text",
-            placeholder: "10-15 hours per week",
-            name: "working_hours",
-          },
-        ],
-      },
-      {
-        fieldTitle: "Availability",
         fieldType: "dropdown",
         fieldRequired: true,
-        fieldDescription: "Approximate weekly hours required for contributors",
+        fieldDescription: "How much time are you available to commit per week?",
         fieldInputProps: [
           {
-            id: "availability",
+            id: "time_commitment",
             type: "text",
-            placeholder: "Select availability",
-            name: "availability",
-            options: availabilityOptions,
+            placeholder: "Select time commitment",
+            name: "time_commitment",
+            options: timeCommitment,
           },
         ],
       },
