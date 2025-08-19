@@ -3,7 +3,7 @@ import {toast} from "sonner";
 import {cn} from "@/lib/utils";
 import {useFormContext} from "react-hook-form";
 import {Button} from "../../shadcn/button";
-import {ImageIcon, XIcon} from "lucide-react";
+import {ImageIcon, XIcon, ZoomInIcon, ZoomOutIcon} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,11 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../shadcn/dialog";
-import Image from "next/image";
-import {Separator} from "../../shadcn/separator";
-import ReactCrop, {Crop, centerCrop, makeAspectCrop} from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import NextImage from "next/image";
 import {formatFileSize} from "@/functions/formatFileSize";
+import {Cropper, CropperCropArea, CropperDescription, CropperImage} from "../../shadcn/cropper";
+import {Slider} from "../../shadcn/slider";
 
 const FILE_CONFIG = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB in bytes
@@ -44,6 +43,19 @@ export interface ImageUploadProps {
   maxUploads?: number; // Maximum number of uploads (default: 1, max: 5)
   allowedFileTypes?: string[]; // Allowed file types
 }
+
+// Define type for pixel crop area
+type Area = {x: number; y: number; width: number; height: number};
+
+// Helper to load image from URL for canvas operations
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", (error: unknown) => reject(error));
+    image.setAttribute("crossOrigin", "anonymous");
+    image.src = url;
+  });
 
 const getReadableFormatNames = (mimeTypes: string[]): string => {
   const formatMap: Record<string, string> = {
@@ -126,10 +138,10 @@ const ImageUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  // Cropper state
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [zoom, setZoom] = useState(1);
   const [imageSrc, setImageSrc] = useState<string>("");
-  const imgRef = useRef<HTMLImageElement>(null);
 
   const {setValue, watch} = useFormContext();
   const selectedValues = watch(name) as ImageData[] | undefined;
@@ -143,8 +155,8 @@ const ImageUpload = ({
       setFileName(null);
       setFileSize(null);
       setImageSrc("");
-      setCrop(undefined);
-      setCompletedCrop(undefined);
+      setCroppedAreaPixels(null);
+      setZoom(1);
     }
   }, [selectedValues]);
 
@@ -272,6 +284,8 @@ const ImageUpload = ({
     if (file) {
       const objectUrl = URL.createObjectURL(file);
       setImageSrc(objectUrl);
+      setCroppedAreaPixels(null);
+      setZoom(1);
 
       return () => {
         URL.revokeObjectURL(objectUrl);
@@ -279,155 +293,161 @@ const ImageUpload = ({
     }
   }, [file]);
 
-  // Center and initialize crop properly
-  const onImageLoad = useCallback(
-    (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const {width, height} = e.currentTarget;
-      const cropInit = centerCrop(
-        makeAspectCrop(
-          {
-            unit: "%",
-            width: initialCropWidth,
-          },
-          aspectRatio,
-          width,
-          height,
-        ),
-        width,
-        height,
-      );
-      setCrop(cropInit);
-    },
-    [aspectRatio, initialCropWidth],
-  );
+  const handleCropChange = useCallback((pixels: Area | null) => {
+    setCroppedAreaPixels(pixels);
+  }, []);
 
   const handleApply = async () => {
-    if (imgRef.current && completedCrop?.width && completedCrop.height) {
-      const croppedImageUrl = getCroppedImg(imgRef.current, completedCrop);
+    if (!imageSrc || !croppedAreaPixels) return;
 
-      const newImageData: ImageData = {
-        url: croppedImageUrl,
-        fileName: fileName || "",
-        fileSize: fileSize || 0,
-        uploadedAt: new Date().toISOString(),
-      };
+    const croppedImageUrl = await getCroppedImg(imageSrc, croppedAreaPixels, type, aspectRatio);
 
-      const currentImages = selectedValues || [];
-      let updatedImages: ImageData[];
+    const newImageData: ImageData = {
+      url: croppedImageUrl,
+      fileName: fileName || "",
+      fileSize: fileSize || 0,
+      uploadedAt: new Date().toISOString(),
+    };
 
-      // Check if a file with the same name already exists
-      const existingImageIndex = currentImages.findIndex(
-        (img) => img.fileName === newImageData.fileName,
-      );
+    const currentImages = selectedValues || [];
+    let updatedImages: ImageData[];
 
-      if (existingImageIndex !== -1) {
-        // Replace the existing image with the same filename
-        updatedImages = [...currentImages];
-        updatedImages[existingImageIndex] = newImageData;
-      } else if (currentImages.length >= validMaxUploads) {
-        // Replace the last image if we've reached the max and no duplicate found
-        updatedImages = [...currentImages.slice(0, -1), newImageData];
-      } else {
-        // Add the new image
-        updatedImages = [...currentImages, newImageData];
-      }
+    // Check if a file with the same name already exists
+    const existingImageIndex = currentImages.findIndex(
+      (img) => img.fileName === newImageData.fileName,
+    );
 
-      setValue(name, updatedImages, {shouldDirty: true});
-      setIsOpen(false);
+    if (existingImageIndex !== -1) {
+      // Replace the existing image with the same filename
+      updatedImages = [...currentImages];
+      updatedImages[existingImageIndex] = newImageData;
+    } else if (currentImages.length >= validMaxUploads) {
+      // Replace the last image if we've reached the max and no duplicate found
+      updatedImages = [...currentImages.slice(0, -1), newImageData];
+    } else {
+      // Add the new image
+      updatedImages = [...currentImages, newImageData];
     }
+
+    setValue(name, updatedImages, {shouldDirty: true});
+    setIsOpen(false);
   };
 
-  function getCroppedImg(image: HTMLImageElement, crop: Crop): string {
+  async function getCroppedImg(
+    imageSrc: string,
+    pixelCrop: Area,
+    imgType: "avatar" | "background" | "demo" | "project",
+    ratio: number,
+  ): Promise<string> {
+    const image = await createImage(imageSrc);
     const canvas = document.createElement("canvas");
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    const ctx = canvas.getContext("2d");
 
-    // Calculate the actual crop dimensions in the original image
-    const cropWidth = crop.width * scaleX;
-    const cropHeight = crop.height * scaleY;
+    if (!ctx) return "";
 
-    // Set canvas to high-quality dimensions based on type, but maintain aspect ratio
+    // Determine output canvas size based on type
     let canvasWidth: number;
     let canvasHeight: number;
 
-    if (type === "background") {
-      // High quality background: maintain aspect ratio but ensure good resolution
+    const cropWidth = pixelCrop.width;
+    const cropHeight = pixelCrop.height;
+
+    if (imgType === "background") {
+      // Prefer exporting at least 2x target size to keep backgrounds crisp
       const targetAspectRatio = 1184 / 156;
+      const minWidth = 2368;
+      const minHeight = 312;
       const cropAspectRatio = cropWidth / cropHeight;
-
       if (cropAspectRatio > targetAspectRatio) {
-        canvasWidth = Math.min(cropWidth, 2368); // 2x the target for high quality
-        canvasHeight = canvasWidth / targetAspectRatio;
+        // Wider than target: fit by width
+        canvasWidth = Math.max(cropWidth, minWidth);
+        canvasHeight = Math.round(canvasWidth / targetAspectRatio);
       } else {
-        canvasHeight = Math.min(cropHeight, 312); // 2x the target for high quality
-        canvasWidth = canvasHeight * targetAspectRatio;
+        // Taller than target: fit by height
+        canvasHeight = Math.max(cropHeight, minHeight);
+        canvasWidth = Math.round(canvasHeight * targetAspectRatio);
       }
-    } else if (type === "demo") {
-      // High quality demo: maintain aspect ratio but ensure good resolution
+    } else if (imgType === "demo") {
+      // Prefer exporting at least 4x target size
       const targetAspectRatio = 94 / 50;
+      const minWidth = 376;
+      const minHeight = 200;
       const cropAspectRatio = cropWidth / cropHeight;
-
       if (cropAspectRatio > targetAspectRatio) {
-        canvasWidth = Math.min(cropWidth, 376); // 4x the target for high quality
-        canvasHeight = canvasWidth / targetAspectRatio;
+        canvasWidth = Math.max(cropWidth, minWidth);
+        canvasHeight = Math.round(canvasWidth / targetAspectRatio);
       } else {
-        canvasHeight = Math.min(cropHeight, 200); // 4x the target for high quality
-        canvasWidth = canvasHeight * targetAspectRatio;
+        canvasHeight = Math.max(cropHeight, minHeight);
+        canvasWidth = Math.round(canvasHeight * targetAspectRatio);
       }
-    } else if (type === "project") {
-      // High quality project: square aspect ratio
-      const maxDimension = Math.min(Math.max(cropWidth, cropHeight), 256); // 4x the target for high quality
-      canvasWidth = maxDimension;
-      canvasHeight = maxDimension;
+    } else if (imgType === "project") {
+      // Export larger square for better quality
+      const maxDimension = Math.max(cropWidth, cropHeight);
+      const target = Math.max(512, Math.min(maxDimension, 1024));
+      canvasWidth = target;
+      canvasHeight = target;
     } else {
-      // For avatar and other types, use the full crop dimensions for maximum quality
-      canvasWidth = cropWidth;
-      canvasHeight = cropHeight;
-    }
-
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    const ctx = canvas.getContext("2d");
-
-    if (ctx) {
-      // Enable high-quality image rendering
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-
-      // Calculate scaling to fit the crop into the canvas while maintaining aspect ratio
+      // avatar or others, keep crop size and aspect ratio
       const cropAspectRatio = cropWidth / cropHeight;
-      const canvasAspectRatio = canvasWidth / canvasHeight;
-
-      let drawWidth,
-        drawHeight,
-        offsetX = 0,
-        offsetY = 0;
-
-      if (cropAspectRatio > canvasAspectRatio) {
-        // Crop is wider than canvas, scale to match width
-        drawWidth = canvasWidth;
-        drawHeight = canvasWidth / cropAspectRatio;
-        offsetY = (canvasHeight - drawHeight) / 2;
+      if (ratio && Math.abs(cropAspectRatio - ratio) > 0.01) {
+        if (cropAspectRatio > ratio) {
+          canvasWidth = cropWidth;
+          canvasHeight = Math.round(cropWidth / ratio);
+        } else {
+          canvasHeight = cropHeight;
+          canvasWidth = Math.round(cropHeight * ratio);
+        }
       } else {
-        // Crop is taller than canvas, scale to match height
-        drawHeight = canvasHeight;
-        drawWidth = canvasHeight * cropAspectRatio;
-        offsetX = (canvasWidth - drawWidth) / 2;
+        canvasWidth = cropWidth;
+        canvasHeight = cropHeight;
       }
-
-      ctx.drawImage(
-        image,
-        crop.x * scaleX,
-        crop.y * scaleY,
-        cropWidth,
-        cropHeight,
-        offsetX,
-        offsetY,
-        drawWidth,
-        drawHeight,
-      );
     }
+
+    // Account for device pixel ratio for sharper output
+    const dpr =
+      typeof window !== "undefined" && window.devicePixelRatio ? window.devicePixelRatio : 1;
+    const scaledCanvasWidth = Math.max(1, Math.floor(canvasWidth * dpr));
+    const scaledCanvasHeight = Math.max(1, Math.floor(canvasHeight * dpr));
+
+    canvas.width = scaledCanvasWidth;
+    canvas.height = scaledCanvasHeight;
+
+    // Draw the cropped image onto the canvas, centering if aspect ratios differ
+    const cropAspectRatio = cropWidth / cropHeight;
+    const canvasAspectRatio = canvasWidth / canvasHeight;
+
+    let drawWidth: number;
+    let drawHeight: number;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (cropAspectRatio > canvasAspectRatio) {
+      drawWidth = canvasWidth;
+      drawHeight = Math.round(canvasWidth / cropAspectRatio);
+      offsetY = Math.round((canvasHeight - drawHeight) / 2);
+    } else {
+      drawHeight = canvasHeight;
+      drawWidth = Math.round(canvasHeight * cropAspectRatio);
+      offsetX = Math.round((canvasWidth - drawWidth) / 2);
+    }
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    // Scale drawing for DPR
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      cropWidth,
+      cropHeight,
+      offsetX,
+      offsetY,
+      drawWidth,
+      drawHeight,
+    );
 
     return canvas.toDataURL("image/webp", 1);
   }
@@ -437,7 +457,7 @@ const ImageUpload = ({
       // Avatar with image
       return (
         <div key={index} className="ring-border rounded-full ring size-10 shrink-0">
-          <Image
+          <NextImage
             src={imageData.url}
             alt={`avatar ${index + 1}`}
             width={40}
@@ -451,7 +471,7 @@ const ImageUpload = ({
     } else if (type === "project") {
       return (
         <div key={index} className=" rounded-lg size-10 shrink-0">
-          <Image
+          <NextImage
             src={imageData.url}
             alt={`project avatar ${index + 1}`}
             width={40}
@@ -466,7 +486,7 @@ const ImageUpload = ({
       // Background with image
       return (
         <div key={index} className="ring-border rounded-[4px] shrink-0">
-          <Image
+          <NextImage
             src={imageData.url}
             alt={`background ${index + 1}`}
             width={114}
@@ -480,7 +500,7 @@ const ImageUpload = ({
     } else if (type === "demo") {
       return (
         <div key={index} className="ring-border rounded-[4px] shrink-0">
-          <Image
+          <NextImage
             src={imageData.url}
             alt={`demo ${index + 1}`}
             width={94}
@@ -579,34 +599,46 @@ const ImageUpload = ({
       </div>
       {file && (
         <Dialog open={isOpen}>
-          <DialogContent className="w-full !max-w-[550px]" onClose={handleClose}>
+          <DialogContent className="gap-0  sm:max-w-140" onClose={handleClose}>
             <div className="space-y-4">
               <DialogHeader>
                 <DialogTitle>Crop {type} image</DialogTitle>
                 <DialogDescription>{cropInstructions}</DialogDescription>
               </DialogHeader>
-              <Separator />
-              <div className="relative flex justify-center items-center w-full max-h-[250px] overflow-hidden checkerboard-bg">
+
+              <div className="relative flex justify-center items-center w-full h-96 sm:h-120 overflow-hidden">
                 {file && imageSrc && (
-                  <ReactCrop
-                    crop={crop}
-                    onChange={(_, percentCrop) => setCrop(percentCrop)}
-                    onComplete={(c) => setCompletedCrop(c)}
-                    circularCrop={circularCrop}
-                    aspect={aspectRatio}>
-                    <img
-                      ref={imgRef}
-                      src={imageSrc}
-                      onLoad={onImageLoad}
-                      style={{
-                        maxHeight: "250px",
-                        width: "auto",
-                        margin: "0 auto",
-                      }}
-                      alt="Crop preview"
-                    />
-                  </ReactCrop>
+                  <Cropper
+                    className="h-96 w-full sm:h-120"
+                    image={imageSrc}
+                    aspectRatio={aspectRatio}
+                    zoom={zoom}
+                    zoomSensitivity={0.002}
+                    onCropChange={handleCropChange}
+                    onZoomChange={setZoom}>
+                    <CropperDescription />
+                    <CropperImage />
+                    <CropperCropArea className={cn(circularCrop && "rounded-full")} />
+                  </Cropper>
                 )}
+              </div>
+
+              <div className="px-1">
+                <div className="mx-auto flex w-full max-w-80 items-center gap-4">
+                  <ZoomOutIcon className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                  <Slider
+                    defaultValue={[1]}
+                    value={[zoom]}
+                    min={1}
+                    max={3}
+                    showTooltip
+                    step={0.05}
+                    tooltipContent={(value) => `${Math.round(value * 100)}%`}
+                    onValueChange={(value: number[]) => setZoom(value[0])}
+                    aria-label="Zoom slider"
+                  />
+                  <ZoomInIcon className="shrink-0 opacity-60" size={16} aria-hidden="true" />
+                </div>
               </div>
 
               <DialogFooter className="flex sm:flex-row flex-col space-y-2 sm:space-y-0">

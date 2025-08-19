@@ -10,10 +10,12 @@ import "swiper/css";
 import "swiper/css/navigation";
 import Image from "next/image";
 import {Button} from "@/components/shadcn/button";
+import {motion, AnimatePresence} from "framer-motion";
 
 const ProjectImageSlider = ({demo}: {demo: string[]}) => {
   const swiperRef = useRef<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Initialize Fancybox
   useEffect(() => {
@@ -39,7 +41,10 @@ const ProjectImageSlider = ({demo}: {demo: string[]}) => {
 
   return (
     <div className="w-full">
-      <div className="relative">
+      <motion.div
+        className="relative"
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}>
         <Swiper
           modules={[Navigation]}
           spaceBetween={0}
@@ -73,13 +78,22 @@ const ProjectImageSlider = ({demo}: {demo: string[]}) => {
           ))}
         </Swiper>
 
-        {/* Image Counter */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-          <div className="bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium">
-            {activeIndex + 1}/{demo.length}
-          </div>
-        </div>
-      </div>
+        {/* Image Counter (hover only) */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10"
+              initial={{opacity: 0, y: 8}}
+              animate={{opacity: 1, y: 0}}
+              exit={{opacity: 0, y: 8}}
+              transition={{duration: 0.2, ease: "easeOut"}}>
+              <div className="bg-black/60 text-white px-3 py-1 rounded-full text-xs font-medium">
+                {activeIndex + 1}/{demo.length}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Navigation Buttons */}
       <div className="flex items-center justify-between mt-4 gap-3">
