@@ -44,7 +44,9 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
   }, [maxSkills, expanded, skills]);
 
   return (
-    <motion.div className="flex flex-wrap items-center gap-[18px] w-full" layout>
+    <motion.div
+      className="flex flex-wrap items-center  w-full gap-x-3.5 gap-y-2.5 flex-row place-content-start"
+      layout>
       <AnimatePresence initial={false}>
         {skillsToShow?.map((skill) => {
           const skillImage = skill?.image_url;
@@ -58,7 +60,7 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
               exit={{opacity: 0, scale: 0.8}}
               transition={{duration: 0.2}}>
               {skillImage && (
-                <div className="flex justify-center items-center border border-border rounded-radius w-7 h-7">
+                <div className="flex justify-center items-center border border-border rounded-radius w-6 h-6">
                   <Image
                     src={skillImage}
                     alt={skill.name}
@@ -68,7 +70,7 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
                   />
                 </div>
               )}
-              <span className="font-medium text-[14px] text-foreground/80">{skill.name}</span>
+              <span className="font-medium text-[14px] text-secondary">{skill.name}</span>
             </motion.div>
           );
         })}

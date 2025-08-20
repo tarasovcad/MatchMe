@@ -9,7 +9,7 @@ const ProfileMiniCardSkeleton = () => {
           {/* Avatar skeleton */}
           <div className="bg-gray-200 rounded-full w-[65px] h-[65px] animate-pulse" />
 
-          <div className="flex flex-col gap-0.5 items-center">
+          <div className="flex flex-col gap-1 items-center">
             {/* Name skeleton */}
             <div className="bg-gray-200 rounded-[4px] w-[120px] h-[23px] animate-pulse" />
             {/* Username skeleton */}
@@ -18,11 +18,11 @@ const ProfileMiniCardSkeleton = () => {
         </div>
 
         {/* buttons skeleton */}
-        <div className="flex items-center gap-1.5 justify-center">
+        <div className="flex items-center gap-1.5 justify-center px-[22px]">
           {/* Follow button skeleton */}
-          <div className="bg-gray-200 rounded-[4px] w-[126px] h-[28px] animate-pulse" />
+          <div className="bg-gray-200 rounded-[4px] w-full h-[36px] animate-pulse" />
           {/* Message button skeleton */}
-          <div className="bg-gray-200 rounded-[4px] w-[126px] h-[28px] animate-pulse" />
+          <div className="bg-gray-200 rounded-[4px] w-full h-[36px] animate-pulse" />
         </div>
       </div>
     </div>

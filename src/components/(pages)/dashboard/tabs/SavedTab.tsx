@@ -78,11 +78,13 @@ const SavedTab = ({user}: {user: User}) => {
     profile: MiniCardMatchMeUser & {isFavorite?: boolean},
     isLast: boolean,
     ref: ((node: HTMLDivElement) => void) | null,
-  ) => (
-    <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
-      <ProfileMiniCard profile={profile} />
-    </motion.div>
-  );
+  ) => {
+    return (
+      <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
+        <ProfileMiniCard profile={profile} />
+      </motion.div>
+    );
+  };
 
   // Custom search input with loading indicators
   const customSearchInput = (

@@ -66,7 +66,7 @@ export interface CardMatchMeUser {
   public_current_role: string | null;
   seniority_level: string | null;
 }
-
+// TODO: remove this interface and use the one above
 export interface MiniCardMatchMeUser {
   id: string;
   name: string;
@@ -80,3 +80,21 @@ export interface MiniCardMatchMeUser {
       }[]
     | null;
 }
+
+export type ProjectTeamMemberMinimal = {
+  user_id: string;
+  name: string;
+  username: string;
+  profile_image:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
+  display_name?: string | null; // alias for display_role on team membership
+  isFollowing?: boolean; // current user -> member
+  isFollowingBack?: boolean; // member -> current user
+  is_owner?: boolean; // whether this member is the project owner
+};

@@ -60,5 +60,17 @@ export interface ProjectOpenPosition {
   // Additional fields for display
   posted_by_name?: string;
   posted_by_username?: string;
+  posted_by_profile_image?:
+    | {
+        fileName: string;
+        fileSize: number;
+        uploadedAt: string;
+        url: string;
+      }[]
+    | null;
   applicant_count?: number;
+  // Optional per-viewer indicator
+  has_pending_request?: boolean;
+  // Enriched skills with images (for minimal views)
+  required_skills_with_images?: Array<{name: string; image_url?: string}>;
 }

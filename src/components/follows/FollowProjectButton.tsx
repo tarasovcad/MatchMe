@@ -54,14 +54,11 @@ const FollowProjectButton = ({
   const followMutation = useMutation({
     mutationFn: () => toggleProjectFollow(projectId),
 
-    // 1. Flip local state and patch cached lists immediately
+    // 1. Don't update state immediately - wait for server response
     onMutate: () => {
       const newFollowing = !following;
 
-      // Update button state instantly
-      setFollowing(newFollowing);
-
-      // Patch cached project lists
+      // Patch cached project lists optimistically
       queryClient.setQueriesData(
         {
           predicate: (q: Query) =>
@@ -87,9 +84,13 @@ const FollowProjectButton = ({
       );
     },
 
-    // 2. Show toast & refetch minimal queries after server confirms
+    // 2. Update button state only after server confirms success
     onSuccess: (res) => {
-      if (res?.success) toast.success(res.message);
+      if (res?.success) {
+        toast.success(res.message);
+        // Update button state after successful response
+        setFollowing(!following);
+      }
 
       // Background refetch project lists for eventual consistency
       queryClient.invalidateQueries({
@@ -142,7 +143,18 @@ const FollowProjectButton = ({
 
   const buttonContent = (
     <span className="flex items-center gap-1">
-      {!hideIcons && <span className="max-[450px]:hidden">{config.icon}</span>}
+      {!hideIcons && (
+        <span className="max-[450px]:hidden">
+          {followMutation.isPending ? (
+            <LoadingButtonCircle
+              size={16}
+              className={currentState !== "following" ? "text-white/80" : ""}
+            />
+          ) : (
+            config.icon
+          )}
+        </span>
+      )}
       {config.text}
     </span>
   );
@@ -160,32 +172,17 @@ const FollowProjectButton = ({
       onClick={userSessionId && !config.needsConfirmation ? config.action : undefined}
       {...animationProps}>
       {simpleStyle ? (
-        followMutation.isPending ? (
-          <LoadingButtonCircle />
-        ) : (
-          buttonContent
-        )
+        buttonContent
       ) : (
         <AnimatePresence mode="wait">
-          {followMutation.isPending ? (
-            <motion.div
-              key="loading"
-              initial={{opacity: 0, scale: 0.5}}
-              animate={{opacity: 1, scale: 1}}
-              exit={{opacity: 0, scale: 0.5}}
-              transition={{duration: 0.2}}>
-              <LoadingButtonCircle />
-            </motion.div>
-          ) : (
-            <motion.div
-              key={currentState}
-              initial={{opacity: 0, x: -10}}
-              animate={{opacity: 1, x: 0}}
-              exit={{opacity: 0, x: 10}}
-              transition={{duration: 0.2}}>
-              {buttonContent}
-            </motion.div>
-          )}
+          <motion.div
+            key={currentState}
+            initial={{opacity: 0, x: -10}}
+            animate={{opacity: 1, x: 0}}
+            exit={{opacity: 0, x: 10}}
+            transition={{duration: 0.2}}>
+            {buttonContent}
+          </motion.div>
         </AnimatePresence>
       )}
     </MotionButton>

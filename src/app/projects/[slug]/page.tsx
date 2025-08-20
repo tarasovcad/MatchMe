@@ -28,6 +28,8 @@ import {notFound} from "next/navigation";
 import FollowProjectButton from "@/components/follows/FollowProjectButton";
 import ProjectFormField from "@/components/(pages)/projects/ProjectFormField";
 import ProjectImageSlider from "@/components/(pages)/projects/ProjectImageSlider";
+import ProjectTabs from "@/components/(pages)/projects/ProjectTabs";
+import ContentShareSection from "@/components/(pages)/other/ContentShareSection";
 
 const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) => {
   const {slug} = await params;
@@ -164,7 +166,7 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
         {/* Main content section */}
         <div>
           <div className="flex flex-col gap-8 max-[990px]:gap-10">
-            {project.demo.length > 0 && (
+            {project?.demo?.length > 0 && (
               <ProjectImageSlider demo={project.demo.map((item) => item.url)} />
             )}
             {projectFormFields.map((formField) => (
@@ -175,8 +177,8 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
                 skills={skills}
               />
             ))}
-            {/* <ProjectTabs />
-            <KeywordTagList tags={tags} type="projects" />
+            <ProjectTabs projectId={project.id} userSessionId={userSessionId} />
+            {/* <KeywordTagList tags={tags} type="projects" /> */}
             <ContentShareSection
               contentType="project"
               contentUrl={`https://matchme.me/projects/${project.slug}`}
@@ -184,7 +186,7 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
               contentTagline={project.tagline}
               excludeProjectId={project.id}
             />
-            <ProjectSimilarSection /> */}
+            {/* <ProjectSimilarSection /> */}
           </div>
         </div>
       </div>

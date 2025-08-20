@@ -1,78 +1,105 @@
 import {Button} from "@/components/shadcn/button";
 import {getNameInitials} from "@/functions/getNameInitials";
-import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
+import {ProjectTeamMemberMinimal} from "@/types/user/matchMeUser";
 import {Messages2} from "iconsax-react";
 import React from "react";
 import Image from "next/image";
 import Avatar from "boring-avatars";
 import Link from "next/link";
+import FollowUserButton from "@/components/follows/FollowUserButton";
+import {Pencil, UserPen} from "lucide-react";
 
 const ProfileMiniCard = ({
-  profile,
+  member,
   customFollowButton,
   customSecondaryButton,
+  userSessionId,
 }: {
-  profile: MiniCardMatchMeUser;
+  member: ProjectTeamMemberMinimal;
   customFollowButton?: React.ReactNode;
   customSecondaryButton?: React.ReactNode;
+  userSessionId?: string;
 }) => {
+  const imageLink =
+    member.profile_image && member.profile_image.length > 0
+      ? member.profile_image[0].url
+      : "/avatar/default-user-avatar.png";
   return (
     <div
-      key={profile.id}
+      key={member.user_id}
       className="w-full border border-border rounded-[12px] max-w-[362px] relative">
       <div className="p-[24px] relative z-5 flex flex-col gap-4">
         {/* name and role */}
         <div className="flex flex-col items-center gap-2.5 ">
-          {profile.profile_image ? (
-            <Image
-              src={profile.profile_image[0].url}
-              alt="team member"
-              width={65}
-              height={65}
-              quality={100}
-              unoptimized
-              className="rounded-full object-cover w-[65px] h-[65px]"
-            />
-          ) : (
-            <div className="border-3 border-background rounded-full max-w-[65px] max-h-[65px]">
-              <Avatar
-                name={getNameInitials(profile.name)}
-                width={65}
-                height={65}
-                variant="beam"
-                className="rounded-full"
-              />
-            </div>
-          )}
+          <Image
+            src={imageLink}
+            alt="team member"
+            width={65}
+            height={65}
+            quality={100}
+            unoptimized
+            className="rounded-full object-cover w-[65px] h-[65px]"
+          />
+
           <div className="flex flex-col gap-0.5 items-center">
-            <Link href={`/profiles/${profile.username}`}>
-              <h4 className="font-medium text-foreground/80 text-[18px] leading-tight hover:text-foreground/70 transition-colors duration-300">
-                {profile.name}
+            <Link href={`/profiles/${member.username}`}>
+              <h4 className="font-medium  text-foreground/85  hover:text-foreground  text-[18px] leading-tight transition-colors duration-300">
+                {member.name}
               </h4>
             </Link>
-            <p className="text-[15px] text-secondary flex items-center gap-1.5 whitespace-nowrap">
-              @{profile.username}
-            </p>
+            {member.display_name ? (
+              <p className="text-[15px] text-secondary flex items-center gap-1.5">
+                {member.display_name}
+              </p>
+            ) : (
+              <p className="text-[15px] text-secondary flex items-center gap-1.5 whitespace-nowrap">
+                @{member.username}
+              </p>
+            )}
           </div>
         </div>
         {/* buttons*/}
-        <div className="flex items-center gap-1.5 justify-center">
-          {customFollowButton ? (
-            customFollowButton
-          ) : (
-            <Button variant="secondary" size="xs" className="flex-1 max-w-[126px]">
-              Follow
-            </Button>
-          )}
-          {customSecondaryButton ? (
-            customSecondaryButton
-          ) : (
-            <Button variant="outline" size="xs" className="flex-1 max-w-[126px]">
-              <Messages2 size="16" color="currentColor" strokeWidth={3} />
-              Message
-            </Button>
-          )}
-        </div>
+        {userSessionId === member.user_id ? (
+          <div className="flex items-center gap-1.5 justify-center px-5.5 ">
+            <Link href={`/profiles/${member.username}`} className="w-full flex-">
+              <Button size={"xs"} className="w-full flex-1" variant="secondary">
+                View Profile
+              </Button>
+            </Link>
+            <Link href={`/settings?tab=account`} className="w-full flex-1 bh">
+              <Button size={"xs"} className="w-full flex-1">
+                <UserPen size="16" color="currentColor" />
+                Edit Profile
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 justify-center px-5.5">
+            {customFollowButton ? (
+              customFollowButton
+            ) : (
+              <FollowUserButton
+                followingId={member.user_id}
+                isFollowing={!!member.isFollowing}
+                isFollowingBack={!!member.isFollowingBack}
+                username={member.username}
+                userSessionId={userSessionId}
+                size="xs"
+                buttonClassName="flex-1 "
+                simpleStyle
+                followVariant="secondary"
+              />
+            )}
+            {customSecondaryButton ? (
+              customSecondaryButton
+            ) : (
+              <Button variant="outline" size="xs" className="flex-1 ">
+                <Messages2 size="16" color="currentColor" strokeWidth={3} />
+                Message
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

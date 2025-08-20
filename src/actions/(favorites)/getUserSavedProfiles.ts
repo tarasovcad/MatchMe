@@ -34,14 +34,16 @@ export async function getUserSavedProfiles(
 
     const favouriteIds = favouriteIdsData?.map((f) => f.favorite_user_id) || [];
     if (favouriteIds.length === 0) return [];
-
     // 2. Build query for profiles that are in favourites list
-    let query = supabase.from("profiles").select("*").in("id", favouriteIds);
+    let query = supabase
+      .from("profiles")
+      .select("id, name, username, profile_image")
+      .in("id", favouriteIds);
 
-    // Apply search / filter options (if any)
-    if (filters && filters.length > 0) {
-      query = applyFiltersToSupabaseQuery(query, filters);
-    }
+    // // Apply search / filter options (if any)
+    // if (filters && filters.length > 0) {
+    //   query = applyFiltersToSupabaseQuery(query, filters);
+    // }
 
     // 3. Pagination
     const from = (page - 1) * perPage;
@@ -49,7 +51,7 @@ export async function getUserSavedProfiles(
     query = query.range(from, to);
 
     const {data: profilesData, error: profilesError} = await query;
-
+    console.log(profilesData);
     if (profilesError) {
       console.error("Error fetching favourite profiles:", profilesError.message);
       return [];
