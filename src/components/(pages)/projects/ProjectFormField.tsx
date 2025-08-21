@@ -5,7 +5,6 @@ import ExpandedDescription from "../profiles/ExpandedDescription";
 import TagsList from "../profiles/TagsList";
 import ProjectDetails from "./ProjectDetails";
 import {Project} from "@/types/projects/projects";
-import ProjectOpenPositions from "./ProjectOpenPositions";
 import {projectDetailsSections} from "@/data/forms/projects/projectFormFields";
 
 const TextComponent = ({project, id}: {project: Project; id: string}) => {
@@ -18,7 +17,6 @@ const fieldComponents = {
   text: TextComponent,
   skills: TagsList,
   details: ProjectDetails,
-  open_positions: ProjectOpenPositions,
 };
 
 const isNonEmpty = (value: unknown): boolean => {

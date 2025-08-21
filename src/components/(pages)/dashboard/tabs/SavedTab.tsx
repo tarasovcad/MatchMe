@@ -81,7 +81,7 @@ const SavedTab = ({user}: {user: User}) => {
   ) => {
     return (
       <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
-        <ProfileMiniCard profile={profile} />
+        <ProfileMiniCard member={{...profile, user_id: profile.id}} />
       </motion.div>
     );
   };

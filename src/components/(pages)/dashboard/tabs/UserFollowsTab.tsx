@@ -77,7 +77,7 @@ const UserFollowsTab = ({user}: {user: User}) => {
     return (
       <motion.div ref={isLast ? ref : null} key={profile.id} variants={cardVariants}>
         <ProfileMiniCard
-          profile={profile}
+          member={{...profile, user_id: profile.id}}
           customFollowButton={
             <AuthGate userSessionId={user.id}>
               <FollowUserButton

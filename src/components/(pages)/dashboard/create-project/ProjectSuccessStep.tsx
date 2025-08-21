@@ -355,9 +355,10 @@ const ProjectSuccessStep = ({projectData}: ProjectSuccessStepProps) => {
 
               <ShareIcons
                 size={16}
-                projectUrl={projectUrl}
-                projectName={projectData.name}
-                projectTagline={projectData.tagline}
+                contentUrl={projectUrl}
+                contentName={projectData.name}
+                contentTagline={projectData.tagline}
+                contentType="project"
                 className="flex items-center gap-1 p-1"
               />
             </div>

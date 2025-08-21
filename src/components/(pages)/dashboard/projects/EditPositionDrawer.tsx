@@ -47,7 +47,6 @@ const PositionDrawer: React.FC<PositionDrawerProps> = ({
   position,
   mode = position ? "edit" : "create",
   projectId,
-  why,
 }) => {
   // Fetch active positions count
   const {

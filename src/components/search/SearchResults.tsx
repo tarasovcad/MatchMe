@@ -34,7 +34,7 @@ const SearchResults = ({section, items, classNames, onProfileSelect}: SearchResu
             <CommandItem
               key={user.id}
               className={classNames.itemBase}
-              value={`${user.name} ${user.username} ${user.tagline ?? ""}`}
+              value={`${user.name} ${user.username}`}
               onSelect={() => onProfileSelect?.(user)}>
               <div className="flex items-start gap-2 w-full">
                 <Avatar className="h-7.5 w-7.5">

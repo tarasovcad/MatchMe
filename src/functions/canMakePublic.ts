@@ -16,7 +16,6 @@ const PROFILE_REQUIRED_FIELDS: Array<keyof MatchMeUser> = [
 const PROJECT_REQUIRED_FIELDS: Array<keyof Project> = [
   "name",
   "slug",
-  "working_hours",
   // "tagline",
   // "description",
   // "project_image",

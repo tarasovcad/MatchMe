@@ -59,7 +59,7 @@ const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
       <div className="w-full min-[990px]:max-w-[652px]">
         <InputComponent
           id={fieldInputProps[0].id}
-          placeholder={fieldInputProps[0].placeholder}
+          placeholder={fieldInputProps[0].placeholder ?? ""}
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
           name={fieldInputProps[0].name}

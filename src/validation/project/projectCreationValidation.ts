@@ -252,6 +252,12 @@ export const projectCreationValidationSchema = z.object({
     .min(1, {message: "At least one skill is required"})
     .max(15, {message: "Skills must be at most 15 tags"}),
   // 4 step
+  collaboration_model: z
+    .string()
+    .min(1, {message: "Collaboration model is required"})
+    .refine((val) => allowedCollaborationModels.has(val), {
+      message: "Please select a valid collaboration style",
+    }),
   collaboration_style: z
     .string()
     .min(1, {message: "Collaboration style is required"})
