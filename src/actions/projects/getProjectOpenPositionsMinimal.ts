@@ -13,7 +13,7 @@ export const getProjectOpenPositionsMinimal = async (
     }
     const supabase = await createClient();
 
-    const [positionsRes, requestsRes] = await Promise.all([
+    const [positionsRes, requestsRes, favoritesRes] = await Promise.all([
       supabase
         .from("project_open_positions")
         .select("*")
@@ -26,7 +26,13 @@ export const getProjectOpenPositionsMinimal = async (
             .eq("project_id", projectId)
             .eq("user_id", userId)
             .eq("direction", "application")
-        : Promise.resolve({data: null, error: null} as const),
+        : Promise.resolve({data: null, error: null}),
+      userId
+        ? supabase
+            .from("favorites_open_positions")
+            .select("favorite_position_id")
+            .eq("user_id", userId)
+        : Promise.resolve({data: null, error: null}),
     ]);
 
     const positions = positionsRes.data;
@@ -85,16 +91,34 @@ export const getProjectOpenPositionsMinimal = async (
         ]),
       );
     }
-
     const pendingByPosition = new Set<string>();
     const requests = requestsRes.data as Array<{position_id: string | null; status: string}> | null;
+    let hasAnyPendingRequest = false;
+
     if (requests) {
       requests.forEach((r) => {
         if (r.position_id && r.status === "pending") {
           pendingByPosition.add(r.position_id);
+          hasAnyPendingRequest = true;
         }
       });
     }
+
+    const savedByPosition = new Set<string>();
+    const favorites = favoritesRes.data as Array<{favorite_position_id: string | null}> | null;
+    if (favorites) {
+      favorites.forEach((f) => {
+        if (f.favorite_position_id) {
+          savedByPosition.add(f.favorite_position_id);
+        }
+      });
+    }
+
+    // Get the title of the position that has a pending request (if any)
+    const pendingPositionTitle =
+      hasAnyPendingRequest && positions
+        ? positions.find((p) => pendingByPosition.has(p.id))?.title || null
+        : null;
 
     const annotated: ProjectOpenPosition[] = (positions ?? []).map((p) => {
       const poster = p.posted_by_user_id ? postersMap.get(p.posted_by_user_id) : undefined;
@@ -111,10 +135,12 @@ export const getProjectOpenPositionsMinimal = async (
         posted_by_username: poster?.username ?? null,
         posted_by_profile_image: poster?.profile_image ?? null,
         has_pending_request: pendingByPosition.has(p.id),
+        has_any_pending_request: hasAnyPendingRequest,
+        pending_position_title: pendingPositionTitle,
         required_skills_with_images,
+        is_saved: userId ? savedByPosition.has(p.id) : false,
       };
     });
-    console.log(annotated);
     return {error: null, data: annotated};
   } catch (err) {
     console.error("getProjectOpenPositionsMinimal unexpected error", err);

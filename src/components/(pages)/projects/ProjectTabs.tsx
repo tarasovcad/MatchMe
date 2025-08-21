@@ -4,6 +4,9 @@ import ProjectOpenPositions from "./ProjectOpenPositions";
 import ProjectTeamMembers from "./ProjectTeamMembers";
 import {useProjectTeamMembersMinimal} from "@/hooks/query/projects/use-project-team-members-minimal";
 import {useProjectOpenPositionsMinimal} from "@/hooks/query/projects/use-project-open-positions-minimal";
+import {useState, useMemo} from "react";
+import {ProjectOpenPosition} from "@/types/positionFieldsTypes";
+import {ProjectTeamMemberMinimal} from "@/types/user/matchMeUser";
 
 export default function ProjectTabs({
   projectId,
@@ -12,6 +15,8 @@ export default function ProjectTabs({
   projectId: string;
   userSessionId?: string;
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Prefetch minimal team members with follow relationships; not used in UI yet
   const {data: members, isLoading: isTeamMembersLoading} = useProjectTeamMembersMinimal(
     projectId,
@@ -22,6 +27,79 @@ export default function ProjectTabs({
     userSessionId,
   );
 
+  // Determine viewer's membership/ownership in this project
+  const {isOwner, isTeamMember} = useMemo(() => {
+    const viewer = members?.find((m) => m.user_id === userSessionId);
+    return {
+      isOwner: Boolean(viewer?.is_owner),
+      isTeamMember: Boolean(viewer),
+    };
+  }, [members, userSessionId]);
+
+  // Search filter functions
+  const filterOpenPositions = (
+    positions: ProjectOpenPosition[],
+    query: string,
+  ): ProjectOpenPosition[] => {
+    if (!query.trim()) return positions;
+
+    const lowercaseQuery = query.toLowerCase();
+    return positions.filter((position) => {
+      const titleMatch = position.title?.toLowerCase().includes(lowercaseQuery);
+      const descriptionMatch = position.description?.toLowerCase().includes(lowercaseQuery);
+      const requirementsMatch = position.requirements?.toLowerCase().includes(lowercaseQuery);
+      const postedByNameMatch = position.posted_by_name?.toLowerCase().includes(lowercaseQuery);
+      const postedByUsernameMatch = position.posted_by_username
+        ?.toLowerCase()
+        .includes(lowercaseQuery);
+
+      // Search in required skills
+      const skillsMatch = position.required_skills?.some((skill) =>
+        skill.toLowerCase().includes(lowercaseQuery),
+      );
+
+      // Search in required skills with images
+      const skillsWithImagesMatch = position.required_skills_with_images?.some((skill) =>
+        skill.name.toLowerCase().includes(lowercaseQuery),
+      );
+
+      return (
+        titleMatch ||
+        descriptionMatch ||
+        requirementsMatch ||
+        postedByNameMatch ||
+        postedByUsernameMatch ||
+        skillsMatch ||
+        skillsWithImagesMatch
+      );
+    });
+  };
+
+  const filterTeamMembers = (
+    members: ProjectTeamMemberMinimal[],
+    query: string,
+  ): ProjectTeamMemberMinimal[] => {
+    if (!query.trim()) return members;
+
+    const lowercaseQuery = query.toLowerCase();
+    return members.filter((member) => {
+      const nameMatch = member.name?.toLowerCase().includes(lowercaseQuery);
+      const usernameMatch = member.username?.toLowerCase().includes(lowercaseQuery);
+      const displayNameMatch = member.display_name?.toLowerCase().includes(lowercaseQuery);
+
+      return nameMatch || usernameMatch || displayNameMatch;
+    });
+  };
+
+  // Apply search filters
+  const filteredOpenPositions = useMemo(() => {
+    return filterOpenPositions(openPositions ?? [], searchQuery);
+  }, [openPositions, searchQuery]);
+
+  const filteredTeamMembers = useMemo(() => {
+    return filterTeamMembers(members ?? [], searchQuery);
+  }, [members, searchQuery]);
+
   function checkLength(length: number | undefined) {
     if (length === 0) {
       return undefined;
@@ -30,19 +108,14 @@ export default function ProjectTabs({
   }
 
   const tabs: Tab[] = [
-    {value: "open-positions", label: "Open Positions", count: checkLength(openPositions?.length)},
-    {value: "team-members", label: "Team Members", count: checkLength(members?.length)},
+    {
+      value: "open-positions",
+      label: "Open Positions",
+      count: checkLength(filteredOpenPositions?.length),
+    },
+    {value: "team-members", label: "Team Members", count: checkLength(filteredTeamMembers?.length)},
     {value: "posts", label: "Posts", disabled: true},
   ];
-
-  const handleSearch = (value: string) => {
-    console.log("Search:", value);
-    // TODO: Implement search functionality
-  };
-  const handleFilter = () => {
-    console.log("Filter clicked");
-    // TODO: Implement filter functionality
-  };
 
   const renderTabContent = (activeTab: string) => {
     switch (activeTab) {
@@ -52,15 +125,19 @@ export default function ProjectTabs({
             projectId={projectId}
             userSessionId={userSessionId}
             isLoading={isOpenPositionsLoading}
-            openPositions={openPositions ?? []}
+            openPositions={filteredOpenPositions}
+            searchQuery={searchQuery}
+            isOwner={isOwner}
+            isTeamMember={isTeamMember}
           />
         );
       case "team-members":
         return (
           <ProjectTeamMembers
-            members={members ?? []}
+            members={filteredTeamMembers}
             userSessionId={userSessionId}
             isLoading={isTeamMembersLoading}
+            searchQuery={searchQuery}
           />
         );
       case "posts":
@@ -71,7 +148,10 @@ export default function ProjectTabs({
             projectId={projectId}
             userSessionId={userSessionId}
             isLoading={isOpenPositionsLoading}
-            openPositions={openPositions ?? []}
+            openPositions={filteredOpenPositions}
+            searchQuery={searchQuery}
+            isOwner={isOwner}
+            isTeamMember={isTeamMember}
           />
         );
     }
@@ -81,12 +161,9 @@ export default function ProjectTabs({
     <FilterableTabs
       tabs={tabs}
       defaultTab="open-positions"
-      searchPlaceholder="Search"
-      onSearch={handleSearch}
-      onFilter={handleFilter}
-      topPadding={true}
-      disableSearch={(activeTab) => activeTab === "team-members"}
-      disableFilter={(activeTab) => activeTab === "team-members"}>
+      searchPlaceholder="Search positions, members, skills..."
+      onSearch={(value) => setSearchQuery(value)}
+      topPadding={true}>
       {renderTabContent}
     </FilterableTabs>
   );

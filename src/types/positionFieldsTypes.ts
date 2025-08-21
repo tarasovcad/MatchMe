@@ -71,6 +71,9 @@ export interface ProjectOpenPosition {
   applicant_count?: number;
   // Optional per-viewer indicator
   has_pending_request?: boolean;
+  has_any_pending_request?: boolean;
+  pending_position_title?: string | null;
   // Enriched skills with images (for minimal views)
   required_skills_with_images?: Array<{name: string; image_url?: string}>;
+  is_saved?: boolean;
 }

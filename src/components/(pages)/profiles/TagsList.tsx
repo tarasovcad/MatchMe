@@ -44,9 +44,7 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
   }, [maxSkills, expanded, skills]);
 
   return (
-    <motion.div
-      className="flex flex-wrap items-center  w-full gap-x-3.5 gap-y-2.5 flex-row place-content-start"
-      layout>
+    <div className="flex flex-wrap items-center  w-full gap-x-3.5 gap-y-2.5 flex-row place-content-start">
       <AnimatePresence initial={false}>
         {skillsToShow?.map((skill) => {
           const skillImage = skill?.image_url;
@@ -54,7 +52,6 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
             <motion.div
               key={skill.name}
               className="flex items-center gap-2"
-              layout
               initial={{opacity: 0, scale: 0.8}}
               animate={{opacity: 1, scale: 1}}
               exit={{opacity: 0, scale: 0.8}}
@@ -78,13 +75,12 @@ const TagsList = ({skills}: {skills: {name: string; image_url?: string}[]}) => {
 
       {skills && skills.length > maxSkills && (
         <motion.button
-          layout
           onClick={toggleExpanded}
           className="flex items-center gap-1 font-medium text-foreground hover:text-foreground/80 text-sm hover:underline transition-colors duration-300 ease-in-out cursor-pointer">
           {expanded ? "Read Less" : `+ ${skills.length - maxSkills} more`}
         </motion.button>
       )}
-    </motion.div>
+    </div>
   );
 };
 
