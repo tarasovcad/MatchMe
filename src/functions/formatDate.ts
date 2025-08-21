@@ -29,3 +29,15 @@ export function formatTimeRelative(date: string) {
   const years = Math.floor(days / 365);
   return `${years} year${years > 1 ? "s" : ""} ago`;
 }
+
+export function formatHumanDate(date: string) {
+  const dateObject = new Date(date);
+  const now = new Date();
+  const diffInDays = Math.floor((now.getTime() - dateObject.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffInDays < 7) {
+    return formatTimeRelative(date); // e.g., "3 days ago"
+  } else {
+    return formatDateAbsolute(date); // e.g., "July 19, 2025"
+  }
+}

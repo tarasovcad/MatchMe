@@ -15,6 +15,7 @@ import {
 import {Button} from "../../shadcn/button";
 import {cn} from "@/lib/utils";
 import {useCountries} from "@/hooks/useCountries";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 
 export default function SelectInputWithSearch({
   id,
@@ -23,13 +24,17 @@ export default function SelectInputWithSearch({
   className,
   options: defaultOptions,
   error,
+  disabled,
+  loading,
 }: {
   id: string;
   placeholder: string;
   name: string;
-  className: string;
+  className?: string;
   options: DropdownOption[];
   error?: {message?: string} | undefined;
+  disabled?: boolean;
+  loading?: boolean;
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
@@ -42,40 +47,54 @@ export default function SelectInputWithSearch({
   }, [selectedValue]);
 
   const isCountrySelect = name === "location";
-  const {countries} = useCountries(isCountrySelect && open);
+  const {countries} = useCountries(isCountrySelect ? true : open);
 
   const options = isCountrySelect ? countries : defaultOptions;
 
-  const handleSelectChange = (value: string) => {
-    if (value === internalValue) {
+  const handleSelectChange = (optionValue: string, optionTitle: string) => {
+    // Use value if it exists, otherwise use title (for backwards compatibility)
+    const valueToSet = optionValue || optionTitle;
+
+    if (valueToSet === selectedValue) {
       setValue(name, "", {shouldValidate: true});
       setInternalValue(null);
     } else {
-      setValue(name, value, {shouldValidate: true});
-      setInternalValue(value);
+      setValue(name, valueToSet, {shouldValidate: true});
+      setInternalValue(valueToSet);
     }
     setOpen(false);
   };
 
-  const selectedOption = options.find((option) => option.title === selectedValue);
+  // Find the selected option to display its title
+  const selectedOption = options.find((option) => {
+    const optionValue = (option as DropdownOption).value || option.title;
+    return optionValue === selectedValue;
+  });
+
+  const isDisabled = !!disabled || !!loading;
 
   return (
     <div>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(val) => !isDisabled && setOpen(val)}>
         <PopoverTrigger asChild>
           <Button
             id={id}
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={isDisabled}
             className={cn(
-              "bg-background hover:bg-background border-input w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
+              "bg-background hover:bg-background border-input max-h-[36px]  w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               className,
             )}>
-            <span className={cn("truncate", !selectedValue && "text-muted-foreground/70")}>
-              {selectedOption?.title || selectedValue || placeholder}
+            <span
+              className={cn(
+                "truncate flex items-center gap-2",
+                !selectedValue && "text-muted-foreground/70",
+              )}>
+              {selectedOption?.title || (loading ? <LoadingButtonCircle size={16} /> : placeholder)}
             </span>
             <ChevronDownIcon
               size={16}
@@ -88,21 +107,26 @@ export default function SelectInputWithSearch({
           className="p-0 border-input w-full min-w-[var(--radix-popper-anchor-width)]"
           align="start">
           <Command>
-            <CommandInput placeholder="Search options..." />
+            <CommandInput placeholder="Search options..." className="" />
             <CommandList>
               <CommandEmpty>No option found</CommandEmpty>
-              <CommandGroup>
-                {options.map((option, index) => (
-                  <CommandItem
-                    key={index}
-                    value={option.title}
-                    onSelect={(currentValue) => {
-                      handleSelectChange(currentValue);
-                    }}>
-                    {option.title}
-                    {selectedValue === option.title && <CheckIcon size={16} className="ml-auto" />}
-                  </CommandItem>
-                ))}
+              <CommandGroup className="p-1">
+                {options.map((option, index) => {
+                  const optionValue = (option as DropdownOption).value || option.title;
+                  const isSelected = selectedValue === optionValue;
+
+                  return (
+                    <CommandItem
+                      key={index}
+                      value={option.title}
+                      onSelect={() => {
+                        handleSelectChange(optionValue, option.title);
+                      }}>
+                      {option.title}
+                      {isSelected && <CheckIcon size={16} className="ml-auto" />}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
           </Command>

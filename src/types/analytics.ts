@@ -5,8 +5,8 @@ export type ChangeType = "positive" | "negative" | "neutral";
 export interface AnalyticsCardItem {
   title: string;
   number: number;
-  type: ChangeType;
-  analyticsNumber: number;
+  type?: ChangeType;
+  analyticsNumber?: number;
   shouldShowBadge?: boolean;
   tooltipData?: {
     metricName: string;

@@ -7,6 +7,9 @@ import {
   getComparisonDateRange,
   calculateAnalyticsBadgeData,
 } from "@/functions/analytics/analyticsDataTransformation";
+import {Ratelimit} from "@upstash/ratelimit";
+import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,6 +20,45 @@ export async function GET(req: NextRequest) {
 
     if (!username) {
       return NextResponse.json({error: "Username is required"}, {status: 400});
+    }
+
+    const ip = await getClientIp();
+
+    // Rate limiting for analytics endpoints
+    const analyticsIpLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(100, "5 m"), // 100 requests per 5 minutes per IP
+      analytics: true,
+      prefix: "ratelimit:ip:analytics",
+      enableProtection: true,
+    });
+
+    // Per-username rate limiting to prevent targeting specific users
+    const analyticsUsernameLimiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, "5 m"), // 30 requests per 5 minutes per username
+      analytics: true,
+      prefix: "ratelimit:username:analytics",
+      enableProtection: true,
+    });
+
+    const [ipLimit, usernameLimit] = await Promise.all([
+      analyticsIpLimiter.limit(ip),
+      analyticsUsernameLimiter.limit(username),
+    ]);
+
+    if (!ipLimit.success) {
+      return NextResponse.json(
+        {error: "Too many analytics requests. Please slow down and try again later."},
+        {status: 429},
+      );
+    }
+
+    if (!usernameLimit.success) {
+      return NextResponse.json(
+        {error: "Too many requests for this profile's analytics. Please try again later."},
+        {status: 429},
+      );
     }
 
     const supabase = await createClient();

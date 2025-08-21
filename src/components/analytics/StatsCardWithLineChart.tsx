@@ -142,8 +142,8 @@ const StatsCardWithLineChart = ({
               </h4>
               {selectedData.shouldShowBadge && (
                 <AnalyticsBadge
-                  number={selectedData.analyticsNumber}
-                  type={selectedData.type}
+                  number={selectedData.analyticsNumber ?? 0}
+                  type={selectedData.type ?? "neutral"}
                   tooltipData={selectedData.tooltipData}
                 />
               )}
@@ -176,8 +176,8 @@ const StatsCardWithLineChart = ({
                   </h4>
                   {item.shouldShowBadge && (
                     <AnalyticsBadge
-                      number={item.analyticsNumber}
-                      type={item.type}
+                      number={item.analyticsNumber ?? 0}
+                      type={item.type ?? "neutral"}
                       tooltipData={item.tooltipData}
                     />
                   )}

@@ -1,22 +1,15 @@
 "use client";
-import {Ban, Bookmark, Ellipsis, Flag, Share2} from "lucide-react";
+import {Ban, Bookmark, Ellipsis, Flag, UserPlus} from "lucide-react";
 import {Button} from "@/components/shadcn/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/shadcn/dropdown-menu";
 import {motion, Variants} from "framer-motion";
-import {itemDropdownVariants, menuVariants} from "@/utils/other/variants";
-import {useState, useTransition} from "react";
+import {useState, useTransition, useEffect} from "react";
 import {toggleUserFavorite} from "@/actions/(favorites)/toggleUserFavorite";
 import {toast} from "sonner";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import {cn} from "@/lib/utils";
 import {postProfileInteraction} from "@/actions/profiles/profileInteractions";
+import OptionsPopover, {OptionsPopoverItem} from "@/components/ui/options/OptionsPopover";
+import InviteUserToProjectDialog from "./InviteUserToProjectDialog";
 
 export default function ProfileOtherButton({
   userId,
@@ -31,16 +24,28 @@ export default function ProfileOtherButton({
 }) {
   const [isPending, startTransition] = useTransition();
   const [isFavorited, setIsFavorited] = useState(isFavorite);
-  const [hasInteracted, setHasInteracted] = useState(false);
+  const [animationState, setAnimationState] = useState<"idle" | "favorite" | "unfavorite">("idle");
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  useEffect(() => {
+    if (animationState !== "idle") {
+      const timer = setTimeout(() => {
+        setAnimationState("idle");
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [animationState]);
 
   const handleFavoriteToggle = async () => {
     if (!userId) return;
 
-    setHasInteracted(true);
     startTransition(async () => {
       const result = await toggleUserFavorite(userId, profileId);
       if (result?.success) {
-        setIsFavorited(!isFavorited);
+        const newFavoriteState = !isFavorited;
+        setIsFavorited(newFavoriteState);
+        // Trigger animation based on the new state
+        setAnimationState(newFavoriteState ? "favorite" : "unfavorite");
         toast.success(result.message);
       } else {
         toast.error("An error occurred. Please try again.");
@@ -49,7 +54,7 @@ export default function ProfileOtherButton({
   };
 
   const iconVariants: Variants = {
-    initial: {scale: 1},
+    idle: {scale: 1},
     favorite: {
       scale: [1, 1.3, 1],
       transition: {
@@ -69,99 +74,89 @@ export default function ProfileOtherButton({
     tap: {scale: 0.9},
   };
 
+  // Custom favorite icon component with loading state and animations
+  const FavoriteIcon = () => {
+    if (isPending) {
+      return (
+        <div className="w-4 h-4 opacity-60">
+          <LoadingButtonCircle size={16} />
+        </div>
+      );
+    }
+
+    return (
+      <motion.div
+        className="relative w-4 h-4"
+        animate={animationState}
+        whileTap="tap"
+        variants={iconVariants}>
+        <Bookmark
+          size={16}
+          aria-hidden="true"
+          fill={isFavorited ? "#d45858" : "transparent"}
+          color={isFavorited ? "#d45858" : "currentColor"}
+        />
+      </motion.div>
+    );
+  };
+
+  const options: OptionsPopoverItem[] = [
+    {
+      icon: UserPlus,
+      label: "Invite to project",
+      onClick: () => {
+        setInviteOpen(true);
+      },
+      separator: true,
+    },
+    {
+      icon: FavoriteIcon,
+      label: isFavorited ? "Remove from favorites" : "Add to favorites",
+      onClick: handleFavoriteToggle,
+      disabled: isPending,
+      keepOpenOnClick: true,
+    },
+
+    {
+      icon: Flag,
+      label: "Report",
+      onClick: () => {
+        if (userId) postProfileInteraction(profileId, userId, "report");
+      },
+      disabled: true,
+      description: "This feature is not available yet",
+    },
+    {
+      icon: Ban,
+      label: "Block",
+      onClick: () => {
+        if (userId) postProfileInteraction(profileId, userId, "block");
+      },
+      disabled: true,
+      description: "This feature is not available yet",
+    },
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size={"icon"} className={cn("h-[38px]", buttonClassName)}>
-          <Ellipsis size={18} strokeWidth={2} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent asChild side="bottom" align="center" sideOffset={4}>
-        <motion.div
-          initial="closed"
-          animate="open"
-          variants={menuVariants}
-          className="space-y-2 rounded-lg min-w-[160px]">
-          <DropdownMenuGroup>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className="relative cursor-pointer"
-                onClick={handleFavoriteToggle}
-                disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <div className="opacity-60 w-4 h-4">
-                      <LoadingButtonCircle size={16} />
-                    </div>
-                    {isFavorited ? "Remove from favorites" : "Add to favorites"}
-                  </>
-                ) : (
-                  <>
-                    <motion.div
-                      className="relative"
-                      initial="initial"
-                      animate={
-                        hasInteracted ? (isFavorited ? "favorite" : "unfavorite") : "initial"
-                      }
-                      whileTap="tap"
-                      variants={iconVariants}>
-                      <Bookmark
-                        size={16}
-                        className="opacity-60"
-                        aria-hidden="true"
-                        fill={isFavorited ? "#d45858" : "transparent"}
-                        color={isFavorited ? "#d45858" : "currentColor"}
-                      />
-                    </motion.div>
-                    {isFavorited ? "Remove from favorites" : "Add to favorites"}
-                  </>
-                )}
-              </DropdownMenuItem>
-            </motion.div>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  if (userId) {
-                    postProfileInteraction(profileId, userId, "share");
-                  }
-                }}>
-                <Share2 size={16} className="opacity-60" aria-hidden="true" />
-                Share Profile
-              </DropdownMenuItem>
-            </motion.div>
-          </DropdownMenuGroup>
+    <div className={cn("flex items-center gap-3", buttonClassName)}>
+      <OptionsPopover
+        items={options}
+        withTitles={false}
+        withDescriptions
+        trigger={
+          <Button size="icon" variant="outline" className="w-9 h-9">
+            <Ellipsis className="w-4 h-4" />
+          </Button>
+        }
+      />
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  if (userId) {
-                    postProfileInteraction(profileId, userId, "report");
-                  }
-                }}>
-                <Flag size={16} className="opacity-60" aria-hidden="true" />
-                Report User
-              </DropdownMenuItem>
-            </motion.div>
-            <motion.div variants={itemDropdownVariants}>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  if (userId) {
-                    postProfileInteraction(profileId, userId, "block");
-                  }
-                }}>
-                <Ban size={16} className="opacity-60" aria-hidden="true" />
-                Block User
-              </DropdownMenuItem>
-            </motion.div>
-          </DropdownMenuGroup>
-        </motion.div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {userId && (
+        <InviteUserToProjectDialog
+          targetUserId={profileId}
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+        />
+      )}
+    </div>
   );
 }

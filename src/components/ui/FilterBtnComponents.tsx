@@ -12,6 +12,7 @@ import {Input} from "../shadcn/input";
 import {useCountries} from "@/hooks/useCountries";
 import {Button} from "../shadcn/button";
 import {cn} from "@/lib/utils";
+import {FilterOption} from "@/store/filterStore";
 
 export const MultiSelect = ({
   title,
@@ -23,7 +24,7 @@ export const MultiSelect = ({
   onClosePopover,
 }: {
   title?: string;
-  options?: Array<{title: string}>;
+  options?: Array<FilterOption>;
   searchQuery: string;
   initialSelectedOptions?: string[];
   onApply: (selectedOptions: string[]) => void;
@@ -50,8 +51,10 @@ export const MultiSelect = ({
     if (!filteredOptions) return [];
 
     return [...filteredOptions].sort((a, b) => {
-      const aSelected = initialSelectedOptions.includes(a.title);
-      const bSelected = initialSelectedOptions.includes(b.title);
+      const aKey = a.value ?? a.title;
+      const bKey = b.value ?? b.title;
+      const aSelected = initialSelectedOptions.includes(aKey);
+      const bSelected = initialSelectedOptions.includes(bKey);
 
       if (aSelected && !bSelected) return -1;
       if (!aSelected && bSelected) return 1;
@@ -71,13 +74,14 @@ export const MultiSelect = ({
   }, [selectedOptions, initialSelectedOptions]);
 
   // Toggle selection when an option is clicked
-  const handleOptionToggle = (optionTitle: string) => {
+  const handleOptionToggle = (optionTitle: string, optionValue?: string) => {
+    const key = optionValue ?? optionTitle;
     setSelectedOptions((prev) => {
       // Remove if already selected, add if not
-      if (prev.includes(optionTitle)) {
-        return prev.filter((title) => title !== optionTitle);
+      if (prev.includes(key)) {
+        return prev.filter((title) => title !== key);
       } else {
-        return [...prev, optionTitle];
+        return [...prev, key];
       }
     });
   };
@@ -97,25 +101,25 @@ export const MultiSelect = ({
   };
 
   return (
-    <CommandGroup className="p-1">
+    <CommandGroup className="py-1 px-1">
       {sortedOptions && sortedOptions.length > 0 ? (
         <div className="relative flex flex-col max-h-[300px]">
           <div className="overflow-y-auto">
             {sortedOptions.map((opt) => (
               <CommandItem
-                key={opt.title}
-                className="group flex items-center gap-2 [&_svg]:size-auto cursor-pointer"
-                onSelect={() => handleOptionToggle(opt.title)}>
+                key={(opt.value ?? opt.title) + opt.title}
+                className="w-full flex items-center gap-2 px-2 py-[5px] rounded-[5px] text-sm transition-colors duration-300 ease-in-out cursor-pointer hover:bg-muted"
+                onSelect={() => handleOptionToggle(opt.title, opt.value)}>
                 <Checkbox
-                  checked={selectedOptions.includes(opt.title)}
+                  checked={selectedOptions.includes(opt.value ?? opt.title)}
                   className={cn(
-                    "group-hover:opacity-100 shadow-xs rounded-[4px] transition-opacity duration-100 ease-in-out cursor-pointer",
-                    selectedOptions.includes(opt.title) ? "opacity-100" : "opacity-0",
+                    "shadow-xs rounded-[4px] transition-opacity duration-100 ease-in-out cursor-pointer",
+                    selectedOptions.includes(opt.value ?? opt.title) ? "opacity-100" : "opacity-0",
                   )}
-                  onClick={() => handleOptionToggle(opt.title)}
-                  onCheckedChange={() => handleOptionToggle(opt.title)}
+                  onClick={() => handleOptionToggle(opt.title, opt.value)}
+                  onCheckedChange={() => handleOptionToggle(opt.title, opt.value)}
                 />
-                <span className="flex-1">{opt.title}</span>
+                <span className="flex-1 whitespace-nowrap text-foreground/90">{opt.title}</span>
               </CommandItem>
             ))}
             {sortedOptions.length > 20 && title === "Tags" && (

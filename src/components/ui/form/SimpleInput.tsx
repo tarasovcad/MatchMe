@@ -25,6 +25,9 @@ const SimpleInput = ({
   showClearButton,
   onClear,
   value,
+  showKbd,
+  kbdText = "⌘K",
+  kbdPlacement = "right",
   ...props
 }: SimpleInputProps) => {
   return (
@@ -43,6 +46,8 @@ const SimpleInput = ({
               search && "peer ps-9",
               loading && loadingPlacement === "right" && "peer pe-9",
               loading && loadingPlacement === "left" && "peer ps-9",
+              showKbd && kbdPlacement === "right" && "peer pe-12",
+              showKbd && kbdPlacement === "left" && "peer ps-12",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
               isUsernameAvailable === false &&
@@ -68,7 +73,7 @@ const SimpleInput = ({
               <Mail size={16} strokeWidth={2} aria-hidden="true" />
             </div>
           )}
-          {search && (
+          {search && !loading && (
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <Search size={16} strokeWidth={2} aria-hidden="true" />
             </div>
@@ -81,6 +86,20 @@ const SimpleInput = ({
           {loading && loadingPlacement === "left" && (
             <div className="absolute inset-y-0 flex justify-center items-center peer-disabled:opacity-50 ps-3 text-muted-foreground/80 pointer-events-none start-0">
               <LoadingButtonCirlce size={16} />
+            </div>
+          )}
+          {showKbd && kbdPlacement === "right" && (
+            <div className="absolute inset-y-0 flex justify-center items-center pe-2 text-muted-foreground pointer-events-none end-0">
+              <kbd className="inline-flex items-center px-1 border border-border rounded h-5 max-h-full font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
+                {kbdText}
+              </kbd>
+            </div>
+          )}
+          {showKbd && kbdPlacement === "left" && (
+            <div className="absolute inset-y-0 flex justify-center items-center ps-2 text-muted-foreground pointer-events-none start-0">
+              <kbd className="inline-flex items-center px-1 border border-border rounded h-5 max-h-full font-[inherit] font-medium text-[0.625rem] text-muted-foreground/70">
+                {kbdText}
+              </kbd>
             </div>
           )}
 

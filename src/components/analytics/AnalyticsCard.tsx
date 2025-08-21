@@ -7,8 +7,8 @@ import {motion} from "framer-motion";
 interface AnalyticsCardProps {
   title: string;
   number: number;
-  type: "positive" | "negative" | "neutral";
-  analyticsNumber: number;
+  type?: "positive" | "negative" | "neutral";
+  analyticsNumber?: number;
   tooltipData?: {
     metricName: string;
     currentValue: number;
@@ -48,14 +48,14 @@ const AnalyticsCard = ({
       onClick={onClick}>
       <div className="flex justify-between items-center gap-1.5 h-[20px]">
         <h5 className="font-medium text-foreground/70 text-sm line-clamp-1 leading-4.5">{title}</h5>
-        {shouldShowBadge && (
+        {shouldShowBadge && analyticsNumber && type && (
           <div className={cn("flex-shrink-0", badgeDisplayment === "bottom" && "hidden")}>
             <AnalyticsBadge number={analyticsNumber} type={type} tooltipData={tooltipData} />
           </div>
         )}
       </div>
       <h4 className="font-medium text-[28px] text-foreground leading-9">{formatNumber(number)}</h4>
-      {shouldShowBadge && (
+      {shouldShowBadge && analyticsNumber && type && (
         <div className={cn("flex items-center gap-[3px]", badgeDisplayment === "top" && "hidden")}>
           <AnalyticsBadge number={analyticsNumber} type={type} tooltipData={tooltipData} />
           <p className="text-secondary text-xs">vs last month</p>

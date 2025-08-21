@@ -3,17 +3,26 @@ import AlertComponent from "@/components/ui/dialog/AlertComponent";
 import {CircleX, Save} from "lucide-react";
 import React from "react";
 
+interface FormMainButtonsProps {
+  isLoading: boolean;
+  handleSave: () => void;
+  handleCancel: () => void;
+  isSaveDisabled?: boolean;
+  isClearDisabled?: boolean;
+  isDisabled?: boolean;
+}
+
 const FormMainButtons = ({
   isLoading,
   handleSave,
   handleCancel,
+  isSaveDisabled,
+  isClearDisabled,
   isDisabled = false,
-}: {
-  isLoading: boolean;
-  handleSave: () => void;
-  handleCancel: () => void;
-  isDisabled?: boolean;
-}) => {
+}: FormMainButtonsProps) => {
+  const saveDisabled = isSaveDisabled !== undefined ? isSaveDisabled : isDisabled;
+  const clearDisabled = isClearDisabled !== undefined ? isClearDisabled : isDisabled;
+
   return (
     <>
       <AlertComponent
@@ -25,7 +34,7 @@ const FormMainButtons = ({
         <Button
           variant={"outline"}
           type="button"
-          disabled={isLoading || isDisabled}
+          disabled={isLoading || clearDisabled}
           className="dark:bg-sidebar-background px-[20px]">
           <CircleX size={16} />
           Cancel
@@ -35,7 +44,7 @@ const FormMainButtons = ({
       <Button
         variant={"secondary"}
         className="px-[25px] w-full max-w-[165.5px] transition-colors duration-300 ease-in-out"
-        disabled={isLoading || isDisabled}
+        disabled={isLoading || saveDisabled}
         isLoading={isLoading}
         onClick={handleSave}>
         <Save size={16} />

@@ -17,7 +17,6 @@ const AnalyticsCardList = ({
       className={cn(
         "flex items-center min-[1174px]:gap-3 max-[1174px]:overflow-x-auto scrollbar-hide ",
         displayInGraph && "min-[1174px]:gap-0",
-
         className,
       )}>
       {data.map((item, index) => (

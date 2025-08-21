@@ -19,12 +19,22 @@ export const profileFormFields = [
   },
   {
     fieldTitle: "Current Goal",
-    fieldDescription:
-      "Current professional aspirations or next steps in your career.",
+    fieldDescription: "Current professional aspirations or next steps in your career.",
     fieldType: "description",
     fieldInputProps: [
       {
         id: "goal",
+        maxNmberOfLines: 9,
+      },
+    ],
+  },
+  {
+    fieldTitle: "My Dream",
+    fieldDescription: "What drives me to get up every day",
+    fieldType: "description",
+    fieldInputProps: [
+      {
+        id: "dream",
         maxNmberOfLines: 9,
       },
     ],

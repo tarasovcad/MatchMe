@@ -5,15 +5,18 @@ import {ArrowUpRight} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, {JSX} from "react";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 const PROFILE_DETAILS = [
   {title: "Current role", value: "public_current_role"},
   {title: "Looking For", value: "looking_for"},
+  {title: "Years of Experience", value: "years_of_experience"},
+  {title: "Seniority Level", value: "seniority_level"},
   {title: "Languages Spoken", value: "languages"},
   {title: "Location", value: "location"},
   {title: "Pronouns", value: "pronouns"},
   {title: "Personal Website", value: "personal_website"},
-  {title: "Availability", value: "work_availability"},
+  {title: "Time Commitment", value: "time_commitment"},
   {title: "Age Range", value: "age"},
 ];
 
@@ -31,7 +34,9 @@ const getAgeRangeLabel = (age: number) => {
   return range?.label || "";
 };
 
-const LocationWithFlag = ({location}: {location: string}) => {
+export const LocationWithFlag = ({location}: {location?: string | null}) => {
+  if (!location) return <p className="text-[14px] text-foreground">N/A</p>;
+
   const {flag, isLoading} = useCountryFlag(location);
 
   return (
@@ -78,8 +83,21 @@ const displayValue = (
           />
         </Link>
       );
-    case "work_availability":
-      return <p className="text-[14px] text-foreground">{`${value} hours / week`}</p>;
+    case "time_commitment": {
+      const found = timeCommitment.find((opt) => opt.value === String(value));
+      return <p className="text-[14px] text-foreground">{found?.title ?? String(value)}</p>;
+    }
+    case "years_of_experience": {
+      const years = Number(value);
+      const yearText = years === 1 ? "year" : "years";
+      return (
+        <p className="text-[14px] text-foreground">
+          {years} {yearText}
+        </p>
+      );
+    }
+    case "seniority_level":
+      return <p className="text-[14px] text-foreground">{String(value)}</p>;
     case "age":
       return <p className="text-[14px] text-foreground">{getAgeRangeLabel(Number(value))}</p>;
     case "location":
@@ -94,6 +112,13 @@ const ProfileDetails = ({user}: {user: MatchMeUser}) => {
     <div className="gap-4 grid grid-cols-3 max-[1100px]:grid-cols-2 max-[450px]:grid-cols-1">
       {PROFILE_DETAILS.map(({title, value}) => {
         const rawValue = user[value as keyof MatchMeUser];
+        const hasValue = (() => {
+          if (rawValue === null || rawValue === undefined) return false;
+          if (Array.isArray(rawValue)) return rawValue.length > 0;
+          if (typeof rawValue === "string") return rawValue.trim() !== "";
+          return true;
+        })();
+        if (!hasValue) return null;
         return (
           <div key={value} className="">
             <p className="text-muted-foreground text-xs break-words">{title}</p>

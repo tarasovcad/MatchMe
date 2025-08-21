@@ -17,7 +17,6 @@ const ProfileSocialLinks = ({user}: {user: MatchMeUser}) => {
     {platform: user.social_links_2_platform, link: user.social_links_2},
     {platform: user.social_links_3_platform, link: user.social_links_3},
   ];
-
   const userSocialLinks = socialData
     .map(({platform, link}) => {
       const socialEntry = socialLinks.find(({title}) => title === platform) ?? {
@@ -42,20 +41,26 @@ const ProfileSocialLinks = ({user}: {user: MatchMeUser}) => {
           const socialLink = `https://${title}${link}`;
           return (
             <Tooltip key={title}>
-              <TooltipTrigger asChild>
-                <Link href={socialLink} target="_blank" rel="noopener noreferrer">
-                  <Button size={"icon"} className="p-[5px]" asChild>
+              <TooltipTrigger>
+                <Link
+                  href={socialLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-red-500">
+                  <Button size={"icon"} className="p-[5.5px] w-9 h-9" asChild>
                     <Image
                       src={image ?? ""}
                       alt={title}
-                      width={24}
-                      height={24}
-                      className="shrink-0"
+                      width={16}
+                      height={16}
+                      quality={100}
+                      unoptimized={true}
+                      className="shrink-0 "
                     />
                   </Button>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent className="px-2 py-1 text-xs" sideOffset={5}>
+              <TooltipContent className="px-2 py-1 text-sm" sideOffset={5}>
                 {name}
               </TooltipContent>
             </Tooltip>

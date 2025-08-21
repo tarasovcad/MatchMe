@@ -2,7 +2,7 @@ import {Option} from "@/components/shadcn/multiselect";
 
 export interface FormFieldProps {
   fieldTitle: string;
-  fieldDescription: string;
+  fieldDescription?: string;
   fieldType:
     | "text"
     | "slug"
@@ -18,15 +18,17 @@ export interface FormFieldProps {
     | "social"
     | "description"
     | "accountVerification"
-    | "makeProfilePublic"
+    | "makePublic"
     | "deleteAccount"
-    | "connectedAccounts";
+    | "connectedAccounts"
+    | "demo";
   fieldRequired?: boolean;
+  fieldRequiredCreateProject?: boolean;
   fieldInputProps: [
     {
       id: string;
-      placeholder: string;
-      type: string;
+      placeholder?: string;
+      type?: string;
       name: string;
       readOnly?: boolean;
       className?: string;
@@ -40,12 +42,14 @@ export interface FormFieldProps {
 
 export interface FormProps {
   formTitle: string;
+  formDescription?: string;
   formData: FormFieldProps[];
 }
 
 export interface DropdownOption {
   title: string;
   description?: string;
+  value?: string;
 }
 
 export interface SocialOption {

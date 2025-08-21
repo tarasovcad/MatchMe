@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   Bell,
+  Bug,
   FolderOpen,
   Globe,
   HelpCircle,
@@ -21,7 +22,7 @@ import {
   SidebarTrigger,
 } from "@/components/shadcn/sidebar";
 import {LogoImage, LogoText} from "../Logo";
-import OpenSearchModal from "../../search/OpenSearchModal";
+import {OpenSearchModal} from "../../search/OpenSearchModal";
 import type {User} from "@supabase/supabase-js";
 import Link from "next/link";
 import {SidebarUserDropdown} from "./SidebarUserDropdown";
@@ -49,12 +50,12 @@ export function AppSidebar({
         icon: PanelsTopLeft,
         isActive: isActive("/dashboard"),
       },
-      {
-        title: "Feed",
-        url: "/feed",
-        icon: Globe,
-        isActive: isActive("/feed"),
-      },
+      // {
+      //   title: "Feed",
+      //   url: "/feed",
+      //   icon: Globe,
+      //   isActive: isActive("/feed"),
+      // },
       {
         title: "Projects",
         url: "/projects",
@@ -92,6 +93,12 @@ export function AppSidebar({
         url: "/support",
         icon: HelpCircle,
         isActive: isActive("/support"),
+      },
+      {
+        title: "Send Feedback",
+        url: "https://matchme.userjot.com/",
+        icon: Bug,
+        external: true,
       },
     ],
   };

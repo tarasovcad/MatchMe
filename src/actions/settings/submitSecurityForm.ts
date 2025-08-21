@@ -2,10 +2,9 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {SettingsSecurityFormData} from "@/validation/settings/settingsSecurityValidation";
+import {invalidateUserCaches} from "../profiles/singleUserProfile";
 
-export const submitSecurityForm = async (
-  formData: Partial<SettingsSecurityFormData>,
-) => {
+export const submitSecurityForm = async (formData: Partial<SettingsSecurityFormData>) => {
   try {
     const supabase = await createClient();
 
@@ -19,7 +18,7 @@ export const submitSecurityForm = async (
 
     const {data: profile, error: fetchError} = await supabase
       .from("profiles")
-      .select("username_changed_at")
+      .select("username_changed_at, username")
       .eq("id", user.id)
       .single();
 
@@ -67,6 +66,26 @@ export const submitSecurityForm = async (
     if (sessionError) {
       console.error("Error updating user session:", error);
       return {error: error, message: "Error updating user session"};
+    }
+
+    // Invalidate user caches after successful update
+    const oldUsername = profile?.username;
+    const newUsername = formDataWithTimestamp.username;
+
+    try {
+      // If username changed, invalidate both old and new username caches
+      if (oldUsername && newUsername && oldUsername !== newUsername) {
+        await Promise.all([
+          invalidateUserCaches(user.id, oldUsername),
+          invalidateUserCaches(user.id, newUsername),
+        ]);
+      } else if (oldUsername) {
+        // If no username change but still need to invalidate (other data might have changed)
+        await invalidateUserCaches(user.id, oldUsername);
+      }
+    } catch (cacheError) {
+      console.error("Error invalidating user caches:", cacheError);
+      // Don't fail the request if cache invalidation fails
     }
   } catch (error) {
     console.error("Error updating profile:", error);

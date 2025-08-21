@@ -1,25 +1,13 @@
 "use client";
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState, useMemo} from "react";
 import SimpleInput from "../../../ui/form/SimpleInput";
 import {Button} from "@/components/shadcn/button";
 import {Controller, useFormContext} from "react-hook-form";
 import {debounce} from "lodash";
-import {toast} from "sonner";
 import {hasProfanity} from "@/utils/other/profanityCheck";
-import {checkSlugAvailabilityAction} from "@/actions/dashboard/create-project/checkSlugAvailabilityAction";
+import {useSlugAvailability} from "@/hooks/query/use-slug-availability";
 import {projectCreationValidationSchema} from "@/validation/project/projectCreationValidation";
-
-// Add this array with your reserved slugs
-const RESERVED_SLUGS = [
-  "admin",
-  "dashboard",
-  "settings",
-  "profile",
-  "login",
-  "signup",
-  "home",
-  "blog",
-];
+import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 
 const InputSlug = ({
   placeholder,
@@ -30,13 +18,14 @@ const InputSlug = ({
   name?: string;
   label?: string;
 }) => {
-  const [slugLoading, setSlugLoading] = useState(false);
-  const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
+  const [debouncedSlug, setDebouncedSlug] = useState("");
 
   const {
     control,
     setValue,
     watch,
+    setError,
+    clearErrors,
     formState: {errors},
   } = useFormContext();
 
@@ -45,87 +34,141 @@ const InputSlug = ({
 
   const slugSchema = projectCreationValidationSchema.shape.slug;
 
-  const checkSlugAvailability = async (slug: string) => {
-    setSlugLoading(true);
-    setIsSlugAvailable(null);
-
-    if (hasProfanity(slug)) {
-      toast.error("Slug contains inappropriate language. Please choose another.");
-      setSlugLoading(false);
-      setIsSlugAvailable(false);
-      return;
-    }
-
-    try {
-      const response = await checkSlugAvailabilityAction(slug);
-      setSlugLoading(false);
-
-      if (response.error) {
-        console.log(response.error);
-        toast.error(response.error);
-        return;
-      }
-
-      if (response.message === "Slug is available") {
-        setIsSlugAvailable(true);
-      }
-
-      if (response.message === "Slug is already taken") {
-        setIsSlugAvailable(false);
-        return;
-      }
-    } catch (error) {
-      console.error("Error checking slug availability:", error);
-      setSlugLoading(false);
-      toast.error("Failed to check slug availability");
-    }
-  };
-
-  const debouncedCheckSlug = useCallback(
+  // Debounce the slug value for the query
+  const debouncedSetSlug = useCallback(
     debounce((slug: string) => {
-      if (!slug || !slugSchema.safeParse(slug).success) return;
-
-      if (RESERVED_SLUGS.includes(slug.toLowerCase())) {
-        setIsSlugAvailable(false);
-        toast.error("This slug is reserved and cannot be used");
-        return;
-      }
-
-      if (hasProfanity(slug)) {
-        setIsSlugAvailable(false);
-        toast.error("Slug contains inappropriate language. Please choose another.");
-        return;
-      }
-
-      checkSlugAvailability(slug);
+      setDebouncedSlug(slug);
     }, 500),
     [],
   );
 
+  const {
+    data: slugAvailabilityData,
+    isLoading: isSlugLoading,
+    error: slugError,
+    isError,
+  } = useSlugAvailability(debouncedSlug);
+
+  // Check for client-side validations (profanity, reserved slugs)
+  const clientSideValidation = useMemo(() => {
+    if (!debouncedSlug || debouncedSlug.length < 3) {
+      return null;
+    }
+
+    if (!slugSchema.safeParse(debouncedSlug).success) {
+      return null;
+    }
+
+    if (RESERVED_PROJECT_SLUGS.includes(debouncedSlug.toLowerCase())) {
+      return {
+        isValid: false,
+        message: "This slug is reserved and cannot be used",
+      };
+    }
+
+    if (hasProfanity(debouncedSlug)) {
+      return {
+        isValid: false,
+        message: "Slug contains inappropriate language. Please choose another.",
+      };
+    }
+
+    return {isValid: true};
+  }, [debouncedSlug, slugSchema]);
+
+  // Determine overall slug availability state
+  const slugState = useMemo(() => {
+    // If slug is too short or invalid, don't show any state
+    if (
+      !debouncedSlug ||
+      debouncedSlug.length < 3 ||
+      !slugSchema.safeParse(debouncedSlug).success
+    ) {
+      return {
+        isAvailable: null,
+        isLoading: false,
+        message: null,
+      };
+    }
+
+    // Check client-side validation first
+    if (clientSideValidation && !clientSideValidation.isValid) {
+      return {
+        isAvailable: false,
+        isLoading: false,
+        message: clientSideValidation.message,
+      };
+    }
+
+    // If client-side validation passes, check server response
+    if (isSlugLoading) {
+      return {
+        isAvailable: null,
+        isLoading: true,
+        message: null,
+      };
+    }
+
+    if (isError) {
+      return {
+        isAvailable: false,
+        isLoading: false,
+        message: slugError?.message || "Failed to check slug availability",
+      };
+    }
+
+    if (slugAvailabilityData) {
+      return {
+        isAvailable: slugAvailabilityData.isAvailable,
+        isLoading: false,
+        message: slugAvailabilityData.isAvailable
+          ? "Slug is available"
+          : "This slug is already taken. Please choose another.",
+      };
+    }
+
+    return {
+      isAvailable: null,
+      isLoading: false,
+      message: null,
+    };
+  }, [
+    debouncedSlug,
+    slugSchema,
+    clientSideValidation,
+    isSlugLoading,
+    isError,
+    slugError,
+    slugAvailabilityData,
+  ]);
+
+  // Update form state based on slug availability
   useEffect(() => {
-    if (!slugValue || slugValue.length < 3) {
-      debouncedCheckSlug.cancel();
-      setIsSlugAvailable(null);
-      setSlugLoading(false);
-      return;
+    setValue("_slugLoading", slugState.isLoading, {shouldValidate: false});
+
+    if (slugState.message && !slugState.isAvailable) {
+      setError(name, {
+        type: "manual",
+        message: slugState.message,
+      });
+    } else if (slugState.isAvailable === true) {
+      clearErrors(name);
     }
+  }, [slugState, name, setError, clearErrors, setValue]);
 
-    setIsSlugAvailable(null);
-    setSlugLoading(true);
-
-    if (RESERVED_SLUGS.includes(slugValue.toLowerCase())) {
-      setIsSlugAvailable(false);
-      setSlugLoading(false);
-      return;
+  // Update debounced slug when slug value changes
+  useEffect(() => {
+    if (slugValue) {
+      debouncedSetSlug(slugValue);
+    } else {
+      setDebouncedSlug("");
+      debouncedSetSlug.cancel();
     }
-
-    debouncedCheckSlug.cancel();
-    debouncedCheckSlug(slugValue);
 
     return () => {
-      debouncedCheckSlug.cancel();
+      debouncedSetSlug.cancel();
     };
-  }, [slugValue]);
+  }, [slugValue, debouncedSetSlug]);
 
   const generateSlug = () => {
     if (!nameValue) return;
@@ -153,9 +196,9 @@ const InputSlug = ({
             error={errors[name]}
             type="text"
             id={name}
-            loading={slugLoading}
+            loading={slugState.isLoading}
             name={field.name}
-            isUsernameAvailable={isSlugAvailable}
+            isUsernameAvailable={slugState.isAvailable}
             value={field.value}
             onChange={(e) => {
               const newValue = e.target.value.toLowerCase();

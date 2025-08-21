@@ -13,6 +13,8 @@ import SelectInput from "@/components/ui/form/SelectInput";
 import {useFormContext} from "react-hook-form";
 import InputSlug from "@/components/(pages)/dashboard/create-project/InputSlug";
 import ImageTabs from "../../settings/ImageTabs";
+import PersonalWebsiteInput from "@/components/ui/form/PersonalWebsiteInput";
+import DemoImageInput from "./DemoImageInput";
 
 const fieldComponents = {
   text: SimpleInput,
@@ -26,6 +28,8 @@ const fieldComponents = {
   select: SettingsSelectField,
   slider: SimpleSlider,
   social: SocialLinksInput,
+  webiste: PersonalWebsiteInput,
+  demo: DemoImageInput,
 };
 
 const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
@@ -55,7 +59,7 @@ const CreateProjectFormField = ({formField}: {formField: FormFieldProps}) => {
       <div className="w-full min-[990px]:max-w-[652px]">
         <InputComponent
           id={fieldInputProps[0].id}
-          placeholder={fieldInputProps[0].placeholder}
+          placeholder={fieldInputProps[0].placeholder ?? ""}
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
           name={fieldInputProps[0].name}

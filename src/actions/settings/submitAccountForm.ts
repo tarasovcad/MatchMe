@@ -2,12 +2,13 @@
 
 import {createClient} from "@/utils/supabase/server";
 import {SettingsAccountFormData} from "@/validation/settings/settingsAccountValidation";
-import {getUploadUrl} from "../aws/getUploadUrlUserAvatars";
-import {uploadImageBuffer} from "../aws/uploadImageBuffer";
-import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
+import {processSingleImageField} from "../utils/processImageField";
 import {Ratelimit} from "@upstash/ratelimit";
 import {redis} from "@/utils/redis/redis";
 import {getClientIp} from "@/utils/network/getClientIp";
+import {MatchMeUser} from "@/types/user/matchMeUser";
+import {canMakePublic} from "@/functions/canMakePublic";
+import {invalidateUserCaches} from "../profiles/singleUserProfile";
 
 export const submitAccountForm = async (formData: Partial<SettingsAccountFormData>) => {
   const supabase = await createClient();
@@ -19,6 +20,7 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   if (!user) {
     throw new Error("User not authenticated");
   }
+
   const ip = await getClientIp();
 
   const settingsAccountLimit = new Ratelimit({
@@ -42,17 +44,10 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     settingsAccountIpLimit.limit(ip),
   ]);
 
-  if (!userLimit.success) {
+  if (!userLimit.success || !ipLimit.success) {
     return {
       error: true,
       message: "Too many security settings update attempts. Please try again later.",
-    };
-  }
-
-  if (!ipLimit.success) {
-    return {
-      error: true,
-      message: "Too many security settings update attempts from this IP. Please try again later.",
     };
   }
 
@@ -77,43 +72,69 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   );
 
   try {
-    if (transformedData.profile_image) {
-      const signedProfileImageUrl = await getUploadUrl(user.id, "user-avatars");
+    const profileRes = await processSingleImageField(
+      transformedData,
+      "profile_image",
+      user.id,
+      "user-avatars",
+    );
 
-      const profileImage = await uploadImageBuffer(
-        signedProfileImageUrl,
-        String(transformedData.profile_image),
-      );
-
-      if (profileImage.error) {
-        return {error: profileImage.error, message: profileImage.message};
-      }
-
-      transformedData.profile_image = `${process.env.CLOUDFRONT_URL}/user-avatars/${user.id}/image.jpg`;
-
-      // Invalidate the CloudFront cache
-      await invalidateCloudFrontCache(`user-avatars/${user.id}/image.jpg`);
+    if (profileRes.error) {
+      return {error: true, message: profileRes.message};
     }
 
-    if (transformedData.background_image) {
-      const signedBackgroundImageUrl = await getUploadUrl(user.id, "user-backgrounds");
+    // Reuse helper for background image
+    const bgRes = await processSingleImageField(
+      transformedData,
+      "background_image",
+      user.id,
+      "user-backgrounds",
+    );
 
-      const backgroundImage = await uploadImageBuffer(
-        signedBackgroundImageUrl,
-        String(transformedData.background_image),
-      );
-
-      if (backgroundImage.error) {
-        return {error: backgroundImage.error, message: backgroundImage.message};
-      }
-
-      transformedData.background_image = `${process.env.CLOUDFRONT_URL}/user-backgrounds/${user.id}/image.jpg`;
-
-      await invalidateCloudFrontCache(`user-backgrounds/${user.id}/image.jpg`);
+    if (bgRes.error) {
+      return {error: true, message: bgRes.message};
     }
   } catch (error) {
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
+  }
+
+  // Backend validation: ensure profile can't be made public if incomplete
+  // Get current profile data to merge with updates for validation
+  const {data: currentProfile} = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  let wasAutomaticallySetToPrivate = false;
+
+  if (currentProfile) {
+    // Merge current profile with the updates to get the complete picture
+    const updatedProfileState = {
+      ...currentProfile,
+      ...transformedData,
+    } as MatchMeUser;
+
+    const {canMakePublic: canMakeProfilePublic} = canMakePublic(updatedProfileState);
+
+    // Check if user is trying to set profile public when it's incomplete
+    if (transformedData.is_profile_public === true && !canMakeProfilePublic) {
+      transformedData.is_profile_public = false;
+      wasAutomaticallySetToPrivate = true;
+    }
+    // Check if profile is currently public but will become incomplete after updates
+    else if (
+      currentProfile.is_profile_public === true &&
+      !canMakeProfilePublic &&
+      transformedData.is_profile_public !== false // User didn't explicitly set it to false
+    ) {
+      transformedData.is_profile_public = false;
+      wasAutomaticallySetToPrivate = true;
+      console.warn(
+        `User ${user.id} profile was public but became incomplete after updates - forced to false`,
+      );
+    }
   }
 
   // Update the profile
@@ -127,11 +148,31 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
   }
+
+  // Invalidate user caches after successful update
+  if (currentProfile?.username) {
+    try {
+      await invalidateUserCaches(user.id, currentProfile.username);
+    } catch (cacheError) {
+      console.error("Error invalidating user caches:", cacheError);
+      // Don't fail the request if cache invalidation fails
+    }
+  }
   // Update the user session with the new image
-  if (transformedData.profile_image !== null) {
+  if (
+    transformedData.profile_image !== null &&
+    Array.isArray(transformedData.profile_image) &&
+    transformedData.profile_image.length > 0
+  ) {
+    const profileImageData = transformedData.profile_image[0] as {
+      fileName: string;
+      fileSize: number;
+      uploadedAt: string;
+      url: string;
+    };
     const {error} = await supabase.auth.updateUser({
       data: {
-        image: transformedData.profile_image,
+        image: profileImageData.url,
       },
     });
     if (error) {
@@ -153,5 +194,6 @@ export const submitAccountForm = async (formData: Partial<SettingsAccountFormDat
   return {
     error: null,
     message: "Profile updated successfully",
+    profileSetToPrivate: wasAutomaticallySetToPrivate,
   };
 };

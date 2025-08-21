@@ -1,37 +1,26 @@
 "use server";
-import {getUploadUrl} from "@/actions/aws/getUploadUrlUserAvatars";
-import {uploadImageBuffer} from "@/actions/aws/uploadImageBuffer";
-import {invalidateCloudFrontCache} from "@/functions/invalidateCloudFrontCache";
+import {
+  processSingleImageField,
+  processMultipleImageField,
+} from "@/actions/utils/processImageField";
 import {getClientIp} from "@/utils/network/getClientIp";
 import {redis} from "@/utils/redis/redis";
 import {createClient} from "@/utils/supabase/server";
 import {ProjectCreationFormData} from "@/validation/project/projectCreationValidation";
 import {Ratelimit} from "@upstash/ratelimit";
 
+// Default role permissions constants
+import {
+  ownerPermissions,
+  memberPermissions,
+  coFounderPermissions,
+} from "@/data/projects/defaultProjectRoles";
+
 import {v4 as uuidv4} from "uuid";
 
-const MAX_PROJECTS = 3;
+const MAX_PROJECTS = 10;
 
 export const createProject = async (formData: Partial<ProjectCreationFormData>) => {
-  const ip = await getClientIp();
-
-  const projectRateLimiter = new Ratelimit({
-    redis: redis,
-    limiter: Ratelimit.slidingWindow(10, "1 h"),
-    analytics: true,
-    prefix: "ratelimit:ip:project-creation",
-    enableProtection: true,
-  });
-
-  const projectLimit = await projectRateLimiter.limit(ip);
-
-  if (!projectLimit.success) {
-    return {
-      error: true,
-      message: `Rate limit exceeded. Try again in later`,
-    };
-  }
-
   const supabase = await createClient();
 
   const {
@@ -41,6 +30,44 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
   if (!user) {
     throw new Error("User not authenticated");
   }
+
+  const ip = await getClientIp();
+
+  const projectUserRateLimiter = new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(10, "6 h"), // 10 projects per 6 hours per user
+    analytics: true,
+    prefix: "ratelimit:user:project-creation",
+    enableProtection: true,
+  });
+
+  const projectIpRateLimiter = new Ratelimit({
+    redis: redis,
+    limiter: Ratelimit.slidingWindow(15, "6 h"), // 15 projects per 6 hours per IP
+    analytics: true,
+    prefix: "ratelimit:ip:project-creation",
+    enableProtection: true,
+  });
+
+  const [userLimit, ipLimit] = await Promise.all([
+    projectUserRateLimiter.limit(user.id),
+    projectIpRateLimiter.limit(ip),
+  ]);
+
+  if (!userLimit.success) {
+    return {
+      error: true,
+      message: "Too many project creation attempts. Please try again later.",
+    };
+  }
+
+  if (!ipLimit.success) {
+    return {
+      error: true,
+      message: "Too many project creation attempts from this IP. Please try again later.",
+    };
+  }
+
   const {count, error: countError} = await supabase
     .from("projects")
     .select("*", {count: "exact", head: true})
@@ -62,6 +89,10 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
 
   const transformedData = Object.entries(formData).reduce(
     (acc, [key, value]) => {
+      // Skip keys that start with underscore
+      if (key.startsWith("_")) {
+        return acc;
+      }
       if (Array.isArray(value) && value.length === 0) {
         // If value is an empty array, set it to null
         acc[key] = null;
@@ -76,73 +107,124 @@ export const createProject = async (formData: Partial<ProjectCreationFormData>) 
     {} as Record<string, Partial<ProjectCreationFormData>[keyof ProjectCreationFormData] | null>,
   );
 
-  const cleanedData = Object.entries(transformedData).reduce(
-    (acc, [key, value]) => {
-      if (value !== null) {
-        acc[key] = value;
-      }
-      return acc;
-    },
-    {} as Record<string, Partial<ProjectCreationFormData>[keyof ProjectCreationFormData]>,
-  );
-
   const projectId = uuidv4();
 
   try {
-    if (cleanedData.project_image) {
-      const signedProfileImageUrl = await getUploadUrl(projectId, "project-avatars");
+    const projRes = await processSingleImageField(
+      transformedData,
+      "project_image",
+      projectId,
+      "project-avatars",
+    );
 
-      const profileImage = await uploadImageBuffer(
-        signedProfileImageUrl,
-        String(cleanedData.project_image),
-      );
+    if (projRes.error) return projRes;
 
-      if (profileImage.error) {
-        return {error: profileImage.error, message: profileImage.message};
-      }
+    const bgRes = await processSingleImageField(
+      transformedData,
+      "background_image",
+      projectId,
+      "project-backgrounds",
+    );
 
-      cleanedData.project_image = `${process.env.CLOUDFRONT_URL}/project-avatars/${projectId}/image.jpg`;
+    if (bgRes.error) return bgRes;
 
-      // Invalidate the CloudFront cache
-      await invalidateCloudFrontCache(`project-avatars/${projectId}/image.jpg`);
-    }
+    const demoRes = await processMultipleImageField(
+      transformedData,
+      "demo",
+      projectId,
+      "project-demo-images",
+    );
 
-    if (cleanedData.background_image) {
-      const signedBackgroundImageUrl = await getUploadUrl(projectId, "project-backgrounds");
-
-      const backgroundImage = await uploadImageBuffer(
-        signedBackgroundImageUrl,
-        String(cleanedData.background_image),
-      );
-
-      if (backgroundImage.error) {
-        return {error: backgroundImage.error, message: backgroundImage.message};
-      }
-
-      cleanedData.background_image = `${process.env.CLOUDFRONT_URL}/project-backgrounds/${projectId}/image.jpg`;
-
-      await invalidateCloudFrontCache(`project-backgrounds/${projectId}/image.jpg`);
-    }
+    if (demoRes.error) return demoRes;
   } catch (error) {
     console.error("Error updating profile:", error);
     return {error: error, message: "Error updating profile"};
   }
 
-  const {error} = await supabase
+  const {data: projectData, error: projectError} = await supabase
     .from("projects")
     .insert({
       id: projectId,
-      ...cleanedData,
+      ...transformedData,
       user_id: user.id,
     })
     .select("*")
     .single();
 
-  if (error) {
-    console.error("Detailed error:", error);
+  if (projectError) {
+    console.error("Detailed project creation error:", projectError);
     return {
       error: true,
       message: "Something went wrong creating your project. Please try again.",
+    };
+  }
+
+  // ────────────────────────────────────────────
+  //  Create default roles: Owner & Member & Co-Founder
+  // ────────────────────────────────────────────
+
+  const {data: rolesData, error: rolesError} = await supabase
+    .from("project_roles")
+    .insert([
+      {
+        project_id: projectId,
+        name: "Owner",
+        badge_color: "purple",
+        permissions: ownerPermissions,
+        is_default: false,
+        is_system_role: true,
+      },
+      {
+        project_id: projectId,
+        name: "Member",
+        badge_color: "green",
+        permissions: memberPermissions,
+        is_default: true,
+        is_system_role: true,
+      },
+      {
+        project_id: projectId,
+        name: "Co-Founder",
+        badge_color: "blue",
+        permissions: coFounderPermissions,
+        is_default: false,
+        is_system_role: false,
+      },
+    ])
+    .select("id, name");
+
+  if (rolesError || !rolesData) {
+    console.error("Error creating default roles:", rolesError);
+    // Rollback project as roles are critical
+    await supabase.from("projects").delete().eq("id", projectId);
+    return {
+      error: true,
+      message: "Something went wrong creating default project roles. Please try again.",
+    };
+  }
+
+  const ownerRole = rolesData.find((r) => r.name === "Owner");
+
+  // Add the project creator as a team member with 'Founder' role and 'owner' permission
+  const {error: teamMemberError} = await supabase.from("project_team_members").insert({
+    project_id: projectId,
+    user_id: user.id,
+    display_role: "Founder",
+    role_id: ownerRole?.id ?? null,
+    joined_date: new Date().toISOString(),
+    is_active: true,
+  });
+
+  if (teamMemberError) {
+    console.error("Error adding project creator to team members:", teamMemberError);
+
+    // Rollback: Delete the created project since team member insertion failed
+    await supabase.from("projects").delete().eq("id", projectId);
+    await supabase.from("project_roles").delete().eq("project_id", projectId);
+
+    return {
+      error: true,
+      message: "Something went wrong setting up your project team. Please try again.",
     };
   }
 

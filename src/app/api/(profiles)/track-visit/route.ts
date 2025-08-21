@@ -1,4 +1,6 @@
 import {createClient} from "@/utils/supabase/server";
+import {redis} from "@/utils/redis/redis";
+import {createClient as createAdminClient} from "@/utils/supabase/admin";
 
 export async function POST(req: Request) {
   try {
@@ -106,6 +108,35 @@ export async function POST(req: Request) {
     if (upsertError) {
       console.error("Error upserting profile visits:", upsertError);
       return Response.json({error: "Failed to update profile visits"}, {status: 500});
+    }
+
+    // Increment unique visitor set in Redis and notify on milestone
+    // Uses a Set keyed by profile to count unique visitor IDs across time
+    const setKey = `profile_unique_visitors:${profileOwnerId}`;
+    const added = await redis.sadd(setKey, visitorId);
+    if (added === 1) {
+      const uniqueCount = await redis.scard(setKey);
+      if (uniqueCount === 1000) {
+        const milestoneKey = `profile_milestone_notified:1000:${profileOwnerId}`;
+        const notified = await redis.get(milestoneKey);
+        if (!notified) {
+          const admin = await createAdminClient();
+          const {error: insertError} = await admin.from("notifications").insert([
+            {
+              recipient_id: profileOwnerId,
+              sender_id: profileOwnerId,
+              type: "profile_milestone",
+              created_at: new Date().toISOString(),
+              status: "info",
+            },
+          ]);
+          if (!insertError) {
+            await redis.set(milestoneKey, "1", {ex: 60 * 60 * 24 * 365});
+          } else {
+            console.error("Failed to insert milestone notification:", insertError);
+          }
+        }
+      }
     }
 
     return Response.json({success: true});

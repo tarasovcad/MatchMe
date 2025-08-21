@@ -7,18 +7,24 @@ import {
 import {Filter, useFilterStore} from "@/store/filterStore";
 import {X} from "lucide-react";
 import React from "react";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
 
 const FilterPanel = ({pageKey}: {pageKey: string}) => {
   const {getFiltersForPage, removeFilter} = useFilterStore();
-  const filters = getFiltersForPage(pageKey);
-
+  const rawFilters = getFiltersForPage(pageKey);
+  const filters = rawFilters.filter((f) => f.type !== "globalSearch" && f.type !== "searchInput");
   if (!filters?.length) return null;
-
   const getFilterDisplayValue = (filter: Filter) => {
     switch (filter.type) {
       case "searchInput":
         return filter.searchValue || "";
+      case "globalSearch":
+        return filter.searchValue || "";
       case "multiSelect":
+        if (filter.value === "time_commitment") {
+          const valueToTitle = new Map(timeCommitment.map((opt) => [opt.value, opt.title]));
+          return filter.selectedOptions?.map((v) => valueToTitle.get(v) || v).join(", ") || "";
+        }
         return filter.selectedOptions?.join(", ") || "";
       case "tagsSearch":
         return filter.selectedTags?.join(", ") || "";
@@ -36,8 +42,7 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
     const words = displayValue.split(" ");
     const shownWords = words.slice(0, 3).join(" ");
     const remainingCount = words.length - 3;
-    const suffix =
-      filter.title === "Availability" ? " hours" : filter.title === "Age" ? " years old" : "";
+    const suffix = filter.title === "Age" ? " years old" : "";
 
     return remainingCount > 0 ? (
       <Tooltip>
@@ -62,7 +67,7 @@ const FilterPanel = ({pageKey}: {pageKey: string}) => {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <div className="flex gap-2 overflow-y-auto">
+      <div className="flex gap-2 overflow-y-auto ">
         {filters.map((filter) => {
           const displayValue = getFilterDisplayValue(filter);
           if (!displayValue) return null;

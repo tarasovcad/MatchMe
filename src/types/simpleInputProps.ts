@@ -18,4 +18,7 @@ export interface SimpleInputProps extends React.InputHTMLAttributes<HTMLInputEle
   showClearButton?: boolean;
   onClear?: () => void;
   value?: string;
+  showKbd?: boolean;
+  kbdText?: string;
+  kbdPlacement?: "left" | "right";
 }

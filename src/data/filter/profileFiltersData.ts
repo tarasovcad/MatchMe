@@ -1,6 +1,8 @@
 import {Briefcase, Calendar, Clock, Languages, MapPin, Search, Wrench} from "lucide-react";
 import {Filter} from "@/store/filterStore";
 import {languages} from "../forms/(settings)/languages";
+import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
+import {seniorityLevels} from "../forms/(settings)/seniorityLevels";
 
 export const profileFiltersData: Filter[] = [
   {
@@ -29,25 +31,37 @@ export const profileFiltersData: Filter[] = [
     showInFilterBtn: true,
   },
   {
-    title: "Availability",
+    title: "Seniority Level",
+    icon: Briefcase,
+    value: "seniority_level",
+    type: "multiSelect",
+    options: seniorityLevels,
+    showSearchInput: true,
+    showInFilterBtn: true,
+  },
+  {
+    title: "Time Commitment",
     icon: Clock,
-    value: "work_availability",
-    type: "numberSelect",
-    showSearchInput: false,
-    numberSelectProps: {
-      maxValue: 40,
-    },
+    value: "time_commitment",
+    type: "multiSelect",
+    options: timeCommitment.map((opt) => ({title: opt.title, value: opt.value})),
+    showSearchInput: true,
     showInFilterBtn: true,
   },
   {
     title: "Age",
     icon: Calendar,
     value: "age",
-    type: "numberSelect",
-    showSearchInput: false,
-    numberSelectProps: {
-      maxValue: 100,
-    },
+    type: "multiSelect",
+    options: [
+      {title: "18-24 years old", value: "18-24"},
+      {title: "25-34 years old", value: "25-34"},
+      {title: "35-44 years old", value: "35-44"},
+      {title: "45-54 years old", value: "45-54"},
+      {title: "55-64 years old", value: "55-64"},
+      {title: "65+ years old", value: "65-150"},
+    ],
+    showSearchInput: true,
     showInFilterBtn: true,
   },
   {

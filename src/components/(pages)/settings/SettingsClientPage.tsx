@@ -13,7 +13,7 @@ import {
 import {User} from "@supabase/supabase-js";
 import Alert from "@/components/ui/Alert";
 import {canChangeUsername} from "@/functions/canChangeUsername";
-import {canUserMakeProfilePublic} from "@/functions/canUserMakeProfilePublic";
+import {canMakePublic} from "@/functions/canMakePublic";
 import TabNavigation from "@/components/ui/form/TabNavigation";
 import {settingsTabsData} from "@/data/tabs/settingsTabsData";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
@@ -31,7 +31,8 @@ const SettingsClientPage = ({
   const [isClient, setIsClient] = useState(false);
   const [handleSave, setHandleSave] = useState<() => void>(() => {});
   const [handleCancel, setHandleCancel] = useState<() => void>(() => {});
-  const [isDisabled, setIsDisabled] = useState(false);
+  const [isSaveDisabled, setIsSaveDisabled] = useState(true);
+  const [isClearDisabled, setIsClearDisabled] = useState(true);
 
   useEffect(() => {
     setIsClient(true);
@@ -45,7 +46,7 @@ const SettingsClientPage = ({
     ? canChangeUsername(profile.username_changed_at)
     : {canChange: true, nextAvailableDate: null};
 
-  const {canMakeProfilePublic} = canUserMakeProfilePublic(profile);
+  const {canMakePublic: canMakeProfilePublic} = canMakePublic(profile);
 
   const renderSelectedComponent = () => {
     const commonProps = {
@@ -53,14 +54,24 @@ const SettingsClientPage = ({
       setIsLoading,
       setHandleSave,
       setHandleCancel,
-      setIsDisabled,
+      setIsDisabled: setIsSaveDisabled,
+      setClearDisabled: setIsClearDisabled,
     };
 
     switch (tab) {
       case "account":
         return <AccountTab {...commonProps} />;
       case "security":
-        return <SecurityTab {...commonProps} user={user} />;
+        return (
+          <SecurityTab
+            profile={profile}
+            setIsLoading={setIsLoading}
+            setHandleSave={setHandleSave}
+            setHandleCancel={setHandleCancel}
+            setIsDisabled={setIsSaveDisabled}
+            user={user}
+          />
+        );
       default:
         return <AccountTab {...commonProps} />;
     }
@@ -115,7 +126,8 @@ const SettingsClientPage = ({
           isLoading={isLoading}
           handleSave={handleSave}
           handleCancel={handleCancel}
-          isDisabled={isDisabled}
+          isSaveDisabled={isSaveDisabled}
+          isClearDisabled={isClearDisabled}
         />
       </motion.div>
     </motion.form>

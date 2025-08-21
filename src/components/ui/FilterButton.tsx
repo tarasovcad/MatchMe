@@ -13,6 +13,7 @@ import {
   TagsSearchFilter,
   useFilterStore,
 } from "@/store/filterStore";
+import {AnimatePresence, motion} from "framer-motion";
 
 const TypeComponents = {
   multiSelect: MultiSelect,
@@ -225,9 +226,10 @@ const FilterButton = ({
                       if (item.showInFilterBtn) {
                         return (
                           <CommandItem
-                            className="group flex justify-between items-center"
+                            className="group flex justify-between items-center text-foreground/90"
                             key={item.value}
                             onMouseEnter={() => setHoveredItem(item.value)}
+                            onMouseLeave={() => setHoveredItem(null)}
                             onSelect={() => {
                               setCurrentSelected(item.value);
                               setSearchQuery("");
@@ -239,15 +241,25 @@ const FilterButton = ({
                               <item.icon size={16} aria-hidden="true" />
                               {item.title}
                             </div>
-                            <ArrowRight
-                              size={16}
-                              className={`${
-                                hoveredItem === item.value
-                                  ? "opacity-80"
-                                  : "opacity-0 group-hover:opacity-100"
-                              }`}
-                              aria-hidden="true"
-                            />
+                            <div className="relative flex h-4 w-4 items-center justify-center">
+                              <AnimatePresence initial={false}>
+                                {hoveredItem === item.value && (
+                                  <motion.div
+                                    key="arrow"
+                                    initial={{opacity: 0, x: -6}}
+                                    animate={{opacity: 1, x: 0}}
+                                    exit={{opacity: 0, x: -6}}
+                                    transition={{
+                                      type: "spring",
+                                      stiffness: 800,
+                                      damping: 24,
+                                      mass: 0.4,
+                                    }}>
+                                    <ArrowRight size={16} aria-hidden="true" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
                           </CommandItem>
                         );
                       }

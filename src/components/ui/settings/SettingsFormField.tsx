@@ -10,7 +10,7 @@ import SimpleSlider from "../form/SimpleSlider";
 import PersonalWebsiteInput from "../form/PersonalWebsiteInput";
 import SocialLinksInput from "./SocialLinksInput";
 import {useFormContext} from "react-hook-form";
-import MakeProfilePublicSwitch from "./MakeProfilePublicSwitch";
+import MakePublicSwitch from "./MakePublicSwitch";
 import VerifyAccountButton from "./VerifyAccountButton";
 import {cn} from "@/lib/utils";
 import TagsInput from "../form/TagsInput";
@@ -20,11 +20,15 @@ import UserConnectedAccounts from "./UserConnectedAccounts";
 import {User} from "@supabase/supabase-js";
 import SettingsUsernameInput from "./SettingsUsernameInput";
 import {MatchMeUser} from "@/types/user/matchMeUser";
+import {Project} from "@/types/projects/projects";
 import SelectInputWithSearch from "../form/SelectInputWithSearch";
 import ImageTabs from "@/components/(pages)/settings/ImageTabs";
+import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
+import ProjectSlugInput from "./ProjectSlugInput";
+import ProjectDangerZone from "@/components/(pages)/dashboard/projects/ProjectDangerZone";
 
 const fieldComponents = {
-  makeProfilePublic: MakeProfilePublicSwitch,
+  makePublic: MakePublicSwitch,
   accountVerification: VerifyAccountButton,
   text: SimpleInput,
   number: NumberFieldInput,
@@ -38,18 +42,23 @@ const fieldComponents = {
   webiste: PersonalWebsiteInput,
   social: SocialLinksInput,
   deleteAccount: DangerZone,
+  deleteProject: ProjectDangerZone,
   connectedAccounts: UserConnectedAccounts,
   username: SettingsUsernameInput,
+  demo: DemoImageInput,
+  slug: ProjectSlugInput,
 };
 
 const SettingsFormField = ({
   formField,
   user,
   profile,
+  project,
 }: {
   formField: FormFieldProps;
   user?: User;
   profile?: MatchMeUser;
+  project?: Project;
 }) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps, fieldRequired} = formField;
   const fieldName = fieldInputProps[0].name;
@@ -61,7 +70,7 @@ const SettingsFormField = ({
   } = useFormContext();
 
   const isTopSection = () => {
-    return fieldType === "makeProfilePublic" || fieldType === "accountVerification";
+    return fieldType === "makePublic" || fieldType === "accountVerification";
   };
 
   const itemVariants = {
@@ -95,18 +104,19 @@ const SettingsFormField = ({
       <div className="w-full min-[990px]:max-w-[652px]">
         <InputComponent
           id={fieldInputProps[0].id}
-          placeholder={fieldInputProps[0].placeholder}
+          placeholder={fieldInputProps[0].placeholder ?? ""}
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
           name={fieldInputProps[0].name}
           readOnly={fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
-          register={register(fieldName)}
+          register={fieldType === "image" ? undefined : register(fieldName)}
           error={errors[fieldName]}
           user={user!}
           mail={fieldInputProps[0].name === "email"}
           profile={profile}
+          project={project}
           className={`${fieldInputProps[0].disabled && "bg-muted shadow-none text-foreground!"}`}
         />
       </div>

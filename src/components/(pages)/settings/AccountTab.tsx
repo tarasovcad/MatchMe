@@ -13,7 +13,7 @@ import {
 } from "@/validation/settings/settingsAccountValidation";
 import {MatchMeUser} from "@/types/user/matchMeUser";
 import {submitAccountForm} from "@/actions/settings/submitAccountForm";
-import {isEqual, pickBy} from "lodash";
+import {isEqual} from "lodash";
 import {toast} from "sonner";
 import {motion} from "framer-motion";
 import {containerVariants, itemVariants} from "@/utils/other/variants";
@@ -24,13 +24,27 @@ const AccountTab = ({
   setHandleSave,
   setHandleCancel,
   setIsDisabled,
+  setClearDisabled,
 }: {
   profile: MatchMeUser;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setHandleSave: React.Dispatch<React.SetStateAction<() => void>>;
   setHandleCancel: React.Dispatch<React.SetStateAction<() => void>>;
   setIsDisabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setClearDisabled?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  // Helper function to normalize values for comparison
+  const normalizeValue = (value: unknown, fieldName: string) => {
+    // For number fields, treat empty string and undefined as equivalent
+    const numberFields = ["age", "years_of_experience"];
+    if (numberFields.includes(fieldName)) {
+      if (value === "" || value === undefined || value === null) {
+        return undefined;
+      }
+    }
+    return value;
+  };
+
   const determineDefaultPlatform = (existingPlatforms: string | null, defaultValue: string) => {
     // If the platform is already specified, use it
     if (existingPlatforms) return existingPlatforms;
@@ -50,18 +64,20 @@ const AccountTab = ({
     is_profile_verified: profile.is_profile_verified ?? false,
     name: profile.name ?? "",
     username: profile.username ?? "",
-    profile_image: profile.profile_image ?? "",
-    profile_image_metadata: profile.profile_image_metadata ?? undefined,
-    background_image: profile.background_image ?? "",
-    background_image_metadata: profile.background_image_metadata ?? undefined,
+    profile_image: profile.profile_image ?? [],
+    background_image: profile.background_image ?? [],
     pronouns: profile.pronouns ?? "",
     age: profile.age ?? undefined,
     public_current_role: profile.public_current_role ?? "",
+    seniority_level: profile.seniority_level ?? "",
+    years_of_experience: profile.years_of_experience ?? undefined,
     looking_for: profile.looking_for ?? "",
     goal: profile.goal ?? "",
+    dream: profile.dream ?? "",
+    tags: Array.isArray(profile.tags) ? profile.tags : [],
     tagline: profile.tagline ?? "",
     skills: Array.isArray(profile.skills) ? profile.skills : [],
-    work_availability: profile.work_availability ?? undefined,
+    time_commitment: profile.time_commitment ?? undefined,
     location: profile.location ?? "",
     languages: Array.isArray(profile.languages) ? profile.languages : [],
     personal_website: profile.personal_website ?? "",
@@ -90,20 +106,35 @@ const AccountTab = ({
 
   // Get the form state to check for errors
   const {formState} = methods;
-
   useEffect(() => {
-    // Filter initialValues to only include properties that are defined, so no empty values are included
-    const cleanInitialValues = pickBy(initialValues, (value) => value !== undefined);
+    // Compare each field individually to detect changes
+    const hasFieldChanged = Object.keys(formValues).some((key) => {
+      const formKey = key as keyof SettingsAccountFormData;
+      const currentValue = normalizeValue(formValues[formKey], key);
+      const initialValue = normalizeValue(initialValues[formKey], key);
 
-    // Filter formValues to only include keys that exist in initialValues
-    // This ensures we only compare fields that were originally provided
-    const cleanFormValues = pickBy(formValues, (_, key) => key in cleanInitialValues);
+      // Check if the values are different
+      return !isEqual(currentValue, initialValue);
+    });
+    // Special check for image arrays - if they go from empty to having content, that's a change
+    const imageArraysChanged =
+      ((!initialValues.profile_image || initialValues.profile_image.length === 0) &&
+        formValues.profile_image &&
+        formValues.profile_image.length > 0) ||
+      ((!initialValues.background_image || initialValues.background_image.length === 0) &&
+        formValues.background_image &&
+        formValues.background_image.length > 0);
 
-    // Compare cleaned values to determine if form has changed
-    const hasChanged = !isEqual(cleanFormValues, cleanInitialValues);
+    const hasChanges = hasFieldChanged || imageArraysChanged;
 
-    setIsDisabled(!hasChanged || !formState.isValid);
-  }, [formValues, initialValues, formState.isValid, setIsDisabled]);
+    // Disable save when there are no changes or validation errors
+    setIsDisabled(!hasChanges || !formState.isValid);
+
+    // Disable clear button only when there are no changes
+    if (setClearDisabled) {
+      setClearDisabled(!hasChanges);
+    }
+  }, [formValues, initialValues, formState.isValid, setIsDisabled, setClearDisabled]);
 
   const onSubmit = async (data: SettingsAccountFormData) => {
     setIsLoading(true);
@@ -118,8 +149,8 @@ const AccountTab = ({
       const changedValues = Object.keys(data).reduce((result, key) => {
         const formKey = key as keyof SettingsAccountFormData;
 
-        const currentValue = data[formKey] === undefined ? "" : data[formKey];
-        const initialValue = initialValues[formKey] === undefined ? "" : initialValues[formKey];
+        const currentValue = normalizeValue(data[formKey], key);
+        const initialValue = normalizeValue(initialValues[formKey], key);
 
         // Compare each field with its initial value
         if (
@@ -135,6 +166,15 @@ const AccountTab = ({
         return result;
       }, {} as Partial<SettingsAccountFormData>);
 
+      // ALWAYS include image fields if they currently have values to prevent nullification
+      if (data.profile_image && data.profile_image.length > 0) {
+        changedValues.profile_image = data.profile_image;
+      }
+
+      if (data.background_image && data.background_image.length > 0) {
+        changedValues.background_image = data.background_image;
+      }
+
       // Only make an API call if there are actual changes to submit
       if (Object.keys(changedValues).length > 0) {
         const response = await submitAccountForm(changedValues);
@@ -144,14 +184,19 @@ const AccountTab = ({
           setIsLoading(false);
           return;
         } else {
-          const newInitialValues = {...initialValues, ...data};
+          // Check if profile was automatically set to private
+          let finalData = data;
+          if (response.profileSetToPrivate) {
+            finalData = {...data, is_profile_public: false};
+            toast.warning("Your profile was set to private because required fields are missing.");
+          }
+
+          const newInitialValues = {...initialValues, ...finalData};
           setInitialValues(newInitialValues);
           methods.reset(newInitialValues);
           setIsLoading(false);
           toast.success(response.message);
         }
-      } else {
-        console.log("No changes to submit");
       }
       setIsLoading(false);
     } catch (error) {

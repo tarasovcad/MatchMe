@@ -18,18 +18,18 @@ export default function Alert({
 
   return (
     <div
-      className="p-4 border-l-2 rounded-md rounded-l-none"
+      className="p-3.5 border-l-2 rounded-md rounded-l-none"
       style={{
         backgroundColor: currentStyle.backgroundColor,
         borderColor: currentStyle.borderColor,
         color: currentStyle.color,
       }}>
-      <div className="flex gap-1">
-        <div className="p-1">
+      <div className="flex gap-2">
+        <div className="pt-0.5">
           <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            viewBox="4 4 16 16"
             fill="none"
             xmlns="http://www.w3.org/2000/svg">
             <path
@@ -40,7 +40,8 @@ export default function Alert({
             />
           </svg>
         </div>
-        <div className="space-y-1 px-2 grow">
+
+        <div className="space-y-1  grow">
           <p className="font-medium text-sm">{title}</p>
           <ul className="text-sm">
             <li>{message}</li>
