@@ -21,6 +21,9 @@ import OpenPositionAddToFavoriteBtn from "@/components/favourites/OpenPositionAd
 import {Textarea} from "@/components/shadcn/textarea";
 import Alert from "@/components/ui/Alert";
 import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
+import {useSubmitProjectApplication} from "@/hooks/query/projects/use-submit-application";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
+import AuthGate from "@/components/other/AuthGate";
 
 const getTitleByValue = (options: {title: string; value: string}[], value?: string): string => {
   if (!value) return "";
@@ -53,6 +56,8 @@ const OpenPositionDetailsDialog = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationMessage, setApplicationMessage] = useState("");
 
+  const submitApplicationMutation = useSubmitProjectApplication();
+
   const hasCurrentPositionRequest = Boolean(openPosition.has_pending_request);
   const hasOtherPositionRequest =
     Boolean(openPosition.has_any_pending_request) && !hasCurrentPositionRequest;
@@ -71,6 +76,27 @@ const OpenPositionDetailsDialog = ({
       setApplicationMessage("");
     }
     onOpenChange(isOpen);
+  };
+
+  const handleSubmitApplication = () => {
+    if (!userId || isOwnerOrMember || hasCurrentPositionRequest) {
+      return;
+    }
+
+    submitApplicationMutation.mutate(
+      {
+        project_id: openPosition.project_id,
+        position_id: openPosition.id,
+        message: applicationMessage.trim() || undefined,
+      },
+      {
+        onSuccess: (result) => {
+          if (result.success) {
+            handleDialogClose(false);
+          }
+        },
+      },
+    );
   };
 
   const isOwnerOrMember = Boolean(isOwner) || Boolean(isTeamMember);
@@ -251,7 +277,20 @@ const OpenPositionDetailsDialog = ({
                   <ChevronLeft size={14} className="mr-1" />
                   Back
                 </Button>
-                <Button variant="secondary" size="xs" disabled={hasCurrentPositionRequest}>
+                <Button
+                  variant="secondary"
+                  size="xs"
+                  className="flex items-center gap-2"
+                  disabled={
+                    hasCurrentPositionRequest ||
+                    submitApplicationMutation.isPending ||
+                    isOwnerOrMember ||
+                    !userId
+                  }
+                  onClick={handleSubmitApplication}>
+                  {submitApplicationMutation.isPending && (
+                    <LoadingButtonCircle className="text-white dark:text-foreground/80" />
+                  )}
                   Submit Application
                 </Button>
               </div>
@@ -384,17 +423,19 @@ const ProjectOpenPositionCardComponent = ({
               <span className="text-foreground/80 font-medium">
                 Click to view full job details and requirements
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDialogOpen(true)}
-                className="h-[32px] bg-background/95 hover:bg-background border-primary/20 hover:border-primary/40 text-foreground/90 shadow-sm group">
-                <span>View Details</span>
-                <ChevronRight
-                  size={14}
-                  className="group-hover:translate-x-0.5 transition-transform duration-200 ml-1"
-                />
-              </Button>
+              <AuthGate userSessionId={userId}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={userId ? () => setIsDialogOpen(true) : undefined}
+                  className="h-[32px] bg-background/95 hover:bg-background border-primary/20 hover:border-primary/40 text-foreground/90 shadow-sm group">
+                  <span>View Details</span>
+                  <ChevronRight
+                    size={14}
+                    className="group-hover:translate-x-0.5 transition-transform duration-200 ml-1"
+                  />
+                </Button>
+              </AuthGate>
             </motion.div>
           </motion.div>
         </motion.div>

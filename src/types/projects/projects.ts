@@ -49,6 +49,7 @@ export type Project = {
   community_platforms: string;
   project_website: string;
   is_project_public: boolean;
+  tags: string[];
 };
 
 export type TeamPermission = "owner" | "co_owner" | "admin" | "editor" | "viewer" | "member";

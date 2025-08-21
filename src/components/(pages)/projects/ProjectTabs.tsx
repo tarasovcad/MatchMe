@@ -161,7 +161,7 @@ export default function ProjectTabs({
     <FilterableTabs
       tabs={tabs}
       defaultTab="open-positions"
-      searchPlaceholder="Search positions, members, skills..."
+      searchPlaceholder="Search..."
       onSearch={(value) => setSearchQuery(value)}
       topPadding={true}>
       {renderTabContent}

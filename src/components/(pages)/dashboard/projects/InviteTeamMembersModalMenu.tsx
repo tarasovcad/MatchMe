@@ -22,7 +22,6 @@ import UserSearchDropdown from "@/components/ui/form/UserSearchDropdown";
 import {toast} from "sonner";
 import SelectInputWithSearch from "@/components/ui/form/SelectInputWithSearch";
 import {useCreateProjectRequest} from "@/hooks/query/projects/use-create-project-request";
-import {MiniCardMatchMeUser} from "@/types/user/matchMeUser";
 import {Member} from "./ProjectManagementTeamMembers";
 
 const inviteTeamMemberSchema = z.object({

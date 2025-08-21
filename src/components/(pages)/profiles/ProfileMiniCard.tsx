@@ -8,6 +8,7 @@ import Avatar from "boring-avatars";
 import Link from "next/link";
 import FollowUserButton from "@/components/follows/FollowUserButton";
 import {Pencil, UserPen} from "lucide-react";
+import AuthGate from "@/components/other/AuthGate";
 
 const ProfileMiniCard = ({
   member,
@@ -78,25 +79,29 @@ const ProfileMiniCard = ({
             {customFollowButton ? (
               customFollowButton
             ) : (
-              <FollowUserButton
-                followingId={member.user_id}
-                isFollowing={!!member.isFollowing}
-                isFollowingBack={!!member.isFollowingBack}
-                username={member.username}
-                userSessionId={userSessionId}
-                size="xs"
-                buttonClassName="flex-1 "
-                simpleStyle
-                followVariant="secondary"
-              />
+              <AuthGate userSessionId={userSessionId}>
+                <FollowUserButton
+                  followingId={member.user_id}
+                  isFollowing={!!member.isFollowing}
+                  isFollowingBack={!!member.isFollowingBack}
+                  username={member.username}
+                  userSessionId={userSessionId}
+                  size="xs"
+                  buttonClassName="flex-1 "
+                  simpleStyle
+                  followVariant="secondary"
+                />
+              </AuthGate>
             )}
             {customSecondaryButton ? (
               customSecondaryButton
             ) : (
-              <Button variant="outline" size="xs" className="flex-1 ">
-                <Messages2 size="16" color="currentColor" strokeWidth={3} />
-                Message
-              </Button>
+              <AuthGate userSessionId={userSessionId}>
+                <Button variant="outline" size="xs" className="flex-1 ">
+                  <Messages2 size="16" color="currentColor" strokeWidth={3} />
+                  Message
+                </Button>
+              </AuthGate>
             )}
           </div>
         )}

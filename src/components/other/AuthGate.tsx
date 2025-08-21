@@ -11,7 +11,7 @@ const AuthGate = ({
   if (userSessionId === null || !userSessionId) {
     return (
       <SignUpDialog>
-        <div className="contents">{children} </div>
+        <div className="contents">{children}</div>
       </SignUpDialog>
     );
   } else {

@@ -30,6 +30,73 @@ import ProjectFormField from "@/components/(pages)/projects/ProjectFormField";
 import ProjectImageSlider from "@/components/(pages)/projects/ProjectImageSlider";
 import ProjectTabs from "@/components/(pages)/projects/ProjectTabs";
 import ContentShareSection from "@/components/(pages)/other/ContentShareSection";
+import KeywordTagList from "@/components/(pages)/other/KeywordTagList";
+import type {Metadata} from "next";
+import {getProject} from "@/actions/projects/singleProject";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{slug: string}>;
+}): Promise<Metadata> {
+  const {slug} = await params;
+
+  try {
+    const project = await getProject(slug);
+
+    if (!project) {
+      return {
+        title: "Project not found | MatchMe",
+        description: "This project does not exist.",
+        robots: {index: false, follow: false},
+        alternates: {canonical: `https://matchme.me/projects/${slug}`},
+      };
+    }
+
+    const titleBase = project.tagline
+      ? `${project.name} – ${project.tagline}`
+      : `${project.name} – Project`;
+    const title = `${titleBase} | MatchMe`;
+    const rawDescription = project.tagline || project.description || "View project on MatchMe.";
+    const description =
+      rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
+    const url = `https://matchme.me/projects/${slug}`;
+    const keywords = [...(project.required_skills ?? []), ...(project.tags ?? [])]
+      .filter(Boolean)
+      .slice(0, 12)
+      .join(", ");
+    const ogImage =
+      Array.isArray(project.project_image) && project.project_image[0]?.url
+        ? project.project_image[0].url
+        : "/logo/full_logo.svg";
+
+    return {
+      title,
+      description,
+      keywords,
+      alternates: {canonical: url},
+      openGraph: {
+        title,
+        description,
+        url,
+        type: "website",
+        images: [ogImage],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage],
+      },
+    };
+  } catch {
+    return {
+      title: "Project | MatchMe",
+      description: "Explore projects on MatchMe.",
+      alternates: {canonical: `https://matchme.me/projects/${slug}`},
+    };
+  }
+}
 
 const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) => {
   const {slug} = await params;
@@ -60,12 +127,12 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
     );
   }
 
-  // Handle project not found outside of try-catch to allow notFound() to work
   if (!bundle) {
     notFound();
   }
 
   const {project, isFollowing, isFavorite, stats} = bundle;
+
   const {followers, members, openRoles, skills} = stats;
   // Get project image URL
   const projectImageUrl =
@@ -91,6 +158,38 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
           height: "clamp(130px, 20vw, 156px)",
           backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
         }}></div>
+
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            mainEntity: {
+              "@type": "CreativeWork",
+              name: project.name,
+              url: `https://matchme.me/projects/${project.slug}`,
+              image: projectImageUrl,
+              description: project.description || project.tagline || undefined,
+              about: [
+                ...((project.tags ?? []) as string[]),
+                ...(skills || []).map((s) => s.name),
+              ].slice(0, 20),
+              keywords: [
+                ...((project.required_skills ?? []) as string[]),
+                ...((project.tags ?? []) as string[]),
+              ]
+                .filter(Boolean)
+                .slice(0, 12)
+                .join(", "),
+              dateCreated: project.created_at,
+              dateModified: project.updated_at,
+              genre: project.category,
+            },
+          }),
+        }}
+      />
 
       <div className="@container flex flex-col gap-3 max-[950px]:gap-6 p-6 pt-0">
         <div className="flex flex-col gap-6">
@@ -178,7 +277,7 @@ const ProjectSinglePage = async ({params}: {params: Promise<{slug: string}>}) =>
               />
             ))}
             <ProjectTabs projectId={project.id} userSessionId={userSessionId} />
-            {/* <KeywordTagList tags={tags} type="projects" /> */}
+            <KeywordTagList tags={project.tags} type="projects" />
             <ContentShareSection
               contentType="project"
               contentUrl={`https://matchme.me/projects/${project.slug}`}
