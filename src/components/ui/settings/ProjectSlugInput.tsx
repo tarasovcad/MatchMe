@@ -24,11 +24,12 @@ interface ProjectSlugInputProps {
   placeholder: string;
   register?: UseFormRegisterReturn<string>;
   project?: Project;
+  readOnly?: boolean;
   [key: string]: unknown; // allow additional props such as 'type', 'disabled', etc.
 }
 
 const ProjectSlugInput = (props: ProjectSlugInputProps) => {
-  const {id, name, placeholder, register, project, ...rest} = props;
+  const {id, name, placeholder, register, project, readOnly = false, ...rest} = props;
 
   const [open, setOpen] = useState(false);
   const [slugLoading, setSlugLoading] = useState(false);
@@ -59,6 +60,11 @@ const ProjectSlugInput = (props: ProjectSlugInputProps) => {
   const slugChangeStatus = project?.slug_changed_at
     ? canChangeSlug(new Date(project.slug_changed_at))
     : {canChange: true, nextAvailableDate: null};
+
+  // If readOnly, always show a plain read-only input (no dialog)
+  if (readOnly) {
+    return <SimpleInput id={id} name={name} placeholder={placeholder} readOnly {...register} />;
+  }
 
   if (!slugChangeStatus.canChange) {
     return (

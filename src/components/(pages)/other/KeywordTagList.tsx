@@ -38,7 +38,7 @@ const KeywordTagList = ({tags, type}: {tags: string[]; type: "projects" | "profi
     setKeywordsToShow(expanded ? tags || [] : tags?.slice(0, maxKeywords) || []);
   }, [maxKeywords, expanded, tags]);
 
-  if (tags.length === 0) {
+  if (!tags || tags.length === 0) {
     return null;
   }
 

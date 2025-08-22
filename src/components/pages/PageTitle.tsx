@@ -32,9 +32,7 @@ const PageTitle = ({
           )}
         </div>
 
-        <MainGradient as="h3" className="font-semibold text-2xl">
-          {title}
-        </MainGradient>
+        <h3 className="font-semibold text-2xl text-foreground/80">{title}</h3>
       </div>
       <p className="text-secondary text-sm">{subtitle}</p>
     </div>

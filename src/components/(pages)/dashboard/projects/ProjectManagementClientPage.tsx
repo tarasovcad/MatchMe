@@ -1,33 +1,31 @@
 "use client";
 import React, {useState} from "react";
-
 import TabNavigation from "@/components/ui/form/TabNavigation";
 import {User} from "@supabase/supabase-js";
 import {Project} from "@/types/projects/projects";
 import DashboardHeader from "../header/DashboardHeader";
-import DashboardOverviewTab from "./DashboardOverviewTab";
 import {dashboardProjectTabsData} from "@/data/tabs/dashboardProjectTabs";
 import {useRouter} from "next/navigation";
 import ProjectManagementDetailsTab from "./ProjectManagementDetailsTab";
 import Alert from "@/components/ui/Alert";
 import {canMakePublic} from "@/functions/canMakePublic";
 import ProjectManagementSecurityTab from "./ProjectManagementSecurityTab";
-import {canChangeUsername} from "@/functions/canChangeUsername";
 import {canChangeSlug} from "@/functions/canChangeSlug";
 import ProjectManagementTeamMembers from "./ProjectManagementTeamMembers";
 import ProjectManagementRequests from "./ProjectManagementRequests";
 import ProjectManagementOpenPositions from "./ProjectManagementOpenPositions";
+import AccessDeniedSection from "@/components/other/AccessDeniedSection";
 
 const ProjectManagementClientPage = ({
   tab,
   user,
   project,
-  userPermission,
+  userPermissions,
 }: {
   tab: string | string[];
   user: User;
   project: Project;
-  userPermission: string;
+  userPermissions?: Record<string, Record<string, boolean>> | null;
 }) => {
   const router = useRouter();
 
@@ -36,16 +34,42 @@ const ProjectManagementClientPage = ({
 
   const {canMakePublic: canMakeProjectPublic} = canMakePublic(projectState);
 
+  const resourceMap: Record<string, string> = {
+    details: "Project Details",
+    "team-members": "Members",
+    "open-positions": "Open Positions",
+    requests: "Invitations",
+    analytics: "Analytics",
+    followers: "Followers",
+    security: "Roles & Permissions",
+  };
+
+  const canViewCurrentTab = (() => {
+    const current = typeof tab === "string" ? tab : Array.isArray(tab) ? tab[0] : "";
+    const resource = resourceMap[current];
+    if (!resource) return true;
+    if (!userPermissions) return true; // default allow if no permissions provided
+    return userPermissions[resource]?.view === true;
+  })();
+
+  // Compute update permission for Project Details
+  const canUpdateProjectDetails = (() => {
+    const resource = resourceMap["details"];
+    if (!userPermissions || !resource) return true;
+    return userPermissions[resource]?.update === true;
+  })();
+
   const renderSelectedComponent = () => {
+    if (!canViewCurrentTab)
+      return <AccessDeniedSection tabName={resourceMap[tab as string]} projectId={project.id} />;
     switch (tab) {
-      case "overview":
-        return <DashboardOverviewTab user={user} project={projectState} />;
       case "details":
         return (
           <ProjectManagementDetailsTab
             user={user}
             project={projectState}
             onProjectUpdate={setProjectState}
+            readOnly={!canUpdateProjectDetails}
           />
         );
       case "analytics":
@@ -64,14 +88,29 @@ const ProjectManagementClientPage = ({
             onProjectUpdate={setProjectState}
           />
         );
+      case "followers":
+        return <div>Followers</div>;
       default:
-        return <DashboardOverviewTab user={user} project={projectState} />;
+        return (
+          <ProjectManagementDetailsTab
+            user={user}
+            project={projectState}
+            onProjectUpdate={setProjectState}
+          />
+        );
     }
   };
 
   const slugChangeStatus = projectState.slug_changed_at
     ? canChangeSlug(projectState.slug_changed_at as Date)
     : {canChange: true, nextAvailableDate: null};
+
+  // Map tabs to permission resource names
+  const computedTabs = dashboardProjectTabsData.map((t) => {
+    const resource = resourceMap[t.query];
+    const canView = userPermissions && resource ? userPermissions[resource]?.view === true : true;
+    return {...t, disabled: resource ? !canView : false};
+  });
 
   return (
     <div className="@container flex flex-col gap-8 pb-24">
@@ -97,7 +136,7 @@ const ProjectManagementClientPage = ({
           hasArrow={true}
           onClick={() => router.push("/dashboard?tab=projects")}
         />
-        <TabNavigation tabsData={dashboardProjectTabsData} activeTab={tab} />
+        <TabNavigation tabsData={computedTabs} activeTab={tab} />
       </div>
 
       <div>{renderSelectedComponent()}</div>

@@ -12,10 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../shadcn/dialog";
-import NextImage from "next/image";
+import Image from "next/image";
 import {formatFileSize} from "@/functions/formatFileSize";
 import {Cropper, CropperCropArea, CropperDescription, CropperImage} from "../../shadcn/cropper";
 import {Slider} from "../../shadcn/slider";
+import ImageViewer from "../ImageViewer";
 
 const FILE_CONFIG = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB in bytes
@@ -42,6 +43,7 @@ export interface ImageUploadProps {
   cropInstructions?: string; // Custom instructions for crop dialog
   maxUploads?: number; // Maximum number of uploads (default: 1, max: 5)
   allowedFileTypes?: string[]; // Allowed file types
+  readOnly?: boolean; // Whether the component is read-only
 }
 
 // Define type for pixel crop area
@@ -129,6 +131,7 @@ const ImageUpload = ({
   cropInstructions = "Adjust the size of the grid to crop your image.",
   allowedFileTypes = FILE_CONFIG.ALLOWED_FILE_TYPES,
   maxUploads = 1,
+  readOnly = false,
 }: ImageUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -165,23 +168,31 @@ const ImageUpload = ({
     e.stopPropagation();
   }, []);
 
-  const handleDragIn = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current++;
-    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-      setIsDragging(true);
-    }
-  }, []);
+  const handleDragIn = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (readOnly) return;
+      dragCounter.current++;
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        setIsDragging(true);
+      }
+    },
+    [readOnly],
+  );
 
-  const handleDragOut = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounter.current--;
-    if (dragCounter.current === 0) {
-      setIsDragging(false);
-    }
-  }, []);
+  const handleDragOut = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (readOnly) return;
+      dragCounter.current--;
+      if (dragCounter.current === 0) {
+        setIsDragging(false);
+      }
+    },
+    [readOnly],
+  );
 
   const validateFile = (selectedFile: File): {valid: boolean; error?: string} => {
     const fileType = selectedFile.type;
@@ -224,28 +235,35 @@ const ImageUpload = ({
     return {valid: true};
   };
 
-  const handleFiles = useCallback((files: FileList) => {
-    const selectedFile = files[0];
-    const validation = validateFile(selectedFile);
+  const handleFiles = useCallback(
+    (files: FileList) => {
+      if (readOnly) return;
 
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
+      const selectedFile = files[0];
+      const validation = validateFile(selectedFile);
 
-    setIsOpen(true);
-    setFile(selectedFile);
-    setFileName(selectedFile.name);
-    setFileSize(selectedFile.size);
-  }, []);
+      if (!validation.valid) {
+        toast.error(validation.error);
+        return;
+      }
+
+      setIsOpen(true);
+      setFile(selectedFile);
+      setFileName(selectedFile.name);
+      setFileSize(selectedFile.size);
+    },
+    [readOnly],
+  );
 
   const handleDeleteFile = (index: number) => {
+    if (readOnly) return;
     const currentImages = selectedValues || [];
     const updatedImages = currentImages.filter((_, i) => i !== index);
     setValue(name, updatedImages, {shouldDirty: true});
   };
 
   const handleDeleteAllFiles = () => {
+    if (readOnly) return;
     setValue(name, [], {shouldDirty: true});
   };
 
@@ -255,20 +273,23 @@ const ImageUpload = ({
       e.stopPropagation();
       setIsDragging(false);
       dragCounter.current = 0;
+      if (readOnly) return;
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         handleFiles(e.dataTransfer.files);
         e.dataTransfer.clearData();
       }
     },
-    [handleFiles],
+    [handleFiles, readOnly],
   );
 
   const handleBrowseFiles = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    if (readOnly) return;
     fileInputRef.current?.click();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly) return;
     const files = e.target.files;
     if (files && files.length) {
       handleFiles(files);
@@ -457,7 +478,7 @@ const ImageUpload = ({
       // Avatar with image
       return (
         <div key={index} className="ring-border rounded-full ring size-10 shrink-0">
-          <NextImage
+          <Image
             src={imageData.url}
             alt={`avatar ${index + 1}`}
             width={40}
@@ -471,7 +492,7 @@ const ImageUpload = ({
     } else if (type === "project") {
       return (
         <div key={index} className=" rounded-lg size-10 shrink-0">
-          <NextImage
+          <Image
             src={imageData.url}
             alt={`project avatar ${index + 1}`}
             width={40}
@@ -486,7 +507,7 @@ const ImageUpload = ({
       // Background with image
       return (
         <div key={index} className="ring-border rounded-[4px] shrink-0">
-          <NextImage
+          <Image
             src={imageData.url}
             alt={`background ${index + 1}`}
             width={114}
@@ -500,7 +521,7 @@ const ImageUpload = ({
     } else if (type === "demo") {
       return (
         <div key={index} className="ring-border rounded-[4px] shrink-0">
-          <NextImage
+          <Image
             src={imageData.url}
             alt={`demo ${index + 1}`}
             width={94}
@@ -527,17 +548,19 @@ const ImageUpload = ({
           className={cn(
             "flex flex-col justify-center items-center gap-[6px]  py-6 border border-border rounded-[8px] w-full border-dashed  text-center",
             isDragging ? "border border-dashed bg-[#f4f4f5] dark:bg-muted" : "border-border ",
+            readOnly && "bg-muted/50 opacity-70 cursor-not-allowed",
           )}
-          onDragEnter={handleDragIn}
-          onDragLeave={handleDragOut}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}>
+          onDragEnter={readOnly ? undefined : handleDragIn}
+          onDragLeave={readOnly ? undefined : handleDragOut}
+          onDragOver={readOnly ? undefined : handleDrag}
+          onDrop={readOnly ? undefined : handleDrop}>
           <input
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
             accept={getFileExtensionsFromMimeTypes(allowedFileTypes)}
+            disabled={readOnly}
           />
           <div
             className="flex justify-center items-center bg-background border rounded-full size-11 shrink-0"
@@ -546,10 +569,18 @@ const ImageUpload = ({
           </div>
           <div className="flex flex-col gap-[4px]">
             <p className="font-medium">
-              <button className="text-primary cursor-pointer" onClick={handleBrowseFiles}>
+              <button
+                className={cn(
+                  "text-primary cursor-pointer",
+                  readOnly && "text-muted-foreground cursor-not-allowed",
+                )}
+                onClick={handleBrowseFiles}
+                disabled={readOnly}>
                 Click to upload
               </button>{" "}
-              <span className="text-foreground/80">or drag and drop</span>
+              <span className={cn("text-foreground/80", readOnly && "text-muted-foreground")}>
+                or drag and drop
+              </span>
             </p>
             <p className="text-[12px] text-secondary text-xs">
               {getReadableFormatNames(allowedFileTypes)} formats, up to 5MB
@@ -577,9 +608,10 @@ const ImageUpload = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="hover:bg-transparent -me-2 size-8 text-muted-foreground/80 hover:text-foreground"
+                  className="hover:bg-transparent -me-2 size-8 text-muted-foreground/80 hover:text-foreground disabled:cursor-not-allowed "
                   onClick={() => handleDeleteFile(index)}
-                  aria-label={`Remove file ${index + 1}`}>
+                  aria-label={`Remove file ${index + 1}`}
+                  disabled={readOnly}>
                   <XIcon aria-hidden="true" size={16} />
                 </Button>
               </div>
@@ -590,7 +622,8 @@ const ImageUpload = ({
                 variant="outline"
                 size="xs"
                 onClick={handleDeleteAllFiles}
-                className="self-start">
+                className="self-start"
+                disabled={readOnly}>
                 Remove all
               </Button>
             )}

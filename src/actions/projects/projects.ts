@@ -69,36 +69,61 @@ export async function checkProjectAccess(slug: string, userId: string) {
     .single();
 
   if (projectError || !project) {
-    return null;
+    return null; // Project not found ->  404
   }
 
-  // Check if user is project owner
+  // Determine owner (for convenience), but do not special-case permissions fetch
   const isOwner = project.user_id === userId;
 
-  if (isOwner) {
-    return {
-      projectData: project,
-      userPermission: "owner",
-      isOwner: true,
-    };
-  }
-
-  // Check if user is an active team member
+  // Fetch active team membership for this user in the project
   const {data: teamMember, error: teamError} = await supabase
     .from("project_team_members")
-    .select("*")
+    .select("user_id, role_id")
     .eq("project_id", project.id)
     .eq("user_id", userId)
-    .eq("is_active", true)
     .single();
 
   if (teamError || !teamMember) {
-    return null; // User has no access
+    return null;
+  }
+
+  // Fetch the role and its permissions
+  type RoleWithPermissions = {
+    id: string;
+    name: string;
+    permissions: Record<string, Record<string, boolean>>;
+  };
+  let role: RoleWithPermissions | null = null;
+  if (teamMember.role_id) {
+    const {data: roleRow} = await supabase
+      .from("project_roles")
+      .select("id, name, permissions")
+      .eq("id", teamMember.role_id)
+      .maybeSingle();
+    if (roleRow) {
+      role = roleRow as RoleWithPermissions;
+    }
+  }
+
+  // If no role assigned, try to fall back to the default role for the project
+  if (!role) {
+    const {data: defaultRole} = await supabase
+      .from("project_roles")
+      .select("id, name, permissions")
+      .eq("project_id", project.id)
+      .eq("is_default", true)
+      .limit(1)
+      .maybeSingle();
+    if (defaultRole) {
+      role = defaultRole as RoleWithPermissions;
+    }
   }
 
   return {
     projectData: project,
-    userPermission: teamMember.permission,
-    isOwner: false,
-  };
+    userPermission: role?.name?.toLowerCase?.() ?? "member",
+    isOwner,
+    role: role ? {id: role.id, name: role.name} : {id: null as unknown as string, name: "Member"},
+    permissions: role?.permissions ?? null,
+  } as const;
 }

@@ -21,6 +21,7 @@ export default function SelectInput({
   error,
   disabled,
   loading,
+  readOnly,
 }: {
   id: string;
   placeholder: string;
@@ -30,12 +31,14 @@ export default function SelectInput({
   error?: {message?: string} | undefined;
   disabled?: boolean;
   loading?: boolean;
+  readOnly?: boolean;
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
   const [internalValue, setInternalValue] = useState<string | null>(selectedValue || null);
 
   const handleSelectChange = (value: string) => {
+    if (readOnly) return;
     if (value === internalValue) {
       setValue(name, "", {shouldValidate: true});
       setInternalValue(null);
@@ -49,12 +52,17 @@ export default function SelectInput({
 
   return (
     <div className="space-y-2">
-      <Select onValueChange={handleSelectChange} value={selectedValue} disabled={isDisabled}>
+      <Select
+        onValueChange={readOnly ? undefined : handleSelectChange}
+        value={selectedValue}
+        disabled={isDisabled}>
         <SelectTrigger
           id={id}
+          data-readonly={readOnly}
           className={cn(
             error &&
               "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+            readOnly && "bg-muted",
             className,
           )}>
           {loading ? (
@@ -70,8 +78,11 @@ export default function SelectInput({
             return (
               <SelectItem
                 key={index}
+                disabled={readOnly}
                 value={option.value ?? option.title}
-                onClick={() => handleSelectChange(option.value ?? option.title)}>
+                onClick={
+                  readOnly ? undefined : () => handleSelectChange(option.value ?? option.title)
+                }>
                 {option.title}
               </SelectItem>
             );

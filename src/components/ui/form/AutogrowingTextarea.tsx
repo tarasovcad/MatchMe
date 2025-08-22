@@ -14,6 +14,7 @@ export default function AutogrowingTextarea({
   register,
   error,
   disabled,
+  readOnly,
 }: {
   id: string;
   placeholder: string;
@@ -22,6 +23,7 @@ export default function AutogrowingTextarea({
   register?: UseFormRegisterReturn<string>;
   error?: {message?: string} | undefined;
   disabled?: boolean;
+  readOnly?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const defaultRows = 1;
@@ -86,10 +88,12 @@ export default function AutogrowingTextarea({
           "min-h-[none] resize-none h-9",
           error &&
             "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+          readOnly && "bg-muted shadow-none text-foreground",
           className,
         )}
         onBlur={register?.onBlur}
         disabled={disabled}
+        readOnly={readOnly}
       />
       <FormErrorLabel error={error} />
     </div>

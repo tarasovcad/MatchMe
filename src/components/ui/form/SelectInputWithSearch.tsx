@@ -26,6 +26,7 @@ export default function SelectInputWithSearch({
   error,
   disabled,
   loading,
+  readOnly,
 }: {
   id: string;
   placeholder: string;
@@ -35,6 +36,7 @@ export default function SelectInputWithSearch({
   error?: {message?: string} | undefined;
   disabled?: boolean;
   loading?: boolean;
+  readOnly?: boolean;
 }) {
   const {setValue, watch} = useFormContext();
   const selectedValue = watch(name);
@@ -52,6 +54,7 @@ export default function SelectInputWithSearch({
   const options = isCountrySelect ? countries : defaultOptions;
 
   const handleSelectChange = (optionValue: string, optionTitle: string) => {
+    if (readOnly) return;
     // Use value if it exists, otherwise use title (for backwards compatibility)
     const valueToSet = optionValue || optionTitle;
 
@@ -87,6 +90,7 @@ export default function SelectInputWithSearch({
               "bg-background hover:bg-background border-input max-h-[36px]  w-full justify-between px-3 font-normal outline-offset-0 outline-none focus-visible:outline-[3px]",
               error &&
                 "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+              readOnly && "bg-muted hover:bg-muted",
               className,
             )}>
             <span
@@ -118,10 +122,15 @@ export default function SelectInputWithSearch({
                   return (
                     <CommandItem
                       key={index}
+                      disabled={readOnly}
                       value={option.title}
-                      onSelect={() => {
-                        handleSelectChange(optionValue, option.title);
-                      }}>
+                      onSelect={
+                        readOnly
+                          ? undefined
+                          : () => {
+                              handleSelectChange(optionValue, option.title);
+                            }
+                      }>
                       {option.title}
                       {isSelected && <CheckIcon size={16} className="ml-auto" />}
                     </CommandItem>

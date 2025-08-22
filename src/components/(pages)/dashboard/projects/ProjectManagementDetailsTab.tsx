@@ -28,10 +28,12 @@ const ProjectManagementDetailsTab = ({
   user,
   project,
   onProjectUpdate,
+  readOnly = false,
 }: {
   user: User;
   project: Project;
   onProjectUpdate?: React.Dispatch<React.SetStateAction<Project>>;
+  readOnly?: boolean;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
@@ -204,7 +206,11 @@ const ProjectManagementDetailsTab = ({
                   key={formField.fieldTitle}
                   variants={itemVariants}
                   className={cn("px-[18px] py-3", index !== 0 && "border-t border-border")}>
-                  <SettingsFormField formField={formField} project={project} />
+                  <SettingsFormField
+                    formField={formField}
+                    project={project}
+                    readOnlyOverride={readOnly}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -217,7 +223,11 @@ const ProjectManagementDetailsTab = ({
                 <motion.div variants={containerVariants} className="flex flex-col gap-6">
                   {section.formData.map((formField) => (
                     <motion.div key={formField.fieldTitle} variants={itemVariants}>
-                      <SettingsFormField formField={formField} project={project} />
+                      <SettingsFormField
+                        formField={formField}
+                        project={project}
+                        readOnlyOverride={readOnly}
+                      />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -228,19 +238,21 @@ const ProjectManagementDetailsTab = ({
       </div>
 
       {/* Bottom action buttons */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={bottomSectionButtonsVariants}
-        className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
-        <FormMainButtons
-          isLoading={isLoading}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          isSaveDisabled={isSaveDisabled}
-          isClearDisabled={isClearDisabled}
-        />
-      </motion.div>
+      {!readOnly && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={bottomSectionButtonsVariants}
+          className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
+          <FormMainButtons
+            isLoading={isLoading}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            isSaveDisabled={isSaveDisabled}
+            isClearDisabled={isClearDisabled}
+          />
+        </motion.div>
+      )}
     </motion.form>
   );
 };
