@@ -26,6 +26,7 @@ import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
 import ProjectSlugInput from "./ProjectSlugInput";
 import ProjectDangerZone from "@/components/(pages)/dashboard/projects/ProjectDangerZone";
+import TransferOwnershipButton from "@/components/(pages)/dashboard/projects/TransferOwnershipButton";
 
 const fieldComponents = {
   makePublic: MakePublicSwitch,
@@ -47,6 +48,7 @@ const fieldComponents = {
   username: SettingsUsernameInput,
   demo: DemoImageInput,
   slug: ProjectSlugInput,
+  transferOwnership: TransferOwnershipButton,
 };
 
 const SettingsFormField = ({

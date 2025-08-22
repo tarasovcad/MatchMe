@@ -9,6 +9,54 @@ import {Project} from "@/types/projects/projects";
 export const submitProjectForm = async (projectId: string, formData: Record<string, unknown>) => {
   const supabase = await createClient();
 
+  const {
+    data: {user},
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return {error: true, message: "Not authenticated"};
+  }
+
+  // Active membership required
+  const {data: member, error: memberErr} = await supabase
+    .from("project_team_members")
+    .select("role_id")
+    .eq("project_id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (memberErr || !member) {
+    return {error: true, message: "Restricted Access"};
+  }
+
+  // Resolve role id: explicit or default
+  let roleId = member.role_id as string | null;
+  if (!roleId) {
+    const {data: defaultRole} = await supabase
+      .from("project_roles")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("is_default", true)
+      .limit(1)
+      .maybeSingle();
+    roleId = defaultRole?.id ?? null;
+  }
+
+  if (!roleId) {
+    return {error: true, message: "Restricted Access"};
+  }
+
+  // Fetch permissions for role and check capability
+  const {data: role} = await supabase
+    .from("project_roles")
+    .select("permissions")
+    .eq("id", roleId)
+    .maybeSingle();
+
+  const canUpdateProjectDetails = role?.permissions?.["Project Details"]?.update === true;
+  if (!canUpdateProjectDetails) {
+    return {error: true, message: "Restricted Access"};
+  }
+
   // Transform empty strings / empty arrays to null for consistency
   const transformedData = Object.entries(formData).reduce(
     (acc, [key, value]) => {
@@ -62,10 +110,6 @@ export const submitProjectForm = async (projectId: string, formData: Record<stri
     console.error("Error processing project images:", err);
     return {error: true, message: "Error processing images"};
   }
-
-  // ---------------------------------------------------------------------------
-  // Backend validation: ensure project can't be made public if incomplete
-  // ---------------------------------------------------------------------------
 
   // Fetch current project to merge with incoming updates
   const {data: currentProject} = await supabase

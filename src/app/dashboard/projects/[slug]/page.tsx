@@ -17,6 +17,7 @@ const allowedTabs = new Set([
   "requests",
   "analytics",
   "followers",
+  "roles-permissions",
   "security",
 ]);
 
@@ -46,7 +47,13 @@ const ProjectManagement = async ({params, searchParams}: PageProps) => {
     notFound();
   }
 
-  const {projectData, permissions} = accessResult;
+  const {projectData, permissions, isOwner} = accessResult;
+
+  // Enforce owner-only access for the security tab
+  if (tab === "security" && !isOwner) {
+    redirect(`/dashboard/projects/${slug}?tab=details`);
+  }
+
   return (
     <SidebarProvider>
       <ProjectManagementClientPage
@@ -54,6 +61,7 @@ const ProjectManagement = async ({params, searchParams}: PageProps) => {
         user={user}
         project={projectData}
         userPermissions={permissions}
+        isOwner={isOwner}
       />
     </SidebarProvider>
   );

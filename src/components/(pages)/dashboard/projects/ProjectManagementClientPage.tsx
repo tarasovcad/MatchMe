@@ -10,22 +10,24 @@ import ProjectManagementDetailsTab from "./ProjectManagementDetailsTab";
 import Alert from "@/components/ui/Alert";
 import {canMakePublic} from "@/functions/canMakePublic";
 import ProjectManagementSecurityTab from "./ProjectManagementSecurityTab";
-import {canChangeSlug} from "@/functions/canChangeSlug";
 import ProjectManagementTeamMembers from "./ProjectManagementTeamMembers";
 import ProjectManagementRequests from "./ProjectManagementRequests";
 import ProjectManagementOpenPositions from "./ProjectManagementOpenPositions";
 import AccessDeniedSection from "@/components/other/AccessDeniedSection";
+import ProjectManagementRolesPermissionsTab from "./ProjectManagementRolesPermissionsTab";
 
 const ProjectManagementClientPage = ({
   tab,
   user,
   project,
   userPermissions,
+  isOwner = false,
 }: {
   tab: string | string[];
   user: User;
   project: Project;
   userPermissions?: Record<string, Record<string, boolean>> | null;
+  isOwner?: boolean;
 }) => {
   const router = useRouter();
 
@@ -41,12 +43,20 @@ const ProjectManagementClientPage = ({
     requests: "Invitations",
     analytics: "Analytics",
     followers: "Followers",
-    security: "Roles & Permissions",
+    "roles-permissions": "Roles & Permissions",
   };
 
+  const currentTabKey = typeof tab === "string" ? tab : Array.isArray(tab) ? tab[0] : "";
+  const currentTabTitle =
+    dashboardProjectTabsData.find((t) => t.query === currentTabKey)?.title ||
+    resourceMap[currentTabKey] ||
+    currentTabKey;
+
   const canViewCurrentTab = (() => {
-    const current = typeof tab === "string" ? tab : Array.isArray(tab) ? tab[0] : "";
-    const resource = resourceMap[current];
+    // Owner-only access for Security tab
+    if (currentTabKey === "security") return isOwner;
+
+    const resource = resourceMap[currentTabKey];
     if (!resource) return true;
     if (!userPermissions) return true; // default allow if no permissions provided
     return userPermissions[resource]?.view === true;
@@ -61,12 +71,11 @@ const ProjectManagementClientPage = ({
 
   const renderSelectedComponent = () => {
     if (!canViewCurrentTab)
-      return <AccessDeniedSection tabName={resourceMap[tab as string]} projectId={project.id} />;
+      return <AccessDeniedSection tabName={currentTabTitle} projectId={project.id} />;
     switch (tab) {
       case "details":
         return (
           <ProjectManagementDetailsTab
-            user={user}
             project={projectState}
             onProjectUpdate={setProjectState}
             readOnly={!canUpdateProjectDetails}
@@ -88,29 +97,38 @@ const ProjectManagementClientPage = ({
             onProjectUpdate={setProjectState}
           />
         );
+      case "roles-permissions":
+        return <ProjectManagementRolesPermissionsTab user={user} project={projectState} />;
       case "followers":
         return <div>Followers</div>;
       default:
         return (
           <ProjectManagementDetailsTab
-            user={user}
             project={projectState}
             onProjectUpdate={setProjectState}
+            readOnly={!canUpdateProjectDetails}
           />
         );
     }
   };
 
-  const slugChangeStatus = projectState.slug_changed_at
-    ? canChangeSlug(projectState.slug_changed_at as Date)
-    : {canChange: true, nextAvailableDate: null};
-
-  // Map tabs to permission resource names
-  const computedTabs = dashboardProjectTabsData.map((t) => {
-    const resource = resourceMap[t.query];
-    const canView = userPermissions && resource ? userPermissions[resource]?.view === true : true;
-    return {...t, disabled: resource ? !canView : false};
-  });
+  // Map tabs to permission resource names and owner-only gating
+  const computedTabs = dashboardProjectTabsData
+    .filter((t) => {
+      // Hide security tab for non-owners
+      if (t.query === "security" && !isOwner) return false;
+      return true;
+    })
+    .map((t) => {
+      const resource = resourceMap[t.query];
+      const permissionAllows =
+        userPermissions && resource ? userPermissions[resource]?.view === true : true;
+      const ownerAllows = t.query === "security" ? isOwner : true;
+      return {
+        ...t,
+        disabled: resource ? !(permissionAllows && ownerAllows) : !ownerAllows ? true : false,
+      };
+    });
 
   return (
     <div className="@container flex flex-col gap-8 pb-24">
@@ -121,13 +139,7 @@ const ProjectManagementClientPage = ({
           type="warning"
         />
       )}
-      {tab === "security" && !slugChangeStatus.canChange && (
-        <Alert
-          message={`Your next available change date is ${slugChangeStatus.nextAvailableDate}.`}
-          title="Project slugs can only be changed once a month"
-          type="warning"
-        />
-      )}
+
       <div className="flex flex-col gap-6">
         <DashboardHeader
           title="Project Overview"

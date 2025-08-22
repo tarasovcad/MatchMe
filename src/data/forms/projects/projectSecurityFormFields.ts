@@ -4,20 +4,6 @@ export const projectSecurityFormFields = [
   {
     formTitle: "Project Security",
     formData: [
-      // {
-      //   fieldTitle: "Email",
-      //   fieldType: "text",
-      //   fieldRequired: true,
-      //   fieldInputProps: [
-      //     {
-      //       id: "email",
-      //       placeholder: "johndoe@example.com",
-      //       type: "email",
-      //       name: "email",
-      //       readOnly: true,
-      //     },
-      //   ],
-      // },
       {
         fieldTitle: "Slug",
         fieldType: "slug",
@@ -25,8 +11,7 @@ export const projectSecurityFormFields = [
         fieldInputProps: [
           {
             id: "slug",
-            placeholder: "johndoe",
-            // readOnly: true,
+            placeholder: "john-doe",
             type: "text",
             name: "slug",
           },
@@ -40,6 +25,17 @@ export const projectSecurityFormFields = [
           {
             id: "deleteProject",
             name: "deleteProject",
+          },
+        ],
+      },
+      {
+        fieldTitle: "Transfer Ownership",
+        fieldDescription: "Transfer ownership of your project to another user",
+        fieldType: "transferOwnership",
+        fieldInputProps: [
+          {
+            id: "transferOwnership",
+            name: "transferOwnership",
           },
         ],
       },

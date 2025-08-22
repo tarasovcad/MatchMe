@@ -6,6 +6,7 @@ export const dashboardProjectTabsData = [
   {query: "requests", title: "Requests"},
   {query: "analytics", title: "Analytics"},
   {query: "followers", title: "Followers"},
+  {query: "roles-permissions", title: "Roles & Permissions"},
   {query: "security", title: "Security"},
   // { query: "activity",      title: "Activity" },
   // { query: "milestones",    title: "Milestones" },

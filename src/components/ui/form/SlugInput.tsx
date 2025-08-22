@@ -1,11 +1,11 @@
 import {toast} from "sonner";
 import {checkSlugAvailabilityAction} from "@/actions/dashboard/create-project/checkSlugAvailabilityAction";
-import {debounce} from "lodash";
 import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
-import React, {useCallback, useEffect} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import SimpleInput from "./SimpleInput";
 import {Controller, useFormContext} from "react-hook-form";
 import {projectSecurityValidationSchema} from "@/validation/project/projectSecurityValidation";
+import {useQuery} from "@tanstack/react-query";
 
 interface SlugInputProps {
   label?: string;
@@ -13,10 +13,6 @@ interface SlugInputProps {
   name?: string;
   onAvailabilityChange?: (isAvailable: boolean | null) => void;
   autoFocus?: boolean;
-  slugLoading: boolean;
-  isSlugAvailable: boolean | null;
-  setSlugLoading: (loading: boolean) => void;
-  setIsSlugAvailable: (isAvailable: boolean | null) => void;
 }
 
 const SlugInput = ({
@@ -25,80 +21,80 @@ const SlugInput = ({
   name = "slug",
   onAvailabilityChange,
   autoFocus,
-  slugLoading,
-  isSlugAvailable,
-  setSlugLoading,
-  setIsSlugAvailable,
 }: SlugInputProps) => {
-  useEffect(() => {
-    if (onAvailabilityChange) {
-      onAvailabilityChange(isSlugAvailable);
-    }
-  }, [isSlugAvailable, onAvailabilityChange]);
-
   const {
     control,
     formState: {errors},
+    watch,
   } = useFormContext();
 
   const slugSchema = projectSecurityValidationSchema.shape.slug;
 
-  const checkSlugAvailability = async (value: string) => {
-    setSlugLoading(true);
-    setIsSlugAvailable(null);
-
-    const response = await checkSlugAvailabilityAction(value);
-    setSlugLoading(false);
-    if (response.error) {
-      toast.error(response.error);
-      return;
-    }
-    if (response.message === "Slug is available") {
-      setIsSlugAvailable(true);
-    }
-    if (response.message === "Slug is already taken") {
-      setIsSlugAvailable(false);
-      return;
-    }
-  };
-
-  const debouncedCheck = useCallback(
-    debounce((value: string) => {
-      if (!value || !slugSchema.safeParse(value).success) return;
-
-      if (RESERVED_PROJECT_SLUGS.includes(value.toLowerCase())) {
-        setIsSlugAvailable(false);
-        toast.error("This slug is reserved and cannot be used");
-        return;
-      }
-      checkSlugAvailability(value);
-    }, 500),
-    [],
-  );
+  const currentValue = (slug ?? watch(name) ?? "").toString();
+  const [debouncedValue, setDebouncedValue] = useState(currentValue);
 
   useEffect(() => {
-    if (!slug || !slugSchema.safeParse(slug).success) {
-      debouncedCheck.cancel();
-      setIsSlugAvailable(null);
-      setSlugLoading(false);
+    const handler = setTimeout(() => setDebouncedValue(currentValue), 300);
+    return () => clearTimeout(handler);
+  }, [currentValue]);
+
+  const isValidFormat = useMemo(
+    () => !!currentValue && slugSchema.safeParse(currentValue).success,
+    [currentValue],
+  );
+  const isReserved = useMemo(
+    () => !!currentValue && RESERVED_PROJECT_SLUGS.includes(currentValue.toLowerCase()),
+    [currentValue],
+  );
+
+  const enabled = isValidFormat && !isReserved && debouncedValue.length > 0;
+
+  const {data, isFetching, error} = useQuery({
+    queryKey: ["project-slug-availability", debouncedValue],
+    queryFn: async () => {
+      const response = await checkSlugAvailabilityAction(debouncedValue.toLowerCase());
+      if (response.error) throw new Error(response.error);
+      return response;
+    },
+    enabled,
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to check slug availability");
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (!isValidFormat) {
+      onAvailabilityChange?.(null);
       return;
     }
-
-    setIsSlugAvailable(null);
-    setSlugLoading(true);
-
-    if (RESERVED_PROJECT_SLUGS.includes(slug.toLowerCase())) {
-      setIsSlugAvailable(false);
-      setSlugLoading(false);
+    if (isReserved) {
+      onAvailabilityChange?.(false);
       return;
     }
+    if (!enabled) {
+      onAvailabilityChange?.(null);
+      return;
+    }
+    if (!data) return;
 
-    debouncedCheck.cancel();
-    debouncedCheck(slug);
-    return () => {
-      debouncedCheck.cancel();
-    };
-  }, [slug]);
+    if (data.message === "Slug is available") onAvailabilityChange?.(true);
+    else if (data.message === "Slug is already taken") onAvailabilityChange?.(false);
+    else onAvailabilityChange?.(null);
+  }, [data, enabled, isReserved, isValidFormat, onAvailabilityChange]);
+
+  const isAvailable = !isValidFormat
+    ? null
+    : isReserved
+      ? false
+      : data?.message === "Slug is available"
+        ? true
+        : data?.message === "Slug is already taken"
+          ? false
+          : null;
 
   return (
     <Controller
@@ -111,9 +107,9 @@ const SlugInput = ({
           error={errors[name]}
           type="text"
           id={name}
-          loading={slugLoading}
-          name={field.name}
-          isUsernameAvailable={isSlugAvailable}
+          loading={enabled && isFetching}
+          name="slug"
+          isUsernameAvailable={isAvailable}
           value={field.value}
           autoFocus={autoFocus}
           onChange={(e) => {

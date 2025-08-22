@@ -25,12 +25,10 @@ import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {cn} from "@/lib/utils";
 
 const ProjectManagementDetailsTab = ({
-  user,
   project,
   onProjectUpdate,
   readOnly = false,
 }: {
-  user: User;
   project: Project;
   onProjectUpdate?: React.Dispatch<React.SetStateAction<Project>>;
   readOnly?: boolean;
