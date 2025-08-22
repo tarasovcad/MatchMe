@@ -99,7 +99,7 @@ const ProjectManagementSecurityTab = ({
       }
 
       // Redirect to the new slug's security tab
-      router.replace(`/dashboard/projects/${data.slug}?tab=security`);
+      router.replace(`/dashboard/projects/${data.slug}?tab=details`);
     }
 
     toast.success("Changes saved successfully", {id: toastId});

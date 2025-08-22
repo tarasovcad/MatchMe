@@ -30,22 +30,6 @@ export const projectDetailsFormFields: FormProps[] = [
         ],
       },
       {
-        fieldTitle: "Slug",
-        fieldDescription: "Used to identify the project in the URL",
-        fieldType: "text",
-        fieldRequired: true,
-
-        fieldInputProps: [
-          {
-            id: "slug",
-            placeholder: "project-slug",
-            readOnly: true,
-            type: "text",
-            name: "slug",
-          },
-        ],
-      },
-      {
         fieldTitle: "Tagline",
         fieldDescription: "Short one-sentence summary to spark interest",
         fieldType: "text",
@@ -242,7 +226,7 @@ export const projectDetailsFormFields: FormProps[] = [
         fieldTitle: "Collaboration Style",
         fieldDescription: "How do you prefer to communicate and coordinate with your team?",
         fieldType: "dropdown",
-        fieldRequired: true,
+
         fieldInputProps: [
           {
             id: "collaboration_style",
@@ -257,6 +241,7 @@ export const projectDetailsFormFields: FormProps[] = [
         fieldTitle: "Time Commitment",
         fieldDescription: "Approximate weekly hours required for contributors",
         fieldType: "dropdown",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "time_commitment",
@@ -290,6 +275,7 @@ export const projectDetailsFormFields: FormProps[] = [
         fieldTitle: "Revenue Expectations",
         fieldDescription: "Projected earnings or monetisation outlook",
         fieldType: "dropdown",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "revenue_expectations",
@@ -304,6 +290,7 @@ export const projectDetailsFormFields: FormProps[] = [
         fieldTitle: "Funding & Investment",
         fieldDescription: "Current funding status or investment goals",
         fieldType: "dropdown",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "funding_investment",
@@ -318,6 +305,7 @@ export const projectDetailsFormFields: FormProps[] = [
         fieldTitle: "Compensation Model",
         fieldDescription: "How contributors will be rewarded",
         fieldType: "dropdown",
+        fieldRequired: true,
         fieldInputProps: [
           {
             id: "compensation_model",
@@ -325,6 +313,27 @@ export const projectDetailsFormFields: FormProps[] = [
             type: "text",
             name: "compensation_model",
             options: compensationModels,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    formTitle: "Boost Discoverability (Optional)",
+    formDescription:
+      "These tags help more people find your project. Only for reach and popularity.",
+    formData: [
+      {
+        fieldTitle: "Tags",
+        fieldDescription:
+          "These tags help more people find your project. Only for reach and popularity.",
+        fieldType: "tags",
+        fieldInputProps: [
+          {
+            id: "tags",
+            placeholder: "Add a tag",
+            type: "text",
+            name: "tags",
           },
         ],
       },

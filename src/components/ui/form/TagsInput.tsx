@@ -90,18 +90,21 @@ export default function TagsInput({
                       const uniqueTags = tagArray.filter((tag) => {
                         const raw = typeof tag.text === "string" ? tag.text : "";
                         const cleaned = raw.replace(/^#/, "");
-                        const normalized = cleaned.toLowerCase();
+                        const normalized = showHashPrefix ? cleaned.toLowerCase() : cleaned;
                         if (normalizedMap.has(normalized)) {
                           return false;
                         }
                         normalizedMap.set(normalized, true);
                         return true;
                       });
-                      const values = uniqueTags.map((tag) => tag.text.replace(/^#/, ""));
+                      const values = uniqueTags.map((tag) => {
+                        const cleaned = tag.text.replace(/^#/, "");
+                        return showHashPrefix ? cleaned.toLowerCase() : cleaned;
+                      });
                       field.onChange(values);
                     }
               }
-              placeholder={readOnly ? "" : placeholder}
+              placeholder={placeholder}
               customTagRenderer={customTagRenderer}
               styleClasses={{
                 inlineTagsContainer: `flex w-full rounded-lg border ${

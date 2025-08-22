@@ -23,6 +23,8 @@ import {
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {cn} from "@/lib/utils";
+import Alert from "@/components/ui/Alert";
+import {canMakePublic} from "@/functions/canMakePublic";
 
 const ProjectManagementDetailsTab = ({
   project,
@@ -58,6 +60,7 @@ const ProjectManagementDetailsTab = ({
       ? project.language_proficiency
       : [],
     technology_stack: Array.isArray(project.technology_stack) ? project.technology_stack : [],
+
     // Step 4
     collaboration_model: project.collaboration_model ?? "",
     collaboration_style: project.collaboration_style ?? "",
@@ -71,6 +74,8 @@ const ProjectManagementDetailsTab = ({
     revenue_expectations: project.revenue_expectations ?? "",
     funding_investment: project.funding_investment ?? "",
     compensation_model: project.compensation_model ?? "",
+    // Step 6
+    tags: Array.isArray(project.tags) ? project.tags : [],
     // Internal
     _slugLoading: false,
   }));
@@ -185,13 +190,22 @@ const ProjectManagementDetailsTab = ({
     methods.reset();
   };
 
+  const {canMakePublic: canMakeProjectPublic} = canMakePublic(project);
+
   return (
     <motion.form
       initial="hidden"
       animate="visible"
       variants={containerVariants}
       onSubmit={(e) => e.preventDefault()}>
-      <div className="flex flex-col gap-9 max-[990px]:gap-8">
+      {!canMakeProjectPublic && (
+        <Alert
+          title="Your project is incomplete!"
+          message="To make your project public, you need to fill in all required details."
+          type="warning"
+        />
+      )}
+      <div className={cn("flex flex-col gap-9 max-[990px]:gap-8", !canMakeProjectPublic && "mt-6")}>
         <FormProvider {...methods}>
           <motion.div
             variants={containerVariants}

@@ -3,6 +3,9 @@
 import {createClient} from "@/utils/supabase/server";
 import {SerializableFilter} from "@/store/filterStore";
 import {applyFiltersToSupabaseQuery} from "@/utils/supabase/applyFiltersToSupabaseQuery";
+import {Ratelimit} from "@upstash/ratelimit";
+import {redis} from "@/utils/redis/redis";
+import {getClientIp} from "@/utils/network/getClientIp";
 
 const TABLE_NAME = "projects";
 
@@ -57,9 +60,41 @@ export async function getUserProjects(userId: string) {
   return data || [];
 }
 
-// Check if a user has access to a project by slug
 export async function checkProjectAccess(slug: string, userId: string) {
   const supabase = await createClient();
+
+  const ip = await getClientIp();
+
+  const userRateLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, "1 m"), // 30 checks per minute per user
+    analytics: true,
+    prefix: "ratelimit:user:project-access-check",
+    enableProtection: true,
+  });
+
+  const ipRateLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(60, "1 m"), // 60 checks per minute per IP
+    analytics: true,
+    prefix: "ratelimit:ip:project-access-check",
+    enableProtection: true,
+  });
+
+  const [userLimit, ipLimit] = await Promise.all([
+    userRateLimiter.limit(userId),
+    ipRateLimiter.limit(ip),
+  ]);
+
+  if (!userLimit.success || !ipLimit.success) {
+    console.warn("Rate limit exceeded for checkProjectAccess", {
+      userId,
+      ip,
+      userRemaining: userLimit.remaining,
+      ipRemaining: ipLimit.remaining,
+    });
+    return null;
+  }
 
   // First, get the project by slug
   const {data: project, error: projectError} = await supabase
@@ -93,6 +128,7 @@ export async function checkProjectAccess(slug: string, userId: string) {
     name: string;
     permissions: Record<string, Record<string, boolean>>;
   };
+
   let role: RoleWithPermissions | null = null;
   if (teamMember.role_id) {
     const {data: roleRow} = await supabase

@@ -7,8 +7,6 @@ import DashboardHeader from "../header/DashboardHeader";
 import {dashboardProjectTabsData} from "@/data/tabs/dashboardProjectTabs";
 import {useRouter} from "next/navigation";
 import ProjectManagementDetailsTab from "./ProjectManagementDetailsTab";
-import Alert from "@/components/ui/Alert";
-import {canMakePublic} from "@/functions/canMakePublic";
 import ProjectManagementSecurityTab from "./ProjectManagementSecurityTab";
 import ProjectManagementTeamMembers from "./ProjectManagementTeamMembers";
 import ProjectManagementRequests from "./ProjectManagementRequests";
@@ -31,10 +29,7 @@ const ProjectManagementClientPage = ({
 }) => {
   const router = useRouter();
 
-  // Local state so we can update project attributes after edits without page refresh
   const [projectState, setProjectState] = useState<Project>(project);
-
-  const {canMakePublic: canMakeProjectPublic} = canMakePublic(projectState);
 
   const resourceMap: Record<string, string> = {
     details: "Project Details",
@@ -132,14 +127,6 @@ const ProjectManagementClientPage = ({
 
   return (
     <div className="@container flex flex-col gap-8 pb-24">
-      {tab === "details" && !canMakeProjectPublic && (
-        <Alert
-          title="Your project is incomplete!"
-          message="To make your project public, you need to fill in all required details."
-          type="warning"
-        />
-      )}
-
       <div className="flex flex-col gap-6">
         <DashboardHeader
           title="Project Overview"
