@@ -1,8 +1,9 @@
 import ImageUpload from "@/components/ui/form/ImageUpload";
 import React, {useEffect, useState} from "react";
 import {motion, AnimatePresence} from "framer-motion";
+import {cn} from "@/lib/utils";
 
-const ImageTabs = ({id}: {id: string}) => {
+const ImageTabs = ({id, readOnly = false}: {id: string; readOnly?: boolean}) => {
   const [selectedTab, setSelectedTab] = useState<string>("");
 
   useEffect(() => {
@@ -17,7 +18,7 @@ const ImageTabs = ({id}: {id: string}) => {
 
   const renderTabContent = () => {
     if (selectedTab === "Profile Image") {
-      return <ImageUpload name="profile_image" type="avatar" />;
+      return <ImageUpload name="profile_image" type="avatar" readOnly={readOnly} />;
     } else if (selectedTab === "Background Image") {
       return (
         <ImageUpload
@@ -27,10 +28,11 @@ const ImageTabs = ({id}: {id: string}) => {
           circularCrop={false}
           initialCropWidth={100}
           cropInstructions="Adjust the grid to crop your background image"
+          readOnly={readOnly}
         />
       );
     } else if (selectedTab === "Project Image") {
-      return <ImageUpload name="project_image" type="project" />;
+      return <ImageUpload name="project_image" type="project" readOnly={readOnly} />;
     }
     return null;
   };

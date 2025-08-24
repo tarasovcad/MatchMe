@@ -1,4 +1,3 @@
-import DashboardClientPage from "@/components/(pages)/dashboard/DashboardClientPage";
 import SidebarProvider from "@/providers/SidebarProvider";
 import {createClient} from "@/utils/supabase/server";
 import {checkProjectAccess} from "@/actions/projects/projects";
@@ -11,10 +10,26 @@ interface PageProps {
   searchParams: Promise<{[key: string]: string | string[] | undefined}>;
 }
 
+const allowedTabs = new Set([
+  "details",
+  "team-members",
+  "open-positions",
+  "requests",
+  "analytics",
+  "followers",
+  "roles-permissions",
+  "security",
+]);
+
+const normalizeTab = (value: string | string[] | undefined) => {
+  const t = Array.isArray(value) ? value[0] : value || "details";
+  return allowedTabs.has(t) ? t : "details";
+};
+
 const ProjectManagement = async ({params, searchParams}: PageProps) => {
   const {slug} = await params;
   const searchParamsData = await searchParams;
-  const tab = searchParamsData?.tab ?? "overview";
+  const tab = normalizeTab(searchParamsData?.tab);
 
   const supabase = await createClient();
 
@@ -26,12 +41,18 @@ const ProjectManagement = async ({params, searchParams}: PageProps) => {
     redirect("/login");
   }
 
-  // Check if project exists and user has access to it
+  // Check if project exists and user has access to it (returns null for not found/unauthorized)
   const accessResult = await checkProjectAccess(slug, user.id);
   if (!accessResult) {
     notFound();
   }
-  const {projectData, userPermission, isOwner} = accessResult;
+
+  const {projectData, permissions, isOwner} = accessResult;
+
+  // Enforce owner-only access for the security tab
+  if (tab === "security" && !isOwner) {
+    redirect(`/dashboard/projects/${slug}?tab=details`);
+  }
 
   return (
     <SidebarProvider>
@@ -39,7 +60,8 @@ const ProjectManagement = async ({params, searchParams}: PageProps) => {
         tab={tab as string}
         user={user}
         project={projectData}
-        userPermission={projectData.userPermission}
+        userPermissions={permissions}
+        isOwner={isOwner}
       />
     </SidebarProvider>
   );

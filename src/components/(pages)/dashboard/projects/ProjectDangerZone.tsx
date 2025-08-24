@@ -16,6 +16,12 @@ import {Project} from "@/types/projects/projects";
 import {toast} from "sonner";
 import {useRouter} from "next/navigation";
 import {deleteProject} from "@/actions/projects/deleteProject";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 
 const ProjectDangerZone = ({id, project}: {id: string; project: Project | undefined}) => {
   if (!project) return null;
@@ -62,7 +68,24 @@ const ProjectDangerZone = ({id, project}: {id: string; project: Project | undefi
 
   return (
     <div>
-      <Dialog open={open} onOpenChange={handleModalClose}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-block">
+              <Button
+                size={"xs"}
+                disabled
+                className="flex items-center gap-2 rounded-[8px] text-destructive hover:text-destructive/90 cursor-pointer">
+                Delete Project
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={6} side="top">
+            <p>This feature is not available yet</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      {/* <Dialog open={open} onOpenChange={handleModalClose}>
         <DialogTrigger asChild>
           <Button
             size={"xs"}
@@ -124,7 +147,7 @@ const ProjectDangerZone = ({id, project}: {id: string; project: Project | undefi
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 };

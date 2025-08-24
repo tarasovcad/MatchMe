@@ -16,11 +16,18 @@ const PROFILE_REQUIRED_FIELDS: Array<keyof MatchMeUser> = [
 const PROJECT_REQUIRED_FIELDS: Array<keyof Project> = [
   "name",
   "slug",
-  // "tagline",
-  // "description",
-  // "project_image",
-  // "demo",
-  // "background_image",
+  "tagline",
+  "description",
+  "category",
+  "current_stage",
+  "expected_timeline",
+  "language_proficiency",
+  "technology_stack",
+  "collaboration_model",
+  "time_commitment",
+  "revenue_expectations",
+  "funding_investment",
+  "compensation_model",
 ];
 
 export function canMakePublic(entity: MatchMeUser | Project | undefined) {

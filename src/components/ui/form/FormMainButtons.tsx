@@ -2,6 +2,7 @@ import {Button} from "@/components/shadcn/button";
 import AlertComponent from "@/components/ui/dialog/AlertComponent";
 import {CircleX, Save} from "lucide-react";
 import React from "react";
+import LoadingButtonCircle from "../LoadingButtonCirlce";
 
 interface FormMainButtonsProps {
   isLoading: boolean;
@@ -45,9 +46,12 @@ const FormMainButtons = ({
         variant={"secondary"}
         className="px-[25px] w-full max-w-[165.5px] transition-colors duration-300 ease-in-out"
         disabled={isLoading || saveDisabled}
-        isLoading={isLoading}
         onClick={handleSave}>
-        <Save size={16} />
+        {isLoading ? (
+          <LoadingButtonCircle size={16} className="text-white dark:text-foreground/80" />
+        ) : (
+          <Save size={16} />
+        )}
         Save Changes
       </Button>
     </>

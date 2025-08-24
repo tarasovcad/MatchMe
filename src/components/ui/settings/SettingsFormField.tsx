@@ -26,6 +26,7 @@ import ImageTabs from "@/components/(pages)/settings/ImageTabs";
 import DemoImageInput from "@/components/(pages)/dashboard/create-project/DemoImageInput";
 import ProjectSlugInput from "./ProjectSlugInput";
 import ProjectDangerZone from "@/components/(pages)/dashboard/projects/ProjectDangerZone";
+import TransferOwnershipButton from "@/components/(pages)/dashboard/projects/TransferOwnershipButton";
 
 const fieldComponents = {
   makePublic: MakePublicSwitch,
@@ -47,6 +48,7 @@ const fieldComponents = {
   username: SettingsUsernameInput,
   demo: DemoImageInput,
   slug: ProjectSlugInput,
+  transferOwnership: TransferOwnershipButton,
 };
 
 const SettingsFormField = ({
@@ -54,11 +56,13 @@ const SettingsFormField = ({
   user,
   profile,
   project,
+  readOnlyOverride,
 }: {
   formField: FormFieldProps;
   user?: User;
   profile?: MatchMeUser;
   project?: Project;
+  readOnlyOverride?: boolean;
 }) => {
   const {fieldDescription, fieldTitle, fieldType, fieldInputProps, fieldRequired} = formField;
   const fieldName = fieldInputProps[0].name;
@@ -108,7 +112,7 @@ const SettingsFormField = ({
           type={fieldType}
           disabled={fieldInputProps[0].disabled}
           name={fieldInputProps[0].name}
-          readOnly={fieldInputProps[0].readOnly}
+          readOnly={readOnlyOverride ?? fieldInputProps[0].readOnly}
           options={fieldInputProps[0].options ?? []}
           socials={fieldInputProps[0].socials ?? []}
           register={fieldType === "image" ? undefined : register(fieldName)}

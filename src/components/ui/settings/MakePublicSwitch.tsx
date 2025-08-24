@@ -7,11 +7,18 @@ import FormSwitch from "../form/FormSwitch";
 type MakePublicSwitchProps = {
   id: string;
   name: string;
+  readOnly?: boolean;
   profile?: MatchMeUser;
   project?: Project;
 };
 
-const MakePublicSwitch = ({id, name, profile, project}: MakePublicSwitchProps) => {
+const MakePublicSwitch = ({
+  id,
+  name,
+  readOnly = false,
+  profile,
+  project,
+}: MakePublicSwitchProps) => {
   // Decide which entity we are dealing with based on the field name.
   const entity = name === "is_project_public" ? project : profile;
 
@@ -21,6 +28,7 @@ const MakePublicSwitch = ({id, name, profile, project}: MakePublicSwitchProps) =
     <FormSwitch
       id={id}
       name={name}
+      readOnly={readOnly}
       visibleLabel="Visible"
       hiddenLabel="Hidden"
       customDisabledLogic={() => isEligible}

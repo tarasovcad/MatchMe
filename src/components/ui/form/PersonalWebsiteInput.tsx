@@ -15,11 +15,13 @@ export default function PersonalWebsiteInput({
   placeholder,
   name,
   error,
+  readOnly,
 }: {
   id: string;
   placeholder: string;
   name: string;
   error?: {message?: string} | undefined;
+  readOnly?: boolean;
 }) {
   const {control, setValue, watch} = useFormContext();
   const websiteValue = watch(name) || "";
@@ -44,25 +46,42 @@ export default function PersonalWebsiteInput({
         <div className="relative">
           <Select
             value={currentProtocol}
-            onValueChange={(newProtocol) => {
-              setValue(name, newProtocol + domain, {shouldValidate: !!domain});
-            }}>
+            onValueChange={
+              readOnly
+                ? undefined
+                : (newProtocol) => {
+                    setValue(name, newProtocol + domain, {shouldValidate: !!domain});
+                  }
+            }>
             <SelectTrigger
               id={`${id}-protocol`}
               className={cn(
                 "appearance-none items-center rounded-none rounded-s-lg border text-sm transition-shadow focus:z-10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 text-muted-foreground",
                 error &&
                   "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+                readOnly && "bg-muted",
               )}>
               <SelectValue placeholder="https://" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="https://">https://</SelectItem>
-              <SelectItem value="http://">http://</SelectItem>
-              <SelectItem value="ftp://">ftp://</SelectItem>
-              <SelectItem value="sftp://">sftp://</SelectItem>
-              <SelectItem value="ws://">ws://</SelectItem>
-              <SelectItem value="wss://">wss://</SelectItem>
+              <SelectItem disabled={readOnly} value="https://">
+                https://
+              </SelectItem>
+              <SelectItem disabled={readOnly} value="http://">
+                http://
+              </SelectItem>
+              <SelectItem disabled={readOnly} value="ftp://">
+                ftp://
+              </SelectItem>
+              <SelectItem disabled={readOnly} value="sftp://">
+                sftp://
+              </SelectItem>
+              <SelectItem disabled={readOnly} value="ws://">
+                ws://
+              </SelectItem>
+              <SelectItem disabled={readOnly} value="wss://">
+                wss://
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -77,14 +96,20 @@ export default function PersonalWebsiteInput({
                 "-ms-px rounded-s-none shadow-none focus-visible:z-10",
                 error &&
                   "border-destructive/80 text-destructive focus-visible:border-destructive/80 focus-visible:ring-destructive/20",
+                readOnly && "bg-muted",
               )}
               placeholder={placeholder}
               type="text"
               value={domain}
-              onChange={(e) => {
-                const newDomain = e.target.value.trim();
-                field.onChange(newDomain ? currentProtocol + newDomain : "");
-              }}
+              readOnly={readOnly}
+              onChange={
+                readOnly
+                  ? undefined
+                  : (e) => {
+                      const newDomain = e.target.value.trim();
+                      field.onChange(newDomain ? currentProtocol + newDomain : "");
+                    }
+              }
               onBlur={field.onBlur}
             />
           )}

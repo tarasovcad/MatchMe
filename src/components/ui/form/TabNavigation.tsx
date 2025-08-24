@@ -6,6 +6,7 @@ interface TabItemProps {
   title: string;
   active?: boolean;
   customLinkGenerator?: (link: string) => string;
+  disabled?: boolean;
 }
 
 const TabNavigation = ({
@@ -13,7 +14,7 @@ const TabNavigation = ({
   activeTab,
   customLinkGenerator,
 }: {
-  tabsData: {query: string; title: string}[];
+  tabsData: {query: string; title: string; disabled?: boolean}[];
   activeTab: string | string[] | undefined;
   customLinkGenerator?: (link: string) => string;
 }) => {
@@ -27,6 +28,7 @@ const TabNavigation = ({
             title={tabItem.title}
             active={tabItem.query === activeTab}
             customLinkGenerator={customLinkGenerator}
+            disabled={tabItem.disabled}
           />
         );
       })}
@@ -34,7 +36,7 @@ const TabNavigation = ({
   );
 };
 
-const TabItem = ({link, title, active, customLinkGenerator}: TabItemProps) => {
+const TabItem = ({link, title, active, customLinkGenerator, disabled}: TabItemProps) => {
   const defaultLink = `?tab=${link}`;
   const linkHref = customLinkGenerator ? customLinkGenerator(link) : defaultLink;
 
@@ -42,6 +44,12 @@ const TabItem = ({link, title, active, customLinkGenerator}: TabItemProps) => {
     <>
       {active ? (
         <button className="bg-[#F4F4F5] dark:bg-[#18181B] px-[14px] py-2 border border-border rounded-radius font-medium text-[#09090B] dark:text-[#E4E4E7] text-sm whitespace-nowrap cursor-default">
+          {title}
+        </button>
+      ) : disabled ? (
+        <button
+          disabled
+          className="bg-transparent px-[14px] py-2 border border-border rounded-radius font-medium text-secondary/50 text-sm whitespace-nowrap cursor-not-allowed">
           {title}
         </button>
       ) : (

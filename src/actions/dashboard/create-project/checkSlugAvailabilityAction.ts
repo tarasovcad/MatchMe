@@ -22,7 +22,7 @@ export async function checkSlugAvailabilityAction(slug: string) {
     const ip = await getClientIp();
     const slugRateLimiter = new Ratelimit({
       redis: redis,
-      limiter: Ratelimit.slidingWindow(10, "3 m"), // 10 tries per 3 minutes
+      limiter: Ratelimit.slidingWindow(10, "1 m"), // 10 tries per 1 minute
       analytics: true,
       prefix: "ratelimit:ip:slug-check",
       enableProtection: true,

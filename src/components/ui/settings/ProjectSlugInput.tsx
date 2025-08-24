@@ -24,14 +24,14 @@ interface ProjectSlugInputProps {
   placeholder: string;
   register?: UseFormRegisterReturn<string>;
   project?: Project;
-  [key: string]: unknown; // allow additional props such as 'type', 'disabled', etc.
+  readOnly?: boolean;
+  [key: string]: unknown;
 }
 
 const ProjectSlugInput = (props: ProjectSlugInputProps) => {
-  const {id, name, placeholder, register, project, ...rest} = props;
+  const {id, name, placeholder, register, project, readOnly = false, ...rest} = props;
 
   const [open, setOpen] = useState(false);
-  const [slugLoading, setSlugLoading] = useState(false);
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
 
   const {watch, setValue, formState} = useFormContext();
@@ -41,6 +41,7 @@ const ProjectSlugInput = (props: ProjectSlugInputProps) => {
   const handleClear = () => {
     setOpen(false);
     setValue("newSlug", "");
+    setIsSlugAvailable(null);
   };
 
   const handleConfirm = () => {
@@ -59,6 +60,10 @@ const ProjectSlugInput = (props: ProjectSlugInputProps) => {
   const slugChangeStatus = project?.slug_changed_at
     ? canChangeSlug(new Date(project.slug_changed_at))
     : {canChange: true, nextAvailableDate: null};
+
+  if (readOnly) {
+    return <SimpleInput id={id} name={name} placeholder={placeholder} readOnly {...register} />;
+  }
 
   if (!slugChangeStatus.canChange) {
     return (
@@ -114,16 +119,7 @@ const ProjectSlugInput = (props: ProjectSlugInputProps) => {
             </div>
             <div className="*:not-first:mt-2">
               <p className="font-medium text-foreground text-sm">New Slug</p>
-              <SlugInput
-                slug={newSlug}
-                name="newSlug"
-                onAvailabilityChange={setIsSlugAvailable}
-                autoFocus
-                setSlugLoading={setSlugLoading}
-                slugLoading={slugLoading}
-                isSlugAvailable={isSlugAvailable}
-                setIsSlugAvailable={setIsSlugAvailable}
-              />
+              <SlugInput name="newSlug" onAvailabilityChange={setIsSlugAvailable} autoFocus />
             </div>
             <DialogFooter>
               <DialogClose asChild>

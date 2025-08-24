@@ -8,6 +8,7 @@ type FormSwitchProps = {
   id: string;
   name: string;
   disabled?: boolean;
+  readOnly?: boolean;
   visibleLabel?: string;
   hiddenLabel?: string;
   customDisabledLogic?: () => boolean;
@@ -17,6 +18,7 @@ const FormSwitch = ({
   id,
   name,
   disabled = false,
+  readOnly = false,
   visibleLabel = "Visible",
   hiddenLabel = "Hidden",
   customDisabledLogic,
@@ -25,15 +27,17 @@ const FormSwitch = ({
   const isChecked = watch(name);
 
   const isDisabled = customDisabledLogic ? !customDisabledLogic() : disabled;
+  const isReadOnly = readOnly;
 
   return (
-    <div className="flex justify-end items-center gap-2 h-9">
+    <div className={cn("flex justify-end items-center gap-2 h-9")}>
       <Switch
         id={id}
         checked={isChecked}
-        onCheckedChange={(checked) => setValue(name, checked)}
+        onCheckedChange={isReadOnly ? undefined : (checked) => setValue(name, checked)}
         aria-label="Toggle switch"
-        disabled={isDisabled}
+        disabled={isDisabled || isReadOnly}
+        className={cn(isReadOnly && "opacity-70 cursor-not-allowed")}
       />
       <AnimatePresence mode="wait">
         <motion.span
@@ -44,7 +48,7 @@ const FormSwitch = ({
           transition={{duration: 0.1, ease: "easeInOut"}}
           className={cn(
             "inline-block w-[46px] font-medium text-foreground text-sm",
-            isDisabled && "text-muted-foreground",
+            (isDisabled || isReadOnly) && "text-muted-foreground",
           )}>
           {isChecked ? visibleLabel : hiddenLabel}
         </motion.span>

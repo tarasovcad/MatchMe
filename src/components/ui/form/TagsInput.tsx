@@ -7,7 +7,16 @@ import {X} from "lucide-react";
 import {Controller, useFormContext} from "react-hook-form";
 import {toast} from "sonner";
 import {hasProfanity} from "@/utils/other/profanityCheck";
-export default function TagsInput({placeholder, name}: {placeholder: string; name: string}) {
+import {cn} from "@/lib/utils";
+export default function TagsInput({
+  placeholder,
+  name,
+  readOnly,
+}: {
+  placeholder: string;
+  name: string;
+  readOnly?: boolean;
+}) {
   const [activeTagIndex, setActiveTagIndex] = useState<number | null>(null);
   const {control} = useFormContext();
   const showHashPrefix = name === "tags";
@@ -35,16 +44,24 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
               } ${isActiveTag ? `ring-2 ring-${error ? "destructive/30" : "ring/50"}` : ""} `}>
               {showHashPrefix ? `#${tag.text}` : tag.text}
               <motion.button
-                className="absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                className={cn(
+                  "absolute -inset-y-px flex p-0 focus-visible:border-ring rounded-e-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 size-7 text-muted-foreground/80 hover:text-foreground transition-colors -end-px",
+                  readOnly && "cursor-not-allowed hover:text-muted-foreground/80",
+                )}
+                onClick={
+                  readOnly
+                    ? undefined
+                    : (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                  const currentTags = field.value || [];
-                  const updatedTags = currentTags.filter((text: string) => text !== tag.text);
-                  field.onChange(updatedTags);
-                }}>
-                <X className="m-auto size-4" />
+                        const currentTags = field.value || [];
+                        const updatedTags = currentTags.filter((text: string) => text !== tag.text);
+                        field.onChange(updatedTags);
+                      }
+                }
+                disabled={readOnly}>
+                <X className="m-auto size-4 " />
               </motion.button>
             </motion.div>
           );
@@ -54,49 +71,58 @@ export default function TagsInput({placeholder, name}: {placeholder: string; nam
           <div className="space-y-2">
             <TagInput
               tags={tags}
-              setTags={(newTags) => {
-                if (error && error.type !== "too_small") {
-                  return;
-                }
-                const tagArray = Array.isArray(newTags) ? newTags : [];
+              setTags={
+                readOnly
+                  ? () => {}
+                  : (newTags) => {
+                      if (error && error.type !== "too_small") {
+                        return;
+                      }
+                      const tagArray = Array.isArray(newTags) ? newTags : [];
 
-                const hasBadTag = tagArray.some((tag) => hasProfanity(tag.text));
-                if (hasBadTag) {
-                  toast.error("Tag contains inappropriate language. Please choose another.");
-                  return;
-                }
+                      const hasBadTag = tagArray.some((tag) => hasProfanity(tag.text));
+                      if (hasBadTag) {
+                        toast.error("Tag contains inappropriate language. Please choose another.");
+                        return;
+                      }
 
-                const normalizedMap = new Map();
-                const uniqueTags = tagArray.filter((tag) => {
-                  const raw = typeof tag.text === "string" ? tag.text : "";
-                  const cleaned = raw.replace(/^#/, "");
-                  const normalized = cleaned.toLowerCase();
-                  if (normalizedMap.has(normalized)) {
-                    return false;
-                  }
-                  normalizedMap.set(normalized, true);
-                  return true;
-                });
-                const values = uniqueTags.map((tag) => tag.text.replace(/^#/, ""));
-                field.onChange(values);
-              }}
+                      const normalizedMap = new Map();
+                      const uniqueTags = tagArray.filter((tag) => {
+                        const raw = typeof tag.text === "string" ? tag.text : "";
+                        const cleaned = raw.replace(/^#/, "");
+                        const normalized = showHashPrefix ? cleaned.toLowerCase() : cleaned;
+                        if (normalizedMap.has(normalized)) {
+                          return false;
+                        }
+                        normalizedMap.set(normalized, true);
+                        return true;
+                      });
+                      const values = uniqueTags.map((tag) => {
+                        const cleaned = tag.text.replace(/^#/, "");
+                        return showHashPrefix ? cleaned.toLowerCase() : cleaned;
+                      });
+                      field.onChange(values);
+                    }
+              }
               placeholder={placeholder}
               customTagRenderer={customTagRenderer}
               styleClasses={{
                 inlineTagsContainer: `flex w-full rounded-lg border ${
                   error ? "border-destructive/80" : "border-input"
-                } bg-background text-sm ${
+                } ${readOnly ? "bg-muted" : "bg-background"} text-sm ${
                   error ? "text-destructive" : "text-foreground"
-                } shadow-xs shadow-black/5 transition-shadow focus-within:outline-hidden focus-within:ring-[3px] ${
-                  error
+                } shadow-xs shadow-black/5 transition-shadow ${readOnly ? "" : "focus-within:outline-hidden focus-within:ring-[3px]"} ${
+                  error && !readOnly
                     ? "focus-within:border-destructive/80 focus-within:ring-destructive/20"
-                    : "focus-within:border-ring focus-within:ring-ring/20"
+                    : !readOnly
+                      ? "focus-within:border-ring focus-within:ring-ring/20"
+                      : ""
                 } gap-1 px-2 transition-[color,box-shadow]`,
                 input: `w-full shadow-none outline-none border-none px-1 bg-transparent text-sm ${
                   error
                     ? "text-destructive placeholder:text-destructive"
                     : "placeholder:text-muted-foreground/70"
-                }`,
+                } ${readOnly ? "pointer-events-none" : ""}`,
               }}
               activeTagIndex={activeTagIndex}
               setActiveTagIndex={setActiveTagIndex}

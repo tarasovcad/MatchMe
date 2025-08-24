@@ -23,15 +23,17 @@ import {
 } from "@/utils/other/variants";
 import FormMainButtons from "@/components/ui/form/FormMainButtons";
 import {cn} from "@/lib/utils";
+import Alert from "@/components/ui/Alert";
+import {canMakePublic} from "@/functions/canMakePublic";
 
 const ProjectManagementDetailsTab = ({
-  user,
   project,
   onProjectUpdate,
+  readOnly = false,
 }: {
-  user: User;
   project: Project;
   onProjectUpdate?: React.Dispatch<React.SetStateAction<Project>>;
+  readOnly?: boolean;
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
@@ -58,6 +60,7 @@ const ProjectManagementDetailsTab = ({
       ? project.language_proficiency
       : [],
     technology_stack: Array.isArray(project.technology_stack) ? project.technology_stack : [],
+
     // Step 4
     collaboration_model: project.collaboration_model ?? "",
     collaboration_style: project.collaboration_style ?? "",
@@ -71,6 +74,8 @@ const ProjectManagementDetailsTab = ({
     revenue_expectations: project.revenue_expectations ?? "",
     funding_investment: project.funding_investment ?? "",
     compensation_model: project.compensation_model ?? "",
+    // Step 6
+    tags: Array.isArray(project.tags) ? project.tags : [],
     // Internal
     _slugLoading: false,
   }));
@@ -185,13 +190,22 @@ const ProjectManagementDetailsTab = ({
     methods.reset();
   };
 
+  const {canMakePublic: canMakeProjectPublic} = canMakePublic(project);
+
   return (
     <motion.form
       initial="hidden"
       animate="visible"
       variants={containerVariants}
       onSubmit={(e) => e.preventDefault()}>
-      <div className="flex flex-col gap-9 max-[990px]:gap-8">
+      {!canMakeProjectPublic && (
+        <Alert
+          title="Your project is incomplete!"
+          message="To make your project public, you need to fill in all required details."
+          type="warning"
+        />
+      )}
+      <div className={cn("flex flex-col gap-9 max-[990px]:gap-8", !canMakeProjectPublic && "mt-6")}>
         <FormProvider {...methods}>
           <motion.div
             variants={containerVariants}
@@ -204,7 +218,11 @@ const ProjectManagementDetailsTab = ({
                   key={formField.fieldTitle}
                   variants={itemVariants}
                   className={cn("px-[18px] py-3", index !== 0 && "border-t border-border")}>
-                  <SettingsFormField formField={formField} project={project} />
+                  <SettingsFormField
+                    formField={formField}
+                    project={project}
+                    readOnlyOverride={readOnly}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -217,7 +235,11 @@ const ProjectManagementDetailsTab = ({
                 <motion.div variants={containerVariants} className="flex flex-col gap-6">
                   {section.formData.map((formField) => (
                     <motion.div key={formField.fieldTitle} variants={itemVariants}>
-                      <SettingsFormField formField={formField} project={project} />
+                      <SettingsFormField
+                        formField={formField}
+                        project={project}
+                        readOnlyOverride={readOnly}
+                      />
                     </motion.div>
                   ))}
                 </motion.div>
@@ -228,19 +250,21 @@ const ProjectManagementDetailsTab = ({
       </div>
 
       {/* Bottom action buttons */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={bottomSectionButtonsVariants}
-        className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
-        <FormMainButtons
-          isLoading={isLoading}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          isSaveDisabled={isSaveDisabled}
-          isClearDisabled={isClearDisabled}
-        />
-      </motion.div>
+      {!readOnly && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={bottomSectionButtonsVariants}
+          className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
+          <FormMainButtons
+            isLoading={isLoading}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            isSaveDisabled={isSaveDisabled}
+            isClearDisabled={isClearDisabled}
+          />
+        </motion.div>
+      )}
     </motion.form>
   );
 };

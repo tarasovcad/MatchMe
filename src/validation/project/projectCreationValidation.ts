@@ -7,9 +7,9 @@ import {expectedTimelineOptions} from "@/data/projects/expectedTimelineOptions";
 import {revenueExpectations} from "@/data/projects/revenueExpectations";
 import {fundingInvestment} from "@/data/projects/fundingInvestment";
 import {compensationModels} from "@/data/projects/compensationModels";
-import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 import {z} from "zod";
 import {timeCommitment} from "@/data/projects/timeCommitmentOptions";
+import {RESERVED_PROJECT_SLUGS} from "@/data/reserved_slugs";
 
 // Common spam patterns to prevent
 const SPAM_PATTERNS = [
@@ -19,6 +19,41 @@ const SPAM_PATTERNS = [
   /^\d+$/, // Only numbers
   /^[!@#$%^&*()]+$/, // Only special characters
 ];
+
+// Image/file validation helpers
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
+const DATA_URL_IMAGE_REGEX = /^data:(image\/[a-zA-Z+.-]+);base64,/;
+
+const inferImageMime = (url: string, fileName: string): string | null => {
+  const match = url.match(DATA_URL_IMAGE_REGEX);
+  if (match) return match[1].toLowerCase();
+  const ext = fileName.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "jpg":
+    case "jpeg":
+    case "jfif":
+    case "pjpeg":
+    case "pjp":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "avif":
+      return "image/avif";
+    default:
+      return null;
+  }
+};
+
+const isValidImageItem = (item: {url: string; fileName: string; fileSize: number}): boolean => {
+  const mime = inferImageMime(item.url, item.fileName);
+  if (!mime || !ALLOWED_IMAGE_MIME.has(mime)) return false;
+  if (typeof item.fileSize !== "number" || item.fileSize <= 0 || item.fileSize > MAX_IMAGE_BYTES)
+    return false;
+  return true;
+};
 
 // Validation helpers
 const hasRepeatedChars = (str: string): boolean => {
@@ -90,7 +125,7 @@ export const projectCreationValidationSchema = z.object({
   tagline: z
     .string()
     .min(10, "Tagline must be at least 10 characters")
-    .max(70, "Tagline must not exceed 70 characters")
+    .max(80, "Tagline must not exceed 80 characters")
     .refine((val) => !hasRepeatedChars(val), {
       message: "Tagline cannot have repetitive characters",
     })
@@ -116,7 +151,10 @@ export const projectCreationValidationSchema = z.object({
       }),
     )
     .max(1)
-    .optional(),
+    .optional()
+    .refine((files) => !files || files.length === 0 || files.every((f) => isValidImageItem(f)), {
+      message: "Only JPG, PNG, WEBP or AVIF images up to 5MB are allowed",
+    }),
   background_image: z
     .array(
       z.object({
@@ -127,7 +165,10 @@ export const projectCreationValidationSchema = z.object({
       }),
     )
     .max(1)
-    .optional(),
+    .optional()
+    .refine((files) => !files || files.length === 0 || files.every((f) => isValidImageItem(f)), {
+      message: "Only JPG, PNG, WEBP or AVIF images up to 5MB are allowed",
+    }),
   // 2 step - Enhanced validations
   description: z
     .string()
@@ -217,7 +258,10 @@ export const projectCreationValidationSchema = z.object({
       }),
     )
     .max(5)
-    .optional(),
+    .optional()
+    .refine((files) => !files || files.length === 0 || files.every((f) => isValidImageItem(f)), {
+      message: "Only JPG, PNG, WEBP or AVIF images up to 5MB are allowed",
+    }),
   // 3 step
   language_proficiency: z
     .array(
@@ -234,7 +278,7 @@ export const projectCreationValidationSchema = z.object({
         }),
     )
     .min(1, {message: "At least one language is required"})
-    .max(15, {message: "Languages must be at most 15 tags"}),
+    .max(10, {message: "Languages must be at most 10 tags"}),
   technology_stack: z
     .array(
       z
@@ -250,7 +294,7 @@ export const projectCreationValidationSchema = z.object({
         }),
     )
     .min(1, {message: "At least one skill is required"})
-    .max(15, {message: "Skills must be at most 15 tags"}),
+    .max(20, {message: "Skills must be at most 20 tags"}),
   // 4 step
   collaboration_model: z
     .string()
@@ -314,6 +358,18 @@ export const projectCreationValidationSchema = z.object({
     .refine((val) => allowedCompensationModels.has(val), {
       message: "Please select a valid compensation model",
     }),
+  tags: z
+    .array(
+      z
+        .string()
+        .min(1, {message: "Each tag must be at least 1 character"})
+        .max(30, {message: "Each tag must be at most 30 characters"})
+        .regex(/^[A-Za-z0-9_\-+]+$/, {
+          message: "Tags can only contain letters, numbers, and the symbols -, _, + (no spaces)",
+        }),
+    )
+    .max(8, {message: "You can add at most 8 tags"})
+    .optional(),
   // Hidden field to track slug loading state
   _slugLoading: z.boolean().optional(),
 });
