@@ -5,7 +5,7 @@ import {
 } from "@/actions/projects/submitProjectApplication";
 import {toast} from "sonner";
 
-export const useSubmitProjectApplication = () => {
+export const useSubmitProjectApplication = (userId?: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -19,10 +19,10 @@ export const useSubmitProjectApplication = () => {
           queryKey: ["project-open-positions-minimal", variables.project_id],
         });
 
-        // You might also want to invalidate user's applications if you have that query
-        queryClient.invalidateQueries({
-          queryKey: ["user-applications"],
-        });
+        // Refresh the user's requests list if userId is provided
+        if (userId) {
+          queryClient.invalidateQueries({queryKey: ["user-requests", userId]});
+        }
       } else {
         toast.error("Failed to submit application", {
           description: result.error || "An unexpected error occurred. Please try again.",

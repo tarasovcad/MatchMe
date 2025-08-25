@@ -24,6 +24,7 @@ import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import {useSubmitProjectApplication} from "@/hooks/query/projects/use-submit-application";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import AuthGate from "@/components/other/AuthGate";
+import {formatDateAbsolute} from "@/functions/formatDate";
 
 const getTitleByValue = (options: {title: string; value: string}[], value?: string): string => {
   if (!value) return "";
@@ -61,6 +62,11 @@ const OpenPositionDetailsDialog = ({
   const hasCurrentPositionRequest = Boolean(openPosition.has_pending_request);
   const hasOtherPositionRequest =
     Boolean(openPosition.has_any_pending_request) && !hasCurrentPositionRequest;
+  const applicationCooldownActive = Boolean(openPosition.application_cooldown_active);
+  const applicationCooldownUntil = openPosition.application_cooldown_until
+    ? new Date(openPosition.application_cooldown_until)
+    : null;
+  const viewerHasPendingInvite = Boolean(openPosition.viewer_has_pending_invite);
 
   const handleNext = () => {
     setCurrentStep(2);
@@ -79,7 +85,7 @@ const OpenPositionDetailsDialog = ({
   };
 
   const handleSubmitApplication = () => {
-    if (!userId || isOwnerOrMember || hasCurrentPositionRequest) {
+    if (!userId || isOwnerOrMember || hasCurrentPositionRequest || viewerHasPendingInvite) {
       return;
     }
 
@@ -116,6 +122,24 @@ const OpenPositionDetailsDialog = ({
         <Alert
           title="You are a team member"
           message="Project team members cannot apply to open positions."
+          type="warning"
+        />
+      );
+    }
+    if (viewerHasPendingInvite) {
+      return (
+        <Alert
+          title="Pending Invitation"
+          message="This project has already sent you an invitation. No need to apply to positions - you can accept or decline the existing invitation."
+          type="warning"
+        />
+      );
+    }
+    if (applicationCooldownActive && applicationCooldownUntil) {
+      return (
+        <Alert
+          title="Application Cooldown Active"
+          message={`A cool‑off period is active for this project. You can apply again on ${formatDateAbsolute(applicationCooldownUntil.toISOString())}.`}
           type="warning"
         />
       );
@@ -210,7 +234,13 @@ const OpenPositionDetailsDialog = ({
                   variant={"secondary"}
                   size={"xs"}
                   onClick={handleNext}
-                  disabled={isOwnerOrMember || hasCurrentPositionRequest}>
+                  disabled={
+                    isOwnerOrMember ||
+                    hasCurrentPositionRequest ||
+                    applicationCooldownActive ||
+                    viewerHasPendingInvite ||
+                    !userId
+                  }>
                   {hasCurrentPositionRequest ? "Applied" : "Next"}
                   {!hasCurrentPositionRequest && <ChevronRight size={14} className="ml-1" />}
                 </Button>
@@ -251,6 +281,14 @@ const OpenPositionDetailsDialog = ({
                 />
               )}
 
+              {viewerHasPendingInvite && (
+                <Alert
+                  title="Pending Invitation"
+                  message="This project has already sent you an invitation. No need to apply to positions - you can accept or decline the existing invitation."
+                  type="warning"
+                />
+              )}
+
               {/* Application form */}
               <div className="space-y-1.5">
                 <div className="space-y-2">
@@ -285,7 +323,9 @@ const OpenPositionDetailsDialog = ({
                     hasCurrentPositionRequest ||
                     submitApplicationMutation.isPending ||
                     isOwnerOrMember ||
-                    !userId
+                    !userId ||
+                    applicationCooldownActive ||
+                    viewerHasPendingInvite
                   }
                   onClick={handleSubmitApplication}>
                   {submitApplicationMutation.isPending && (

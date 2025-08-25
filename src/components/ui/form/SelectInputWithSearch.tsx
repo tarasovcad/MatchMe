@@ -118,12 +118,13 @@ export default function SelectInputWithSearch({
                 {options.map((option, index) => {
                   const optionValue = (option as DropdownOption).value || option.title;
                   const isSelected = selectedValue === optionValue;
+                  const cmdkItemValue = `${option.title}__${optionValue}`;
 
                   return (
                     <CommandItem
-                      key={index}
+                      key={optionValue}
                       disabled={readOnly}
-                      value={option.title}
+                      value={cmdkItemValue}
                       onSelect={
                         readOnly
                           ? undefined

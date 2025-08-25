@@ -14,6 +14,26 @@ import ProjectManagementOpenPositions from "./ProjectManagementOpenPositions";
 import AccessDeniedSection from "@/components/other/AccessDeniedSection";
 import ProjectManagementRolesPermissionsTab from "./ProjectManagementRolesPermissionsTab";
 
+// Reusable permissions hook
+type PermissionAction = "view" | "create" | "update" | "delete" | "notification";
+const usePermissions = (
+  userPermissions?: Record<string, Record<string, boolean>> | null,
+  resolveResourceName?: (key: string) => string | undefined,
+) => {
+  const can = (action: PermissionAction, resourceKey: string) => {
+    const resourceName = resolveResourceName ? resolveResourceName(resourceKey) : undefined;
+    if (!userPermissions || !resourceName) return true;
+    return userPermissions[resourceName]?.[action] === true;
+  };
+
+  const canViewTab = (tabKey: string, isOwner: boolean) => {
+    if (tabKey === "security") return isOwner;
+    return can("view", tabKey);
+  };
+
+  return {can, canViewTab};
+};
+
 const ProjectManagementClientPage = ({
   tab,
   user,
@@ -41,28 +61,20 @@ const ProjectManagementClientPage = ({
     "roles-permissions": "Roles & Permissions",
   };
 
+  const {can, canViewTab} = usePermissions(userPermissions, (key) => resourceMap[key]);
+
   const currentTabKey = typeof tab === "string" ? tab : Array.isArray(tab) ? tab[0] : "";
   const currentTabTitle =
     dashboardProjectTabsData.find((t) => t.query === currentTabKey)?.title ||
     resourceMap[currentTabKey] ||
     currentTabKey;
 
-  const canViewCurrentTab = (() => {
-    // Owner-only access for Security tab
-    if (currentTabKey === "security") return isOwner;
+  const canViewCurrentTab = canViewTab(currentTabKey, isOwner);
 
-    const resource = resourceMap[currentTabKey];
-    if (!resource) return true;
-    if (!userPermissions) return true; // default allow if no permissions provided
-    return userPermissions[resource]?.view === true;
-  })();
-
-  // Compute update permission for Project Details
-  const canUpdateProjectDetails = (() => {
-    const resource = resourceMap["details"];
-    if (!userPermissions || !resource) return true;
-    return userPermissions[resource]?.update === true;
-  })();
+  const canUpdateProjectDetails = can("update", "details");
+  const canUpdateRolesPermissions = can("update", "roles-permissions");
+  const canCreateRolesPermissions = can("create", "roles-permissions");
+  const canDeleteRolesPermissions = can("delete", "roles-permissions");
 
   const renderSelectedComponent = () => {
     if (!canViewCurrentTab)
@@ -93,7 +105,16 @@ const ProjectManagementClientPage = ({
           />
         );
       case "roles-permissions":
-        return <ProjectManagementRolesPermissionsTab user={user} project={projectState} />;
+        return (
+          <ProjectManagementRolesPermissionsTab
+            user={user}
+            project={projectState}
+            readOnly={!canUpdateRolesPermissions}
+            canCreate={canCreateRolesPermissions}
+            canUpdate={canUpdateRolesPermissions}
+            canDelete={canDeleteRolesPermissions}
+          />
+        );
       case "followers":
         return <div>Followers</div>;
       default:
@@ -115,13 +136,11 @@ const ProjectManagementClientPage = ({
       return true;
     })
     .map((t) => {
-      const resource = resourceMap[t.query];
-      const permissionAllows =
-        userPermissions && resource ? userPermissions[resource]?.view === true : true;
+      const permissionAllows = can("view", t.query);
       const ownerAllows = t.query === "security" ? isOwner : true;
       return {
         ...t,
-        disabled: resource ? !(permissionAllows && ownerAllows) : !ownerAllows ? true : false,
+        disabled: !(permissionAllows && ownerAllows),
       };
     });
 

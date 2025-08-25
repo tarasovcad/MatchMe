@@ -16,7 +16,21 @@ import {toast} from "sonner";
 import {updateProjectRoles} from "@/actions/projects/updateProjectRoles";
 import type {UpdatableRole} from "@/actions/projects/updateProjectRoles";
 
-const ProjectManagementRolesPermissionsTab = ({user, project}: {user: User; project: Project}) => {
+const ProjectManagementRolesPermissionsTab = ({
+  user,
+  project,
+  readOnly = false,
+  canCreate = true,
+  canUpdate = true,
+  canDelete = true,
+}: {
+  user: User;
+  project: Project;
+  readOnly?: boolean;
+  canCreate?: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
   const [changedRoles, setChangedRoles] = useState<UpdatableRole[]>([]);
@@ -65,24 +79,29 @@ const ProjectManagementRolesPermissionsTab = ({user, project}: {user: User; proj
             projectId={project.id}
             onRolesChange={setChangedRoles}
             resetSignal={resetRolesSignal}
+            isReadOnly={readOnly}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
           />
         </motion.div>
       </motion.div>
 
-      {/* Bottom action buttons */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={bottomSectionButtonsVariants}
-        className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
-        <FormMainButtons
-          isLoading={isLoading}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          isSaveDisabled={isSaveDisabled}
-          isClearDisabled={changedRoles.length === 0}
-        />
-      </motion.div>
+      {(!readOnly || canCreate || canUpdate || canDelete) && (
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={bottomSectionButtonsVariants}
+          className="right-0 bottom-0 left-0 z-[5] fixed flex justify-end items-center gap-[10px] bg-sidebar-background shadow-lg p-6 border-t border-border">
+          <FormMainButtons
+            isLoading={isLoading}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            isSaveDisabled={isSaveDisabled}
+            isClearDisabled={changedRoles.length === 0}
+          />
+        </motion.div>
+      )}
     </motion.div>
   );
 };

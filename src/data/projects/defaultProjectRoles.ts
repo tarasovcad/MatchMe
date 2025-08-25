@@ -6,7 +6,7 @@ export const ownerPermissions = {
   Applications: {view: true, create: true, update: true, delete: true, notification: true},
   "Open Positions": {view: true, create: true, update: true, delete: true},
   "Project Details": {view: true, update: true},
-  "Roles & Permissions": {view: true, create: true, update: true, delete: true, notification: true},
+  "Roles & Permissions": {view: true, create: true, update: true, delete: true},
 } as const;
 
 export const coFounderPermissions = {
@@ -22,7 +22,6 @@ export const coFounderPermissions = {
     create: false,
     update: false,
     delete: false,
-    notification: false,
   },
 } as const;
 
@@ -39,7 +38,6 @@ export const memberPermissions = {
     create: false,
     update: false,
     delete: false,
-    notification: false,
   },
 } as const;
 
@@ -57,7 +55,6 @@ export const createDefaultPermissions = (): Record<string, Record<string, boolea
       create: false,
       update: false,
       delete: false,
-      notification: false,
     },
   };
 };
