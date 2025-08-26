@@ -48,6 +48,7 @@ import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
 import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
 import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
 import {toast} from "sonner";
+import AccessDeniedSection from "@/components/other/AccessDeniedSection";
 
 interface ProjectRequest {
   id: string;
@@ -88,13 +89,18 @@ const ProjectManagementRequests = ({
   user,
   canUpdateInvitations = false,
   canUpdateApplications = false,
+  canViewInvitations = true,
+  canViewApplications = true,
 }: {
   project: Project;
   user: User;
   canUpdateInvitations?: boolean;
   canUpdateApplications?: boolean;
+  canViewInvitations?: boolean;
+  canViewApplications?: boolean;
 }) => {
-  const [activeTab, setActiveTab] = useState("received");
+  const defaultSubTab = canViewApplications ? "received" : canViewInvitations ? "sent" : "received";
+  const [activeTab, setActiveTab] = useState(defaultSubTab);
   const [query, setQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([
     {id: "status", desc: false},
@@ -160,15 +166,19 @@ const ProjectManagementRequests = ({
       {
         value: "received",
         label: "Received",
-        count: requests?.filter((req) => req.direction === "application").length || 0,
+        count: canViewApplications
+          ? requests?.filter((req) => req.direction === "application").length || 0
+          : undefined,
       },
       {
         value: "sent",
         label: "Sent",
-        count: requests?.filter((req) => req.direction === "invite").length || 0,
+        count: canViewInvitations
+          ? requests?.filter((req) => req.direction === "invite").length || 0
+          : undefined,
       },
     ],
-    [requests],
+    [requests, canViewApplications, canViewInvitations],
   );
 
   const statusConfig = {
@@ -607,7 +617,7 @@ const ProjectManagementRequests = ({
     <div className="w-full mx-auto space-y-6">
       <FilterableTabs
         tabs={tabs}
-        defaultTab="received"
+        defaultTab={defaultSubTab}
         searchPlaceholder="Search requests"
         displayFilterButton={false}
         topPadding={false}
@@ -619,7 +629,12 @@ const ProjectManagementRequests = ({
         }}>
         {(currentActiveTab) => (
           <>
-            {isRequestsLoading ? (
+            {!(currentActiveTab === "received" ? canViewApplications : canViewInvitations) ? (
+              <AccessDeniedSection
+                tabName={currentActiveTab === "received" ? "Applications" : "Invitations"}
+                projectId={project.id}
+              />
+            ) : isRequestsLoading ? (
               <div key="skeleton">
                 <TableSkeleton columns={skeletonColumns} rowCount={5} />
               </div>

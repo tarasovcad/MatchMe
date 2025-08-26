@@ -25,6 +25,8 @@ import {toast} from "sonner";
 import {X} from "lucide-react";
 import {useProjectRequests} from "@/hooks/query/projects/use-project-requests";
 import Alert from "@/components/ui/Alert";
+import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
+import {useProjectTeamMembersMinimal} from "@/hooks/query/projects/use-project-team-members-minimal";
 
 const inviteSchema = z.object({
   project: z.string().min(1, "Select a project"),
@@ -91,14 +93,22 @@ export default function InviteUserToProjectDialog({
     );
   }, [projectRequests, targetUserId]);
 
-  // Only fetch roles/positions if no pending invite exists
+  // Fetch team members to detect if target user is already a member
+  const {data: teamMembers = [], isLoading: isLoadingMembers} =
+    useProjectTeamMembersMinimal(selectedProjectId);
+  const isAlreadyMember = useMemo(
+    () => !!targetUserId && teamMembers.some((m) => m.user_id === targetUserId),
+    [teamMembers, targetUserId],
+  );
+
+  // Only fetch roles/positions if no pending invite exists and not already a member
   const {data: roles = [], isLoading: isLoadingRoles} = useProjectRoles(
     selectedProjectId,
-    !!selectedProjectId && !hasPendingInvite,
+    !!selectedProjectId && !hasPendingInvite && !isAlreadyMember,
   );
   const {data: positions = [], isLoading: isLoadingPositions} = useProjectOpenPositions(
     selectedProjectId,
-    !!selectedProjectId && !hasPendingInvite,
+    !!selectedProjectId && !hasPendingInvite && !isAlreadyMember,
   );
 
   const createInviteMutation = useCreateProjectRequest();
@@ -134,15 +144,18 @@ export default function InviteUserToProjectDialog({
   const isDetailsDisabled =
     !selectedProjectId ||
     hasPendingInvite ||
+    isAlreadyMember ||
     isLoadingRoles ||
     isLoadingPositions ||
-    isRequestsLoading;
+    isRequestsLoading ||
+    isLoadingMembers;
 
   // Check if we're still loading critical data for the selected project
   const isLoadingCriticalData =
     !!selectedProjectId &&
     !hasPendingInvite &&
-    (isLoadingRoles || isLoadingPositions || isRequestsLoading);
+    !isAlreadyMember &&
+    (isLoadingRoles || isLoadingPositions || isRequestsLoading || isLoadingMembers);
 
   // Check if user has no projects
   const hasNoProjects = !isLoadingProjects && projectOptions.length === 0;
@@ -159,6 +172,10 @@ export default function InviteUserToProjectDialog({
     }
     if (hasPendingInvite) {
       toast.error("User already has a pending invite for this project");
+      return;
+    }
+    if (isAlreadyMember) {
+      toast.error("User is already a member of this project");
       return;
     }
     setIsSubmitting(true);
@@ -209,6 +226,13 @@ export default function InviteUserToProjectDialog({
             type="warning"
           />
         )}
+        {isAlreadyMember && selectedProjectId && (
+          <Alert
+            title="User is already a member"
+            message={`${targetUserName || "This user"} is already a team member of this project.`}
+            type="warning"
+          />
+        )}
 
         {/* No projects available */}
         {!isLoadingProjects && projectOptions.length === 0 && (
@@ -250,7 +274,9 @@ export default function InviteUserToProjectDialog({
                 className=""
                 options={roleOptions}
                 disabled={isDetailsDisabled}
-                loading={!!selectedProjectId && !hasPendingInvite && isLoadingRoles}
+                loading={
+                  !!selectedProjectId && !hasPendingInvite && !isAlreadyMember && isLoadingRoles
+                }
               />
             </div>
 
@@ -267,7 +293,9 @@ export default function InviteUserToProjectDialog({
                 name="position"
                 options={positionOptions}
                 disabled={isDetailsDisabled}
-                loading={!!selectedProjectId && !hasPendingInvite && isLoadingPositions}
+                loading={
+                  !!selectedProjectId && !hasPendingInvite && !isAlreadyMember && isLoadingPositions
+                }
               />
             </div>
 
@@ -303,8 +331,13 @@ export default function InviteUserToProjectDialog({
             size="xs"
             variant="secondary"
             onClick={handleSend}
-            disabled={!isValid || isSubmitting || isLoadingCriticalData || hasNoProjects}>
-            {isSubmitting ? "Sending..." : "Send invite"}
+            disabled={
+              !isValid || isSubmitting || isLoadingCriticalData || hasNoProjects || isAlreadyMember
+            }>
+            {isSubmitting && (
+              <LoadingButtonCircle size={16} className="text-white dark:text-foreground/80" />
+            )}
+            Send invite
           </Button>
         </DialogFooter>
       </DialogContent>

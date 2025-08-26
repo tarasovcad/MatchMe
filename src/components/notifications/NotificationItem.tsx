@@ -10,6 +10,7 @@ import {toast} from "sonner";
 import LoadingButtonCircle from "../ui/LoadingButtonCirlce";
 import {Check, X} from "lucide-react";
 import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
+import {useProjectAccess} from "@/hooks/query/dashboard/use-user-projects";
 
 const GroupedFollowNotification = ({
   notification,
@@ -49,7 +50,12 @@ const GroupedFollowNotification = ({
             alt={first?.name || ""}
             className="rounded-full object-cover"
           />
-          <AvatarFallback>{first ? getNameInitials(first.name) : ""}</AvatarFallback>
+          <AvatarFallback
+            fallbackImage="/avatar/default-user-avatar.png"
+            fallbackImageAlt="Default user avatar"
+            className="text-xs">
+            {first ? getNameInitials(first.name) : ""}
+          </AvatarFallback>
         </Avatar>
         <Avatar className="h-6 w-6 absolute left-2 top-3 ring-2 ring-background">
           <AvatarImage
@@ -57,7 +63,12 @@ const GroupedFollowNotification = ({
             alt={second?.name || ""}
             className="rounded-full object-cover"
           />
-          <AvatarFallback>{second ? getNameInitials(second.name) : ""}</AvatarFallback>
+          <AvatarFallback
+            fallbackImage="/avatar/default-user-avatar.png"
+            fallbackImageAlt="Default user avatar"
+            className="text-xs">
+            {second ? getNameInitials(second.name) : ""}
+          </AvatarFallback>
         </Avatar>
       </div>
 
@@ -146,7 +157,12 @@ const FollowNotification = ({
           alt={name}
           className="rounded-full object-cover"
         />
-        <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+        <AvatarFallback
+          fallbackImage="/avatar/default-user-avatar.png"
+          fallbackImageAlt="Default user avatar"
+          className="text-xs">
+          {getNameInitials(name)}
+        </AvatarFallback>
       </Avatar>
 
       <div className="w-full text-secondary flex flex-col gap-0.5">
@@ -201,15 +217,25 @@ const ProjectInviteNotification = ({
 
     setLoadingAction("accept");
     try {
-      const result = await manageRequestMutation.mutateAsync({
-        requestId: null,
-        action: "accept",
-        projectId: notification.project?.id ?? "",
+      const promise = manageRequestMutation
+        .mutateAsync({
+          requestId: null,
+          action: "accept",
+          projectId: notification.project?.id ?? "",
+        })
+        .then((res) => {
+          if (!res.success) throw new Error(res.message || "Failed to join project");
+          return res.message || "Joined project";
+        });
+
+      toast.promise(promise, {
+        loading: "Joining project...",
+        success: (msg) => msg,
+        error: (err) => (err instanceof Error ? err.message : "Failed to join project"),
       });
 
-      if (result.success) {
-        setIsAccepted(true);
-      }
+      await promise;
+      setIsAccepted(true);
     } catch (error) {
       console.error("Error accepting project invite:", error);
     } finally {
@@ -227,15 +253,25 @@ const ProjectInviteNotification = ({
 
     setLoadingAction("reject");
     try {
-      const result = await manageRequestMutation.mutateAsync({
-        requestId: null,
-        action: "reject",
-        projectId: notification.project?.id ?? "",
+      const promise = manageRequestMutation
+        .mutateAsync({
+          requestId: null,
+          action: "reject",
+          projectId: notification.project?.id ?? "",
+        })
+        .then((res) => {
+          if (!res.success) throw new Error(res.message || "Failed to decline invitation");
+          return res.message || "Invitation declined";
+        });
+
+      toast.promise(promise, {
+        loading: "Declining invitation...",
+        success: (msg) => msg,
+        error: (err) => (err instanceof Error ? err.message : "Failed to decline invitation"),
       });
 
-      if (result.success) {
-        setIsDeclined(true);
-      }
+      await promise;
+      setIsDeclined(true);
     } catch (error) {
       console.error("Error declining project invite:", error);
     } finally {
@@ -255,7 +291,12 @@ const ProjectInviteNotification = ({
           alt={name}
           className="rounded-full object-cover"
         />
-        <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+        <AvatarFallback
+          fallbackImage="/avatar/default-user-avatar.png"
+          fallbackImageAlt="Default user avatar"
+          className="text-xs">
+          {getNameInitials(name)}
+        </AvatarFallback>
       </Avatar>
 
       <div className="w-full text-secondary flex flex-col gap-2.5">
@@ -311,7 +352,11 @@ const ProjectInviteNotification = ({
                 className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[60px] w-full"
                 onClick={handleAccept}
                 disabled={loadingAction !== null}>
-                {loadingAction === "accept" ? <LoadingButtonCircle size={16} /> : "Join"}
+                {loadingAction === "accept" ? (
+                  <LoadingButtonCircle size={16} className="text-white dark:text-foreground/80" />
+                ) : (
+                  "Join"
+                )}
               </Button>
               <Button
                 variant={"outline"}
@@ -365,7 +410,12 @@ const ProjectEventNotification = ({
             alt={name}
             className="rounded-full object-cover"
           />
-          <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+          <AvatarFallback
+            fallbackImage="/avatar/default-user-avatar.png"
+            fallbackImageAlt="Default user avatar"
+            className="text-xs">
+            {getNameInitials(name)}
+          </AvatarFallback>
         </Avatar>
         {status && (
           <span
@@ -620,9 +670,11 @@ const ProjectInviteRejectedNotification = ({
 const ProjectJoinRequestNotification = ({
   notification,
   markAsRead,
+  currentUserId,
 }: {
   notification: Notification;
   markAsRead: (ids: string[]) => void;
+  currentUserId?: string;
 }) => {
   const sender = notification.sender;
   const {profile_image, name} = sender;
@@ -630,8 +682,15 @@ const ProjectJoinRequestNotification = ({
   const projectSlug = notification.project?.slug;
   const isRead = notification.is_read === true;
   const [loadingAction, setLoadingAction] = useState<"accept" | "reject" | null>(null);
-
   const manageRequestMutation = useManageProjectRequest();
+
+  const {data: accessData, isLoading: isAccessLoading} = useProjectAccess(
+    projectSlug || "",
+    currentUserId || "",
+  );
+  const canUpdateApplications = Boolean(
+    accessData?.permissions?.["Applications"]?.update === true || accessData?.isOwner,
+  );
 
   const handleClick = () => {
     if (!isRead) {
@@ -647,11 +706,24 @@ const ProjectJoinRequestNotification = ({
     }
     setLoadingAction("accept");
     try {
-      await manageRequestMutation.mutateAsync({
-        requestId: notification.reference_id,
-        action: "accept",
-        projectId: notification.project?.id ?? "",
+      const promise = manageRequestMutation
+        .mutateAsync({
+          requestId: notification.reference_id,
+          action: "accept",
+          projectId: notification.project?.id ?? "",
+        })
+        .then((res) => {
+          if (!res.success) throw new Error(res.message || "Failed to accept request");
+          return res.message || "Request accepted";
+        });
+
+      toast.promise(promise, {
+        loading: "Accepting request...",
+        success: (msg) => msg,
+        error: (err) => (err instanceof Error ? err.message : "Failed to accept request"),
       });
+
+      await promise;
     } catch (error) {
       console.error("Error accepting join request:", error);
     } finally {
@@ -667,11 +739,24 @@ const ProjectJoinRequestNotification = ({
     }
     setLoadingAction("reject");
     try {
-      await manageRequestMutation.mutateAsync({
-        requestId: notification.reference_id,
-        action: "reject",
-        projectId: notification.project?.id ?? "",
+      const promise = manageRequestMutation
+        .mutateAsync({
+          requestId: notification.reference_id,
+          action: "reject",
+          projectId: notification.project?.id ?? "",
+        })
+        .then((res) => {
+          if (!res.success) throw new Error(res.message || "Failed to reject request");
+          return res.message || "Request rejected";
+        });
+
+      toast.promise(promise, {
+        loading: "Rejecting request...",
+        success: (msg) => msg,
+        error: (err) => (err instanceof Error ? err.message : "Failed to reject request"),
       });
+
+      await promise;
     } catch (error) {
       console.error("Error rejecting join request:", error);
     } finally {
@@ -691,7 +776,12 @@ const ProjectJoinRequestNotification = ({
           alt={name}
           className="rounded-full object-cover"
         />
-        <AvatarFallback>{getNameInitials(name)}</AvatarFallback>
+        <AvatarFallback
+          fallbackImage="/avatar/default-user-avatar.png"
+          fallbackImageAlt="Default user avatar"
+          className="text-xs">
+          {getNameInitials(name)}
+        </AvatarFallback>
       </Avatar>
 
       <div className="w-full text-secondary flex flex-col gap-2.5">
@@ -717,24 +807,30 @@ const ProjectJoinRequestNotification = ({
             <p>{formatTimeRelative(notification.created_at)}</p>
           </div>
         </div>
-        <div className="flex gap-1.5">
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[60px] w-full"
-            onClick={handleAccept}
-            disabled={loadingAction !== null}>
-            {loadingAction === "accept" ? <LoadingButtonCircle size={16} /> : "Accept"}
-          </Button>
-          <Button
-            variant={"outline"}
-            size={"xs"}
-            className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[80px] w-full"
-            onClick={handleReject}
-            disabled={loadingAction !== null}>
-            {loadingAction === "reject" ? <LoadingButtonCircle size={16} /> : "Decline"}
-          </Button>
-        </div>
+        {canUpdateApplications && !isAccessLoading && (
+          <div className="flex gap-1.5">
+            <Button
+              variant={"secondary"}
+              size={"xs"}
+              className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[60px] w-full"
+              onClick={handleAccept}
+              disabled={loadingAction !== null}>
+              {loadingAction === "accept" ? (
+                <LoadingButtonCircle size={16} className="text-white dark:text-foreground/80" />
+              ) : (
+                "Accept"
+              )}
+            </Button>
+            <Button
+              variant={"outline"}
+              size={"xs"}
+              className="text-[13px] leading-[14px] h-fit max-h-[30px] max-w-[80px] w-full"
+              onClick={handleReject}
+              disabled={loadingAction !== null}>
+              {loadingAction === "reject" ? <LoadingButtonCircle size={16} /> : "Decline"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -802,6 +898,7 @@ const ProjectDeletedNotification = ({
 export const createNotificationItem = (
   notification: Notification,
   markAsRead: (ids: string[]) => void,
+  options?: {currentUserId?: string},
 ) => {
   switch (notification.type) {
     case "follow":
@@ -834,6 +931,7 @@ export const createNotificationItem = (
           key={notification.id}
           notification={notification}
           markAsRead={markAsRead}
+          currentUserId={options?.currentUserId}
         />
       );
 

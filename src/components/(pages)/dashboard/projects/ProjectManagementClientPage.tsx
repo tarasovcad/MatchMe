@@ -70,7 +70,13 @@ const ProjectManagementClientPage = ({
     resourceMap[currentTabKey] ||
     currentTabKey;
 
-  const canViewCurrentTab = canViewTab(currentTabKey, isOwner);
+  // Per-subtab view permissions inside Requests
+  const canViewInvitations = can("view", "requests");
+  const canViewApplications = can("view", "applications");
+  const canViewRequestsTab = canViewInvitations || canViewApplications;
+
+  const canViewCurrentTab =
+    currentTabKey === "requests" ? canViewRequestsTab : canViewTab(currentTabKey, isOwner);
 
   const canUpdateProjectDetails = can("update", "details");
   const canUpdateRolesPermissions = can("update", "roles-permissions");
@@ -102,6 +108,8 @@ const ProjectManagementClientPage = ({
             user={user}
             canUpdateInvitations={canUpdateInvitations}
             canUpdateApplications={canUpdateApplications}
+            canViewInvitations={canViewInvitations}
+            canViewApplications={canViewApplications}
           />
         );
       case "open-positions":
@@ -146,7 +154,7 @@ const ProjectManagementClientPage = ({
       return true;
     })
     .map((t) => {
-      const permissionAllows = can("view", t.query);
+      const permissionAllows = t.query === "requests" ? canViewRequestsTab : can("view", t.query);
       const ownerAllows = t.query === "security" ? isOwner : true;
       return {
         ...t,

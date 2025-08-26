@@ -12,11 +12,13 @@ const NotificationList = ({
   isLoading,
   isLoadingMore = false,
   markAsRead,
+  currentUserId,
 }: {
   notifications: Notification[];
   isLoading: boolean;
   isLoadingMore?: boolean;
   markAsRead: (ids: string[]) => void;
+  currentUserId?: string;
 }) => {
   if (isLoading) {
     return (
@@ -55,7 +57,7 @@ const NotificationList = ({
                 initial={{opacity: 0}}
                 animate={{opacity: 1, transition: {duration: 0.18}}}
                 transition={itemTransition}>
-                {createNotificationItem(notification, markAsRead)}
+                {createNotificationItem(notification, markAsRead, {currentUserId})}
               </motion.div>
             ))}
           </div>

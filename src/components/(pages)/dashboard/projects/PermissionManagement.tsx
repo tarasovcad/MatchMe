@@ -287,7 +287,24 @@ const PermissionManagement = ({
           const updatedPermissions = {...(role.permissions || {})};
           const resourcePermissions = {...(updatedPermissions[resourceId] || {})};
 
-          resourcePermissions[permissionType] = !resourcePermissions[permissionType];
+          const currentValue = Boolean(resourcePermissions[permissionType]);
+          const newValue = !currentValue;
+          resourcePermissions[permissionType] = newValue;
+
+          // If enabling any non-view permission, ensure view is enabled automatically
+          if (permissionType !== "view" && newValue) {
+            resourcePermissions.view = true;
+          }
+
+          // If disabling view, automatically disable all other permissions for this resource
+          if (permissionType === "view" && !newValue) {
+            PERMISSION_ORDER.forEach((perm) => {
+              if (perm !== "view") {
+                resourcePermissions[perm] = false;
+              }
+            });
+          }
+
           updatedPermissions[resourceId] = resourcePermissions;
 
           return {

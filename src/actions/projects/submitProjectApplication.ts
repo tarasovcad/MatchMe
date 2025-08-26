@@ -265,7 +265,6 @@ export const submitProjectApplication = async (data: SubmitProjectApplicationDat
 
     // Resolve recipients and send notifications
     const {error: permError, userIds} = await recipientsPromise;
-    console.log("userIds", userIds);
     if (!permError) {
       const recipientSet = new Set<string>(userIds ?? []);
 
