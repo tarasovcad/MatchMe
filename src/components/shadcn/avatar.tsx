@@ -25,19 +25,37 @@ function AvatarImage({className, ...props}: React.ComponentProps<typeof AvatarPr
   );
 }
 
+type AvatarFallbackProps = React.ComponentProps<typeof AvatarPrimitive.Fallback> & {
+  fallbackImage?: string;
+  fallbackImageAlt?: string;
+};
+
 function AvatarFallback({
   className,
+  fallbackImage,
+  fallbackImageAlt,
+  children,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+}: AvatarFallbackProps) {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
       className={cn(
-        "bg-background border border-foreground/20  border-dashed flex size-full items-center justify-center rounded-full",
+        "bg-background  border-foreground/20  border-dashed flex size-full items-center justify-center rounded-full",
         className,
+        !fallbackImage && "border",
       )}
-      {...props}
-    />
+      {...props}>
+      {fallbackImage ? (
+        <img
+          src={fallbackImage}
+          alt={fallbackImageAlt ?? "Avatar"}
+          className="size-full object-cover rounded-full"
+        />
+      ) : (
+        children
+      )}
+    </AvatarPrimitive.Fallback>
   );
 }
 

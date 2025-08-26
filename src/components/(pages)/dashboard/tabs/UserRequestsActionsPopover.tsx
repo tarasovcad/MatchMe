@@ -18,7 +18,6 @@ export type UserRequestActions = {
   onAcceptInvite?: () => void;
   onRejectInvite?: () => void;
   onCancelApplication?: () => void;
-  onResendApplication?: () => void;
   onSendMessage?: () => void;
   onViewProject?: () => void;
   onCopyProjectLink?: () => void;
@@ -28,9 +27,8 @@ export type UserRequestsActionsPopoverProps = UserRequestActions & {
   requestDirection: "invite" | "application";
   requestStatus: "pending" | "accepted" | "rejected" | "cancelled";
   projectSlug: string;
-  nextAllowedAt?: string | null;
+
   isManageProcessing?: boolean;
-  isSubmitProcessing?: boolean;
   trigger?: React.ReactNode;
 };
 
@@ -38,13 +36,10 @@ const UserRequestsActionsPopover: React.FC<UserRequestsActionsPopoverProps> = ({
   requestDirection,
   requestStatus,
   projectSlug,
-  nextAllowedAt,
   isManageProcessing = false,
-  isSubmitProcessing = false,
   onAcceptInvite,
   onRejectInvite,
   onCancelApplication,
-  onResendApplication,
   onSendMessage,
   onViewProject,
   onCopyProjectLink,
@@ -67,24 +62,6 @@ const UserRequestsActionsPopover: React.FC<UserRequestsActionsPopoverProps> = ({
   const isInvite = requestDirection === "invite";
   const isApplication = requestDirection === "application";
   const isPending = requestStatus === "pending";
-
-  // Cooldown state for applications (re-apply flow)
-  const now = typeof window !== "undefined" ? new Date() : null;
-  const nextAtDate = nextAllowedAt ? new Date(nextAllowedAt) : null;
-  const isCoolingDown = !!(nextAtDate && now && nextAtDate.getTime() > now.getTime());
-  const canResendApplication = isApplication && !isPending && !isCoolingDown;
-
-  // Descriptions
-  let resendAppDescription: string | undefined = undefined;
-  if (isApplication) {
-    if (isCoolingDown && nextAtDate) {
-      const dateStr = formatDateAbsolute(nextAtDate.toISOString());
-      resendAppDescription = `You can re-apply on ${dateStr}. A short pause after a ${requestStatus === "cancelled" ? "withdrawal" : "decline"} keeps things considerate.`;
-    } else if (canResendApplication) {
-      resendAppDescription = "You can send a new application now.";
-    }
-  }
-
   const cancelAppDescription =
     "Withdraw your application. After cancelling, you’ll be able to re‑apply in 7 days.";
 
@@ -107,20 +84,7 @@ const UserRequestsActionsPopover: React.FC<UserRequestsActionsPopoverProps> = ({
     );
   }
 
-  // Application actions for the user
   if (isApplication) {
-    // Re-apply path only for rejected/cancelled applications (respect cool-off)
-    if (requestStatus === "rejected" || requestStatus === "cancelled") {
-      items.push({
-        icon: RefreshCw,
-        label: "Resend application",
-        onClick: onResendApplication,
-        description: resendAppDescription,
-        disabled: !canResendApplication || isSubmitProcessing,
-        separator: true,
-      });
-    }
-
     // Pending application → allow cancel with description
     if (isPending) {
       items.push({
@@ -174,6 +138,7 @@ const UserRequestsActionsPopover: React.FC<UserRequestsActionsPopoverProps> = ({
       contentAlign="end"
       withDescriptions
       withTitles={false}
+      onOpenAutoFocusPrevent
     />
   );
 };

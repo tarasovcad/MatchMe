@@ -33,14 +33,14 @@ export const submitProjectApplication = async (data: SubmitProjectApplicationDat
     // Preflight global rate limit to short-circuit spam before DB reads
     const preflightUserLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(20, "5 m"), // 20 attempts per 5 minutes per user
+      limiter: Ratelimit.slidingWindow(10, "2 m"), // 10 attempts per 2 minutes per user
       analytics: true,
       prefix: "ratelimit:user:application-preflight",
       enableProtection: true,
     });
     const preflightIpLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(50, "5 m"), // 50 attempts per 5 minutes per IP
+      limiter: Ratelimit.slidingWindow(30, "1 m"), // 30 attempts per 1 minute per IP
       analytics: true,
       prefix: "ratelimit:ip:application-preflight",
       enableProtection: true,
@@ -206,14 +206,14 @@ export const submitProjectApplication = async (data: SubmitProjectApplicationDat
     // Rate limits for creating a new application
     const createUserLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(10, "12 h"), // up to 10 new applications per 2 hours per user
+      limiter: Ratelimit.slidingWindow(10, "24 h"), // up to 10 new applications per 24 hours per user
       analytics: true,
       prefix: "ratelimit:user:application-create",
       enableProtection: true,
     });
     const createIpLimiter = new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(30, "12 h"), // up to 30 new applications per 2 hours per IP
+      limiter: Ratelimit.slidingWindow(50, "24 h"), // up to 50 new applications per 24 hours per IP
       analytics: true,
       prefix: "ratelimit:ip:application-create",
       enableProtection: true,

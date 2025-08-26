@@ -1,5 +1,4 @@
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {toast} from "sonner";
 import {
   manageProjectRequest,
   ManageProjectRequestAction,
@@ -24,61 +23,9 @@ export function useManageProjectRequest() {
     mutationFn: async ({requestId, projectId, action}: UseManageProjectRequestParams) => {
       return manageProjectRequest({requestId, projectId, action});
     },
-    onMutate: async (variables) => {
-      const {projectId, action, requestId} = variables;
-
-      // Cancel queries to avoid race conditions
-      await Promise.all([queryClient.cancelQueries({queryKey: ["project-requests", projectId]})]);
-
-      // Snapshot current data
-      const previousRequests = queryClient.getQueryData<ProjectRequestItem[]>([
-        "project-requests",
-        projectId,
-      ]);
-
-      // Optimistic update of status in table
-      if (previousRequests) {
-        const next = previousRequests.map((r) =>
-          r.id === requestId
-            ? {
-                ...r,
-                status:
-                  action === "accept"
-                    ? "accepted"
-                    : action === "reject"
-                      ? "rejected"
-                      : action === "cancel"
-                        ? "cancelled"
-                        : action === "reset"
-                          ? "pending"
-                          : r.status,
-                updated_at: new Date().toISOString(),
-              }
-            : r,
-        );
-        queryClient.setQueryData(["project-requests", projectId], next);
-      }
-
-      return {previousRequests};
-    },
-    onError: (_error, variables, context) => {
-      // Revert optimistic update
-      if (context?.previousRequests && variables.projectId) {
-        queryClient.setQueryData(
-          ["project-requests", variables.projectId],
-          context.previousRequests,
-        );
-      }
-      toast.error("Failed to process request");
-    },
     onSuccess: (result, variables) => {
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-      toast.success(result.message);
-
       const {projectId, action} = variables;
+      if (!result.success) return;
 
       // Invalidate the requests for fresh data
       queryClient.invalidateQueries({queryKey: ["project-requests", projectId]});
@@ -92,7 +39,6 @@ export function useManageProjectRequest() {
           queryKey: ["project-team-members-profiles", projectId],
         });
       }
-
       // Also refresh any notifications lists
       queryClient.invalidateQueries({queryKey: ["notifications"]});
     },

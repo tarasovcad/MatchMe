@@ -4,7 +4,16 @@ import SimpleInput from "@/components/ui/form/SimpleInput";
 import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
 import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
-import {User2, Calendar, Circle, ChevronDown, Trash2, MessageCircle, Briefcase} from "lucide-react";
+import {
+  User2,
+  Calendar,
+  Circle,
+  ChevronDown,
+  Trash2,
+  MessageCircle,
+  Briefcase,
+  Archive,
+} from "lucide-react";
 import React, {useState, useMemo} from "react";
 import {useProjectRequests} from "@/hooks/query/projects/use-project-requests";
 import {motion, AnimatePresence} from "framer-motion";
@@ -38,6 +47,7 @@ import Link from "next/link";
 import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
 import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
 import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
+import {toast} from "sonner";
 
 interface ProjectRequest {
   id: string;
@@ -73,7 +83,17 @@ interface ProjectRequest {
   last_sent_at?: string | null;
 }
 
-const ProjectManagementRequests = ({project, user}: {project: Project; user: User}) => {
+const ProjectManagementRequests = ({
+  project,
+  user,
+  canUpdateInvitations = false,
+  canUpdateApplications = false,
+}: {
+  project: Project;
+  user: User;
+  canUpdateInvitations?: boolean;
+  canUpdateApplications?: boolean;
+}) => {
   const [activeTab, setActiveTab] = useState("received");
   const [query, setQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([
@@ -198,7 +218,12 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
             />
             <Avatar className="h-6 w-6">
               <AvatarImage src={request.user_profile_image?.[0]?.url} alt={request.user_name} />
-              <AvatarFallback>{request.user_name.charAt(0)}</AvatarFallback>
+              <AvatarFallback
+                fallbackImage="/avatar/default-user-avatar.png"
+                fallbackImageAlt="Default user avatar"
+                className="text-xs">
+                {request.user_name.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <Link
               href={`/profiles/${request.user_username}`}
@@ -245,7 +270,12 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
               <AvatarImage src={created_by_profile_image?.[0]?.url} alt={name} />
-              <AvatarFallback className="text-xs">{name?.charAt(0)}</AvatarFallback>
+              <AvatarFallback
+                fallbackImage="/avatar/default-user-avatar.png"
+                fallbackImageAlt="Default user avatar"
+                className="text-xs">
+                {name?.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             {createProfileLink(username, name)}
           </div>
@@ -323,42 +353,70 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
       header: "",
       cell: ({row}) => {
         const request = row.original as ProjectRequest;
-        console.log(request);
-        const handleAcceptRequest = () =>
-          manageRequestMutation.mutate({
-            requestId: request.id,
-            action: "accept",
-            projectId: project.id,
+        const handleAcceptRequest = async () => {
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: request.id,
+              action: "accept",
+              projectId: project.id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to accept request");
+              return res.message || "Request accepted";
+            });
+          toast.promise(promise, {
+            loading: `Accepting ${request.user_name}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to accept request"),
           });
+        };
 
-        const handleRejectRequest = () =>
-          manageRequestMutation.mutate({
-            requestId: request.id,
-            action: "reject",
-            projectId: project.id,
+        const handleRejectRequest = async () => {
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: request.id,
+              action: "reject",
+              projectId: project.id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to reject request");
+              return res.message || "Request rejected";
+            });
+          toast.promise(promise, {
+            loading: `Rejecting ${request.user_name}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to reject request"),
           });
+        };
 
         // Open confirmation modal instead of mutating directly
         const handleCancelInvitation = () => setRequestToCancel(request);
 
-        const handleResendInvitation = () =>
-          manageRequestMutation.mutate({
-            requestId: request.id,
-            action: "resend",
-            projectId: project.id,
+        const handleResendInvitation = async () => {
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: request.id,
+              action: "resend",
+              projectId: project.id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to resend invitation");
+              return res.message || "Invitation resent";
+            });
+          toast.promise(promise, {
+            loading: `Resending invitation to ${request.user_name}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to resend invitation"),
           });
-
-        const handleReinvite = () =>
-          manageRequestMutation.mutate({
-            requestId: request.id,
-            action: "reinvite",
-            projectId: project.id,
-          });
+        };
 
         const handleSendMessage = () => {
           console.log("Send message to:", request.user_username);
           // TODO: Implement send message logic
         };
+
+        const isInvite = request.direction === "invite";
+        const isApplication = request.direction === "application";
 
         return (
           <ProjectRequestsActionsPopover
@@ -373,7 +431,10 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
             onCancelInvitation={handleCancelInvitation}
             onResendInvitation={handleResendInvitation}
             onSendMessage={handleSendMessage}
-            onReinvite={handleReinvite}
+            canAccept={isApplication && canUpdateApplications}
+            canReject={isApplication && canUpdateApplications}
+            canResend={isInvite && canUpdateInvitations}
+            canCancel={isInvite && canUpdateInvitations}
           />
         );
       },
@@ -551,18 +612,17 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
         displayFilterButton={false}
         topPadding={false}
         customRightContent={customRightContent}
-        onTabChange={setActiveTab}>
+        contentAnimated={!isRequestsLoading}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setRowSelection({});
+        }}>
         {(currentActiveTab) => (
           <>
             {isRequestsLoading ? (
-              <motion.div
-                key="skeleton"
-                initial={{opacity: 0}}
-                animate={{opacity: 1}}
-                exit={{opacity: 0}}
-                transition={{duration: 0.3, ease: "easeInOut"}}>
+              <div key="skeleton">
                 <TableSkeleton columns={skeletonColumns} rowCount={5} />
-              </motion.div>
+              </div>
             ) : (
               <motion.div
                 key="table"
@@ -579,13 +639,14 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
                       {
                         label: "Send message",
                         icon: <MessageCircle className="w-4 h-4" />,
+                        disabled: true,
                         onClick: handleSendMessage,
                       },
                       {
-                        label: "Delete",
-                        icon: <Trash2 className="w-4 h-4" />,
+                        label: "Archive",
+                        icon: <Archive className="w-4 h-4" />,
                         onClick: handleDeleteRequests,
-                        className: "text-red-500 hover:text-red-700",
+                        disabled: true,
                       },
                     ]}
                   />
@@ -687,19 +748,23 @@ const ProjectManagementRequests = ({project, user}: {project: Project; user: Use
           }
         }}
         onConfirm={async () => {
-          if (!requestToCancel) return {error: "No request selected"};
-          const result = await manageRequestMutation.mutateAsync({
-            requestId: requestToCancel.id,
-            action: "cancel",
-            projectId: project.id,
+          if (!requestToCancel) return {};
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: requestToCancel.id,
+              action: "cancel",
+              projectId: project.id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to cancel invitation");
+              return res.message || "Invitation cancelled";
+            });
+          toast.promise(promise, {
+            loading: `Cancelling invitation for ${requestToCancel.user_name}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to cancel invitation"),
           });
-
-          if (!result.success) {
-            return {error: result.message};
-          }
-
           setRequestToCancel(null);
-          // Avoid duplicate success toast; hook already toasts on success
           return {};
         }}
         confirmButtonText="Cancel Invitation">

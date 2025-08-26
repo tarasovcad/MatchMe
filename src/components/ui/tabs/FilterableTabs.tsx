@@ -27,6 +27,8 @@ interface FilterableTabsProps {
   topPadding?: boolean;
   customSearchInput?: ReactNode;
   customRightContent?: ReactNode;
+  // control whether content area should animate
+  contentAnimated?: boolean | ((activeTab: string) => boolean);
 }
 
 export default function FilterableTabs({
@@ -44,6 +46,7 @@ export default function FilterableTabs({
   className = "",
   onTabChange,
   customRightContent,
+  contentAnimated = true,
 }: FilterableTabsProps) {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.value || "");
 
@@ -59,6 +62,8 @@ export default function FilterableTabs({
     typeof disableSearch === "function" ? disableSearch(activeTab) : disableSearch;
   const isFilterDisabled =
     typeof disableFilter === "function" ? disableFilter(activeTab) : disableFilter;
+  const isContentAnimated =
+    typeof contentAnimated === "function" ? contentAnimated(activeTab) : !!contentAnimated;
 
   return (
     <div className={`@container ${className}`}>
@@ -149,15 +154,19 @@ export default function FilterableTabs({
       </div>
 
       <div className="w-full">
-        <motion.div
-          key={activeTab}
-          initial={{opacity: 0, y: 20}}
-          animate={{opacity: 1, y: 0}}
-          exit={{opacity: 0, y: -20}}
-          transition={{duration: 0.15, ease: "easeInOut"}}
-          className="w-full pt-2">
-          {children(activeTab)}
-        </motion.div>
+        {isContentAnimated ? (
+          <motion.div
+            key={activeTab}
+            initial={{opacity: 0, y: 20}}
+            animate={{opacity: 1, y: 0}}
+            exit={{opacity: 0, y: -20}}
+            transition={{duration: 0.15, ease: "easeInOut"}}
+            className="w-full pt-2">
+            {children(activeTab)}
+          </motion.div>
+        ) : (
+          <div className="w-full pt-2">{children(activeTab)}</div>
+        )}
       </div>
     </div>
   );

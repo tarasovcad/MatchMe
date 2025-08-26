@@ -59,6 +59,7 @@ const ProjectManagementClientPage = ({
     analytics: "Analytics",
     followers: "Followers",
     "roles-permissions": "Roles & Permissions",
+    applications: "Applications",
   };
 
   const {can, canViewTab} = usePermissions(userPermissions, (key) => resourceMap[key]);
@@ -75,6 +76,8 @@ const ProjectManagementClientPage = ({
   const canUpdateRolesPermissions = can("update", "roles-permissions");
   const canCreateRolesPermissions = can("create", "roles-permissions");
   const canDeleteRolesPermissions = can("delete", "roles-permissions");
+  const canUpdateInvitations = can("update", "requests");
+  const canUpdateApplications = can("update", "applications");
 
   const renderSelectedComponent = () => {
     if (!canViewCurrentTab)
@@ -93,7 +96,14 @@ const ProjectManagementClientPage = ({
       case "team-members":
         return <ProjectManagementTeamMembers project={projectState} user={user} />;
       case "requests":
-        return <ProjectManagementRequests project={projectState} user={user} />;
+        return (
+          <ProjectManagementRequests
+            project={projectState}
+            user={user}
+            canUpdateInvitations={canUpdateInvitations}
+            canUpdateApplications={canUpdateApplications}
+          />
+        );
       case "open-positions":
         return <ProjectManagementOpenPositions project={projectState} user={user} />;
       case "security":

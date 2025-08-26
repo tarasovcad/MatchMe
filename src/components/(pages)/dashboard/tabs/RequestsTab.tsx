@@ -31,17 +31,8 @@ import {
   Briefcase,
   Building2,
   MessageCircle,
-  Trash2,
-  Eye,
-  Pin,
-  UserX,
-  ThumbsUpIcon,
-  ThumbsDownIcon,
   Archive,
   FolderOpen,
-  Copy,
-  Send,
-  RefreshCw,
 } from "lucide-react";
 import {cn} from "@/lib/utils";
 import Link from "next/link";
@@ -55,6 +46,7 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import {Skeleton} from "@/components/shadcn/skeleton";
 import {motion} from "framer-motion";
 import {toast} from "sonner";
+import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
 
 const RequestsTab = ({user}: {user: User}) => {
   const [activeTab, setActiveTab] = useState<"sent" | "received">("received");
@@ -64,6 +56,7 @@ const RequestsTab = ({user}: {user: User}) => {
     {id: "created_at", desc: true},
   ]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [requestToCancel, setRequestToCancel] = useState<UserRequest | null>(null);
 
   // --- Real data fetching ---
   const {data: allRequests, isLoading} = useUserRequests(user.id);
@@ -202,7 +195,12 @@ const RequestsTab = ({user}: {user: User}) => {
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
               <AvatarImage src={r.created_by_profile_image_url || undefined} alt={r.invited_by} />
-              <AvatarFallback className="text-xs">{r.invited_by?.charAt(0)}</AvatarFallback>
+              <AvatarFallback
+                fallbackImage="/avatar/default-user-avatar.png"
+                fallbackImageAlt="Default user avatar"
+                className="text-xs">
+                {r.invited_by?.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <Link
               href={`/profiles/${r.created_by_username}`}
@@ -290,33 +288,44 @@ const RequestsTab = ({user}: {user: User}) => {
 
         const isManageProcessing = manageRequestMutation.isPending;
 
-        const handleAcceptInvite = () =>
-          manageRequestMutation.mutate({
-            requestId: r.id,
-            action: "accept",
-            projectId: r.project_id,
+        const handleAcceptInvite = async () => {
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: r.id,
+              action: "accept",
+              projectId: r.project_id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to accept invite");
+              return res.message || "Invitation accepted";
+            });
+          toast.promise(promise, {
+            loading: `Accepting invite to ${r.project_title}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to accept invite"),
           });
+        };
 
-        const handleRejectInvite = () =>
-          manageRequestMutation.mutate({
-            requestId: r.id,
-            action: "reject",
-            projectId: r.project_id,
+        const handleRejectInvite = async () => {
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: r.id,
+              action: "reject",
+              projectId: r.project_id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to reject invite");
+              return res.message || "Invitation declined";
+            });
+          toast.promise(promise, {
+            loading: `Declining invite to ${r.project_title}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to reject invite"),
           });
+        };
 
-        const handleCancelApplication = () =>
-          manageRequestMutation.mutate({
-            requestId: r.id,
-            action: "cancel",
-            projectId: r.project_id,
-          });
-
-        const handleResendApplication = () => {
-          manageRequestMutation.mutate({
-            requestId: r.id,
-            action: "reinvite",
-            projectId: r.project_id,
-          });
+        const handleCancelApplication = () => {
+          setRequestToCancel(r);
         };
 
         const onCopyProjectLink = async () => {
@@ -335,13 +344,10 @@ const RequestsTab = ({user}: {user: User}) => {
             requestDirection={r.direction}
             requestStatus={r.status}
             projectSlug={r.project_slug}
-            nextAllowedAt={r.next_allowed_at}
             isManageProcessing={isManageProcessing}
-            isSubmitProcessing={isManageProcessing}
             onAcceptInvite={handleAcceptInvite}
             onRejectInvite={handleRejectInvite}
             onCancelApplication={handleCancelApplication}
-            onResendApplication={handleResendApplication}
             onCopyProjectLink={onCopyProjectLink}
           />
         );
@@ -533,18 +539,17 @@ const RequestsTab = ({user}: {user: User}) => {
         displayFilterButton={false}
         topPadding={false}
         customRightContent={customRightContent}
-        onTabChange={(v) => setActiveTab(v as "sent" | "received")}>
+        contentAnimated={!isLoading}
+        onTabChange={(v) => {
+          setActiveTab(v as "sent" | "received");
+          setRowSelection({});
+        }}>
         {(currentActiveTab) => (
           <>
             {isLoading ? (
-              <motion.div
-                key="skeleton"
-                initial={{opacity: 0}}
-                animate={{opacity: 1}}
-                exit={{opacity: 0}}
-                transition={{duration: 0.3, ease: "easeInOut"}}>
+              <div key="skeleton">
                 <TableSkeleton columns={skeletonColumns} rowCount={5} />
-              </motion.div>
+              </div>
             ) : (
               <motion.div
                 key="table"
@@ -560,13 +565,14 @@ const RequestsTab = ({user}: {user: User}) => {
                       {
                         label: "Send message",
                         icon: <MessageCircle className="w-4 h-4" />,
+                        disabled: true,
                         onClick: handleBulkMessage,
                       },
                       {
-                        label: "Delete",
-                        icon: <Trash2 className="w-4 h-4" />,
+                        label: "Archive",
+                        icon: <Archive className="w-4 h-4" />,
                         onClick: handleBulkDelete,
-                        className: "text-red-500 hover:text-red-700",
+                        disabled: true,
                       },
                     ]}
                   />
@@ -626,11 +632,16 @@ const RequestsTab = ({user}: {user: User}) => {
                           </TableRow>
                         ))
                       ) : (
-                        <TableRow>
+                        <motion.tr
+                          key="no-results"
+                          initial={{opacity: 0}}
+                          animate={{opacity: 1}}
+                          exit={{opacity: 0}}
+                          className="border-b">
                           <TableCell colSpan={15} className="h-24 text-center">
                             No {currentActiveTab} requests found.
                           </TableCell>
-                        </TableRow>
+                        </motion.tr>
                       )}
                     </TableBody>
                   </Table>
@@ -640,6 +651,42 @@ const RequestsTab = ({user}: {user: User}) => {
           </>
         )}
       </FilterableTabs>
+
+      <ConfirmationModal
+        id="cancel-user-request-modal"
+        triggerText=""
+        title="Cancel Request"
+        description={`Are you sure you want to cancel your application to "${requestToCancel?.project_title || ""}"? This action cannot be undone.`}
+        requireInput={false}
+        open={!!requestToCancel}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setRequestToCancel(null);
+          }
+        }}
+        onConfirm={async () => {
+          if (!requestToCancel) return {};
+          const promise = manageRequestMutation
+            .mutateAsync({
+              requestId: requestToCancel.id,
+              action: "cancel",
+              projectId: requestToCancel.project_id,
+            })
+            .then((res) => {
+              if (!res.success) throw new Error(res.message || "Failed to cancel application");
+              return res.message || "Application cancelled";
+            });
+          toast.promise(promise, {
+            loading: `Cancelling application to ${requestToCancel.project_title}...`,
+            success: (msg) => msg,
+            error: (err) => (err instanceof Error ? err.message : "Failed to cancel application"),
+          });
+          setRequestToCancel(null);
+          return {};
+        }}
+        confirmButtonText="Cancel Request">
+        <div style={{display: "none"}} />
+      </ConfirmationModal>
     </div>
   );
 };

@@ -16,6 +16,7 @@ export type BulkAction = {
   icon: React.ReactNode;
   onClick: () => void;
   className?: string;
+  disabled?: boolean;
 };
 
 export interface BulkActionsBarProps {
@@ -64,14 +65,15 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
 
               {/* ── Action buttons ───────────────────────────── */}
               <div className="flex items-center gap-2">
-                {actions.map(({label, icon, onClick, className}) => (
+                {actions.map(({label, icon, onClick, disabled, className}) => (
                   <Tooltip key={label}>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
                         onClick={onClick}
+                        disabled={disabled}
                         className={cn(
-                          "p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80",
+                          "p-0.5 cursor-pointer transition-all duration-200 text-secondary hover:text-foreground/80 disabled:opacity-50 disabled:pointer-events-none",
                           className,
                         )}>
                         {icon}

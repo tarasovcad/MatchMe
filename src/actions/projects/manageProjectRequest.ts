@@ -7,13 +7,7 @@ import {getUsersWithProjectPermission} from "./getUsersWithProjectPermission";
 import {PostgrestError} from "@supabase/supabase-js";
 import {createClient as createAdminClient} from "@/utils/supabase/admin";
 
-export type ManageProjectRequestAction =
-  | "accept"
-  | "reject"
-  | "cancel"
-  | "resend"
-  | "reinvite"
-  | "reset";
+export type ManageProjectRequestAction = "accept" | "reject" | "cancel" | "resend" | "reset";
 
 interface ProjectRequest {
   id: string;
@@ -27,7 +21,6 @@ interface ProjectRequest {
   status: "pending" | "accepted" | "rejected" | "cancelled";
   resend_count?: number;
   next_allowed_at?: string | null;
-  last_sent_at?: string | null;
 }
 
 interface ManageProjectRequestParams {
@@ -68,17 +61,18 @@ export async function manageProjectRequest({
     const {data, error} = await supabase
       .from("project_requests")
       .select(
-        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at, last_sent_at",
+        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at",
       )
       .eq("id", requestId)
       .single();
     request = data;
     requestError = error;
   } else {
+    // when using request from notificaion
     const {data, error} = await supabase
       .from("project_requests")
       .select(
-        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at, last_sent_at",
+        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at",
       )
       .eq("project_id", projectId)
       .eq("user_id", user.id)
@@ -91,6 +85,76 @@ export async function manageProjectRequest({
 
   if (requestError || !request) {
     return {success: false, message: "Project request not found or already processed"};
+  }
+
+  // resolve current user's role permissions
+  const resolveUserPermissions = async (
+    projectIdToCheck: string,
+    userIdToCheck: string,
+  ): Promise<Record<string, Record<string, boolean>> | null> => {
+    const {data: member} = await supabase
+      .from("project_team_members")
+      .select("role_id")
+      .eq("project_id", projectIdToCheck)
+      .eq("user_id", userIdToCheck)
+      .maybeSingle();
+
+    if (!member) return null; // non-members do not have project-granted permissions
+    const roleId = member.role_id as string | null;
+
+    const {data: role} = await supabase
+      .from("project_roles")
+      .select("permissions")
+      .eq("id", roleId)
+      .maybeSingle();
+    return (role?.permissions as Record<string, Record<string, boolean>>) ?? null;
+  };
+
+  // Authorization gates per action/direction
+  const isInvitedUser = user.id === request.user_id;
+  const isApplication = request.direction === "application";
+  const isInvite = request.direction === "invite";
+
+  const perms = await resolveUserPermissions(request.project_id, user.id);
+  const canUpdateInvitations = !!perms?.["Invitations"]?.update;
+  const canUpdateApplications = !!perms?.["Applications"]?.update;
+
+  // Rules:
+  // - Invites: invited user may accept/reject their own invite; resend/cancel require Invitations.update
+  // - Applications: accept/reject require Applications.update; applicant may cancel their own application
+  // - Reset: require update on relevant resource
+  if (isInvite) {
+    if (action === "resend" || action === "cancel") {
+      if (!canUpdateInvitations) {
+        return {success: false, message: "Restricted Access"};
+      }
+    } else if (action === "accept" || action === "reject") {
+      if (!isInvitedUser) {
+        return {success: false, message: "Only the invited user can perform this action"};
+      }
+    }
+  }
+
+  if (isApplication) {
+    if (action === "accept" || action === "reject") {
+      if (!canUpdateApplications) {
+        return {success: false, message: "Restricted Access"};
+      }
+    }
+    if (action === "cancel") {
+      const isApplicant = isInvitedUser; // for applications, request.user_id is the applicant
+      if (!isApplicant && !canUpdateApplications) {
+        return {success: false, message: "Restricted Access"};
+      }
+    }
+  }
+
+  if (action === "reset") {
+    const needApplications = isApplication;
+    const allowed = needApplications ? canUpdateApplications : canUpdateInvitations;
+    if (!allowed) {
+      return {success: false, message: "Restricted Access"};
+    }
   }
 
   // Helpers
@@ -161,7 +225,7 @@ export async function manageProjectRequest({
     // Clear cooldown fields after a successful join/acceptance
     await supabase
       .from("project_requests")
-      .update({resend_count: 0, last_sent_at: null, next_allowed_at: null, status: "accepted"})
+      .update({resend_count: 0, next_allowed_at: null, status: "accepted"})
       .eq("id", request.id);
 
     // Notifications differ by direction
@@ -240,7 +304,6 @@ export async function manageProjectRequest({
         .from("project_requests")
         .update({
           resend_count: 0,
-          last_sent_at: null,
           next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
         })
         .eq("id", request.id);
@@ -251,7 +314,6 @@ export async function manageProjectRequest({
         .from("project_requests")
         .update({
           resend_count: 0,
-          last_sent_at: null,
           next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
         })
         .eq("id", request.id);
@@ -302,7 +364,6 @@ export async function manageProjectRequest({
         .from("project_requests")
         .update({
           resend_count: 0,
-          last_sent_at: null,
           next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
         })
         .eq("id", request.id);
@@ -340,7 +401,6 @@ export async function manageProjectRequest({
         .from("project_requests")
         .update({
           resend_count: 0,
-          last_sent_at: null,
           next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
         })
         .eq("id", request.id);
@@ -413,7 +473,6 @@ export async function manageProjectRequest({
 
     const updatedFields = {
       updated_at: now.toISOString(),
-      last_sent_at: now.toISOString(),
       next_allowed_at: nextWindowMs ? new Date(now.getTime() + nextWindowMs).toISOString() : null,
       resend_count: currentResendCount + 1,
     } as const;
@@ -436,99 +495,6 @@ export async function manageProjectRequest({
     return {
       success: true,
       message: "Invitation resent",
-      data: {projectId: request.project_id, userId: request.user_id},
-    };
-  }
-
-  if (action === "reinvite") {
-    if (request.status !== "cancelled" && request.status !== "rejected") {
-      return {success: false, message: "Only cancelled or rejected requests can be re-sent"};
-    }
-
-    // Respect cool-off set on cancel/reject
-    const now = new Date();
-    const nextAllowedAt = request.next_allowed_at ? new Date(request.next_allowed_at) : null;
-    if (nextAllowedAt && nextAllowedAt.getTime() > now.getTime()) {
-      const actionText =
-        request.direction === "invite" ? "re-invite this user" : "re-apply to this project";
-      return {
-        success: false,
-        message: `You can ${actionText} on ${nextAllowedAt.toISOString()}`,
-      };
-    }
-
-    // Update fields - different logic for invites vs applications
-    const updateFields: {
-      status: "pending";
-      updated_at: string;
-      last_sent_at: string;
-      next_allowed_at: string;
-      resend_count: number;
-      created_by?: string;
-    } = {
-      status: "pending",
-      updated_at: now.toISOString(),
-      last_sent_at: now.toISOString(),
-      next_allowed_at: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      resend_count: 0,
-    };
-
-    // For invites, update created_by to current user (the one re-inviting)
-    // For applications, keep original created_by (the applicant)
-    if (request.direction === "invite") {
-      updateFields.created_by = user.id;
-    }
-
-    const {error: updateErr} = await supabase
-      .from("project_requests")
-      .update(updateFields)
-      .eq("id", request.id);
-
-    if (updateErr) {
-      const actionText = request.direction === "invite" ? "re-invite user" : "re-apply to project";
-      return {success: false, message: `Failed to ${actionText}`};
-    }
-
-    // Send different notifications based on direction
-    if (request.direction === "invite") {
-      // For invites: notify the user being invited
-      await sendNotification({
-        type: "project_invite",
-        recipientId: request.user_id,
-        referenceId: request.project_id,
-      });
-    } else {
-      // For applications: notify all team members with permission to receive application notifications
-      const {error: permError, userIds} = await getUsersWithProjectPermission({
-        projectId: request.project_id,
-        resource: "Applications",
-        action: "notification",
-        excludeUserIds: [request.user_id], // Exclude the applicant
-      });
-
-      if (!permError && userIds.length > 0) {
-        const nowIso = new Date().toISOString();
-        const rows = userIds.map((recipientId) => ({
-          recipient_id: recipientId,
-          type: "project_request",
-          sender_id: request.user_id,
-          reference_id: request.project_id,
-          created_at: nowIso,
-          status: "pending",
-        }));
-
-        const {error: insertError} = await supabase.from("notifications").insert(rows);
-        if (insertError) {
-          console.error("manageProjectRequest reinvite notifications insert error", insertError);
-        }
-      }
-    }
-
-    const successMessage =
-      request.direction === "invite" ? "Invitation sent" : "Application submitted";
-    return {
-      success: true,
-      message: successMessage,
       data: {projectId: request.project_id, userId: request.user_id},
     };
   }
