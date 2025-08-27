@@ -660,79 +660,98 @@ const PermissionManagement = ({
   const skeletonColumns = [
     {
       id: "name",
-      header: (
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-4 w-16" />
-        </div>
-      ),
+      header: <Skeleton className="h-4 w-16" />,
       cell: (
         <div className="flex items-center gap-3">
           <Skeleton className="h-4 w-4" />
-          <Skeleton className="h-4 w-4" />
-          <Skeleton className="h-6 w-20 rounded-full" />
+          <Skeleton className="h-5 w-24 rounded-[6px]" />
         </div>
       ),
       size: 260,
     },
     {
-      id: "view",
+      id: "view_count",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
           <Skeleton className="h-4 w-12" />
         </div>
       ),
-      cell: <Skeleton className="h-4 w-10" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-10" />
+        </div>
+      ),
       size: 120,
     },
     {
-      id: "create",
+      id: "create_count",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
           <Skeleton className="h-4 w-14" />
         </div>
       ),
-      cell: <Skeleton className="h-4 w-10" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-10" />
+        </div>
+      ),
       size: 120,
     },
     {
-      id: "update",
+      id: "update_count",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
           <Skeleton className="h-4 w-14" />
         </div>
       ),
-      cell: <Skeleton className="h-4 w-10" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-10" />
+        </div>
+      ),
       size: 120,
     },
     {
-      id: "delete",
+      id: "delete_count",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
           <Skeleton className="h-4 w-12" />
         </div>
       ),
-      cell: <Skeleton className="h-4 w-10" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-10" />
+        </div>
+      ),
       size: 120,
     },
     {
-      id: "notification",
+      id: "notification_count",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
           <Skeleton className="h-4 w-20" />
         </div>
       ),
-      cell: <Skeleton className="h-4 w-10" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-12" />
+        </div>
+      ),
       size: 140,
     },
     {
       id: "actions",
       header: <div className="w-full" />,
-      cell: <Skeleton className="h-8 w-8 rounded-md" />,
+      cell: (
+        <div className="flex justify-center">
+          <Skeleton className="h-4 w-4 rounded-md" />
+        </div>
+      ),
       size: 50,
     },
   ];
@@ -780,14 +799,9 @@ const PermissionManagement = ({
       </div>
 
       {isRolesLoading ? (
-        <motion.div
-          key="skeleton"
-          initial={{opacity: 0}}
-          animate={{opacity: 1}}
-          exit={{opacity: 0}}
-          transition={{duration: 0.3, ease: "easeInOut"}}>
+        <div key="skeleton">
           <TableSkeleton columns={skeletonColumns} rowCount={5} />
-        </motion.div>
+        </div>
       ) : !roles || roles.length === 0 ? (
         <motion.div
           key="empty"

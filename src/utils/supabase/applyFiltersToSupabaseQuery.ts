@@ -74,7 +74,7 @@ export function applyFiltersToSupabaseQuery(query: any, filters: SerializableFil
       case "openPositionsSearch":
         if (filter.searchValue) {
           query = query.or(
-            `title.ilike.%${filter.searchValue}%,` + `description.ilike.%${filter.searchValue}%,`,
+            `title.ilike.%${filter.searchValue}%,` + `description.ilike.%${filter.searchValue}%`,
           );
         }
         break;

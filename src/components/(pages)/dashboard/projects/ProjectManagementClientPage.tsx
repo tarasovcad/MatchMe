@@ -13,6 +13,7 @@ import ProjectManagementRequests from "./ProjectManagementRequests";
 import ProjectManagementOpenPositions from "./ProjectManagementOpenPositions";
 import AccessDeniedSection from "@/components/other/AccessDeniedSection";
 import ProjectManagementRolesPermissionsTab from "./ProjectManagementRolesPermissionsTab";
+import ProjectManagementFollowersTab from "./ProjectManagementFollowersTab";
 
 // Reusable permissions hook
 type PermissionAction = "view" | "create" | "update" | "delete" | "notification";
@@ -134,7 +135,7 @@ const ProjectManagementClientPage = ({
           />
         );
       case "followers":
-        return <div>Followers</div>;
+        return <ProjectManagementFollowersTab project={projectState} user={user} />;
       default:
         return (
           <ProjectManagementDetailsTab

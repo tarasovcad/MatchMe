@@ -19,6 +19,7 @@ export const getProjectOpenPositionsMinimal = async (
           .from("project_open_positions")
           .select("*")
           .eq("project_id", projectId)
+          .eq("status", "open")
           .order("created_at", {ascending: false}),
         userId
           ? supabase
