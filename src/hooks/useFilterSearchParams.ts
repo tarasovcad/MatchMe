@@ -59,6 +59,11 @@ export function useFilterSearchParams() {
           break;
 
         default:
+          // Skip navigation/UI parameters that shouldn't be treated as filters
+          if (key === "tab" || key === "page" || key === "sort" || key === "order") {
+            break;
+          }
+
           // Generic multiSelect for other filters
           filters.push({
             value: key,
@@ -76,8 +81,20 @@ export function useFilterSearchParams() {
   // Update URL with new filters
   const updateUrlFilters = useCallback(
     (filters: SerializableFilter[]) => {
-      const params = new URLSearchParams();
+      // Start with current search parameters to preserve navigation params
+      const params = new URLSearchParams(searchParams);
 
+      // List of navigation/UI parameters to preserve
+      const navigationParams = ["tab", "page", "sort", "order"];
+
+      // Remove all existing filter parameters, but keep navigation params
+      Array.from(params.keys()).forEach((key) => {
+        if (!navigationParams.includes(key)) {
+          params.delete(key);
+        }
+      });
+
+      // Add new filter parameters
       filters.forEach((filter) => {
         switch (filter.type) {
           case "globalSearch":
@@ -119,7 +136,7 @@ export function useFilterSearchParams() {
       const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
       router.replace(newUrl, {scroll: false});
     },
-    [router, pathname],
+    [router, pathname, searchParams],
   );
 
   return {

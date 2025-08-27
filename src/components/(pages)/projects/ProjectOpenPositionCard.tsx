@@ -36,6 +36,8 @@ export type ProjectOpenPositionCardProps = {
   userId?: string;
   isOwner?: boolean;
   isTeamMember?: boolean;
+  allowFirstStep?: boolean;
+  firstStepLink?: string;
 };
 
 // Extracted dialog component
@@ -46,6 +48,8 @@ const OpenPositionDetailsDialog = ({
   userId,
   isOwner,
   isTeamMember,
+  allowFirstStep = true,
+  firstStepLink,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +57,8 @@ const OpenPositionDetailsDialog = ({
   userId?: string;
   isOwner?: boolean;
   isTeamMember?: boolean;
+  allowFirstStep?: boolean;
+  firstStepLink?: string;
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationMessage, setApplicationMessage] = useState("");
@@ -230,20 +236,29 @@ const OpenPositionDetailsDialog = ({
                   labelWhenEmpty="Add to favorites"
                   labelWhenFilled="Remove from favorites"
                 />
-                <Button
-                  variant={"secondary"}
-                  size={"xs"}
-                  onClick={handleNext}
-                  disabled={
-                    isOwnerOrMember ||
-                    hasCurrentPositionRequest ||
-                    applicationCooldownActive ||
-                    viewerHasPendingInvite ||
-                    !userId
-                  }>
-                  {hasCurrentPositionRequest ? "Applied" : "Next"}
-                  {!hasCurrentPositionRequest && <ChevronRight size={14} className="ml-1" />}
-                </Button>
+                {allowFirstStep ? (
+                  <Button
+                    variant={"secondary"}
+                    size={"xs"}
+                    onClick={handleNext}
+                    disabled={
+                      isOwnerOrMember ||
+                      hasCurrentPositionRequest ||
+                      applicationCooldownActive ||
+                      viewerHasPendingInvite ||
+                      !userId
+                    }>
+                    {hasCurrentPositionRequest ? "Applied" : "Next"}
+                    {!hasCurrentPositionRequest && <ChevronRight size={14} className="ml-1" />}
+                  </Button>
+                ) : (
+                  <Link href={firstStepLink ?? ""}>
+                    <Button variant={"secondary"} size={"xs"}>
+                      View Project
+                      <ChevronRight size={14} className="ml-1" />
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -374,8 +389,9 @@ const ProjectOpenPositionCardComponent = ({
   userId,
   isOwner,
   isTeamMember,
+  allowFirstStep = true,
+  firstStepLink,
 }: ProjectOpenPositionCardProps) => {
-  console.log(openPosition);
   const [isHovered, setIsHovered] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -487,6 +503,8 @@ const ProjectOpenPositionCardComponent = ({
         userId={userId}
         isOwner={isOwner}
         isTeamMember={isTeamMember}
+        allowFirstStep={allowFirstStep}
+        firstStepLink={firstStepLink}
       />
     </motion.div>
   );

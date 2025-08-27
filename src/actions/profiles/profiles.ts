@@ -95,21 +95,3 @@ export async function getAllProfiles(
     throw new Error("Failed to fetch profiles");
   }
 }
-
-export async function getUserFavoritesProfiles(userId: string) {
-  if (!userId) return [];
-
-  const supabase = await createClient();
-
-  const {data, error: favoritesError} = await supabase
-    .from("favorites_users")
-    .select("favorite_user_id")
-    .eq("user_id", userId);
-
-  if (favoritesError) {
-    console.log("Error fetching favorites:", favoritesError.message);
-    return [];
-  }
-
-  return data.map((fav) => fav.favorite_user_id);
-}

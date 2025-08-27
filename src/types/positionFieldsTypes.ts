@@ -81,4 +81,6 @@ export interface ProjectOpenPosition {
   application_cooldown_until?: string | null;
   // Per-viewer invite state
   viewer_has_pending_invite?: boolean;
+  // Project slug for building links
+  project_slug?: string;
 }

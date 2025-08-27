@@ -11,7 +11,8 @@ export type FilterType =
   | "multiSelect"
   | "tagsSearch"
   | "numberSelect"
-  | "globalSearch";
+  | "globalSearch"
+  | "openPositionsSearch";
 
 export type BaseFilter = {
   title: string;
@@ -44,6 +45,11 @@ export type GlobalSearchFilter = BaseFilter & {
   searchValue?: string;
 };
 
+export type OpenPositionsSearchFilter = BaseFilter & {
+  type: "openPositionsSearch";
+  searchValue?: string;
+};
+
 export type NumberSelectFilter = BaseFilter & {
   type: "numberSelect";
   numberSelectProps?: {
@@ -57,7 +63,8 @@ export type Filter =
   | TagsSearchFilter
   | SearchInputFilter
   | NumberSelectFilter
-  | GlobalSearchFilter;
+  | GlobalSearchFilter
+  | OpenPositionsSearchFilter;
 
 export type SerializableBaseFilter = {
   value: string;
@@ -80,14 +87,19 @@ export type SerializableSearchInputFilter = SerializableBaseFilter & {
   searchValue?: string;
 };
 
-export type SerializableNumberSelectFilter = SerializableBaseFilter & {
-  type: "numberSelect";
-  selectedValue?: number | number[];
-};
-
 export type SerializableGlobalSearchFilter = SerializableBaseFilter & {
   type: "globalSearch";
   searchValue?: string;
+};
+
+export type SerializableOpenPositionsSearchFilter = SerializableBaseFilter & {
+  type: "openPositionsSearch";
+  searchValue?: string;
+};
+
+export type SerializableNumberSelectFilter = SerializableBaseFilter & {
+  type: "numberSelect";
+  selectedValue?: number | number[];
 };
 
 export type SerializableFilter =
@@ -95,7 +107,8 @@ export type SerializableFilter =
   | SerializableTagsSearchFilter
   | SerializableSearchInputFilter
   | SerializableNumberSelectFilter
-  | SerializableGlobalSearchFilter;
+  | SerializableGlobalSearchFilter
+  | SerializableOpenPositionsSearchFilter;
 
 interface FilterStore {
   appliedFilters: Record<string, Filter[]>;
@@ -205,6 +218,7 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
 
           case "globalSearch":
           case "searchInput":
+          case "openPositionsSearch":
             return {
               ...baseFilter,
               searchValue:
@@ -212,6 +226,7 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
                   serializableFilter as
                     | SerializableGlobalSearchFilter
                     | SerializableSearchInputFilter
+                    | SerializableOpenPositionsSearchFilter
                 ).searchValue || "",
             };
 
@@ -265,7 +280,9 @@ export const useFilterStore = create<FilterStore>((set, get) => ({
           selectedTags: filter.selectedTags,
         };
       } else if (
-        (filter.type === "searchInput" || filter.type === "globalSearch") &&
+        (filter.type === "searchInput" ||
+          filter.type === "globalSearch" ||
+          filter.type === "openPositionsSearch") &&
         filter.searchValue
       ) {
         return {
