@@ -1,22 +1,7 @@
-import ColumnViewPopover from "@/components/table/ColumnViewPopover";
-import TableSettingsPopover from "@/components/table/TableSettingsPopover";
-import SimpleInput from "@/components/ui/form/SimpleInput";
-import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
-import {Project} from "@/types/projects/projects";
 import {User} from "@supabase/supabase-js";
-import {
-  User2,
-  Calendar,
-  Circle,
-  ChevronDown,
-  Trash2,
-  MessageCircle,
-  Briefcase,
-  Archive,
-} from "lucide-react";
-import React, {useState, useMemo} from "react";
-import {useProjectRequests} from "@/hooks/query/projects/use-project-requests";
-import {motion, AnimatePresence} from "framer-motion";
+import React, {useMemo, useState} from "react";
+import FilterableTabs, {Tab} from "@/components/ui/tabs/FilterableTabs";
+import SimpleInput from "@/components/ui/form/SimpleInput";
 import {
   ColumnDef,
   SortingState,
@@ -34,151 +19,91 @@ import {
   TableRow,
 } from "@/components/shadcn/table";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/shadcn/avatar";
-import {cn} from "@/lib/utils";
+import {Checkbox} from "@/components/shadcn/checkbox";
 import ColumnHeaderPopover from "@/components/table/ColumnHeaderPopover";
+import ColumnViewPopover from "@/components/table/ColumnViewPopover";
+import TableSettingsPopover from "@/components/table/TableSettingsPopover";
 import BulkActionsBar from "@/components/table/BulkActionsBar";
-import usePersistedTableColumns from "@/hooks/usePersistedTableColumns";
+import {
+  Calendar,
+  Circle,
+  ChevronDown,
+  Briefcase,
+  Building2,
+  MessageCircle,
+  Archive,
+  FolderOpen,
+} from "lucide-react";
+import {cn} from "@/lib/utils";
+import Link from "next/link";
+
+import UserRequestsActionsPopover from "./UserRequestsActionsPopover";
+import {formatTimeRelative} from "@/functions/formatDate";
+import {useUserRequests} from "@/hooks/query/dashboard/use-user-requests";
+import {useManageUserRequest} from "@/hooks/query/dashboard/use-manage-user-request";
+import type {UserRequestForProfileTab as UserRequest} from "@/actions/projects/getUserRequests";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import {Skeleton} from "@/components/shadcn/skeleton";
-import {Checkbox} from "@/components/shadcn/checkbox";
-import {formatHumanDate} from "@/functions/formatDate";
-import {renderOrDash, createProfileLink} from "@/utils/tableHelpers";
-import Link from "next/link";
-import ProjectRequestsActionsPopover from "./ProjectRequestsActionsPopover";
-import {useManageProjectRequest} from "@/hooks/query/projects/use-manage-project-request";
-import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
+import {motion} from "framer-motion";
 import {toast} from "sonner";
-import AccessDeniedSection from "@/components/other/AccessDeniedSection";
+import ConfirmationModal from "@/components/ui/dialog/ConfirmationModal";
 
-interface ProjectRequest {
-  id: string;
-  project_id: string;
-  user_id: string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  position_id?: string;
-  direction: "invite" | "application";
-  status: "pending" | "accepted" | "rejected" | "cancelled";
-  role_id?: string;
-  user_name: string;
-  user_username: string;
-  user_profile_image: {
-    url: string;
-    fileName: string;
-    fileSize: number;
-    uploadedAt: string;
-  }[];
-  created_by_name: string;
-  created_by_username: string;
-  created_by_profile_image: {
-    url: string;
-    fileName: string;
-    fileSize: number;
-    uploadedAt: string;
-  }[];
-  position_title?: string;
-  // Cooldown/resend fields
-  resend_count: number;
-  next_allowed_at: string | null;
-  last_sent_at?: string | null;
-}
-
-const ProjectManagementRequests = ({
-  project,
-  user,
-  canUpdateInvitations = false,
-  canUpdateApplications = false,
-  canViewInvitations = true,
-  canViewApplications = true,
-}: {
-  project: Project;
-  user: User;
-  canUpdateInvitations?: boolean;
-  canUpdateApplications?: boolean;
-  canViewInvitations?: boolean;
-  canViewApplications?: boolean;
-}) => {
-  const defaultSubTab = canViewApplications ? "received" : canViewInvitations ? "sent" : "received";
-  const [activeTab, setActiveTab] = useState(defaultSubTab);
+const RequestsTab = ({user}: {user: User}) => {
+  const [activeTab, setActiveTab] = useState<"sent" | "received">("received");
   const [query, setQuery] = useState("");
   const [sorting, setSorting] = useState<SortingState>([
     {id: "status", desc: false},
     {id: "created_at", desc: true},
   ]);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
-  const [requestToCancel, setRequestToCancel] = useState<ProjectRequest | null>(null);
-  const {data: requests, isLoading: isRequestsLoading} = useProjectRequests(project.id);
-  const manageRequestMutation = useManageProjectRequest();
+  const [requestToCancel, setRequestToCancel] = useState<UserRequest | null>(null);
 
-  // Column state management
-  const {
-    columnOrder,
-    setColumnOrder,
-    columnSizing,
-    setColumnSizing,
-    columnVisibility,
-    setColumnVisibility,
-  } = usePersistedTableColumns("requestsTablePrefs");
+  // --- Real data fetching ---
+  const {data: allRequests, isLoading} = useUserRequests(user.id);
+  const manageRequestMutation = useManageUserRequest(user.id);
 
-  const effectiveColumnVisibility = useMemo(() => {
-    const visibility = {...columnVisibility};
-    if (activeTab === "received") {
-      visibility["created_by_name"] = false;
+  const filteredByTab = useMemo(() => {
+    if (!allRequests) return [];
+
+    if (activeTab === "sent") {
+      return allRequests.filter((r) => r.direction === "application");
     }
-    return visibility;
-  }, [columnVisibility, activeTab]);
+    return allRequests.filter((r) => r.direction === "invite");
+  }, [allRequests, activeTab]);
 
-  // Filter requests based on active tab
-  const filteredRequests = useMemo(() => {
-    if (!requests) return [];
-
-    if (activeTab === "received") {
-      return requests.filter((req) => req.direction === "application");
-    } else if (activeTab === "sent") {
-      return requests.filter((req) => req.direction === "invite");
-    }
-    return requests;
-  }, [requests, activeTab]);
-
-  // Apply search query
   const data = useMemo(() => {
-    if (!filteredRequests || !query) return filteredRequests || [];
+    if (!filteredByTab || !query) return filteredByTab || [];
 
-    return filteredRequests.filter((request) => {
-      const q = query.toLowerCase();
-      return (
-        request.user_name.toLowerCase().includes(q) ||
-        request.user_username.toLowerCase().includes(q) ||
-        request.status.toLowerCase().includes(q) ||
-        request.direction.toLowerCase().includes(q) ||
-        (request.created_by_name && request.created_by_name.toLowerCase().includes(q)) ||
-        (request.created_by_username && request.created_by_username.toLowerCase().includes(q)) ||
-        (request.position_id && request.position_id.toLowerCase().includes(q)) ||
-        (request.position_title && request.position_title.toLowerCase().includes(q))
-      );
-    });
-  }, [query, filteredRequests]);
+    const q = query.toLowerCase();
+    return filteredByTab.filter((r) =>
+      [
+        r.project_title,
+        r.project_slug,
+        r.position_title || "",
+        r.status,
+        r.direction,
+        r.invited_by,
+        r.created_by_username,
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q)),
+    );
+  }, [filteredByTab, query]);
 
-  // Update tab counts
   const tabs: Tab[] = useMemo(
     () => [
       {
         value: "received",
         label: "Received",
-        count: canViewApplications
-          ? requests?.filter((req) => req.direction === "application").length || 0
-          : undefined,
+        count: allRequests?.filter((r) => r.direction === "invite").length || 0,
       },
       {
         value: "sent",
         label: "Sent",
-        count: canViewInvitations
-          ? requests?.filter((req) => req.direction === "invite").length || 0
-          : undefined,
+        count: allRequests?.filter((r) => r.direction === "application").length || 0,
       },
     ],
-    [requests, canViewApplications, canViewInvitations],
+    [allRequests],
   );
 
   const statusConfig = {
@@ -186,24 +111,22 @@ const ProjectManagementRequests = ({
     accepted: {color: "bg-[#009E61]", label: "Accepted"},
     rejected: {color: "bg-[#EF1A2C]", label: "Rejected"},
     cancelled: {color: "bg-[#6C757D]", label: "Cancelled"},
-  };
+  } as const;
 
-  const getColumns = (): ColumnDef<ProjectRequest>[] => [
+  const getColumns = (): ColumnDef<UserRequest>[] => [
     {
-      accessorKey: "user_name",
+      accessorKey: "project_title",
       header: ({table}) => (
         <div className="flex items-center gap-3">
           {(() => {
             const allPageSelected = table.getIsAllPageRowsSelected();
             const somePageSelected =
               table.getSelectedRowModel().rows.length > 0 && !allPageSelected;
-
             const checked: boolean | "indeterminate" = allPageSelected
               ? true
               : somePageSelected
                 ? "indeterminate"
                 : false;
-
             return (
               <Checkbox
                 aria-label="Select all"
@@ -212,12 +135,14 @@ const ProjectManagementRequests = ({
               />
             );
           })()}
-          <User2 className="w-3.5 h-3.5" />
-          <span>{activeTab === "received" ? "Requester" : "Invited User"}</span>
+          <div className="flex items-center gap-1">
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span>Project</span>
+          </div>
         </div>
       ),
       cell: ({row}) => {
-        const request = row.original as ProjectRequest;
+        const r = row.original as UserRequest;
         return (
           <div className="flex items-center gap-3">
             <Checkbox
@@ -227,26 +152,20 @@ const ProjectManagementRequests = ({
               className="mr-1"
             />
             <Avatar className="h-6 w-6">
-              <AvatarImage src={request.user_profile_image?.[0]?.url} alt={request.user_name} />
-              <AvatarFallback
-                fallbackImage="/avatar/default-user-avatar.png"
-                fallbackImageAlt="Default user avatar"
-                className="text-xs">
-                {request.user_name.charAt(0)}
-              </AvatarFallback>
+              <AvatarImage src={r.project_logo_url || undefined} alt={r.project_title} />
+              <AvatarFallback>{r.project_title.charAt(0)}</AvatarFallback>
             </Avatar>
             <Link
-              href={`/profiles/${request.user_username}`}
+              href={`/projects/${r.project_slug}`}
               className="leading-none text-foreground/90 hover:underline">
-              {request.user_name}
+              {r.project_title}
             </Link>
           </div>
         );
       },
-      size: 200,
+      size: 220,
       minSize: 220,
     },
-
     {
       accessorKey: "position_title",
       header: () => (
@@ -256,38 +175,38 @@ const ProjectManagementRequests = ({
         </div>
       ),
       cell: ({row}) => {
-        const positionTitle = row.original.position_title;
-        return renderOrDash(positionTitle);
+        const title = row.original.position_title;
+        return title ? title : <span className="text-muted-foreground">—</span>;
       },
       size: 200,
       minSize: 200,
     },
     {
-      accessorKey: "created_by_name",
+      accessorKey: "invited_by",
       header: () => (
         <div className="flex items-center gap-1 leading-none">
-          <User2 className="w-3.5 h-3.5" />
-          <span>{activeTab === "received" ? "Sent by" : "Invited by"}</span>
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Invited by</span>
         </div>
       ),
       cell: ({row}) => {
-        const {
-          created_by_name: name,
-          created_by_username: username,
-          created_by_profile_image,
-        } = row.original;
+        const r = row.original;
         return (
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
-              <AvatarImage src={created_by_profile_image?.[0]?.url} alt={name} />
+              <AvatarImage src={r.created_by_profile_image_url || undefined} alt={r.invited_by} />
               <AvatarFallback
                 fallbackImage="/avatar/default-user-avatar.png"
                 fallbackImageAlt="Default user avatar"
                 className="text-xs">
-                {name?.charAt(0)}
+                {r.invited_by?.charAt(0)}
               </AvatarFallback>
             </Avatar>
-            {createProfileLink(username, name)}
+            <Link
+              href={`/profiles/${r.created_by_username}`}
+              className="leading-none text-foreground/90 hover:underline">
+              {r.invited_by}
+            </Link>
           </div>
         );
       },
@@ -307,7 +226,6 @@ const ProjectManagementRequests = ({
       cell: ({row}) => {
         const status = row.original.status;
         const config = statusConfig[status];
-
         return (
           <div
             className={cn(
@@ -321,9 +239,7 @@ const ProjectManagementRequests = ({
       },
       sortingFn: (rowA, rowB) => {
         const statusOrder = {pending: 0, accepted: 1, rejected: 2, cancelled: 3};
-        const statusA = rowA.original.status;
-        const statusB = rowB.original.status;
-        return statusOrder[statusA] - statusOrder[statusB];
+        return statusOrder[rowA.original.status] - statusOrder[rowB.original.status];
       },
     },
     {
@@ -331,16 +247,19 @@ const ProjectManagementRequests = ({
       header: () => (
         <div className="flex items-center gap-1 leading-none">
           <Calendar className="w-3.5 h-3.5" />
-          <span>{activeTab === "received" ? "Received At" : "Sent At"}</span>
+          <span>{activeTab === "received" ? "Received At" : "Applied At"}</span>
         </div>
       ),
       cell: ({row}) => {
-        const request = row.original;
-        const date = activeTab === "received" ? request.created_at : request.last_sent_at;
-        return renderOrDash(date ? formatHumanDate(date) : null);
+        const value = row.original.created_at;
+        return value ? (
+          <span>{formatTimeRelative(value)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
       },
-      size: 130,
-      minSize: 130,
+      size: 160,
+      minSize: 140,
     },
     {
       accessorKey: "updated_at",
@@ -351,100 +270,85 @@ const ProjectManagementRequests = ({
         </div>
       ),
       cell: ({row}) => {
-        const date = row.original.updated_at;
-        return renderOrDash(date ? formatHumanDate(date) : null);
+        const value = row.original.updated_at;
+        return value ? (
+          <span>{formatTimeRelative(value)}</span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
       },
-      size: 130,
-      minSize: 130,
+      size: 160,
+      minSize: 140,
     },
-
     {
       id: "actions",
       header: "",
       cell: ({row}) => {
-        const request = row.original as ProjectRequest;
-        const handleAcceptRequest = async () => {
+        const r = row.original;
+
+        const isManageProcessing = manageRequestMutation.isPending;
+
+        const handleAcceptInvite = async () => {
           const promise = manageRequestMutation
             .mutateAsync({
-              requestId: request.id,
+              requestId: r.id,
               action: "accept",
-              projectId: project.id,
+              projectId: r.project_id,
             })
             .then((res) => {
-              if (!res.success) throw new Error(res.message || "Failed to accept request");
-              return res.message || "Request accepted";
+              if (!res.success) throw new Error(res.message || "Failed to accept invite");
+              return res.message || "Invitation accepted";
             });
           toast.promise(promise, {
-            loading: `Accepting ${request.user_name}...`,
+            loading: `Accepting invite to ${r.project_title}...`,
             success: (msg) => msg,
-            error: (err) => (err instanceof Error ? err.message : "Failed to accept request"),
+            error: (err) => (err instanceof Error ? err.message : "Failed to accept invite"),
           });
         };
 
-        const handleRejectRequest = async () => {
+        const handleRejectInvite = async () => {
           const promise = manageRequestMutation
             .mutateAsync({
-              requestId: request.id,
+              requestId: r.id,
               action: "reject",
-              projectId: project.id,
+              projectId: r.project_id,
             })
             .then((res) => {
-              if (!res.success) throw new Error(res.message || "Failed to reject request");
-              return res.message || "Request rejected";
+              if (!res.success) throw new Error(res.message || "Failed to reject invite");
+              return res.message || "Invitation declined";
             });
           toast.promise(promise, {
-            loading: `Rejecting ${request.user_name}...`,
+            loading: `Declining invite to ${r.project_title}...`,
             success: (msg) => msg,
-            error: (err) => (err instanceof Error ? err.message : "Failed to reject request"),
+            error: (err) => (err instanceof Error ? err.message : "Failed to reject invite"),
           });
         };
 
-        // Open confirmation modal instead of mutating directly
-        const handleCancelInvitation = () => setRequestToCancel(request);
-
-        const handleResendInvitation = async () => {
-          const promise = manageRequestMutation
-            .mutateAsync({
-              requestId: request.id,
-              action: "resend",
-              projectId: project.id,
-            })
-            .then((res) => {
-              if (!res.success) throw new Error(res.message || "Failed to resend invitation");
-              return res.message || "Invitation resent";
-            });
-          toast.promise(promise, {
-            loading: `Resending invitation to ${request.user_name}...`,
-            success: (msg) => msg,
-            error: (err) => (err instanceof Error ? err.message : "Failed to resend invitation"),
-          });
+        const handleCancelApplication = () => {
+          setRequestToCancel(r);
         };
 
-        const handleSendMessage = () => {
-          console.log("Send message to:", request.user_username);
-          // TODO: Implement send message logic
+        const onCopyProjectLink = async () => {
+          const projectUrl = `${window.location.origin}/projects/${r.project_slug}`;
+          try {
+            await navigator.clipboard.writeText(projectUrl);
+            toast.success("Project link copied to clipboard!");
+          } catch (error) {
+            console.error("Failed to copy link:", error);
+            toast.error("Failed to copy link");
+          }
         };
-
-        const isInvite = request.direction === "invite";
-        const isApplication = request.direction === "application";
 
         return (
-          <ProjectRequestsActionsPopover
-            requestDirection={request.direction}
-            requestStatus={request.status}
-            userName={request.user_name}
-            userUsername={request.user_username}
-            resendCount={request.resend_count}
-            nextAllowedAt={request.next_allowed_at}
-            onAcceptRequest={handleAcceptRequest}
-            onRejectRequest={handleRejectRequest}
-            onCancelInvitation={handleCancelInvitation}
-            onResendInvitation={handleResendInvitation}
-            onSendMessage={handleSendMessage}
-            canAccept={isApplication && canUpdateApplications}
-            canReject={isApplication && canUpdateApplications}
-            canResend={isInvite && canUpdateInvitations}
-            canCancel={isInvite && canUpdateInvitations}
+          <UserRequestsActionsPopover
+            requestDirection={r.direction}
+            requestStatus={r.status}
+            projectSlug={r.project_slug}
+            isManageProcessing={isManageProcessing}
+            onAcceptInvite={handleAcceptInvite}
+            onRejectInvite={handleRejectInvite}
+            onCancelApplication={handleCancelApplication}
+            onCopyProjectLink={onCopyProjectLink}
           />
         );
       },
@@ -454,6 +358,19 @@ const ProjectManagementRequests = ({
       maxSize: 50,
     },
   ];
+
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+
+  const effectiveColumnVisibility = useMemo(() => {
+    const visibility = {...columnVisibility};
+    // Hide "Invited by" column on sent, show on Received
+    if (activeTab === "sent") {
+      visibility["invited_by"] = false;
+    }
+    return visibility;
+  }, [columnVisibility, activeTab]);
 
   const table = useReactTable({
     data,
@@ -480,18 +397,18 @@ const ProjectManagementRequests = ({
 
   const selectedCount = table.getSelectedRowModel().rows.length;
 
-  const handleDeleteRequests = () => {
+  const handleBulkDelete = () => {
     console.log(
-      "Delete requests:",
+      "Bulk delete requests:",
       table.getSelectedRowModel().rows.map((r) => r.original.id),
     );
     table.resetRowSelection(false);
   };
 
-  const handleSendMessage = () => {
+  const handleBulkMessage = () => {
     console.log(
-      "Send message to:",
-      table.getSelectedRowModel().rows.map((r) => r.original.id),
+      "Bulk message:",
+      table.getSelectedRowModel().rows.map((r) => r.original.project_slug),
     );
     table.resetRowSelection(false);
   };
@@ -509,9 +426,9 @@ const ProjectManagementRequests = ({
       <ColumnViewPopover
         table={table}
         hiddenColumnIds={
-          activeTab === "received"
-            ? ["user_name", "actions", "created_by_name"]
-            : ["user_name", "actions"]
+          activeTab === "sent"
+            ? ["project_title", "actions", "invited_by"]
+            : ["project_title", "actions"]
         }
       />
       <TableSettingsPopover
@@ -528,7 +445,7 @@ const ProjectManagementRequests = ({
 
   const skeletonColumns = [
     {
-      id: "user_name",
+      id: "project_title",
       header: (
         <div className="flex items-center gap-3">
           <Skeleton className="h-4 w-4" />
@@ -543,7 +460,7 @@ const ProjectManagementRequests = ({
           <Skeleton className="h-4 w-24" />
         </div>
       ),
-      size: 200,
+      size: 220,
     },
     {
       id: "position_title",
@@ -557,7 +474,7 @@ const ProjectManagementRequests = ({
       size: 200,
     },
     {
-      id: "created_by_name",
+      id: "invited_by",
       header: (
         <div className="flex items-center gap-1">
           <Skeleton className="h-3.5 w-3.5" />
@@ -592,7 +509,7 @@ const ProjectManagementRequests = ({
         </div>
       ),
       cell: <Skeleton className="h-4 w-20" />,
-      size: 130,
+      size: 160,
     },
     {
       id: "updated_at",
@@ -603,7 +520,7 @@ const ProjectManagementRequests = ({
         </div>
       ),
       cell: <Skeleton className="h-4 w-20" />,
-      size: 130,
+      size: 160,
     },
     {
       id: "actions",
@@ -617,24 +534,19 @@ const ProjectManagementRequests = ({
     <div className="w-full mx-auto space-y-6">
       <FilterableTabs
         tabs={tabs}
-        defaultTab={defaultSubTab}
+        defaultTab="received"
         searchPlaceholder="Search requests"
         displayFilterButton={false}
         topPadding={false}
         customRightContent={customRightContent}
-        contentAnimated={!isRequestsLoading}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
+        contentAnimated={!isLoading}
+        onTabChange={(v) => {
+          setActiveTab(v as "sent" | "received");
           setRowSelection({});
         }}>
         {(currentActiveTab) => (
           <>
-            {!(currentActiveTab === "received" ? canViewApplications : canViewInvitations) ? (
-              <AccessDeniedSection
-                tabName={currentActiveTab === "received" ? "Applications" : "Invitations"}
-                projectId={project.id}
-              />
-            ) : isRequestsLoading ? (
+            {isLoading ? (
               <div key="skeleton">
                 <TableSkeleton columns={skeletonColumns} rowCount={5} />
               </div>
@@ -645,8 +557,7 @@ const ProjectManagementRequests = ({
                 animate={{opacity: 1}}
                 exit={{opacity: 0}}
                 transition={{duration: 0.3, ease: "easeInOut"}}>
-                <div className="border border-border rounded-[10px] overflow-x-auto scrollbar-thin scrollbar-">
-                  {/* Bulk actions bar */}
+                <div className="border border-border rounded-[10px] overflow-x-auto">
                   <BulkActionsBar
                     selectedCount={selectedCount}
                     onClearSelection={() => table.resetRowSelection(false)}
@@ -655,12 +566,12 @@ const ProjectManagementRequests = ({
                         label: "Send message",
                         icon: <MessageCircle className="w-4 h-4" />,
                         disabled: true,
-                        onClick: handleSendMessage,
+                        onClick: handleBulkMessage,
                       },
                       {
                         label: "Archive",
                         icon: <Archive className="w-4 h-4" />,
-                        onClick: handleDeleteRequests,
+                        onClick: handleBulkDelete,
                         disabled: true,
                       },
                     ]}
@@ -689,7 +600,6 @@ const ProjectManagementRequests = ({
                                   )}
                                 </div>
                               )}
-                              {/* Resize handle */}
                               {header.column.getCanResize() && (
                                 <div
                                   onMouseDown={header.getResizeHandler()}
@@ -703,43 +613,36 @@ const ProjectManagementRequests = ({
                       ))}
                     </TableHeader>
                     <TableBody>
-                      <AnimatePresence initial={false} mode="popLayout">
-                        {table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <motion.tr
-                              key={row.original.id || row.id}
-                              layout="position"
-                              initial={{opacity: 0}}
-                              animate={{opacity: 1}}
-                              exit={{opacity: 0}}
-                              transition={{duration: 0.2}}
-                              data-state={row.getIsSelected() && "selected"}
-                              className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell
-                                  key={cell.id}
-                                  className={cn(
-                                    "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
-                                  )}
-                                  style={{width: cell.column.getSize()}}>
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </TableCell>
-                              ))}
-                            </motion.tr>
-                          ))
-                        ) : (
-                          <motion.tr
-                            key="no-results"
-                            initial={{opacity: 0}}
-                            animate={{opacity: 1}}
-                            exit={{opacity: 0}}
-                            className="border-b">
-                            <TableCell colSpan={15} className="h-24 text-center">
-                              No {currentActiveTab} requests found.
-                            </TableCell>
-                          </motion.tr>
-                        )}
-                      </AnimatePresence>
+                      {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.original.id || row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                            className="hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border transition-colors">
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell
+                                key={cell.id}
+                                className={cn(
+                                  "px-2.5 last:border-r-0 py-1 text-left text-foreground border-r border-border",
+                                )}
+                                style={{width: cell.column.getSize()}}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <motion.tr
+                          key="no-results"
+                          initial={{opacity: 0}}
+                          animate={{opacity: 1}}
+                          exit={{opacity: 0}}
+                          className="border-b">
+                          <TableCell colSpan={15} className="h-24 text-center">
+                            No {currentActiveTab} requests found.
+                          </TableCell>
+                        </motion.tr>
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -749,12 +652,11 @@ const ProjectManagementRequests = ({
         )}
       </FilterableTabs>
 
-      {/* Cancel Invitation Confirmation Modal */}
       <ConfirmationModal
-        id="cancel-invite-modal"
+        id="cancel-user-request-modal"
         triggerText=""
-        title="Cancel Invitation"
-        description={`Are you sure you want to cancel the invitation to "${requestToCancel?.user_name || ""}"? This action cannot be undone.`}
+        title="Cancel Request"
+        description={`Are you sure you want to cancel your application to "${requestToCancel?.project_title || ""}"? This action cannot be undone.`}
         requireInput={false}
         open={!!requestToCancel}
         onOpenChange={(isOpen) => {
@@ -768,25 +670,25 @@ const ProjectManagementRequests = ({
             .mutateAsync({
               requestId: requestToCancel.id,
               action: "cancel",
-              projectId: project.id,
+              projectId: requestToCancel.project_id,
             })
             .then((res) => {
-              if (!res.success) throw new Error(res.message || "Failed to cancel invitation");
-              return res.message || "Invitation cancelled";
+              if (!res.success) throw new Error(res.message || "Failed to cancel application");
+              return res.message || "Application cancelled";
             });
           toast.promise(promise, {
-            loading: `Cancelling invitation for ${requestToCancel.user_name}...`,
+            loading: `Cancelling application to ${requestToCancel.project_title}...`,
             success: (msg) => msg,
-            error: (err) => (err instanceof Error ? err.message : "Failed to cancel invitation"),
+            error: (err) => (err instanceof Error ? err.message : "Failed to cancel application"),
           });
           setRequestToCancel(null);
           return {};
         }}
-        confirmButtonText="Cancel Invitation">
+        confirmButtonText="Cancel Request">
         <div style={{display: "none"}} />
       </ConfirmationModal>
     </div>
   );
 };
 
-export default ProjectManagementRequests;
+export default RequestsTab;

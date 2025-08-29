@@ -4,7 +4,7 @@ import {useEffect} from "react";
 import {useFilterStore} from "@/store/filterStore";
 import {useFilterSearchParams} from "./useFilterSearchParams";
 
-export function useFiltersWithUrl(pageKey: string) {
+export function useFiltersWithUrl(pageKey: string, enabled: boolean = true) {
   const {filtersFromUrl, updateUrlFilters} = useFilterSearchParams();
   const {
     getSerializableFilters,
@@ -20,12 +20,16 @@ export function useFiltersWithUrl(pageKey: string) {
   const pageFilters = useFilterStore((state) => state.appliedFilters[pageKey]);
 
   // Always reflect URL -> Store (including clearing when URL has no filters)
+  // Guarded by enabled flag
   useEffect(() => {
+    if (!enabled) return;
     setFiltersFromUrl(pageKey, filtersFromUrl);
-  }, [pageKey, filtersFromUrl, setFiltersFromUrl]);
+  }, [enabled, pageKey, filtersFromUrl, setFiltersFromUrl]);
 
   // Store -> URL (only when different to avoid echo loops)
+  // Guarded by enabled flag
   useEffect(() => {
+    if (!enabled) return;
     const currentStoreFilters = getSerializableFilters(pageKey);
 
     const sortByValue = <T extends {value: string}>(arr: T[]) =>
@@ -37,7 +41,7 @@ export function useFiltersWithUrl(pageKey: string) {
     if (urlStr !== storeStr) {
       updateUrlFilters(currentStoreFilters);
     }
-  }, [pageKey, pageFilters, filtersFromUrl, getSerializableFilters, updateUrlFilters]);
+  }, [enabled, pageKey, pageFilters, filtersFromUrl, getSerializableFilters, updateUrlFilters]);
 
   return {
     // Filter store methods

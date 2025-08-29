@@ -5,12 +5,11 @@ import {cardVariants} from "@/utils/other/variants";
 import InfiniteItemLoader from "../../InfiniteItemLoader";
 import {getUserFollows, UserWithFollowStatus} from "@/actions/(follows)/getUserFollows";
 import {useFollowCounts} from "@/hooks/query/dashboard/use-follows";
-import {useState, useMemo} from "react";
+import {useState, useMemo, useCallback} from "react";
 import {useFilterStore} from "@/store/filterStore";
 import {SerializableFilter} from "@/store/filterStore";
 import SearchInputPage from "@/components/ui/form/SearchInputPage";
 import FollowUserButton from "@/components/follows/FollowUserButton";
-import {useInfiniteItems} from "@/hooks/useInfiniteItems";
 import AuthGate from "@/components/other/AuthGate";
 import ProfileMiniCard from "../../profiles/ProfileMiniCard";
 import ProfileMiniCardSkeleton from "../../profiles/ProfileMiniCardSkeleton";
@@ -18,7 +17,11 @@ import ProfileMiniCardSkeleton from "../../profiles/ProfileMiniCardSkeleton";
 const UserFollowsTab = ({user}: {user: User}) => {
   const {data: followCounts} = useFollowCounts(user.id);
   const [activeTab, setActiveTab] = useState("followers");
-  const {getSerializableFilters} = useFilterStore();
+  const {getSerializableFilters, removeFilter} = useFilterStore();
+  const [loading, setLoading] = useState<{initial: boolean; more: boolean}>({
+    initial: false,
+    more: false,
+  });
 
   const tabs: Tab[] = [
     {
@@ -38,34 +41,36 @@ const UserFollowsTab = ({user}: {user: User}) => {
     },
   ];
 
-  // Get current filters for the active tab
   const currentFilters = useMemo((): SerializableFilter[] => {
     const pageKey = `follows-${activeTab}`;
     return getSerializableFilters(pageKey);
   }, [activeTab, getSerializableFilters]);
 
-  // Create fetch function for the active tab
-  const fetchItems = async (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => {
-    return await getUserFollows(
-      user.id,
-      activeTab as "followers" | "following" | "mutual",
-      page,
-      itemsPerPage,
-      filters,
-    );
+  const fetchItems = useCallback(
+    async (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => {
+      const isInitial = page === 1;
+      setLoading((prev) => ({...prev, [isInitial ? "initial" : "more"]: true}));
+      try {
+        return await getUserFollows(
+          user.id,
+          activeTab as "followers" | "following" | "mutual",
+          page,
+          itemsPerPage,
+          filters,
+        );
+      } finally {
+        setLoading((prev) => ({...prev, [isInitial ? "initial" : "more"]: false}));
+      }
+    },
+    [activeTab, user.id],
+  );
+
+  const handleTabChange = (nextTab: string) => {
+    removeFilter(`follows-${activeTab}`, "search");
+    removeFilter(`follows-${nextTab}`, "search");
+    setActiveTab(nextTab);
   };
 
-  // Use the infinite items hook for loading states
-  const query = useInfiniteItems({
-    type: "profiles",
-    userId: user.id,
-    itemsPerPage: 15,
-    serializableFilters: currentFilters,
-    fetchItems,
-    cacheKey: `follows-${activeTab}`,
-  });
-
-  // Render function for each profile item
   const renderFollowItem = (
     profile: UserWithFollowStatus,
     isLast: boolean,
@@ -100,14 +105,11 @@ const UserFollowsTab = ({user}: {user: User}) => {
     );
   };
 
-  // Custom search input
   const customSearchInput = (
     <SearchInputPage
+      key={`follows-${activeTab}`}
       pageKey={`follows-${activeTab}`}
-      loading={{
-        initial: query.isLoadingInitial || (query.isFetching && !query.isLoadingMore),
-        more: query.isLoadingMore,
-      }}
+      loading={loading}
     />
   );
 
@@ -119,7 +121,7 @@ const UserFollowsTab = ({user}: {user: User}) => {
       displayFilterButton={false}
       customSearchInput={customSearchInput}
       topPadding={false}
-      onTabChange={setActiveTab}>
+      onTabChange={handleTabChange}>
       {(currentActiveTab) => (
         <InfiniteItemLoader
           key={`${currentActiveTab}-${JSON.stringify(currentFilters)}`}
@@ -133,6 +135,7 @@ const UserFollowsTab = ({user}: {user: User}) => {
           displaySearch={false}
           pageKey={`follows-${currentActiveTab}`}
           cacheKey={`follows-${currentActiveTab}`}
+          syncFiltersWithUrl={false}
         />
       )}
     </FilterableTabs>

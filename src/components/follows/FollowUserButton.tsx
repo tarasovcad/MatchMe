@@ -178,6 +178,9 @@ const FollowUserButton = ({
   // Animation props - disable when simpleStyle is true
   const animationProps = simpleStyle ? {} : {whileTap: {scale: 0.95}};
 
+  // When icons are hidden, show a loader instead of text while pending
+  const showSpinnerInsteadOfText = hideIcons && followMutation.isPending;
+
   const buttonContent = (
     <span className="flex items-center gap-1">
       {!hideIcons && (
@@ -192,7 +195,14 @@ const FollowUserButton = ({
           )}
         </span>
       )}
-      {config.text}
+      {showSpinnerInsteadOfText ? (
+        <LoadingButtonCircle
+          size={16}
+          className={cn(currentState === "follow" && "text-white/80 dark:text-foreground/80")}
+        />
+      ) : (
+        config.text
+      )}
     </span>
   );
 

@@ -4,13 +4,14 @@ import {useInfiniteQuery} from "@tanstack/react-query";
 import {SerializableFilter} from "@/store/filterStore";
 
 interface UseInfiniteItemsProps<T> {
-  type: "profiles" | "projects";
+  type: "profiles" | "projects" | "open-positions";
   userId: string;
   itemsPerPage: number;
   serializableFilters: SerializableFilter[];
   fetchItems: (page: number, itemsPerPage: number, filters?: SerializableFilter[]) => Promise<T[]>;
   cacheKey?: string;
   initialData?: T[]; // Initial data from server-side rendering
+  enabled?: boolean; // Control if the query should run
 }
 
 export function useInfiniteItems<T extends {id: string}>({
@@ -21,6 +22,7 @@ export function useInfiniteItems<T extends {id: string}>({
   fetchItems,
   cacheKey,
   initialData,
+  enabled = true,
 }: UseInfiniteItemsProps<T>) {
   const infiniteKey = cacheKey ? `${type}-${cacheKey}-infinite` : `${type}-infinite`;
 
@@ -55,10 +57,11 @@ export function useInfiniteItems<T extends {id: string}>({
     getNextPageParam: (lastPage) => lastPage.nextPage,
     initialData: queryInitialData, // Use server-side data only when no filters are active
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2, // Retry failed requests 2 times
+    retry: 1, // Fewer retries to avoid duplicate traffic
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
     refetchOnWindowFocus: false, // Don't refetch when window regains focus
-    refetchOnMount: true, // Refetch when component mounts if the data is stale
+    refetchOnMount: false, // Avoid duplicate initial fetch (especially in StrictMode)
+    enabled, // Only run when ready
   });
 
   // Flatten items and filter out current user

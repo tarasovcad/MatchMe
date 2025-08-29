@@ -21,7 +21,7 @@ export type InfiniteListProps<T> = {
   ) => React.ReactNode;
   renderSkeleton: () => React.ReactNode;
   itemsPerPage?: number;
-  type: "profiles" | "projects";
+  type: "profiles" | "projects" | "open-positions";
   filtersData?: Filter[];
   displayFilterButton?: boolean;
   displaySearch?: boolean;
@@ -29,6 +29,8 @@ export type InfiniteListProps<T> = {
   pageKey?: string;
   initialData?: T[];
   customSearch?: React.ReactNode;
+  itemsContainerClassName?: string;
+  syncFiltersWithUrl?: boolean;
 };
 
 const InfiniteItemLoader = <T extends {id: string}>({
@@ -45,12 +47,14 @@ const InfiniteItemLoader = <T extends {id: string}>({
   pageKey,
   initialData,
   customSearch,
+  itemsContainerClassName,
+  syncFiltersWithUrl = true,
 }: InfiniteListProps<T>) => {
   const userId = userSession?.id || "";
   const filterStoreKey = pageKey || type;
 
-  // Initialize URL-based filters
-  useFiltersWithUrl(filterStoreKey);
+  // Initialize URL-based filters (optionally disabled)
+  useFiltersWithUrl(filterStoreKey, syncFiltersWithUrl);
 
   const {getSerializableFilters} = useFilterStore();
   const serializableFilters = getSerializableFilters(filterStoreKey);
@@ -127,7 +131,7 @@ const InfiniteItemLoader = <T extends {id: string}>({
       {displayFilterButton && <FilterPanel pageKey={filterStoreKey} />}
 
       <div className="container-query-parent">
-        <div className="gap-6 container-grid grid grid-cols-3">
+        <div className={itemsContainerClassName || "gap-6 container-grid grid grid-cols-3"}>
           {items.map((item, index) => {
             const isLast = items.length === index + 1;
             return renderItem(item, isLast, isLast ? lastItemRef : null, userId);

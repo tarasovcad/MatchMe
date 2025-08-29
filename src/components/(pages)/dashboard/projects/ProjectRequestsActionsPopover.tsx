@@ -19,7 +19,6 @@ export type ProjectRequestActions = {
   onRejectRequest?: () => void;
   onCancelInvitation?: () => void;
   onResendInvitation?: () => void;
-  onReinvite?: () => void;
   onSendMessage?: () => void;
   onViewProfile?: () => void;
   onCopyProfileLink?: () => void;
@@ -33,6 +32,11 @@ export type ProjectRequestsActionsPopoverProps = ProjectRequestActions & {
   resendCount?: number;
   nextAllowedAt?: string | null;
   trigger?: React.ReactNode;
+  // Permission gates
+  canAccept?: boolean;
+  canReject?: boolean;
+  canResend?: boolean;
+  canCancel?: boolean;
 };
 
 const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps> = ({
@@ -44,13 +48,16 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
   onRejectRequest,
   onCancelInvitation,
   onResendInvitation,
-  onReinvite,
   onSendMessage,
   onViewProfile,
   onCopyProfileLink,
   resendCount = 0,
   nextAllowedAt,
   trigger,
+  canAccept = true,
+  canReject = true,
+  canResend = true,
+  canCancel = true,
 }) => {
   const handleViewProfile = () => {
     if (onViewProfile) {
@@ -76,12 +83,10 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
 
   const handleAcceptRequest = () => {
     onAcceptRequest?.();
-    toast.success(`${userName}'s request has been accepted`);
   };
 
   const handleRejectRequest = () => {
     onRejectRequest?.();
-    toast.success(`${userName}'s request has been rejected`);
   };
 
   const handleCancelInvitation = () => {
@@ -90,10 +95,6 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
 
   const handleResendInvitation = () => {
     onResendInvitation?.();
-  };
-
-  const handleReinvite = () => {
-    onReinvite?.();
   };
 
   const handleArchiveRequest = () => {
@@ -110,7 +111,8 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
   const nextAtDate = nextAllowedAt ? new Date(nextAllowedAt) : null;
   const isOverLimit = resendCount >= 5;
   const isCoolingDown = !!(nextAtDate && now && nextAtDate.getTime() > now.getTime());
-  const canResend = isSent && isPending && !isOverLimit && !isCoolingDown;
+  const cooldownAllowsResend = isSent && isPending && !isOverLimit && !isCoolingDown;
+  const showResend = canResend && cooldownAllowsResend;
 
   const getResendWaitText = (count: number): string => {
     if (count <= 0)
@@ -134,7 +136,7 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
       "Resend limit reached. Further resends aren’t available for this invite. The counter will reset only if the user applies to your project.";
   } else if (isCoolingDown) {
     resendDescription = getResendWaitText(resendCount);
-  } else if (canResend) {
+  } else if (showResend) {
     const nextAfter = getNextWindowAfterText(resendCount);
     resendDescription =
       resendCount >= 4
@@ -145,61 +147,42 @@ const ProjectRequestsActionsPopover: React.FC<ProjectRequestsActionsPopoverProps
   const items: OptionsPopoverItem[] = [];
 
   if (isReceived && isPending) {
-    items.push(
-      {
+    if (canAccept) {
+      items.push({
         icon: ThumbsUpIcon,
         label: "Accept request",
         onClick: handleAcceptRequest,
-      },
-      {
+      });
+    }
+    if (canReject) {
+      items.push({
         icon: ThumbsDownIcon,
         label: "Reject request",
         onClick: handleRejectRequest,
         separator: true,
-      },
-    );
+      });
+    }
   }
 
   if (isSent && isPending) {
-    items.push(
-      {
+    if (showResend) {
+      items.push({
         icon: RefreshCw,
         label: "Resend invitation",
         onClick: handleResendInvitation,
         description: resendDescription,
-        disabled: !canResend,
-      },
-      {
+      });
+    }
+    if (canCancel) {
+      items.push({
         icon: UserX,
         label: "Cancel invitation",
         onClick: handleCancelInvitation,
         description:
           "Withdraw this invite. After cancelling, you’ll be able to re‑invite in 7 days.",
         separator: true,
-      },
-    );
-  }
-
-  // Re-invite path for declined or cancelled invites (respect cool-off)
-  if (isSent && (requestStatus === "rejected" || requestStatus === "cancelled")) {
-    const canReinvite = !isCoolingDown;
-    let reinviteDescription = "";
-    if (isCoolingDown && nextAtDate) {
-      const dateStr = formatDateAbsolute(nextAtDate.toISOString());
-      reinviteDescription =
-        requestStatus === "cancelled"
-          ? `You can re-invite on ${dateStr}. A short pause after a withdrawal keeps things considerate.`
-          : `You can re-invite on ${dateStr}. A short pause after a decline keeps things considerate.`;
+      });
     }
-
-    items.push({
-      icon: RefreshCw,
-      label: "Re-invite",
-      onClick: handleReinvite,
-      description: reinviteDescription,
-      disabled: !canReinvite,
-      separator: true,
-    });
   }
 
   items.push(

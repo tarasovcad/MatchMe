@@ -9,10 +9,6 @@ export const useUserProjects = (userId: string) => {
   });
 };
 
-/**
- * Hook to check if current user has access to a project
- * Returns project data with user permission level
- */
 export const useProjectAccess = (slug: string, userId: string) => {
   return useQuery({
     queryKey: ["project-access", slug, userId],

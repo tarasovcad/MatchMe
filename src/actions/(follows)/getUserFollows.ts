@@ -9,7 +9,6 @@ import {SupabaseClient} from "@supabase/supabase-js";
 const TABLE_NAME = "follows";
 const PROFILES_TABLE_NAME = "profiles";
 
-// Define the columns needed for MiniCardMatchMeUser
 const MINI_CARD_COLUMNS = `
   id,
   name,

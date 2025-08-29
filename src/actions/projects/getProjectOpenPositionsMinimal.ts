@@ -13,27 +13,50 @@ export const getProjectOpenPositionsMinimal = async (
     }
     const supabase = await createClient();
 
-    const [positionsRes, requestsRes, favoritesRes] = await Promise.all([
-      supabase
-        .from("project_open_positions")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("created_at", {ascending: false}),
-      userId
-        ? supabase
-            .from("project_requests")
-            .select("position_id, status")
-            .eq("project_id", projectId)
-            .eq("user_id", userId)
-            .eq("direction", "application")
-        : Promise.resolve({data: null, error: null}),
-      userId
-        ? supabase
-            .from("favorites_open_positions")
-            .select("favorite_position_id")
-            .eq("user_id", userId)
-        : Promise.resolve({data: null, error: null}),
-    ]);
+    const [positionsRes, requestsRes, favoritesRes, lastAppRes, pendingInviteRes] =
+      await Promise.all([
+        supabase
+          .from("project_open_positions")
+          .select("*")
+          .eq("project_id", projectId)
+          .eq("status", "open")
+          .order("created_at", {ascending: false}),
+        userId
+          ? supabase
+              .from("project_requests")
+              .select("position_id, status")
+              .eq("project_id", projectId)
+              .eq("user_id", userId)
+              .eq("direction", "application")
+          : Promise.resolve({data: null, error: null}),
+        userId
+          ? supabase
+              .from("favorites_open_positions")
+              .select("favorite_position_id")
+              .eq("user_id", userId)
+          : Promise.resolve({data: null, error: null}),
+        userId
+          ? supabase
+              .from("project_requests")
+              .select("next_allowed_at")
+              .eq("project_id", projectId)
+              .eq("user_id", userId)
+              .eq("direction", "application")
+              .order("updated_at", {ascending: false})
+              .limit(1)
+              .maybeSingle()
+          : Promise.resolve({data: null, error: null}),
+        userId
+          ? supabase
+              .from("project_requests")
+              .select("id")
+              .eq("project_id", projectId)
+              .eq("user_id", userId)
+              .eq("direction", "invite")
+              .eq("status", "pending")
+              .maybeSingle()
+          : Promise.resolve({data: null, error: null}),
+      ]);
 
     const positions = positionsRes.data;
     const positionsError = positionsRes.error;
@@ -114,11 +137,20 @@ export const getProjectOpenPositionsMinimal = async (
       });
     }
 
+    const viewerNextAllowedAt: string | null | undefined =
+      lastAppRes?.data?.next_allowed_at ?? null;
+    const now = new Date();
+    const cooldownActive = viewerNextAllowedAt
+      ? new Date(viewerNextAllowedAt).getTime() > now.getTime()
+      : false;
+
     // Get the title of the position that has a pending request (if any)
     const pendingPositionTitle =
       hasAnyPendingRequest && positions
         ? positions.find((p) => pendingByPosition.has(p.id))?.title || null
         : null;
+
+    const viewerHasPendingInvite = Boolean(pendingInviteRes?.data?.id);
 
     const annotated: ProjectOpenPosition[] = (positions ?? []).map((p) => {
       const poster = p.posted_by_user_id ? postersMap.get(p.posted_by_user_id) : undefined;
@@ -139,6 +171,9 @@ export const getProjectOpenPositionsMinimal = async (
         pending_position_title: pendingPositionTitle,
         required_skills_with_images,
         is_saved: userId ? savedByPosition.has(p.id) : false,
+        application_cooldown_active: Boolean(userId && cooldownActive),
+        application_cooldown_until: userId && viewerNextAllowedAt ? viewerNextAllowedAt : null,
+        viewer_has_pending_invite: Boolean(userId && viewerHasPendingInvite),
       };
     });
     return {error: null, data: annotated};

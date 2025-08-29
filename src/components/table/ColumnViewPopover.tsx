@@ -42,6 +42,7 @@ function ColumnViewPopoverInner<TData extends object>(props: ColumnViewPopoverPr
     update_count: "Update Count",
     delete_count: "Delete Count",
     notification_count: "Notification Count",
+    invited_by: "Invited By",
   };
 
   const allLeaf = table.getAllLeafColumns();

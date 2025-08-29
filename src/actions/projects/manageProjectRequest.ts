@@ -3,16 +3,11 @@
 import {createClient} from "@/utils/supabase/server";
 import {sendNotification} from "@/actions/notifications/sendNotification";
 import {notifyOnNewProjectMember} from "./notifyOnNewProjectMember";
+import {getUsersWithProjectPermission} from "./getUsersWithProjectPermission";
 import {PostgrestError} from "@supabase/supabase-js";
 import {createClient as createAdminClient} from "@/utils/supabase/admin";
 
-export type ManageProjectRequestAction =
-  | "accept"
-  | "reject"
-  | "cancel"
-  | "resend"
-  | "reinvite"
-  | "reset";
+export type ManageProjectRequestAction = "accept" | "reject" | "cancel" | "resend" | "reset";
 
 interface ProjectRequest {
   id: string;
@@ -26,7 +21,6 @@ interface ProjectRequest {
   status: "pending" | "accepted" | "rejected" | "cancelled";
   resend_count?: number;
   next_allowed_at?: string | null;
-  last_sent_at?: string | null;
 }
 
 interface ManageProjectRequestParams {
@@ -67,17 +61,18 @@ export async function manageProjectRequest({
     const {data, error} = await supabase
       .from("project_requests")
       .select(
-        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at, last_sent_at",
+        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at",
       )
       .eq("id", requestId)
       .single();
     request = data;
     requestError = error;
   } else {
+    // when using request from notificaion
     const {data, error} = await supabase
       .from("project_requests")
       .select(
-        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at, last_sent_at",
+        "id, project_id, user_id, created_by, created_at, position_id, role_id, direction, status, resend_count, next_allowed_at",
       )
       .eq("project_id", projectId)
       .eq("user_id", user.id)
@@ -90,6 +85,76 @@ export async function manageProjectRequest({
 
   if (requestError || !request) {
     return {success: false, message: "Project request not found or already processed"};
+  }
+
+  // resolve current user's role permissions
+  const resolveUserPermissions = async (
+    projectIdToCheck: string,
+    userIdToCheck: string,
+  ): Promise<Record<string, Record<string, boolean>> | null> => {
+    const {data: member} = await supabase
+      .from("project_team_members")
+      .select("role_id")
+      .eq("project_id", projectIdToCheck)
+      .eq("user_id", userIdToCheck)
+      .maybeSingle();
+
+    if (!member) return null; // non-members do not have project-granted permissions
+    const roleId = member.role_id as string | null;
+
+    const {data: role} = await supabase
+      .from("project_roles")
+      .select("permissions")
+      .eq("id", roleId)
+      .maybeSingle();
+    return (role?.permissions as Record<string, Record<string, boolean>>) ?? null;
+  };
+
+  // Authorization gates per action/direction
+  const isInvitedUser = user.id === request.user_id;
+  const isApplication = request.direction === "application";
+  const isInvite = request.direction === "invite";
+
+  const perms = await resolveUserPermissions(request.project_id, user.id);
+  const canUpdateInvitations = !!perms?.["Invitations"]?.update;
+  const canUpdateApplications = !!perms?.["Applications"]?.update;
+
+  // Rules:
+  // - Invites: invited user may accept/reject their own invite; resend/cancel require Invitations.update
+  // - Applications: accept/reject require Applications.update; applicant may cancel their own application
+  // - Reset: require update on relevant resource
+  if (isInvite) {
+    if (action === "resend" || action === "cancel") {
+      if (!canUpdateInvitations) {
+        return {success: false, message: "Restricted Access"};
+      }
+    } else if (action === "accept" || action === "reject") {
+      if (!isInvitedUser) {
+        return {success: false, message: "Only the invited user can perform this action"};
+      }
+    }
+  }
+
+  if (isApplication) {
+    if (action === "accept" || action === "reject") {
+      if (!canUpdateApplications) {
+        return {success: false, message: "Restricted Access"};
+      }
+    }
+    if (action === "cancel") {
+      const isApplicant = isInvitedUser; // for applications, request.user_id is the applicant
+      if (!isApplicant && !canUpdateApplications) {
+        return {success: false, message: "Restricted Access"};
+      }
+    }
+  }
+
+  if (action === "reset") {
+    const needApplications = isApplication;
+    const allowed = needApplications ? canUpdateApplications : canUpdateInvitations;
+    if (!allowed) {
+      return {success: false, message: "Restricted Access"};
+    }
   }
 
   // Helpers
@@ -157,15 +222,10 @@ export async function manageProjectRequest({
       return {success: false, message: "Failed to add user to team"};
     }
 
-    const statusErr = await updateStatus("accepted");
-    if (statusErr) {
-      return {success: false, message: "Failed to update request status"};
-    }
-
     // Clear cooldown fields after a successful join/acceptance
     await supabase
       .from("project_requests")
-      .update({resend_count: 0, last_sent_at: null, next_allowed_at: null})
+      .update({resend_count: 0, next_allowed_at: null, status: "accepted"})
       .eq("id", request.id);
 
     // Notifications differ by direction
@@ -208,22 +268,56 @@ export async function manageProjectRequest({
   }
 
   if (action === "reject") {
+    const {data: rejectionHistory, error: rejectionHistoryError} = await supabase
+      .from("project_requests")
+      .select("id")
+      .eq("project_id", request.project_id)
+      .eq("user_id", request.user_id)
+      .eq("direction", "application")
+      .eq("status", "rejected");
+
+    if (rejectionHistoryError) {
+      return {success: false, message: "Failed to check rejection history"};
+    }
+
+    const rejectionCount = (rejectionHistory?.length || 0) + 1;
+
     const statusErr = await updateStatus("rejected");
     if (statusErr) {
       return {success: false, message: "Failed to update request status"};
     }
 
-    // Set a 30-day cool-off for re-invites and clear resend-related fields
+    // Set cooldown based on rejection count
+    // 1st rejection: 7 days, 2nd and subsequent: 30 days
     const now = new Date();
-    const coolOffMs = 30 * 24 * 60 * 60 * 1000;
-    await supabase
-      .from("project_requests")
-      .update({
-        resend_count: 0,
-        last_sent_at: null,
-        next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
-      })
-      .eq("id", request.id);
+    let coolOffMs: number;
+
+    if (rejectionCount === 1) {
+      coolOffMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+    } else {
+      coolOffMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    }
+
+    // For applications, set cooldown to prevent re-applying. For invites, keep the original 14-day logic.
+    if (request.direction === "application") {
+      await supabase
+        .from("project_requests")
+        .update({
+          resend_count: 0,
+          next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
+        })
+        .eq("id", request.id);
+    } else {
+      // 14-day cool-off for re-invites
+      const coolOffMs = 14 * 24 * 60 * 60 * 1000;
+      await supabase
+        .from("project_requests")
+        .update({
+          resend_count: 0,
+          next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
+        })
+        .eq("id", request.id);
+    }
 
     if (request.direction === "application") {
       await sendNotification({
@@ -256,45 +350,78 @@ export async function manageProjectRequest({
   }
 
   if (action === "cancel") {
-    if (request.direction !== "invite") {
-      return {success: false, message: "Only invites can be cancelled"};
+    if (request.direction === "invite") {
+      const statusErr = await updateStatus("cancelled");
+
+      if (statusErr) {
+        return {success: false, message: "Failed to cancel invite"};
+      }
+
+      // Set a 7-day cool-off and clear resend-related fields so owners cannot cancel to bypass cooldowns
+      const now = new Date();
+      const coolOffMs = 7 * 24 * 60 * 60 * 1000;
+      await supabase
+        .from("project_requests")
+        .update({
+          resend_count: 0,
+          next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
+        })
+        .eq("id", request.id);
+
+      const {error: notificationError} = await admin
+        .from("notifications")
+        .update({status: "cancelled", action_taken_at: new Date().toISOString()})
+        .eq("recipient_id", request.user_id)
+        .eq("reference_id", request.project_id)
+        .eq("type", "project_invite");
+
+      console.log("notificationError", notificationError);
+      if (notificationError) {
+        return {success: false, message: "Failed to update notification status"};
+      }
+
+      return {
+        success: true,
+        message: "Invitation cancelled",
+        data: {projectId: request.project_id, userId: request.user_id},
+      };
     }
 
-    const statusErr = await updateStatus("cancelled");
+    // Allow users to cancel their own applications
+    if (request.direction === "application") {
+      const statusErr = await updateStatus("cancelled");
+      if (statusErr) {
+        return {success: false, message: "Failed to cancel application"};
+      }
 
-    if (statusErr) {
-      return {success: false, message: "Failed to cancel invite"};
+      // Apply a short cool-off (7 days) to discourage quick re-spam
+      const now = new Date();
+      const coolOffMs = 7 * 24 * 60 * 60 * 1000;
+      await supabase
+        .from("project_requests")
+        .update({
+          resend_count: 0,
+          next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
+        })
+        .eq("id", request.id);
+
+      // Mark application notifications as cancelled
+      await admin
+        .from("notifications")
+        .update({status: "cancelled", action_taken_at: new Date().toISOString()})
+        .eq("sender_id", request.user_id)
+        .eq("reference_id", request.project_id)
+        .eq("type", "project_request")
+        .eq("status", "pending");
+
+      return {
+        success: true,
+        message: "Application cancelled",
+        data: {projectId: request.project_id, userId: request.user_id},
+      };
     }
 
-    // Set a 7-day cool-off and clear resend-related fields so owners cannot cancel to bypass cooldowns
-    const now = new Date();
-    const coolOffMs = 7 * 24 * 60 * 60 * 1000;
-    await supabase
-      .from("project_requests")
-      .update({
-        resend_count: 0,
-        last_sent_at: null,
-        next_allowed_at: new Date(now.getTime() + coolOffMs).toISOString(),
-      })
-      .eq("id", request.id);
-
-    const {error: notificationError} = await admin
-      .from("notifications")
-      .update({status: "cancelled", action_taken_at: new Date().toISOString()})
-      .eq("recipient_id", request.user_id)
-      .eq("reference_id", request.project_id)
-      .eq("type", "project_invite");
-
-    console.log("notificationError", notificationError);
-    if (notificationError) {
-      return {success: false, message: "Failed to update notification status"};
-    }
-
-    return {
-      success: true,
-      message: "Invitation cancelled",
-      data: {projectId: request.project_id, userId: request.user_id},
-    };
+    return {success: false, message: "Invalid cancel action"};
   }
 
   if (action === "resend") {
@@ -346,7 +473,6 @@ export async function manageProjectRequest({
 
     const updatedFields = {
       updated_at: now.toISOString(),
-      last_sent_at: now.toISOString(),
       next_allowed_at: nextWindowMs ? new Date(now.getTime() + nextWindowMs).toISOString() : null,
       resend_count: currentResendCount + 1,
     } as const;
@@ -369,55 +495,6 @@ export async function manageProjectRequest({
     return {
       success: true,
       message: "Invitation resent",
-      data: {projectId: request.project_id, userId: request.user_id},
-    };
-  }
-
-  if (action === "reinvite") {
-    if (request.direction !== "invite") {
-      return {success: false, message: "Only invites can be re-invited"};
-    }
-
-    if (request.status !== "cancelled" && request.status !== "rejected") {
-      return {success: false, message: "Only cancelled or rejected invites can be re-invited"};
-    }
-
-    // Respect cool-off set on cancel/reject
-    const now = new Date();
-    const nextAllowedAt = request.next_allowed_at ? new Date(request.next_allowed_at) : null;
-    if (nextAllowedAt && nextAllowedAt.getTime() > now.getTime()) {
-      return {
-        success: false,
-        message: `You can re-invite this user on ${nextAllowedAt.toISOString()}`,
-      };
-    }
-
-    // Update the existing rejected invite to pending and reinitialize cooldown fields
-    const {error: updateErr} = await supabase
-      .from("project_requests")
-      .update({
-        status: "pending",
-        updated_at: now.toISOString(),
-        created_by: user.id,
-        last_sent_at: now.toISOString(),
-        next_allowed_at: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-        resend_count: 0,
-      })
-      .eq("id", request.id);
-
-    if (updateErr) {
-      return {success: false, message: "Failed to re-invite user"};
-    }
-
-    await sendNotification({
-      type: "project_invite",
-      recipientId: request.user_id,
-      referenceId: request.project_id,
-    });
-
-    return {
-      success: true,
-      message: "Invitation sent",
       data: {projectId: request.project_id, userId: request.user_id},
     };
   }

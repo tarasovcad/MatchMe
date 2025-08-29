@@ -24,6 +24,7 @@ import AutogrowingTextarea from "@/components/ui/form/AutogrowingTextarea";
 import {useSubmitProjectApplication} from "@/hooks/query/projects/use-submit-application";
 import LoadingButtonCircle from "@/components/ui/LoadingButtonCirlce";
 import AuthGate from "@/components/other/AuthGate";
+import {formatDateAbsolute} from "@/functions/formatDate";
 
 const getTitleByValue = (options: {title: string; value: string}[], value?: string): string => {
   if (!value) return "";
@@ -35,6 +36,8 @@ export type ProjectOpenPositionCardProps = {
   userId?: string;
   isOwner?: boolean;
   isTeamMember?: boolean;
+  allowFirstStep?: boolean;
+  firstStepLink?: string;
 };
 
 // Extracted dialog component
@@ -45,6 +48,8 @@ const OpenPositionDetailsDialog = ({
   userId,
   isOwner,
   isTeamMember,
+  allowFirstStep = true,
+  firstStepLink,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,6 +57,8 @@ const OpenPositionDetailsDialog = ({
   userId?: string;
   isOwner?: boolean;
   isTeamMember?: boolean;
+  allowFirstStep?: boolean;
+  firstStepLink?: string;
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationMessage, setApplicationMessage] = useState("");
@@ -61,6 +68,11 @@ const OpenPositionDetailsDialog = ({
   const hasCurrentPositionRequest = Boolean(openPosition.has_pending_request);
   const hasOtherPositionRequest =
     Boolean(openPosition.has_any_pending_request) && !hasCurrentPositionRequest;
+  const applicationCooldownActive = Boolean(openPosition.application_cooldown_active);
+  const applicationCooldownUntil = openPosition.application_cooldown_until
+    ? new Date(openPosition.application_cooldown_until)
+    : null;
+  const viewerHasPendingInvite = Boolean(openPosition.viewer_has_pending_invite);
 
   const handleNext = () => {
     setCurrentStep(2);
@@ -79,7 +91,7 @@ const OpenPositionDetailsDialog = ({
   };
 
   const handleSubmitApplication = () => {
-    if (!userId || isOwnerOrMember || hasCurrentPositionRequest) {
+    if (!userId || isOwnerOrMember || hasCurrentPositionRequest || viewerHasPendingInvite) {
       return;
     }
 
@@ -116,6 +128,24 @@ const OpenPositionDetailsDialog = ({
         <Alert
           title="You are a team member"
           message="Project team members cannot apply to open positions."
+          type="warning"
+        />
+      );
+    }
+    if (viewerHasPendingInvite) {
+      return (
+        <Alert
+          title="Pending Invitation"
+          message="This project has already sent you an invitation. No need to apply to positions - you can accept or decline the existing invitation."
+          type="warning"
+        />
+      );
+    }
+    if (applicationCooldownActive && applicationCooldownUntil) {
+      return (
+        <Alert
+          title="Application Cooldown Active"
+          message={`A cool‑off period is active for this project. You can apply again on ${formatDateAbsolute(applicationCooldownUntil.toISOString())}.`}
           type="warning"
         />
       );
@@ -206,14 +236,29 @@ const OpenPositionDetailsDialog = ({
                   labelWhenEmpty="Add to favorites"
                   labelWhenFilled="Remove from favorites"
                 />
-                <Button
-                  variant={"secondary"}
-                  size={"xs"}
-                  onClick={handleNext}
-                  disabled={isOwnerOrMember || hasCurrentPositionRequest}>
-                  {hasCurrentPositionRequest ? "Applied" : "Next"}
-                  {!hasCurrentPositionRequest && <ChevronRight size={14} className="ml-1" />}
-                </Button>
+                {allowFirstStep ? (
+                  <Button
+                    variant={"secondary"}
+                    size={"xs"}
+                    onClick={handleNext}
+                    disabled={
+                      isOwnerOrMember ||
+                      hasCurrentPositionRequest ||
+                      applicationCooldownActive ||
+                      viewerHasPendingInvite ||
+                      !userId
+                    }>
+                    {hasCurrentPositionRequest ? "Applied" : "Next"}
+                    {!hasCurrentPositionRequest && <ChevronRight size={14} className="ml-1" />}
+                  </Button>
+                ) : (
+                  <Link href={firstStepLink ?? ""}>
+                    <Button variant={"secondary"} size={"xs"}>
+                      View Project
+                      <ChevronRight size={14} className="ml-1" />
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -247,6 +292,14 @@ const OpenPositionDetailsDialog = ({
                 <Alert
                   title="Application Already Submitted"
                   message={`You've already applied to "${openPosition.pending_position_title}" in this project. Applying here will replace your previous application since only one application per project is allowed.`}
+                  type="warning"
+                />
+              )}
+
+              {viewerHasPendingInvite && (
+                <Alert
+                  title="Pending Invitation"
+                  message="This project has already sent you an invitation. No need to apply to positions - you can accept or decline the existing invitation."
                   type="warning"
                 />
               )}
@@ -285,7 +338,9 @@ const OpenPositionDetailsDialog = ({
                     hasCurrentPositionRequest ||
                     submitApplicationMutation.isPending ||
                     isOwnerOrMember ||
-                    !userId
+                    !userId ||
+                    applicationCooldownActive ||
+                    viewerHasPendingInvite
                   }
                   onClick={handleSubmitApplication}>
                   {submitApplicationMutation.isPending && (
@@ -334,8 +389,9 @@ const ProjectOpenPositionCardComponent = ({
   userId,
   isOwner,
   isTeamMember,
+  allowFirstStep = true,
+  firstStepLink,
 }: ProjectOpenPositionCardProps) => {
-  console.log(openPosition);
   const [isHovered, setIsHovered] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -447,6 +503,8 @@ const ProjectOpenPositionCardComponent = ({
         userId={userId}
         isOwner={isOwner}
         isTeamMember={isTeamMember}
+        allowFirstStep={allowFirstStep}
+        firstStepLink={firstStepLink}
       />
     </motion.div>
   );

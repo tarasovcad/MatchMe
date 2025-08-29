@@ -1,6 +1,7 @@
 "use server";
 import {createClient} from "@/utils/supabase/server";
 import {sendNotification} from "@/actions/notifications/sendNotification";
+import {formatDateAbsolute} from "@/functions/formatDate";
 
 export interface ProjectTeamMemberProfile {
   user_id: string;
@@ -122,7 +123,7 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
       if (nextAllowed.getTime() > now.getTime()) {
         return {
           success: false,
-          error: `User declined recently. You can re-invite on ${nextAllowed.toISOString()}`,
+          error: `User declined recently. You can re-invite on ${formatDateAbsolute(lastRejected.next_allowed_at)}`,
         };
       }
     }
@@ -145,7 +146,7 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
       if (nextAllowed.getTime() > now.getTime()) {
         return {
           success: false,
-          error: `You withdrew the invite recently. You can re-invite on ${nextAllowed.toISOString()}`,
+          error: `You withdrew the invite recently. You can re-invite on ${formatDateAbsolute(lastCancelled.next_allowed_at)}`,
         };
       }
     }
@@ -159,9 +160,10 @@ export const createProjectRequest = async (data: CreateProjectRequestData) => {
         created_by: user.id,
         position_id: data.position_id || null,
         role_id: data.role_id || null,
-        direction: "invite", // This is an invite from project to user
+        direction: "invite",
         status: "pending",
         last_sent_at: new Date().toISOString(),
+        resend_count: 0,
         next_allowed_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
       })
       .select()

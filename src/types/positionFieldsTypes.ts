@@ -76,4 +76,11 @@ export interface ProjectOpenPosition {
   // Enriched skills with images (for minimal views)
   required_skills_with_images?: Array<{name: string; image_url?: string}>;
   is_saved?: boolean;
+  // Per-viewer cooldown fields
+  application_cooldown_active?: boolean;
+  application_cooldown_until?: string | null;
+  // Per-viewer invite state
+  viewer_has_pending_invite?: boolean;
+  // Project slug for building links
+  project_slug?: string;
 }

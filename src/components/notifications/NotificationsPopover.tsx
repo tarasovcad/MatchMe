@@ -398,6 +398,7 @@ const NotificationsPopover = ({
               isLoadingMore={isLoadingMore}
               notifications={getFilteredNotifications()}
               markAsRead={(ids) => markAsRead(ids)}
+              currentUserId={userSessionId}
             />
           </div>
 
